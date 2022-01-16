@@ -8,7 +8,7 @@ import {
   generatePermissionRevokeMessage,
 } from "./helpers/test-helpers";
 
-describe("Constants", async function () {
+describe("📦 Constants", async function () {
   let Constants: Constants__factory;
   let constants: Constants;
   let deployer: SignerWithAddress;

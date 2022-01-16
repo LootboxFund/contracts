@@ -10,7 +10,7 @@ import { expect } from "chai";
 import { BigNumber } from "ethers";
 import { DAO_ROLE, DEVELOPER_ROLE } from "./helpers/test-helpers";
 
-describe("GuildFactory", () => {
+describe("📦 GuildFactory", () => {
   let deployer: SignerWithAddress;
   let treasury: SignerWithAddress;
   let dao: SignerWithAddress;
