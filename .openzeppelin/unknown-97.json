@@ -90,6 +90,16 @@
       "address": "0x7825F177eb695702171BDA06F972A113df882ac1",
       "txHash": "0xd4ead38637e72b63b642448dbd3a6f327dd5cfc0b8ed0d79ca0e431a71538f9f",
       "kind": "uups"
+    },
+    {
+      "address": "0xe34e8B98b5C3C057beb6d1dEEa358671A4F9e092",
+      "txHash": "0xc4a7d8238f9cd6446f7e77d249a2e537ae70e17209fc0cd8509b603b1452233d",
+      "kind": "uups"
+    },
+    {
+      "address": "0xcD19027e249ccD0890b6f2006Ef03e1357d97be5",
+      "txHash": "0x533c7c465f47cbc2176f39476287d3d7d158244215dbd62730123d4e62889b5e",
+      "kind": "uups"
     }
   ],
   "impls": {
@@ -993,6 +1003,269 @@
           {
             "contract": "CrowdSale",
             "label": "GAMER",
+            "type": "t_address",
+            "src": "contracts/CrowdSale.sol:62"
+          },
+          {
+            "contract": "CrowdSale",
+            "label": "ETH",
+            "type": "t_address",
+            "src": "contracts/CrowdSale.sol:64"
+          },
+          {
+            "contract": "CrowdSale",
+            "label": "USDC",
+            "type": "t_address",
+            "src": "contracts/CrowdSale.sol:65"
+          },
+          {
+            "contract": "CrowdSale",
+            "label": "USDT",
+            "type": "t_address",
+            "src": "contracts/CrowdSale.sol:66"
+          },
+          {
+            "contract": "CrowdSale",
+            "label": "UST",
+            "type": "t_address",
+            "src": "contracts/CrowdSale.sol:67"
+          },
+          {
+            "contract": "CrowdSale",
+            "label": "DAI",
+            "type": "t_address",
+            "src": "contracts/CrowdSale.sol:68"
+          },
+          {
+            "contract": "CrowdSale",
+            "label": "deploymentStartTime",
+            "type": "t_uint256",
+            "src": "contracts/CrowdSale.sol:70"
+          },
+          {
+            "contract": "CrowdSale",
+            "label": "deploymentEndTime",
+            "type": "t_uint256",
+            "src": "contracts/CrowdSale.sol:71"
+          },
+          {
+            "contract": "CrowdSale",
+            "label": "isRetired",
+            "type": "t_bool",
+            "src": "contracts/CrowdSale.sol:73"
+          }
+        ],
+        "types": {
+          "t_contract(AggregatorV3Interface)45": {
+            "label": "contract AggregatorV3Interface"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_address_payable": {
+            "label": "address payable"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)89_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_struct(RoleData)89_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "members",
+                "type": "t_mapping(t_address,t_bool)"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32"
+              }
+            ]
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(address => mapping(address => uint256))"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_array(t_uint256)45_storage": {
+            "label": "uint256[45]"
+          }
+        }
+      }
+    },
+    "ca707c733244210fd108bd85752efda6f86bbc7e7a79ad10727ad1e09d79e8b4": {
+      "address": "0xaFEeA61551b8F20006D91a3F8484F1BeF6Cb0f00",
+      "txHash": "0xfafc494ca29fa0ac6e1c4686286724d777de504f29ea0e655aa86cc85a9c04ad",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:39"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:44"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_balances",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:37"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_allowances",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:39"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_totalSupply",
+            "type": "t_uint256",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:41"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_name",
+            "type": "t_string_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:43"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "_symbol",
+            "type": "t_string_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:44"
+          },
+          {
+            "contract": "ERC20Upgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)45_storage",
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol:362"
+          },
+          {
+            "contract": "PausableUpgradeable",
+            "label": "_paused",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:29"
+          },
+          {
+            "contract": "PausableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:97"
+          },
+          {
+            "contract": "ERC165Upgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol:36"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "_roles",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)89_storage)",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:64"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:232"
+          },
+          {
+            "contract": "ERC1967UpgradeUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:215"
+          },
+          {
+            "contract": "UUPSUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:81"
+          },
+          {
+            "contract": "CrowdSale",
+            "label": "priceFeedBNB",
+            "type": "t_contract(AggregatorV3Interface)45",
+            "src": "contracts/CrowdSale.sol:47"
+          },
+          {
+            "contract": "CrowdSale",
+            "label": "priceFeedETH",
+            "type": "t_contract(AggregatorV3Interface)45",
+            "src": "contracts/CrowdSale.sol:48"
+          },
+          {
+            "contract": "CrowdSale",
+            "label": "priceFeedUSDC",
+            "type": "t_contract(AggregatorV3Interface)45",
+            "src": "contracts/CrowdSale.sol:49"
+          },
+          {
+            "contract": "CrowdSale",
+            "label": "priceFeedUSDT",
+            "type": "t_contract(AggregatorV3Interface)45",
+            "src": "contracts/CrowdSale.sol:50"
+          },
+          {
+            "contract": "CrowdSale",
+            "label": "priceFeedUST",
+            "type": "t_contract(AggregatorV3Interface)45",
+            "src": "contracts/CrowdSale.sol:51"
+          },
+          {
+            "contract": "CrowdSale",
+            "label": "priceFeedDAI",
+            "type": "t_contract(AggregatorV3Interface)45",
+            "src": "contracts/CrowdSale.sol:52"
+          },
+          {
+            "contract": "CrowdSale",
+            "label": "currentPriceUSDCents",
+            "type": "t_uint256",
+            "src": "contracts/CrowdSale.sol:59"
+          },
+          {
+            "contract": "CrowdSale",
+            "label": "TREASURY",
+            "type": "t_address_payable",
+            "src": "contracts/CrowdSale.sol:61"
+          },
+          {
+            "contract": "CrowdSale",
+            "label": "GUILD",
             "type": "t_address",
             "src": "contracts/CrowdSale.sol:62"
           },

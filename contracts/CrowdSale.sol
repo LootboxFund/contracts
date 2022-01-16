@@ -15,7 +15,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 
-interface IERC20GAMER {
+interface IERC20GUILD {
 	function mintRequest(address _recipient, uint256 _amount) external;
     function transfer(address recipient, uint256 amount) external returns (bool);
     function whitelistMint(address _mintAddress, bool _isActive) external;
@@ -59,7 +59,7 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
 	uint currentPriceUSDCents;
 
     address payable public TREASURY;
-	address public GAMER;
+	address public GUILD;
 
     address public ETH;
     address public USDC;
@@ -72,7 +72,8 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
 
     bool public isRetired;
 
-    event Purchase(address indexed _buyer, address indexed _stablecoin, uint _stablecoinPaid, uint _gamerReceived, uint _priceInUSDCents);
+    event TestEvent(address indexed _tester, string _message);
+    event Purchase(address indexed _buyer, address indexed _stablecoin, uint _stablecoinPaid, uint _guildReceived, uint _priceInUSDCents);
     event ErrorLog(string _error);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -80,13 +81,13 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
 
     // ERC1967 UUPS Upgradeable
     function initialize(
-        address _gamerToken,
+        address _guildToken,
         address _daoAddress, 
         address _developerAddress, 
         address payable _treasuryAddress,
         uint _startingPriceInUSDCents
     ) initializer public {
-        __ERC20_init("CrowdSale", "CROWDSALE_GAMER_TOKEN");
+        __ERC20_init("CrowdSale", "CROWDSALE_GUILD_TOKEN");
         __Pausable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
@@ -95,7 +96,7 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
         currentPriceUSDCents = _startingPriceInUSDCents;
 
         TREASURY = _treasuryAddress;
-		GAMER = _gamerToken;
+		GUILD = _guildToken;
 
         _grantRole(DAO_ROLE, _daoAddress);
         _grantRole(GOVERNOR_ROLE, _daoAddress);
@@ -103,6 +104,10 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
         _grantRole(DEVELOPER_ROLE, _developerAddress);
 
 	}
+
+    function testEventLogging() public {
+        emit TestEvent(msg.sender, "This is a test");
+    }
 
 	function setStablecoins(
         address _eth,
@@ -232,19 +237,19 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
 			uint timeStamp,
 			uint80 answeredInRound
 		) = priceFeedUSDC.latestRoundData();
-        uint gamerTokenDecimals = 18;
+        uint guildTokenDecimals = 18;
         uint oracleDecimals = 8;
         IERC20 tokenUSDC = IERC20(USDC);
-        // calculate the received GAMER at the current prices of USDC & GAMER
-		uint gamerPurchasedAmount = _amount * uint(price) * 10**(gamerTokenDecimals - uint(tokenUSDC.decimals())) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
+        // calculate the received GUILD at the current prices of USDC & GUILD
+		uint guildPurchasedAmount = _amount * uint(price) * 10**(guildTokenDecimals - uint(tokenUSDC.decimals())) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
         // transfer stablecoin from buyer wallet to treasury
         tokenUSDC.transferFrom(msg.sender, TREASURY, _amount);
 
-        // transfer GAMER from newly minted, to buyer wallet
-        IERC20GAMER tokenGAMER = IERC20GAMER(GAMER);
-        tokenGAMER.mintRequest(msg.sender, gamerPurchasedAmount);
+        // transfer GUILD from newly minted, to buyer wallet
+        IERC20GUILD tokenGUILD = IERC20GUILD(GUILD);
+        tokenGUILD.mintRequest(msg.sender, guildPurchasedAmount);
         // emit purchase event
-        emit Purchase(msg.sender, USDC, _amount, gamerPurchasedAmount, currentPriceUSDCents);
+        emit Purchase(msg.sender, USDC, _amount, guildPurchasedAmount, currentPriceUSDCents);
 	}
 
     function buyInUSDT(uint256 _amount) public payable whenNotPaused {
@@ -256,18 +261,18 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
             uint timeStamp,
             uint80 answeredInRound
         ) = priceFeedUSDT.latestRoundData();
-        uint gamerTokenDecimals = 18;
+        uint guildTokenDecimals = 18;
         uint oracleDecimals = 8;
         IERC20 tokenUSDT = IERC20(USDT);
-        // calculate the received GAMER at the current prices of USDT & GAMER
-        uint gamerPurchasedAmount = _amount * uint(price) * 10**(gamerTokenDecimals - uint(tokenUSDT.decimals())) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
+        // calculate the received GUILD at the current prices of USDT & GUILD
+        uint guildPurchasedAmount = _amount * uint(price) * 10**(guildTokenDecimals - uint(tokenUSDT.decimals())) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
         // transfer stablecoin from buyer wallet to treasury
         tokenUSDT.transferFrom(msg.sender, TREASURY, _amount);
-        // transfer GAMER from newly minted, to buyer wallet
-        IERC20GAMER tokenGAMER = IERC20GAMER(GAMER);
-        tokenGAMER.mintRequest(msg.sender, gamerPurchasedAmount);
+        // transfer GUILD from newly minted, to buyer wallet
+        IERC20GUILD tokenGUILD = IERC20GUILD(GUILD);
+        tokenGUILD.mintRequest(msg.sender, guildPurchasedAmount);
         // emit purchase event
-        emit Purchase(msg.sender, USDT, _amount, gamerPurchasedAmount, currentPriceUSDCents);
+        emit Purchase(msg.sender, USDT, _amount, guildPurchasedAmount, currentPriceUSDCents);
     }
 
     function buyInUST(uint256 _amount) public payable whenNotPaused {
@@ -279,18 +284,18 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
             uint timeStamp,
             uint80 answeredInRound
         ) = priceFeedUST.latestRoundData();
-        uint gamerTokenDecimals = 18;
+        uint guildTokenDecimals = 18;
         uint oracleDecimals = 8;
         IERC20 tokenUST = IERC20(UST);
-        // calculate the received GAMER at the current prices of USDT & GAMER
-        uint gamerPurchasedAmount = _amount * uint(price) * 10**(gamerTokenDecimals - uint(tokenUST.decimals())) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
+        // calculate the received GUILD at the current prices of USDT & GUILD
+        uint guildPurchasedAmount = _amount * uint(price) * 10**(guildTokenDecimals - uint(tokenUST.decimals())) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
         // transfer stablecoin from buyer wallet to treasury
         tokenUST.transferFrom(msg.sender, TREASURY, _amount);
-        // transfer GAMER from newly minted, to buyer wallet
-        IERC20GAMER tokenGAMER = IERC20GAMER(GAMER);
-        tokenGAMER.mintRequest(msg.sender, gamerPurchasedAmount);
+        // transfer GUILD from newly minted, to buyer wallet
+        IERC20GUILD tokenGUILD = IERC20GUILD(GUILD);
+        tokenGUILD.mintRequest(msg.sender, guildPurchasedAmount);
         // emit purchase event
-        emit Purchase(msg.sender, UST, _amount, gamerPurchasedAmount, currentPriceUSDCents);
+        emit Purchase(msg.sender, UST, _amount, guildPurchasedAmount, currentPriceUSDCents);
     }
 
     function buyInETH(uint256 _amount) public payable whenNotPaused {
@@ -302,18 +307,18 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
             uint timeStamp,
             uint80 answeredInRound
         ) = priceFeedETH.latestRoundData();
-        uint gamerTokenDecimals = 18;
+        uint guildTokenDecimals = 18;
         uint oracleDecimals = 8;
         IERC20 tokenETH = IERC20(ETH);
-        // calculate the received GAMER at the current prices of ETH & GAMER
-        uint gamerPurchasedAmount = _amount * uint(price) * 10**(gamerTokenDecimals - uint(tokenETH.decimals())) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
+        // calculate the received GUILD at the current prices of ETH & GUILD
+        uint guildPurchasedAmount = _amount * uint(price) * 10**(guildTokenDecimals - uint(tokenETH.decimals())) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
         // transfer stablecoin from buyer wallet to treasury
         tokenETH.transferFrom(msg.sender, TREASURY, _amount);
-        // transfer GAMER from newly minted, to buyer wallet
-        IERC20GAMER tokenGAMER = IERC20GAMER(GAMER);
-        tokenGAMER.mintRequest(msg.sender, gamerPurchasedAmount);
+        // transfer GUILD from newly minted, to buyer wallet
+        IERC20GUILD tokenGUILD = IERC20GUILD(GUILD);
+        tokenGUILD.mintRequest(msg.sender, guildPurchasedAmount);
         // emit purchase event
-        emit Purchase(msg.sender, ETH, _amount, gamerPurchasedAmount, currentPriceUSDCents);
+        emit Purchase(msg.sender, ETH, _amount, guildPurchasedAmount, currentPriceUSDCents);
     }
 
     function buyInDAI(uint256 _amount) public payable whenNotPaused {
@@ -325,18 +330,18 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
             uint timeStamp,
             uint80 answeredInRound
         ) = priceFeedDAI.latestRoundData();
-        uint gamerTokenDecimals = 18;
+        uint guildTokenDecimals = 18;
         uint oracleDecimals = 8;
         IERC20 tokenDAI = IERC20(DAI);
-        // calculate the received GAMER at the current prices of ETH & GAMER
-        uint gamerPurchasedAmount = _amount * uint(price) * 10**(gamerTokenDecimals - uint(tokenDAI.decimals())) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
+        // calculate the received GUILD at the current prices of ETH & GUILD
+        uint guildPurchasedAmount = _amount * uint(price) * 10**(guildTokenDecimals - uint(tokenDAI.decimals())) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
         // transfer stablecoin from buyer wallet to treasury
         tokenDAI.transferFrom(msg.sender, TREASURY, _amount);
-        // transfer GAMER from newly minted, to buyer wallet
-        IERC20GAMER tokenGAMER = IERC20GAMER(GAMER);
-        tokenGAMER.mintRequest(msg.sender, gamerPurchasedAmount);
+        // transfer GUILD from newly minted, to buyer wallet
+        IERC20GUILD tokenGUILD = IERC20GUILD(GUILD);
+        tokenGUILD.mintRequest(msg.sender, guildPurchasedAmount);
         // emit purchase event
-        emit Purchase(msg.sender, DAI, _amount, gamerPurchasedAmount, currentPriceUSDCents);
+        emit Purchase(msg.sender, DAI, _amount, guildPurchasedAmount, currentPriceUSDCents);
     }
     
     function buyInBNB(address payable _beneficiary) public payable whenNotPaused {
@@ -348,20 +353,20 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
             uint timeStamp, 
             uint80 answeredInRound
         ) = priceFeedBNB.latestRoundData();
-        uint gamerTokenDecimals = 18;
+        uint guildTokenDecimals = 18;
         uint bnbDecimals = 18;
         uint oracleDecimals = 8;
-        // calculate the received GAMER at the current prices of BNB & GAMER
-        uint gamerPurchasedAmount = msg.value * uint(price) * 10**(gamerTokenDecimals - bnbDecimals) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
+        // calculate the received GUILD at the current prices of BNB & GUILD
+        uint guildPurchasedAmount = msg.value * uint(price) * 10**(guildTokenDecimals - bnbDecimals) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
 
         // forward BNB to beneficiary
         TREASURY.transfer(msg.value); 
 
-        // transfer GAMER from newly minted, to buyer wallet
-        IERC20GAMER tokenGAMER = IERC20GAMER(GAMER);
-        tokenGAMER.mintRequest(_beneficiary, gamerPurchasedAmount);
+        // transfer GUILD from newly minted, to buyer wallet
+        IERC20GUILD tokenGUILD = IERC20GUILD(GUILD);
+        tokenGUILD.mintRequest(_beneficiary, guildPurchasedAmount);
         // emit purchase event
-        emit Purchase(_beneficiary, address(0), msg.value, gamerPurchasedAmount, currentPriceUSDCents);
+        emit Purchase(_beneficiary, address(0), msg.value, guildPurchasedAmount, currentPriceUSDCents);
     }
     
     function pause() public onlyRole(GOVERNOR_ROLE) {
