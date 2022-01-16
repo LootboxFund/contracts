@@ -42,9 +42,12 @@ describe("📦 GuildFactory", () => {
 
     await constants.deployed();
 
-    guildFactory = await GuildFactory.deploy(constants.address);
+    guildFactory = await GuildFactory.deploy(dao.address, constants.address);
     await guildFactory.deployed();
   });
+
+  // Skipped because tokenImplementation is internal
+  it.skip("set the proxy tokenImplementation variable");
 
   it("set the address for the Constants contract", async () => {
     const guildFactoryAddress = await guildFactory.fxConstants();
@@ -52,9 +55,48 @@ describe("📦 GuildFactory", () => {
     expect(constants.address).to.eq(await guildFactory.fxConstants());
   });
 
-  describe.skip("when contract is paused", () => {});
+  it("assignes the dao the DAO_ROLE", async () => {
+    expect(await guildFactory.hasRole(DAO_ROLE, dao.address)).to.be.true;
+  });
 
-  describe.skip("viewGuildTokens()", () => {});
+  describe("viewGuildTokens()", () => {
+    it("returns empty array when no guildTokens have been created yet", async () => {
+      expect(await guildFactory.viewGuildTokens()).to.deep.eq([]);
+    });
+
+    it("returns the correct array length and type of guildToken proxy addresses", async () => {
+      const nTokensToMake = 5;
+      for (let n = 0; n < nTokensToMake; n++) {
+        await guildFactory.createGuild(
+          "TestGuild" + nTokensToMake.toString(),
+          "GUILDT" + nTokensToMake.toString(),
+          dao.address,
+          developer.address
+        );
+        const proxies = await guildFactory.viewGuildTokens();
+        expect(proxies.length).to.eq(n + 1);
+        // expect(proxies.every((addr: string) => typeof addr === "string" && )).to.deep.eq()
+      }
+      const proxies = await guildFactory.viewGuildTokens();
+      expect(proxies.length).to.eq(nTokensToMake);
+    });
+
+    it("returns a distinct array", async () => {
+      const nTokensToMake = 5;
+      for (let n = 0; n < nTokensToMake; n++) {
+        await guildFactory.createGuild(
+          "TestGuild" + nTokensToMake.toString(),
+          "GUILDT" + nTokensToMake.toString(),
+          dao.address,
+          developer.address
+        );
+      }
+      const proxies = await guildFactory.viewGuildTokens();
+      expect(proxies.filter((v, i, a) => a.indexOf(v) === i).length).to.eq(
+        nTokensToMake
+      );
+    });
+  });
 
   describe("createGuild()", () => {
     let guildTokenAddress: string;
@@ -70,18 +112,33 @@ describe("📦 GuildFactory", () => {
     });
 
     beforeEach(async () => {
-      console.log("SETTING TINGS UP", guildName, guildSymbol);
-      const tx = await guildFactory.createGuild(
+      await guildFactory.createGuild(
         guildName,
         guildSymbol,
         dao.address,
         developer.address
       );
 
-      const [paddedTokenAddress] = await guildFactory.viewGuildTokens();
-      guildTokenAddress = stripZeros(paddedTokenAddress);
+      [guildTokenAddress] = (await guildFactory.viewGuildTokens()).map(
+        stripZeros
+      );
       guildToken = GuildTokenFactory.attach(guildTokenAddress);
     });
+
+    it("reverts with 'Pausable: paused' error if contract is paused", async () => {
+      await guildFactory.connect(dao).pause();
+      await expect(
+        guildFactory.createGuild(
+          guildName,
+          guildSymbol,
+          dao.address,
+          developer.address
+        )
+      ).to.be.revertedWith("Pausable: paused");
+    });
+
+    // TODO
+    it.skip("is payable and can receive native token");
 
     it("sets the guildToken's address", async () => {
       expect(typeof guildTokenAddress).to.eq("string");
@@ -108,11 +165,11 @@ describe("📦 GuildFactory", () => {
       expect(symbol).to.eq(guildSymbol);
     });
 
-    it("grants the dao the guildToken's DAO_ROLE", async () => {
+    it("grants the guildToken's DAO_ROLE to the dao", async () => {
       expect(await guildToken.hasRole(DAO_ROLE, dao.address)).to.eq(true);
     });
 
-    it("grants the developer the guildTokens's DEVELOPER_ROLE", async () => {
+    it("grants the guildTokens's DEVELOPER_ROLE to the developer", async () => {
       expect(await guildToken.hasRole(DEVELOPER_ROLE, developer.address)).to.eq(
         true
       );
@@ -144,8 +201,9 @@ describe("📦 GuildFactory", () => {
           purchaser.address
         );
 
-        const [_, paddedTokenAddress] = await guildFactory.viewGuildTokens();
-        secondGuildTokenAddress = stripZeros(paddedTokenAddress);
+        const [_, secondGuildTokenAddress] = (
+          await guildFactory.viewGuildTokens()
+        ).map(stripZeros);
         secondGuildToken = GuildTokenFactory.attach(secondGuildTokenAddress);
       });
 
@@ -156,4 +214,7 @@ describe("📦 GuildFactory", () => {
       });
     });
   });
+
+  describe.skip("pause()", () => {});
+  describe.skip("unpause()", () => {});
 });

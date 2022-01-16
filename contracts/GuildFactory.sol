@@ -22,13 +22,14 @@ contract GuildFactory is Pausable, AccessControl {
 
     // Points to the guild token proxies
     using EnumerableSet for EnumerableSet.AddressSet;
-    EnumerableSet.AddressSet private GUILD_TOKENS;
+    EnumerableSet.AddressSet private GUILD_TOKEN_PROXIES;
 
     event GuildCreated(address tokenAddress);
 
-    constructor(address _fxConstants) {
+    constructor(address dao, address _fxConstants) {
         tokenImplementation = address(new GuildToken());
         fxConstants = _fxConstants;
+        _grantRole(DAO_ROLE, dao); // TODO: Add way to update DAO_ROLE with DEFAULT_ADMIN_ROLE & add function to set DEFAULT_ADMIN_ROLE to 0
     }
 
     function createGuild(
@@ -37,8 +38,6 @@ contract GuildFactory is Pausable, AccessControl {
         address dao,
         address developer
     ) public payable whenNotPaused returns (address) {
-        // TODO: Look more into payable and gas fees
-
         // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
         ERC1967Proxy proxy = new ERC1967Proxy(
             tokenImplementation,
@@ -50,13 +49,14 @@ contract GuildFactory is Pausable, AccessControl {
                 developer
             )
         );
-        GUILD_TOKENS.add(address(proxy));
+        GUILD_TOKEN_PROXIES.add(address(proxy));
         emit GuildCreated(address(proxy));
         return address(proxy);
     }
 
     function viewGuildTokens() public view returns (bytes32[] memory) {
-        return GUILD_TOKENS._inner._values; // TODO investigate memory usage if GUILD_PROXIES can be huge
+        // TODO investigate memory usage if GUILD_TOKEN_PROXIES can be huge
+        return GUILD_TOKEN_PROXIES._inner._values;
     }
 
     // --------- Managing the Token ---------
