@@ -8,9 +8,15 @@ import {
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { BigNumber } from "ethers";
+import { DAO_ROLE, DEVELOPER_ROLE } from "./helpers/test-helpers";
 
 describe("GuildFactory", () => {
   let deployer: SignerWithAddress;
+  let treasury: SignerWithAddress;
+  let dao: SignerWithAddress;
+  let developer: SignerWithAddress;
+  let purchaser: SignerWithAddress;
+
   let GuildFactory: GuildFactory__factory;
   let guildFactory: GuildFactory;
 
@@ -19,7 +25,7 @@ describe("GuildFactory", () => {
   });
 
   beforeEach(async () => {
-    [deployer] = await ethers.getSigners();
+    [deployer, treasury, dao, developer, purchaser] = await ethers.getSigners();
     guildFactory = await GuildFactory.deploy();
     await guildFactory.deployed();
   });
@@ -42,7 +48,12 @@ describe("GuildFactory", () => {
     });
 
     beforeEach(async () => {
-      await guildFactory.createGuild(guildName, guildSymbol, initialSupply);
+      await guildFactory.createGuild(
+        guildName,
+        guildSymbol,
+        dao.address,
+        developer.address
+      );
       guildTokenAddress = await guildFactory.deployedContracts(0);
       guildToken = GuildToken.attach(guildTokenAddress);
     });
@@ -65,14 +76,24 @@ describe("GuildFactory", () => {
       expect(symbol).to.eq(guildSymbol);
     });
 
-    it("correctly sets the deployed address", async () => {
+    it("correctly sets the contract address", async () => {
       const address = guildToken.address;
       expect(typeof address).to.eq("string");
       expect(address.slice(0, 2)).to.eq("0x");
       expect(address).to.eq(guildTokenAddress);
     });
 
-    it(`mints ${initialSupply.toString()} initial tokens`, async () => {
+    it("grants the dao the DAO_ROLE", async () => {
+      expect(await guildToken.hasRole(DAO_ROLE, dao.address)).to.eq(true);
+    });
+
+    it("grants the developer the DEVELOPER_ROLE", async () => {
+      expect(await guildToken.hasRole(DEVELOPER_ROLE, developer.address)).to.eq(
+        true
+      );
+    });
+
+    it.skip(`mints ${initialSupply.toString()} initial tokens`, async () => {
       console.log("starting");
       const supply = await guildToken.currentSupply();
       console.log("supply:", supply);
@@ -82,6 +103,7 @@ describe("GuildFactory", () => {
     it.skip(`sets the max supply of XXX`);
 
     it.skip("sets the correct guildFX treasury value in the deployed contract", () => {
+      // THIS SHOULD BE USED FROM THE CONSTANTS CONTRACT
       // const guildToken = GuildToken.attach(guildTokenAddress);
     });
 

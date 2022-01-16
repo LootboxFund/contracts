@@ -7,7 +7,7 @@ pragma solidity 0.8.4;
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import "./SimpleERC20.sol";
+import "./GuildToken.sol";
 
 contract GuildFactory is Pausable, AccessControl {
     // Points to the guild token proxies
@@ -26,23 +26,24 @@ contract GuildFactory is Pausable, AccessControl {
     event TokenDeployed(address tokenAddress);
 
     constructor() {
-        tokenImplementation = address(new SimpleERC20());
+        tokenImplementation = address(new GuildToken());
     }
 
     function createGuild(
         string memory guildName,
         string memory guildSymbol,
-        uint256 initialSupply
+        address dao,
+        address developer
     ) public payable whenNotPaused returns (address) {
         // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
         ERC1967Proxy proxy = new ERC1967Proxy(
             tokenImplementation,
             abi.encodeWithSelector(
-                SimpleERC20(address(0)).initialize.selector,
+                GuildToken(address(0)).initialize.selector,
                 guildName,
                 guildSymbol,
-                initialSupply,
-                msg.sender
+                dao,
+                developer
             )
         );
         deployedContracts.push(address(proxy));
