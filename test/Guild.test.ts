@@ -465,7 +465,6 @@ describe("📦 GUILD token", async function () {
     });
   });
 
-
   describe("mintRequest()", function () {
     it("reverts with permission error when not called with MINTER_ROLE", async function () {
       const promise = token.connect(addr2).mintRequest(addr1.address, 10);
@@ -564,21 +563,16 @@ describe("📦 GUILD token", async function () {
     });
   });
 
-
   describe("burn()", function () {
-
     describe("when called by the DAO_ROLE", function () {
       beforeEach(async function () {
-        await token.grantRole(DAO_ROLE, addr1.address);n
+        await token.grantRole(DAO_ROLE, addr1.address);
       });
       it("reverts with 'Pausable: paused' error if contract is paused", async function () {
         await token.pause();
 
-        await expect(token.burn(1)).to.be.revertedWith(
-          "Pausable: paused"
-        );
+        await expect(token.burn(1)).to.be.revertedWith("Pausable: paused");
       });
-
     });
   });
 });
