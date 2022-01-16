@@ -33,7 +33,7 @@ contract GuildToken is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable
 
     // events
     event MintACLUpdated(address indexed _mintAddress, bool _isWhitelisted);
-    event ChestMintRequestFulfilled(address indexed _fromMint, address indexed _toReceiver, uint _amount);
+    event MintRequestFulfilled(address indexed _fromMint, address indexed _toReceiver, uint _amount);
     
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
@@ -102,7 +102,7 @@ contract GuildToken is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable
         uint256 _addAmount = _amount;
         currentSupply = currentSupply + _addAmount;
         _mint(_recipient, _addAmount);
-        emit ChestMintRequestFulfilled(msg.sender, _recipient, _addAmount);
+        emit MintRequestFulfilled(msg.sender, _recipient, _addAmount);
     }
     function viewMintsWhitelist() public view returns (bytes32[] memory) {
         return ACTIVE_MINTS._inner._values;
