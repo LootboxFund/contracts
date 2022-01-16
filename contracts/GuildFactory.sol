@@ -7,26 +7,28 @@ pragma solidity 0.8.4;
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./GuildToken.sol";
 
 contract GuildFactory is Pausable, AccessControl {
-    // Points to the guild token proxies
     address internal immutable tokenImplementation;
 
     // Only the DAO (GuildFX) can control token
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
     bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE");
 
-    // GuildFX treasury
-    address public guildFXTreasury;
+    // GuildFX constants
+    address public fxConstants;
 
-    // List of deployed tokens TODO revisit memory costs of using an array
-    address[] public deployedContracts;
+    // Points to the guild token proxies
+    using EnumerableSet for EnumerableSet.AddressSet;
+    EnumerableSet.AddressSet private GUILD_TOKENS;
 
-    event TokenDeployed(address tokenAddress);
+    event GuildCreated(address tokenAddress);
 
-    constructor() {
+    constructor(address _fxConstants) {
         tokenImplementation = address(new GuildToken());
+        fxConstants = _fxConstants;
     }
 
     function createGuild(
@@ -35,6 +37,8 @@ contract GuildFactory is Pausable, AccessControl {
         address dao,
         address developer
     ) public payable whenNotPaused returns (address) {
+        // TODO: Look more into payable and gas fees
+
         // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
         ERC1967Proxy proxy = new ERC1967Proxy(
             tokenImplementation,
@@ -46,9 +50,13 @@ contract GuildFactory is Pausable, AccessControl {
                 developer
             )
         );
-        deployedContracts.push(address(proxy));
-        emit TokenDeployed(address(proxy));
+        GUILD_TOKENS.add(address(proxy));
+        emit GuildCreated(address(proxy));
         return address(proxy);
+    }
+
+    function viewGuildTokens() public view returns (bytes32[] memory) {
+        return GUILD_TOKENS._inner._values; // TODO investigate memory usage if GUILD_PROXIES can be huge
     }
 
     // --------- Managing the Token ---------

@@ -33,6 +33,12 @@ export const DEFAULT_ADMIN_ROLE =
 export const padAddressTo32Bytes = (address: string) =>
   ethers.utils.hexZeroPad(address, 32).toLowerCase();
 
+// Opposite of padAddressTo32Bytes
+export const stripZeros = (address: string) => {
+  const desiredHexLength = 40; // Not including "0x"
+  return `0x${address.slice(address.length - desiredHexLength)}`;
+};
+
 export const convertTokenToWei = (tokens: number) =>
   // ethers.BigNumber.from(`${tokens}000000000000000000`);
   tokens; // Conversion not needed anymore
