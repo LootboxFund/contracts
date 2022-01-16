@@ -6,6 +6,8 @@ import {
   GuildToken__factory,
   Constants,
   Constants__factory,
+  CrowdSale,
+  CrowdSale__factory,
 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
@@ -73,6 +75,57 @@ describe("📦 GuildFactory", () => {
     expect(await guildFactory.hasRole(DAO_ROLE, dao.address)).to.be.true;
   });
 
+  describe("pause()", () => {
+    it("reverts with access control error if not called by the DAO", async () => {
+      await expect(guildFactory.connect(purchaser).pause()).to.be.revertedWith(
+        generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
+      );
+    });
+
+    describe("called by address with the DAO_ROLE", () => {
+      let transaction: ContractTransaction;
+
+      beforeEach(async () => {
+        transaction = await guildFactory.connect(dao).pause();
+      });
+
+      it("pauses the contract", async () => {
+        expect(await guildFactory.paused()).to.be.equal(true);
+      });
+
+      it("emits a paused event", async () => {
+        await expect(transaction).to.emit(guildFactory, "Paused");
+      });
+    });
+  });
+
+  describe("unpause()", () => {
+    it("reverts with with access control error", async () => {
+      await expect(
+        guildFactory.connect(purchaser).unpause()
+      ).to.be.revertedWith(
+        generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
+      );
+    });
+
+    describe("called by address with the DAO_ROLE", () => {
+      let transaction: ContractTransaction;
+
+      beforeEach(async () => {
+        await guildFactory.connect(dao).pause();
+        transaction = await guildFactory.connect(dao).unpause();
+      });
+
+      it("unpauses the contract", async () => {
+        expect(await guildFactory.paused()).to.be.equal(false);
+      });
+
+      it("emits an unpaused event", async () => {
+        await expect(transaction).to.emit(guildFactory, "Unpaused");
+      });
+    });
+  });
+
   describe("viewGuildTokens()", () => {
     it("returns empty array when no guildTokens have been created yet", async () => {
       expect(await guildFactory.viewGuildTokens()).to.deep.eq([]);
@@ -108,6 +161,47 @@ describe("📦 GuildFactory", () => {
       const proxies = await guildFactory.viewGuildTokens();
       expect(proxies.filter((v, i, a) => a.indexOf(v) === i).length).to.eq(
         nTokensToMake
+      );
+    });
+  });
+
+  describe("viewCrowdSales()", () => {
+    it("returns empty array when no crowdSales have been created yet", async () => {
+      expect(await guildFactory.viewCrowdSales()).to.deep.eq([]);
+    });
+
+    it("returns the correct array length and type of crowdSale proxy addresses", async () => {
+      const nContractsToMake = 5;
+      for (let n = 0; n < nContractsToMake; n++) {
+        await guildFactory.createCrowdSale(
+            deployer.address, // Should be erc20 address, but does not matter for these tests
+            dao.address,
+            developer.address,
+            treasury.address,
+            1
+        );
+        const proxies = await guildFactory.viewCrowdSales();
+        expect(proxies.length).to.eq(n + 1);
+        // expect(proxies.every((addr: string) => typeof addr === "string" && )).to.deep.eq()
+      }
+      const proxies = await guildFactory.viewCrowdSales();
+      expect(proxies.length).to.eq(nContractsToMake);
+    });
+
+    it("returns a distinct array", async () => {
+      const nContractsToMake = 5;
+      for (let n = 0; n < nContractsToMake; n++) {
+        await guildFactory.createCrowdSale(
+            deployer.address, // Should be erc20 address, but does not matter for these tests
+            dao.address,
+            developer.address,
+            treasury.address,
+            1
+        );
+      }
+      const proxies = await guildFactory.viewCrowdSales();
+      expect(proxies.filter((v, i, a) => a.indexOf(v) === i).length).to.eq(
+        nContractsToMake
       );
     });
   });
@@ -267,54 +361,177 @@ describe("📦 GuildFactory", () => {
         expect(secondGuildTokenAddress).to.not.eq(guildTokenAddress);
       });
     });
-    describe("pause()", () => {
-      it("reverts with access control error if not called by the DAO", async () => {
-        await expect(guildToken.connect(purchaser).pause()).to.be.revertedWith(
-          generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
-        );
-      });
+  });
 
-      describe("called by address with the DAO_ROLE", () => {
-        let transaction: ContractTransaction;
-
-        beforeEach(async () => {
-          transaction = await guildFactory.connect(dao).pause();
-        });
-
-        it("pauses the contract", async () => {
-          expect(await guildFactory.paused()).to.be.equal(true);
-        });
-
-        it("emits a paused event", async () => {
-          await expect(transaction).to.emit(guildFactory, "Paused");
-        });
-      });
+  describe("createCrowdSale()", () => {
+    let crowdSaleAddress: string;
+    let CrowdSaleFactory: CrowdSale__factory;
+    let crowdSale: CrowdSale;
+    let transaction: ContractTransaction;
+    const startingPriceInUSDCents = 7;
+    
+    before(async () => {
+      CrowdSaleFactory = await ethers.getContractFactory("CrowdSale");
     });
 
-    describe("unpause()", () => {
-      it("reverts with with access control error", async () => {
-        await expect(
-          guildFactory.connect(purchaser).unpause()
-        ).to.be.revertedWith(
-          generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
+    beforeEach(async () => {
+      transaction = await guildFactory.createCrowdSale(
+        deployer.address, // Should be erc20 address, but does not matter for these tests
+        dao.address,
+        developer.address,
+        treasury.address,
+        startingPriceInUSDCents
+      );
+
+      [crowdSaleAddress] = (await guildFactory.viewCrowdSales()).map(
+        stripZeros
+      );
+      crowdSale = CrowdSaleFactory.attach(crowdSaleAddress);
+    });
+
+    it("reverts if guildToken is zero", async () => {
+      await expect(
+        guildFactory.createCrowdSale(
+          ethers.constants.AddressZero, // Should be erc20 address, but does not matter for these tests
+          dao.address,
+          developer.address,
+          treasury.address,
+          startingPriceInUSDCents
+        )
+      ).to.be.revertedWith("Guild token cannot be zero");
+    });
+
+    it("reverts if dao is zero", async () => {
+      await expect(
+        guildFactory.createCrowdSale(
+          deployer.address, // Should be erc20 address, but does not matter for these tests
+          ethers.constants.AddressZero,
+          developer.address,
+          treasury.address,
+          startingPriceInUSDCents
+        )
+      ).to.be.revertedWith("DAO address cannot be zero");
+    });
+
+    it("reverts if developer is zero", async () => {
+      await expect(
+        guildFactory.createCrowdSale(
+          deployer.address, // Should be erc20 address, but does not matter for these tests
+          dao.address,
+          ethers.constants.AddressZero,
+          treasury.address,
+          startingPriceInUSDCents
+        )
+      ).to.be.revertedWith("Developer address cannot be zero");
+    });
+
+    it("reverts if treasury is zero", async () => {
+      await expect(
+        guildFactory.createCrowdSale(
+          deployer.address, // Should be erc20 address, but does not matter for these tests
+          dao.address,
+          developer.address,
+          ethers.constants.AddressZero,
+          startingPriceInUSDCents
+        )
+      ).to.be.revertedWith("Treasury address cannot be zero");
+    });
+
+    it("reverts if startingPriceInUSDCents less than or equal to zero", async () => {
+      await expect(
+        guildFactory.createCrowdSale(
+          deployer.address, // Should be erc20 address, but does not matter for these tests
+          dao.address,
+          developer.address,
+          treasury.address,
+          0
+        )
+      ).to.be.revertedWith("Starting price should be greater than zero");
+
+      await expect(
+        guildFactory.createCrowdSale(
+          deployer.address, // Should be erc20 address, but does not matter for these tests
+          dao.address,
+          developer.address,
+          ethers.constants.AddressZero,
+          -1
+        )
+      // ).to.be.revertedWith('Error: value out-of-bounds (argument="startingPriceInUSDCents", value=-1, code=INVALID_ARGUMENT, version=abi/5.5.0)');
+      // TODO: specify revert message
+      ).to.be.reverted;
+    });
+
+    it("reverts with 'Pausable: paused' error if contract is paused", async () => {
+      await guildFactory.connect(dao).pause();
+      await expect(
+        guildFactory.createCrowdSale(
+          deployer.address, // Should be erc20 address, but does not matter for these tests
+          dao.address,
+          developer.address,
+          treasury.address,
+          startingPriceInUSDCents
+        )
+      ).to.be.revertedWith("Pausable: paused");
+    });
+
+    it.skip("is payable and can receive native token");
+
+    it("emits a CrowdSaleCreated event", async () => {
+      await expect(transaction).to.emit(guildFactory, "CrowdSaleCreated");
+      // await expect(transaction).to.emit(guildFactory, "GuildCreated").withArgs(
+      //   crowdSaleAddress, // TODO add explicit arg check (crowdSaleAddress is all lowercase and not matching)
+      //   guildName,
+      //   guildSymbol,
+      //   dao.address,
+      //   developer.address
+      // );
+    });
+
+    // TODO
+    it.skip(
+      "returns a hashed transaction resolving into the crowdSale's proxy address"
+    );
+
+    it("sets the crowdSale's address", async () => {
+      expect(typeof crowdSaleAddress).to.eq("string");
+      expect(ethers.utils.isAddress(crowdSaleAddress)).to.be.true;
+      expect(crowdSaleAddress.length).to.eq(42);
+      expect(crowdSale.address).to.eq(crowdSaleAddress);
+    });
+
+    it("grants the crowdSale's DAO_ROLE to the dao", async () => {
+      expect(await crowdSale.hasRole(DAO_ROLE, dao.address)).to.eq(true);
+    });
+
+    it("grants the crowdSales's DEVELOPER_ROLE to the developer", async () => {
+      expect(await crowdSale.hasRole(DEVELOPER_ROLE, developer.address)).to.eq(
+        true
+      );
+    });
+
+    describe("when making a second crowdSale", () => {
+      let secondCrowdSaleAddress: string;
+      let secondCrowdSale: CrowdSale;
+
+      beforeEach(async () => {
+        await guildFactory.createCrowdSale(
+          deployer.address, // Should be erc20 address, but does not matter for these tests
+          dao.address,
+          developer.address,
+          treasury.address,
+          startingPriceInUSDCents
         );
+        let _;
+        [_, secondCrowdSaleAddress] = (await guildFactory.viewCrowdSales()).map(
+          stripZeros
+        );
+        secondCrowdSale = CrowdSaleFactory.attach(secondCrowdSaleAddress);
       });
 
-      describe("called by address with the DAO_ROLE", () => {
-        let transaction: ContractTransaction;
-
-        beforeEach(async () => {
-          await guildFactory.connect(dao).pause();
-          transaction = await guildFactory.connect(dao).unpause();
-        });
-
-        it("unpauses the contract", async () => {
-          expect(await guildFactory.paused()).to.be.equal(false);
-        });
-
-        it("emits an unpaused event", async () => {
-          await expect(transaction).to.emit(guildFactory, "Unpaused");
-        });
+      it("creates a distinguished address from the first", async () => {
+        expect(typeof secondCrowdSaleAddress).to.eq("string");
+        expect(ethers.utils.isAddress(secondCrowdSaleAddress)).to.be.true;
+        expect(secondCrowdSaleAddress).to.not.eq(crowdSaleAddress);
       });
     });
   });
