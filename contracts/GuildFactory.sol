@@ -24,7 +24,13 @@ contract GuildFactory is Pausable, AccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
     EnumerableSet.AddressSet private GUILD_TOKEN_PROXIES;
 
-    event GuildCreated(address tokenAddress);
+    event GuildCreated(
+        address tokenAddress,
+        string name,
+        string token,
+        address dao,
+        address developer
+    );
 
     constructor(address dao, address _fxConstants) {
         tokenImplementation = address(new GuildToken());
@@ -50,7 +56,13 @@ contract GuildFactory is Pausable, AccessControl {
             )
         );
         GUILD_TOKEN_PROXIES.add(address(proxy));
-        emit GuildCreated(address(proxy));
+        emit GuildCreated(
+            address(proxy),
+            guildName,
+            guildSymbol,
+            dao,
+            developer
+        );
         return address(proxy);
     }
 

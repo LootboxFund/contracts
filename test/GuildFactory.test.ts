@@ -9,7 +9,7 @@ import {
 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import { BigNumber } from "ethers";
+import { BigNumber, ContractTransaction } from "ethers";
 import { DAO_ROLE, DEVELOPER_ROLE, stripZeros } from "./helpers/test-helpers";
 
 describe("📦 GuildFactory", () => {
@@ -102,6 +102,7 @@ describe("📦 GuildFactory", () => {
     let guildTokenAddress: string;
     let GuildTokenFactory: GuildToken__factory;
     let guildToken: GuildToken;
+    let transaction: ContractTransaction;
     const guildName: string = "GuildFXTest";
     const guildSymbol: string = "GFXT";
     const guildDecimals: number = 18;
@@ -112,7 +113,7 @@ describe("📦 GuildFactory", () => {
     });
 
     beforeEach(async () => {
-      await guildFactory.createGuild(
+      transaction = await guildFactory.createGuild(
         guildName,
         guildSymbol,
         dao.address,
@@ -139,6 +140,18 @@ describe("📦 GuildFactory", () => {
 
     // TODO
     it.skip("is payable and can receive native token");
+
+    it("emits a GuildCreated event", async () => {
+      await expect(transaction).to.emit(guildFactory, "GuildCreated");
+      // TODO add explicit arg check (guildTokenAddress is all lowercase and not matching)
+      // .withArgs(
+      //   guildTokenAddress,
+      //   guildName,
+      //   guildSymbol,
+      //   dao.address,
+      //   developer.address
+      // );
+    });
 
     it("sets the guildToken's address", async () => {
       expect(typeof guildTokenAddress).to.eq("string");
@@ -175,8 +188,6 @@ describe("📦 GuildFactory", () => {
       );
     });
 
-    it.skip("emits a GuildCreated event");
-
     it.skip(`mints ${initialSupply.toString()} initial tokens`, async () => {
       console.log("starting");
       const supply = await guildToken.currentSupply();
@@ -200,8 +211,8 @@ describe("📦 GuildFactory", () => {
           purchaser.address,
           purchaser.address
         );
-
-        const [_, secondGuildTokenAddress] = (
+        let _;
+        [_, secondGuildTokenAddress] = (
           await guildFactory.viewGuildTokens()
         ).map(stripZeros);
         secondGuildToken = GuildTokenFactory.attach(secondGuildTokenAddress);
