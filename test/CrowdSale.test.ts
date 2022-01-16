@@ -4,7 +4,6 @@ import { ethers, upgrades } from "hardhat";
 import { constants } from "@openzeppelin/test-helpers";
 import {
   DAO_ROLE,
-  GOVERNOR_ROLE,
   generatePermissionRevokeMessage,
   MINTER_ROLE,
 } from "./helpers/test-helpers";
@@ -275,15 +274,15 @@ describe("📦 CrowdSale of GUILD token", async function () {
       });
     });
 
-    it("reverts with access control error when called with address without GOVERNOR_ROLE", async () => {
+    it("reverts with access control error when called with address without DAO_ROLE", async () => {
       await expect(crowdSale.connect(purchaser).pause()).to.be.revertedWith(
-        generatePermissionRevokeMessage(purchaser.address, GOVERNOR_ROLE)
+        generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
       );
     });
   });
 
   describe("unpause()", () => {
-    describe("called by address with the GOVERNOR_ROLE", function () {
+    describe("called by address with the DAO_ROLE", function () {
       let promise: Promise<any>;
 
       beforeEach(async () => {
@@ -301,9 +300,9 @@ describe("📦 CrowdSale of GUILD token", async function () {
       });
     });
 
-    it("reverts with access control error when called with address without GOVERNOR_ROLE", async () => {
+    it("reverts with access control error when called with address without DAO_ROLE", async () => {
       await expect(crowdSale.connect(purchaser).unpause()).to.be.revertedWith(
-        generatePermissionRevokeMessage(purchaser.address, GOVERNOR_ROLE)
+        generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
       );
     });
   });

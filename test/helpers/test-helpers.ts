@@ -22,10 +22,6 @@ export const MINTER_ROLE = ethers.utils.solidityKeccak256(
   ["string"],
   ["MINTER_ROLE"]
 );
-export const GOVERNOR_ROLE = ethers.utils.solidityKeccak256(
-  ["string"],
-  ["GOVERNOR_ROLE"]
-);
 
 export const DEFAULT_ADMIN_ROLE =
   "0x0000000000000000000000000000000000000000000000000000000000000000";

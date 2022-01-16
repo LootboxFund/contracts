@@ -54,7 +54,6 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
     // only the DAO can control Treasury
     bytes32 constant DAO_ROLE = keccak256("DAO_ROLE");
     bytes32 constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE");
-    bytes32 constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE");
 
 	uint currentPriceUSDCents;
 
@@ -99,8 +98,6 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
 		GUILD = _guildToken;
 
         _grantRole(DAO_ROLE, _daoAddress);
-        _grantRole(GOVERNOR_ROLE, _daoAddress);
-        _grantRole(GOVERNOR_ROLE, msg.sender);
         _grantRole(DEVELOPER_ROLE, _developerAddress);
 
 	}
@@ -369,11 +366,11 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
         emit Purchase(_beneficiary, address(0), msg.value, guildPurchasedAmount, currentPriceUSDCents);
     }
     
-    function pause() public onlyRole(GOVERNOR_ROLE) {
+    function pause() public onlyRole(DAO_ROLE) {
         _pause();
     }
 
-    function unpause() public onlyRole(GOVERNOR_ROLE) {
+    function unpause() public onlyRole(DAO_ROLE) {
         _unpause();
     }
 
