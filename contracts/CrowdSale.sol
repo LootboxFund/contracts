@@ -7,7 +7,6 @@ pragma solidity 0.8.4;
 
 import "hardhat/console.sol";
 
-import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -42,7 +41,7 @@ interface IERC20 {
 }
 
 
-contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
+contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
     
     AggregatorV3Interface internal priceFeedBNB;
     AggregatorV3Interface internal priceFeedETH;
@@ -78,7 +77,7 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
 
-    // ERC1967 UUPS Upgradeable
+    // UUPS Upgradeable
     function initialize(
         address _guildToken,
         address _daoAddress, 
@@ -86,7 +85,6 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
         address payable _treasuryAddress,
         uint _startingPriceInUSDCents
     ) initializer public {
-        __ERC20_init("CrowdSale", "CROWDSALE_GUILD_TOKEN");
         __Pausable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();

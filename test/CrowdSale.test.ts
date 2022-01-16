@@ -144,18 +144,6 @@ describe("📦 CrowdSale of GUILD token", async function () {
       );
   });
 
-  it("has CrowdSale name", async function () {
-    expect(await crowdSale.name()).to.eq("CrowdSale");
-  });
-
-  it("has CROWDSALE_GUILD_TOKEN symbol", async function () {
-    expect(await crowdSale.symbol()).to.eq("CROWDSALE_GUILD_TOKEN");
-  });
-
-  it("has 18 decimals", async function () {
-    expect(await crowdSale.decimals()).to.eq(18);
-  });
-
   it("sets the GUILD token address correctly", async function () {
     expect(await crowdSale.GUILD()).to.eq(token.address);
   });
