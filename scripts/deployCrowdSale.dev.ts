@@ -5,6 +5,7 @@
 // Runtime Environment's members available in the global scope.
 import { ethers, upgrades } from "hardhat";
 import { DAI, ETH, USDC, USDT, UST } from "../typechain";
+import { logToFile } from "./helpers/logger";
 
 const OxSoil = "0xaC15B26acF4334a62961237a0DCEC90eDFE1B251";
 const Oxterran = "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F";
@@ -19,6 +20,7 @@ const sleep = async (ms = 1000) => {
 };
 
 const STARTING_GUILD_PRICE_IN_USD_CENTS = 7;
+const LOG_FILE_PATH = `${__dirname}/logs/deployCrowdSale_log_${Date.now()}.txt`;
 
 // Chainlink addresses from https://docs.chain.link/docs/binance-smart-chain-addresses
 const STABLECOINS = {
@@ -50,7 +52,14 @@ async function main() {
   const [deployer, treasury, developerAndDao, purchaser] =
     await ethers.getSigners();
   const DEPLOYER_ADDRESS = deployer.address;
-  console.log(`---- ${DEPLOYER_ADDRESS} ---> Deployer Address`);
+  logToFile(`
+  
+---------- DEPLOY CROWDSALE (development) ----------
+  
+---- Script starting
+
+  \n`, LOG_FILE_PATH);
+  logToFile(`---- ${DEPLOYER_ADDRESS} ---> Deployer Address \n`, LOG_FILE_PATH)
 
   // --------- Deploy the Stablecoins --------- //
   const Eth = await ethers.getContractFactory("ETH");
@@ -71,7 +80,7 @@ async function main() {
     ethers.BigNumber.from("100000000000000000000")
   );
   await sleep();
-  console.log(`---- ${ethStablecoin.address} ---> ETH Stablecoin Address`);
+  logToFile(`---- ${ethStablecoin.address} ---> ETH Stablecoin Address\n`, LOG_FILE_PATH)
 
   // Needed to slow down transactions to avoid "replacement fee too low" errors...
   await new Promise<void>((resolve) => {
@@ -98,7 +107,7 @@ async function main() {
     ethers.BigNumber.from("100000000000000000000")
   );
   await sleep();
-  console.log(`---- ${usdcStablecoin.address} ---> USDC Stablecoin Address`);
+  logToFile(`---- ${usdcStablecoin.address} ---> USDC Stablecoin Address\n`, LOG_FILE_PATH)
 
   const Usdt = await ethers.getContractFactory("USDT");
   const usdtStablecoin = (await Usdt.deploy(0)) as USDT;
@@ -118,7 +127,7 @@ async function main() {
     ethers.BigNumber.from("100000000000000000000")
   );
   await sleep();
-  console.log(`---- ${usdtStablecoin.address} ---> USDT Stablecoin Address`);
+  logToFile(`---- ${usdtStablecoin.address} ---> USDT Stablecoin Address\n`, LOG_FILE_PATH)
 
   const Ust = await ethers.getContractFactory("UST");
   const ustStablecoin = (await Ust.deploy(0)) as UST;
@@ -138,7 +147,7 @@ async function main() {
     ethers.BigNumber.from("100000000000000000000")
   );
   await sleep();
-  console.log(`---- ${ustStablecoin.address} ---> UST Stablecoin Address`);
+  logToFile(`---- ${ustStablecoin.address} ---> UST Stablecoin Address\n`, LOG_FILE_PATH)
 
   const Dai = await ethers.getContractFactory("DAI");
   const daiStablecoin = (await Dai.deploy(0)) as DAI;
@@ -158,7 +167,7 @@ async function main() {
     ethers.BigNumber.from("100000000000000000000")
   );
   await sleep();
-  console.log(`---- ${daiStablecoin.address} ---> DAI Stablecoin Address`);
+  logToFile(`---- ${daiStablecoin.address} ---> DAI Stablecoin Address\n`, LOG_FILE_PATH)
 
   // --------- Deploy GUILD Token --------- //
   const GuildToken = await ethers.getContractFactory("GuildToken");
@@ -167,7 +176,7 @@ async function main() {
   await sleep();
   const GUILD_TOKEN_ADDRESS = guildtoken.address;
   const GUILD = await GuildToken.attach(GUILD_TOKEN_ADDRESS);
-  console.log(`---- ${GUILD_TOKEN_ADDRESS} ---> GUILD Token Address`);
+  logToFile(`---- ${GUILD_TOKEN_ADDRESS} ---> GUILD Token Address\n`, LOG_FILE_PATH);
   (
     await GUILD.transferOwnershipToDAO(DEPLOYER_ADDRESS, DEPLOYER_ADDRESS)
   ).wait();
@@ -191,20 +200,20 @@ async function main() {
   const CROWDSALE_ADDRESS = crowdsale.address;
   const CROWDSALE = await Crowdsale.attach(CROWDSALE_ADDRESS);
   await sleep();
-  console.log(`---- ${CROWDSALE_ADDRESS} ---> GUILD Crowdsale Address`);
+  logToFile(`---- ${CROWDSALE_ADDRESS} ---> GUILD Crowdsale Address\n`, LOG_FILE_PATH);
 
-  console.log(`
+  logToFile(`
+    // ----- Deploy Stablecoins
+    ETH = ${ethStablecoin.address}
+    USDC = ${usdcStablecoin.address}
+    USDT = ${usdtStablecoin.address}
+    UST = ${ustStablecoin.address}
+    DAI = ${daiStablecoin.address}
+  \n`, LOG_FILE_PATH);
+
   
-  // ----- Deploy Stablecoins
-  ETH = ${ethStablecoin.address}
-  USDC = ${usdcStablecoin.address}
-  USDT = ${usdtStablecoin.address}
-  UST = ${ustStablecoin.address}
-  DAI = ${daiStablecoin.address}
-
-  `);
   (
-    await CROWDSALE.setStablecoins(
+    await CROWDSALE.connect(developerAndDao).setStablecoins(
       ethStablecoin.address,
       usdcStablecoin.address,
       usdtStablecoin.address,
@@ -212,10 +221,17 @@ async function main() {
       daiStablecoin.address
     )
   ).wait();
-  console.log(`---- Set stablecoins!`);
+  logToFile(`
+    ---- Set stablecoins!
+    ETH = ${ethStablecoin.address}
+    USDC = ${usdcStablecoin.address}
+    USDT = ${usdtStablecoin.address}
+    UST = ${ustStablecoin.address}
+    DAI = ${daiStablecoin.address}
+  \n`, LOG_FILE_PATH);
   await sleep();
   (
-    await CROWDSALE.setOracles(
+    await CROWDSALE.connect(developerAndDao).setOracles(
       STABLECOINS[ENVIRONMENT].BNB.priceFeed,
       STABLECOINS[ENVIRONMENT].ETH.priceFeed,
       STABLECOINS[ENVIRONMENT].USDC.priceFeed,
@@ -224,18 +240,30 @@ async function main() {
       STABLECOINS[ENVIRONMENT].DAI.priceFeed
     )
   ).wait();
-  console.log(`---- Set oracles!`);
+  logToFile(`
+    ---- Set oracles!
+    BNB = ${STABLECOINS[ENVIRONMENT].BNB.priceFeed}
+    ETH = ${STABLECOINS[ENVIRONMENT].ETH.priceFeed}
+    USDC = ${STABLECOINS[ENVIRONMENT].USDC.priceFeed}
+    USDT = ${STABLECOINS[ENVIRONMENT].USDT.priceFeed}
+    UST = ${STABLECOINS[ENVIRONMENT].UST.priceFeed}
+    DAI = ${STABLECOINS[ENVIRONMENT].DAI.priceFeed}
+  \n`, LOG_FILE_PATH);
   await sleep();
 
   // --------- Whitelist the CrowdSale with MINTER_ROLE --------- //
   (await GUILD.whitelistMint(crowdsale.address, true)).wait();
-  console.log(`---- Whitelist a mint!`);
+  logToFile(`
+    ---- Whitelist a mint!
+    Crowdsale = ${crowdsale.address}
+  \n`, LOG_FILE_PATH);
   await sleep();
 }
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
 main().catch((error) => {
+  logToFile(error.message, LOG_FILE_PATH);
   console.error(error);
   process.exitCode = 1;
 });

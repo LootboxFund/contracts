@@ -141,14 +141,14 @@ describe("📦 GUILD token", async function () {
         ).to.be.equal(false);
       });
 
-      it.skip("removes the deployer from the DAO_ROLE", async function () {
+      it("removes the deployer from the DAO_ROLE", async function () {
         await promise;
         expect(await token.hasRole(DAO_ROLE, deployer.address)).to.be.equal(
           false
         );
       });
 
-      it.skip("removes the deployer from the DEVELOPER_ROLE", async function () {
+      it("removes the deployer from the DEVELOPER_ROLE", async function () {
         await promise;
         expect(
           await token.hasRole(DEVELOPER_ROLE, deployer.address)
@@ -564,189 +564,21 @@ describe("📦 GUILD token", async function () {
     });
   });
 
-  describe("mint()", function () {
-    it("reverts with permission error when not called by the DAO", async function () {
-      const promise = token.connect(addr2).mint(addr2.address, 10);
-      await expect(promise).to.be.revertedWith(
-        generatePermissionRevokeMessage(addr2.address, DAO_ROLE)
-      );
-    });
 
-    it("reverts with permission error when called with MINTER_ROLE", async function () {
-      await token.whitelistMint(addr2.address, true);
-      const promise = token.connect(addr2).mint(addr2.address, 10);
-      await expect(promise).to.be.revertedWith(
-        generatePermissionRevokeMessage(addr2.address, DAO_ROLE)
-      );
-    });
-
-    it("reverts with permission error when called with REBASE_ROLE", async function () {
-      await token.whitelistChest(addr2.address, true);
-      const promise = token.connect(addr2).mint(addr2.address, 10);
-      await expect(promise).to.be.revertedWith(
-        generatePermissionRevokeMessage(addr2.address, DAO_ROLE)
-      );
-    });
+  describe("burn()", function () {
 
     describe("when called by the DAO_ROLE", function () {
       beforeEach(async function () {
-        await token.grantRole(DAO_ROLE, addr1.address);
+        await token.grantRole(DAO_ROLE, addr1.address);n
       });
-
       it("reverts with 'Pausable: paused' error if contract is paused", async function () {
         await token.pause();
 
-        await expect(
-          token.connect(addr1).mint(addr2.address, 10)
-        ).to.be.revertedWith("Pausable: paused");
-      });
-
-      it("sends the address the correct number of tokens", async function () {
-        await token.connect(addr1).mint(addr2.address, 10);
-        const balance = await token.balanceOf(addr2.address);
-        expect(balance).to.be.equal(convertTokenToWei(10));
-        expect(await token.currentSupply()).to.be.equal(convertTokenToWei(10));
-      });
-
-      it("does not mint negative amount", async function () {
-        const initialSupply = await token.currentSupply();
-        const promise = token.connect(addr1).mint(addr2.address, -1000);
-        // TODO: specify revert message
-        // await expect(promise).to.be.revertedWith(
-        //   generateInvalidArgumentErrorMessage(-1000)
-        // );
-        await expect(promise).to.be.reverted;
-        expect(await token.currentSupply()).to.be.equal(initialSupply);
-      });
-
-      it("does not mint fractions", async function () {
-        const initialSupply = await token.currentSupply();
-        const promise = token.connect(addr1).mint(addr2.address, 0.1);
-        // TODO: specify revert message
-        // await expect(promise).to.be.revertedWith(
-        //   generateInvalidArgumentErrorMessage(-1000)
-        // );
-        await expect(promise).to.be.reverted;
-        expect(await token.currentSupply()).to.be.equal(initialSupply);
-      });
-
-      it("reverts on big number overflows", async function () {
-        const initialSupply = await token.currentSupply();
-        const promise = token
-          .connect(addr1)
-          .mint(addr2.address, `${constants.MAX_UINT256}0`);
-        // TODO: specify revert message
-        // await expect(promise).to.be.revertedWith(
-        //   generateInvalidArgumentErrorMessage(-1000)
-        // );
-        await expect(promise).to.be.reverted;
-        expect(await token.currentSupply()).to.be.equal(initialSupply);
-      });
-
-      it("updates the current supply counter", async function () {
-        expect(await token.currentSupply()).to.be.equal(0);
-        await token.connect(addr1).mint(addr2.address, 10);
-        expect(await token.currentSupply()).to.be.equal(convertTokenToWei(10));
-        await token.connect(addr1).mint(addr3.address, 100);
-        expect(await token.currentSupply()).to.be.equal(convertTokenToWei(110));
-      });
-
-      it("emits an AdminMintRequestFulfilled event", async function () {
-        const promise = token.connect(addr1).mint(addr2.address, 10);
-        await expect(promise).to.emit(token, "AdminMintRequestFulfilled");
-      });
-    });
-  });
-
-  describe.skip("burn()", function () {
-    it("reverts with permission error when not called by the DAO", async function () {
-      const promise = token.connect(addr2).burn(addr2.address, 10);
-      await expect(promise).to.be.revertedWith(
-        generatePermissionRevokeMessage(addr2.address, DAO_ROLE)
-      );
-    });
-
-    it("reverts with permission error when called with MINTER_ROLE", async function () {
-      await token.whitelistMint(addr2.address, true);
-      const promise = token.connect(addr2).burn(addr2.address, 10);
-      await expect(promise).to.be.revertedWith(
-        generatePermissionRevokeMessage(addr2.address, DAO_ROLE)
-      );
-    });
-
-    it("reverts with permission error when called with REBASE_ROLE", async function () {
-      await token.whitelistChest(addr2.address, true);
-      const promise = token.connect(addr2).burn(addr2.address, 10);
-      await expect(promise).to.be.revertedWith(
-        generatePermissionRevokeMessage(addr2.address, DAO_ROLE)
-      );
-    });
-
-    describe("when called by the DAO_ROLE", function () {
-      beforeEach(async function () {
-        await token.grantRole(DAO_ROLE, addr1.address);
-      });
-
-      it("reverts with 'Pausable: paused' error if contract is paused", async function () {
-        await token.pause();
-
-        await expect(token.burn(addr2.address, 10)).to.be.revertedWith(
+        await expect(token.burn(1)).to.be.revertedWith(
           "Pausable: paused"
         );
       });
 
-      // it("sends the address the correct number of tokens", async function () {
-      //   await token.mint(addr2.address, 10);
-      //   const balance = await token.balanceOf(addr2.address);
-      //   expect(balance).to.be.equal(convertTokenToWei(10));
-      //   expect(await token.currentSupply()).to.be.equal(convertTokenToWei(10));
-      // });
-
-      // it("does not mint negative amount", async function () {
-      //   const initialSupply = await token.currentSupply();
-      //   const promise = token.mint(addr2.address, -1000);
-      //   // TODO: specify revert message
-      //   // await expect(promise).to.be.revertedWith(
-      //   //   generateInvalidArgumentErrorMessage(-1000)
-      //   // );
-      //   await expect(promise).to.be.reverted;
-      //   expect(await token.currentSupply()).to.be.equal(initialSupply);
-      // });
-
-      // it("does not mint fractions", async function () {
-      //   const initialSupply = await token.currentSupply();
-      //   const promise = token.mint(addr2.address, 0.1);
-      //   // TODO: specify revert message
-      //   // await expect(promise).to.be.revertedWith(
-      //   //   generateInvalidArgumentErrorMessage(-1000)
-      //   // );
-      //   await expect(promise).to.be.reverted;
-      //   expect(await token.currentSupply()).to.be.equal(initialSupply);
-      // });
-
-      // it("reverts on big number overflows", async function () {
-      //   const initialSupply = await token.currentSupply();
-      //   const promise = token.mint(addr2.address, `${constants.MAX_UINT256}`);
-      //   // TODO: specify revert message
-      //   // await expect(promise).to.be.revertedWith(
-      //   //   generateInvalidArgumentErrorMessage(-1000)
-      //   // );
-      //   await expect(promise).to.be.reverted;
-      //   expect(await token.currentSupply()).to.be.equal(initialSupply);
-      // });
-
-      // it("updates the current supply counter", async function () {
-      //   expect(await token.currentSupply()).to.be.equal(0);
-      //   await token.mint(addr2.address, 10);
-      //   expect(await token.currentSupply()).to.be.equal(convertTokenToWei(10));
-      //   await token.mint(addr3.address, 100);
-      //   expect(await token.currentSupply()).to.be.equal(convertTokenToWei(110));
-      // });
-
-      // it("emits an AdminMintRequestFulfilled event", async function () {
-      //   const promise = token.mint(addr2.address, 10);
-      //   await expect(promise).to.emit(token, "AdminMintRequestFulfilled");
-      // });
     });
   });
 });

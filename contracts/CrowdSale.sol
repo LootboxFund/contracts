@@ -64,7 +64,7 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
     address public ETH;
     address public USDC;
     address public USDT;
-    address public UST; // Mainnet UST 0x23396cf899ca06c4472205fc903bdb4de249d6fc
+    address public UST; 
     address public DAI;
 
     uint256 deploymentStartTime;
@@ -111,10 +111,10 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
         address _ust,
         address _dai
 	) public onlyRole(DAO_ROLE) {
+        ETH = _eth;
         USDC = _usdc;
         USDT = _usdt;
         UST = _ust;
-        ETH = _eth;
         DAI = _dai;
 	}
 
