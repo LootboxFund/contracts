@@ -1,7 +1,5 @@
 import { expect } from "chai";
 import { ethers, upgrades } from "hardhat";
-// @ts-ignore Seems like they don't have any type declarations at this time
-import { constants } from "@openzeppelin/test-helpers";
 import {
   DAO_ROLE,
   generatePermissionRevokeMessage,
