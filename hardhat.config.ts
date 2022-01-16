@@ -37,7 +37,8 @@ const config: HardhatUserConfig = {
       accounts: [
         `${process.env.DEV_DEPLOYER_PRIVATE_KEY}`,
         `${process.env.DEV_TREASURY_PRIVATE_KEY}`,
-        `${process.env.DEV_DAODEV_PRIVATE_KEY}`,
+        `${process.env.DEV_DAO_PRIVATE_KEY}`,
+        `${process.env.DEV_DEVELOPER_PRIVATE_KEY}`,
         `${process.env.DEV_ADDR_1_PRIVATE_KEY}`,
       ],
     },
@@ -46,7 +47,8 @@ const config: HardhatUserConfig = {
       accounts: [
         `${process.env.DEV_DEPLOYER_PRIVATE_KEY}`,
         `${process.env.DEV_TREASURY_PRIVATE_KEY}`,
-        `${process.env.DEV_DAODEV_PRIVATE_KEY}`,
+        `${process.env.DEV_DAO_PRIVATE_KEY}`,
+        `${process.env.DEV_DEVELOPER_PRIVATE_KEY}`,
         `${process.env.DEV_ADDR_1_PRIVATE_KEY}`,
       ],
     },

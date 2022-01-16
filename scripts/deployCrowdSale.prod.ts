@@ -50,13 +50,14 @@ const sleep = async (ms = 1000) => {
 };
 
 async function main() {
-  const [deployer, treasury, developerAndDao, purchaser] =
+  const [deployer, treasury, dao, developer, purchaser] =
     await ethers.getSigners();
   console.log(`
   
   ---- deployer = ${deployer.address}
   ---- treasury = ${treasury.address}
-  ---- developerAndDao = ${developerAndDao.address}
+  ---- dao = ${dao.address}
+  ---- developer = ${developer.address}
   ---- purchaser = ${purchaser.address}
   
   `);

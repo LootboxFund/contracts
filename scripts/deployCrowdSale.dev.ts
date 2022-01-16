@@ -49,17 +49,20 @@ const STABLECOINS = {
 const ENVIRONMENT = "development";
 
 async function main() {
-  const [deployer, treasury, developerAndDao, purchaser] =
+  const [deployer, treasury, dao, developer, purchaser] =
     await ethers.getSigners();
   const DEPLOYER_ADDRESS = deployer.address;
-  logToFile(`
+  logToFile(
+    `
   
 ---------- DEPLOY CROWDSALE (development) ----------
   
 ---- Script starting
 
-  \n`, LOG_FILE_PATH);
-  logToFile(`---- ${DEPLOYER_ADDRESS} ---> Deployer Address \n`, LOG_FILE_PATH)
+  \n`,
+    LOG_FILE_PATH
+  );
+  logToFile(`---- ${DEPLOYER_ADDRESS} ---> Deployer Address \n`, LOG_FILE_PATH);
 
   // --------- Deploy the Stablecoins --------- //
   const Eth = await ethers.getContractFactory("ETH");
@@ -80,7 +83,10 @@ async function main() {
     ethers.BigNumber.from("100000000000000000000")
   );
   await sleep();
-  logToFile(`---- ${ethStablecoin.address} ---> ETH Stablecoin Address\n`, LOG_FILE_PATH)
+  logToFile(
+    `---- ${ethStablecoin.address} ---> ETH Stablecoin Address\n`,
+    LOG_FILE_PATH
+  );
 
   // Needed to slow down transactions to avoid "replacement fee too low" errors...
   await new Promise<void>((resolve) => {
@@ -107,7 +113,10 @@ async function main() {
     ethers.BigNumber.from("100000000000000000000")
   );
   await sleep();
-  logToFile(`---- ${usdcStablecoin.address} ---> USDC Stablecoin Address\n`, LOG_FILE_PATH)
+  logToFile(
+    `---- ${usdcStablecoin.address} ---> USDC Stablecoin Address\n`,
+    LOG_FILE_PATH
+  );
 
   const Usdt = await ethers.getContractFactory("USDT");
   const usdtStablecoin = (await Usdt.deploy(0)) as USDT;
@@ -127,7 +136,10 @@ async function main() {
     ethers.BigNumber.from("100000000000000000000")
   );
   await sleep();
-  logToFile(`---- ${usdtStablecoin.address} ---> USDT Stablecoin Address\n`, LOG_FILE_PATH)
+  logToFile(
+    `---- ${usdtStablecoin.address} ---> USDT Stablecoin Address\n`,
+    LOG_FILE_PATH
+  );
 
   const Ust = await ethers.getContractFactory("UST");
   const ustStablecoin = (await Ust.deploy(0)) as UST;
@@ -147,7 +159,10 @@ async function main() {
     ethers.BigNumber.from("100000000000000000000")
   );
   await sleep();
-  logToFile(`---- ${ustStablecoin.address} ---> UST Stablecoin Address\n`, LOG_FILE_PATH)
+  logToFile(
+    `---- ${ustStablecoin.address} ---> UST Stablecoin Address\n`,
+    LOG_FILE_PATH
+  );
 
   const Dai = await ethers.getContractFactory("DAI");
   const daiStablecoin = (await Dai.deploy(0)) as DAI;
@@ -167,7 +182,10 @@ async function main() {
     ethers.BigNumber.from("100000000000000000000")
   );
   await sleep();
-  logToFile(`---- ${daiStablecoin.address} ---> DAI Stablecoin Address\n`, LOG_FILE_PATH)
+  logToFile(
+    `---- ${daiStablecoin.address} ---> DAI Stablecoin Address\n`,
+    LOG_FILE_PATH
+  );
 
   // --------- Deploy GUILD Token --------- //
   const GuildToken = await ethers.getContractFactory("GuildToken");
@@ -176,7 +194,10 @@ async function main() {
   await sleep();
   const GUILD_TOKEN_ADDRESS = guildtoken.address;
   const GUILD = await GuildToken.attach(GUILD_TOKEN_ADDRESS);
-  logToFile(`---- ${GUILD_TOKEN_ADDRESS} ---> GUILD Token Address\n`, LOG_FILE_PATH);
+  logToFile(
+    `---- ${GUILD_TOKEN_ADDRESS} ---> GUILD Token Address\n`,
+    LOG_FILE_PATH
+  );
   (
     await GUILD.transferOwnershipToDAO(DEPLOYER_ADDRESS, DEPLOYER_ADDRESS)
   ).wait();
@@ -188,8 +209,8 @@ async function main() {
     Crowdsale,
     [
       GUILD_TOKEN_ADDRESS,
-      developerAndDao.address,
-      developerAndDao.address,
+      dao.address,
+      developer.address,
       treasury.address,
       STARTING_GUILD_PRICE_IN_USD_CENTS,
     ],
@@ -200,20 +221,25 @@ async function main() {
   const CROWDSALE_ADDRESS = crowdsale.address;
   const CROWDSALE = await Crowdsale.attach(CROWDSALE_ADDRESS);
   await sleep();
-  logToFile(`---- ${CROWDSALE_ADDRESS} ---> GUILD Crowdsale Address\n`, LOG_FILE_PATH);
+  logToFile(
+    `---- ${CROWDSALE_ADDRESS} ---> GUILD Crowdsale Address\n`,
+    LOG_FILE_PATH
+  );
 
-  logToFile(`
+  logToFile(
+    `
     // ----- Deploy Stablecoins
     ETH = ${ethStablecoin.address}
     USDC = ${usdcStablecoin.address}
     USDT = ${usdtStablecoin.address}
     UST = ${ustStablecoin.address}
     DAI = ${daiStablecoin.address}
-  \n`, LOG_FILE_PATH);
+  \n`,
+    LOG_FILE_PATH
+  );
 
-  
   (
-    await CROWDSALE.connect(developerAndDao).setStablecoins(
+    await CROWDSALE.connect(dao).setStablecoins(
       ethStablecoin.address,
       usdcStablecoin.address,
       usdtStablecoin.address,
@@ -221,17 +247,20 @@ async function main() {
       daiStablecoin.address
     )
   ).wait();
-  logToFile(`
+  logToFile(
+    `
     ---- Set stablecoins!
     ETH = ${ethStablecoin.address}
     USDC = ${usdcStablecoin.address}
     USDT = ${usdtStablecoin.address}
     UST = ${ustStablecoin.address}
     DAI = ${daiStablecoin.address}
-  \n`, LOG_FILE_PATH);
+  \n`,
+    LOG_FILE_PATH
+  );
   await sleep();
   (
-    await CROWDSALE.connect(developerAndDao).setOracles(
+    await CROWDSALE.connect(dao).setOracles(
       STABLECOINS[ENVIRONMENT].BNB.priceFeed,
       STABLECOINS[ENVIRONMENT].ETH.priceFeed,
       STABLECOINS[ENVIRONMENT].USDC.priceFeed,
@@ -240,7 +269,8 @@ async function main() {
       STABLECOINS[ENVIRONMENT].DAI.priceFeed
     )
   ).wait();
-  logToFile(`
+  logToFile(
+    `
     ---- Set oracles!
     BNB = ${STABLECOINS[ENVIRONMENT].BNB.priceFeed}
     ETH = ${STABLECOINS[ENVIRONMENT].ETH.priceFeed}
@@ -248,15 +278,20 @@ async function main() {
     USDT = ${STABLECOINS[ENVIRONMENT].USDT.priceFeed}
     UST = ${STABLECOINS[ENVIRONMENT].UST.priceFeed}
     DAI = ${STABLECOINS[ENVIRONMENT].DAI.priceFeed}
-  \n`, LOG_FILE_PATH);
+  \n`,
+    LOG_FILE_PATH
+  );
   await sleep();
 
   // --------- Whitelist the CrowdSale with MINTER_ROLE --------- //
   (await GUILD.whitelistMint(crowdsale.address, true)).wait();
-  logToFile(`
+  logToFile(
+    `
     ---- Whitelist a mint!
     Crowdsale = ${crowdsale.address}
-  \n`, LOG_FILE_PATH);
+  \n`,
+    LOG_FILE_PATH
+  );
   await sleep();
 }
 

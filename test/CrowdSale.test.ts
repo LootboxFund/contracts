@@ -43,7 +43,8 @@ describe("📦 CrowdSale of GAMER token", async function () {
   let deployer: SignerWithAddress;
   let treasury: SignerWithAddress;
   let purchaser: SignerWithAddress;
-  let developerAndDao: SignerWithAddress;
+  let dao: SignerWithAddress;
+  let developer: SignerWithAddress;
 
   let Token: GuildToken__factory;
   let token: GuildToken;
@@ -78,8 +79,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
   const startingPriceInUSDCents = 7;
 
   before(async function () {
-    [deployer, treasury, developerAndDao, purchaser] =
-      await ethers.getSigners();
+    [deployer, treasury, dao, developer, purchaser] = await ethers.getSigners();
     Token = await ethers.getContractFactory("GuildToken");
     CrowdSale = await ethers.getContractFactory("CrowdSale");
     Eth = await ethers.getContractFactory("ETH");
@@ -93,17 +93,14 @@ describe("📦 CrowdSale of GAMER token", async function () {
   beforeEach(async function () {
     token = (await upgrades.deployProxy(Token, { kind: "uups" })) as GuildToken;
     await token.deployed();
-    await token.transferOwnershipToDAO(
-      developerAndDao.address,
-      developerAndDao.address
-    );
+    await token.transferOwnershipToDAO(dao.address, developer.address);
 
     crowdSale = (await upgrades.deployProxy(
       CrowdSale,
       [
         token.address,
-        developerAndDao.address,
-        developerAndDao.address,
+        dao.address,
+        developer.address,
         treasury.address,
         startingPriceInUSDCents,
       ],
@@ -122,7 +119,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
 
     // set the stablecoins in crowdsale
     await crowdSale
-      .connect(developerAndDao)
+      .connect(dao)
       .setStablecoins(
         eth_stablecoin.address,
         usdc_stablecoin.address,
@@ -133,7 +130,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
 
     // set the price feeds in crowdsale
     await crowdSale
-      .connect(developerAndDao)
+      .connect(dao)
       .setOracles(
         bnb_pricefeed,
         eth_pricefeed,
@@ -157,12 +154,12 @@ describe("📦 CrowdSale of GAMER token", async function () {
   });
 
   it("sets the GAMER token address correctly", async function () {
-    expect( await crowdSale.GAMER()).to.eq(token.address);
-  })
+    expect(await crowdSale.GAMER()).to.eq(token.address);
+  });
 
   it("sets the treasury address correctly", async function () {
-    expect( await crowdSale.TREASURY()).to.eq(treasury.address);
-  })
+    expect(await crowdSale.TREASURY()).to.eq(treasury.address);
+  });
 
   it("only allows DAO to set stablecoins and pricefeeds", async function () {
     await expect(
@@ -180,7 +177,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
     );
     await expect(
       crowdSale
-        .connect(developerAndDao)
+        .connect(dao)
         .setStablecoins(
           eth_stablecoin.address,
           usdc_stablecoin.address,
@@ -189,7 +186,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
           dai_stablecoin.address
         )
     ).to.not.be.revertedWith(
-      generatePermissionRevokeMessage(developerAndDao.address, DAO_ROLE)
+      generatePermissionRevokeMessage(dao.address, DAO_ROLE)
     );
     await expect(
       crowdSale
@@ -207,7 +204,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
     );
     await expect(
       crowdSale
-        .connect(developerAndDao)
+        .connect(dao)
         .setOracles(
           bnb_pricefeed,
           eth_pricefeed,
@@ -217,7 +214,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
           dai_pricefeed
         )
     ).to.not.be.revertedWith(
-      generatePermissionRevokeMessage(developerAndDao.address, DAO_ROLE)
+      generatePermissionRevokeMessage(dao.address, DAO_ROLE)
     );
   });
 
@@ -231,7 +228,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
       generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
     );
     await expect(
-      crowdSale.connect(developerAndDao).setCurrentUSDPriceInCents(8)
+      crowdSale.connect(dao).setCurrentUSDPriceInCents(8)
     ).to.not.be.revertedWith(
       generatePermissionRevokeMessage(crowdSale.address, DAO_ROLE)
     );
@@ -248,7 +245,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
 
   it("allows DAO to whitelist the CrowdSale as a valid minter", async () => {
     await expect(
-      token.connect(developerAndDao).whitelistMint(crowdSale.address, true)
+      token.connect(dao).whitelistMint(crowdSale.address, true)
     ).to.not.be.revertedWith(
       generatePermissionRevokeMessage(crowdSale.address, DAO_ROLE)
     );
@@ -259,7 +256,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
       let promise: Promise<any>;
 
       beforeEach(async () => {
-        promise = crowdSale.connect(developerAndDao).pause();
+        promise = crowdSale.connect(dao).pause();
       });
 
       it("pauses the contract", async () => {
@@ -272,11 +269,11 @@ describe("📦 CrowdSale of GAMER token", async function () {
       });
     });
 
-    it('reverts with access control error when called with address without GOVERNOR_ROLE', async () => {
+    it("reverts with access control error when called with address without GOVERNOR_ROLE", async () => {
       await expect(crowdSale.connect(purchaser).pause()).to.be.revertedWith(
         generatePermissionRevokeMessage(purchaser.address, GOVERNOR_ROLE)
       );
-    })
+    });
   });
 
   describe("unpause()", () => {
@@ -284,8 +281,8 @@ describe("📦 CrowdSale of GAMER token", async function () {
       let promise: Promise<any>;
 
       beforeEach(async () => {
-        await crowdSale.connect(developerAndDao).pause();
-        promise = crowdSale.connect(developerAndDao).unpause();
+        await crowdSale.connect(dao).pause();
+        promise = crowdSale.connect(dao).unpause();
       });
 
       it("unpauses the contract", async () => {
@@ -298,11 +295,11 @@ describe("📦 CrowdSale of GAMER token", async function () {
       });
     });
 
-    it('reverts with access control error when called with address without GOVERNOR_ROLE', async () => {
+    it("reverts with access control error when called with address without GOVERNOR_ROLE", async () => {
       await expect(crowdSale.connect(purchaser).unpause()).to.be.revertedWith(
         generatePermissionRevokeMessage(purchaser.address, GOVERNOR_ROLE)
       );
-    })
+    });
   });
 
   describe("buyer can purchase GAMER tokens using USDC", async () => {
@@ -317,39 +314,48 @@ describe("📦 CrowdSale of GAMER token", async function () {
 
     beforeEach(async () => {
       stableCoinDecimals = await usdc_stablecoin.decimals();
-      seedUserStableCoinAmount = ethers.utils.parseUnits('100', stableCoinDecimals);  // $100 USD
-      seedTreasuryStableCoinAmount = ethers.utils.parseUnits('200', stableCoinDecimals);  // $200 USD
-      stablecoinAmount = ethers.utils.parseUnits('10', stableCoinDecimals);  // $10 USD
+      seedUserStableCoinAmount = ethers.utils.parseUnits(
+        "100",
+        stableCoinDecimals
+      ); // $100 USD
+      seedTreasuryStableCoinAmount = ethers.utils.parseUnits(
+        "200",
+        stableCoinDecimals
+      ); // $200 USD
+      stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 USD
 
-      archivedPrice = ethers.BigNumber.from('100005159');
+      archivedPrice = ethers.BigNumber.from("100005159");
       startingPriceUSDCents = ethers.BigNumber.from(7);
       gamerPurchasedAmount = stablecoinAmount
-        .mul(Math.pow(10, 18 - stableCoinDecimals))  // Converts stablecoins
+        .mul(Math.pow(10, 18 - stableCoinDecimals)) // Converts stablecoins
         .mul(archivedPrice)
         .div(startingPriceUSDCents)
-        .div(Math.pow(10, 8 - 2));  // Converts USD cents to 8 decimal
+        .div(Math.pow(10, 8 - 2)); // Converts USD cents to 8 decimal
 
       await usdc_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
-      await usdc_stablecoin.mint(treasury.address, seedTreasuryStableCoinAmount);
+      await usdc_stablecoin.mint(
+        treasury.address,
+        seedTreasuryStableCoinAmount
+      );
       await usdc_stablecoin
         .connect(purchaser)
         .approve(crowdSale.address, stablecoinAmount);
-      await token
-        .connect(developerAndDao)
-        .whitelistMint(crowdSale.address, true);
+      await token.connect(dao).whitelistMint(crowdSale.address, true);
     });
 
     it("reverts with pausable error if contract is paused", async () => {
-      await crowdSale.connect(developerAndDao).pause();
+      await crowdSale.connect(dao).pause();
       await expect(
         crowdSale
           .connect(purchaser)
           .buyInUSDC(purchaser.address, { value: stablecoinAmount.toString() })
-      ).to.be.revertedWith("Pausable: paused")
-    })
+      ).to.be.revertedWith("Pausable: paused");
+    });
 
     it("purchaser has 100 usdc_stablecoin in wallet", async function () {
-      expect(await usdc_stablecoin.balanceOf(purchaser.address)).to.equal(seedUserStableCoinAmount);
+      expect(await usdc_stablecoin.balanceOf(purchaser.address)).to.equal(
+        seedUserStableCoinAmount
+      );
     });
 
     it("has an oracle price feed", async function () {
@@ -377,8 +383,12 @@ describe("📦 CrowdSale of GAMER token", async function () {
           startingPriceUSDCents.toString()
         );
       expect(await crowdSale.GAMER()).to.equal(token.address);
-      expect(await usdc_stablecoin.balanceOf(purchaser.address)).to.equal(ethers.utils.parseUnits('90', stableCoinDecimals));
-      expect(await usdc_stablecoin.balanceOf(treasury.address)).to.equal(ethers.utils.parseUnits('210', stableCoinDecimals));
+      expect(await usdc_stablecoin.balanceOf(purchaser.address)).to.equal(
+        ethers.utils.parseUnits("90", stableCoinDecimals)
+      );
+      expect(await usdc_stablecoin.balanceOf(treasury.address)).to.equal(
+        ethers.utils.parseUnits("210", stableCoinDecimals)
+      );
       expect(await token.balanceOf(purchaser.address)).to.equal(
         gamerPurchasedAmount.toString()
       );
@@ -390,49 +400,58 @@ describe("📦 CrowdSale of GAMER token", async function () {
 
   describe("buyer can purchase GAMER tokens using USDT", async () => {
     let stableCoinDecimals: number;
-    let seedUserStableCoinAmount: BigNumber; 
-    let seedTreasuryStableCoinAmount: BigNumber; 
-    let stablecoinAmount: BigNumber; 
+    let seedUserStableCoinAmount: BigNumber;
+    let seedTreasuryStableCoinAmount: BigNumber;
+    let stablecoinAmount: BigNumber;
 
-    let archivedPrice: BigNumber; 
-    let startingPriceUSDCents: BigNumber; 
-    let gamerPurchasedAmount: BigNumber; 
-    
+    let archivedPrice: BigNumber;
+    let startingPriceUSDCents: BigNumber;
+    let gamerPurchasedAmount: BigNumber;
+
     beforeEach(async () => {
       stableCoinDecimals = await usdc_stablecoin.decimals();
-      seedUserStableCoinAmount = ethers.utils.parseUnits('100', stableCoinDecimals);  // $100 USD
-      seedTreasuryStableCoinAmount = ethers.utils.parseUnits('200', stableCoinDecimals);  // $200 USD
-      stablecoinAmount = ethers.utils.parseUnits('10', stableCoinDecimals);  // $10 USD
+      seedUserStableCoinAmount = ethers.utils.parseUnits(
+        "100",
+        stableCoinDecimals
+      ); // $100 USD
+      seedTreasuryStableCoinAmount = ethers.utils.parseUnits(
+        "200",
+        stableCoinDecimals
+      ); // $200 USD
+      stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 USD
 
-      archivedPrice = ethers.BigNumber.from('100018962');
+      archivedPrice = ethers.BigNumber.from("100018962");
       startingPriceUSDCents = ethers.BigNumber.from(7);
       gamerPurchasedAmount = stablecoinAmount
-        .mul(Math.pow(10, 18 - stableCoinDecimals))  // Converts stablecoins
+        .mul(Math.pow(10, 18 - stableCoinDecimals)) // Converts stablecoins
         .mul(archivedPrice)
         .div(startingPriceUSDCents)
-        .div(Math.pow(10, 8 - 2));  // Converts USD cents to 8 decimal
-      
+        .div(Math.pow(10, 8 - 2)); // Converts USD cents to 8 decimal
+
       await usdt_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
-      await usdt_stablecoin.mint(treasury.address, seedTreasuryStableCoinAmount);
+      await usdt_stablecoin.mint(
+        treasury.address,
+        seedTreasuryStableCoinAmount
+      );
       await usdt_stablecoin
         .connect(purchaser)
         .approve(crowdSale.address, stablecoinAmount);
-      await token
-        .connect(developerAndDao)
-        .whitelistMint(crowdSale.address, true);
+      await token.connect(dao).whitelistMint(crowdSale.address, true);
     });
 
     it("reverts with pausable error if contract is paused", async () => {
-      await crowdSale.connect(developerAndDao).pause();
+      await crowdSale.connect(dao).pause();
       await expect(
         crowdSale
           .connect(purchaser)
           .buyInUSDT(purchaser.address, { value: stablecoinAmount.toString() })
-      ).to.be.revertedWith("Pausable: paused")
-    })
+      ).to.be.revertedWith("Pausable: paused");
+    });
 
     it("purchaser has 100 usdt_stablecoin in wallet", async function () {
-      expect(await usdt_stablecoin.balanceOf(purchaser.address)).to.equal(seedUserStableCoinAmount);
+      expect(await usdt_stablecoin.balanceOf(purchaser.address)).to.equal(
+        seedUserStableCoinAmount
+      );
     });
 
     it("has an oracle price feed", async function () {
@@ -459,8 +478,12 @@ describe("📦 CrowdSale of GAMER token", async function () {
           startingPriceUSDCents.toString()
         );
       expect(await crowdSale.GAMER()).to.equal(token.address);
-      expect(await usdt_stablecoin.balanceOf(purchaser.address)).to.equal(ethers.utils.parseUnits('90', stableCoinDecimals));
-      expect(await usdt_stablecoin.balanceOf(treasury.address)).to.equal(ethers.utils.parseUnits('210', stableCoinDecimals));
+      expect(await usdt_stablecoin.balanceOf(purchaser.address)).to.equal(
+        ethers.utils.parseUnits("90", stableCoinDecimals)
+      );
+      expect(await usdt_stablecoin.balanceOf(treasury.address)).to.equal(
+        ethers.utils.parseUnits("210", stableCoinDecimals)
+      );
       expect(await token.balanceOf(purchaser.address)).to.equal(
         gamerPurchasedAmount.toString()
       );
@@ -472,48 +495,54 @@ describe("📦 CrowdSale of GAMER token", async function () {
 
   describe("buyer can purchase GAMER tokens using UST", async () => {
     let stableCoinDecimals: number;
-    let seedUserStableCoinAmount: BigNumber; 
-    let seedTreasuryStableCoinAmount: BigNumber; 
-    let stablecoinAmount: BigNumber; 
+    let seedUserStableCoinAmount: BigNumber;
+    let seedTreasuryStableCoinAmount: BigNumber;
+    let stablecoinAmount: BigNumber;
 
-    let archivedPrice: BigNumber; 
-    let startingPriceUSDCents: BigNumber; 
-    let gamerPurchasedAmount: BigNumber; 
+    let archivedPrice: BigNumber;
+    let startingPriceUSDCents: BigNumber;
+    let gamerPurchasedAmount: BigNumber;
 
     beforeEach(async () => {
       stableCoinDecimals = await usdc_stablecoin.decimals();
-      seedUserStableCoinAmount = ethers.utils.parseUnits('100', stableCoinDecimals);  // $100 USD
-      seedTreasuryStableCoinAmount = ethers.utils.parseUnits('200', stableCoinDecimals);  // $200 USD
-      stablecoinAmount = ethers.utils.parseUnits('10', stableCoinDecimals);  // $10 USD
+      seedUserStableCoinAmount = ethers.utils.parseUnits(
+        "100",
+        stableCoinDecimals
+      ); // $100 USD
+      seedTreasuryStableCoinAmount = ethers.utils.parseUnits(
+        "200",
+        stableCoinDecimals
+      ); // $200 USD
+      stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 USD
 
-      archivedPrice = ethers.BigNumber.from('100058710');
+      archivedPrice = ethers.BigNumber.from("100058710");
       startingPriceUSDCents = ethers.BigNumber.from(7);
       gamerPurchasedAmount = stablecoinAmount
-        .mul(Math.pow(10, 18 - stableCoinDecimals))  // Converts stablecoins
+        .mul(Math.pow(10, 18 - stableCoinDecimals)) // Converts stablecoins
         .mul(archivedPrice)
         .div(startingPriceUSDCents)
-        .div(Math.pow(10, 8 - 2));  // Converts USD cents to 8 decimal
+        .div(Math.pow(10, 8 - 2)); // Converts USD cents to 8 decimal
       await ust_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
       await ust_stablecoin.mint(treasury.address, seedTreasuryStableCoinAmount);
       await ust_stablecoin
         .connect(purchaser)
         .approve(crowdSale.address, stablecoinAmount);
-      await token
-        .connect(developerAndDao)
-        .whitelistMint(crowdSale.address, true);
+      await token.connect(dao).whitelistMint(crowdSale.address, true);
     });
 
     it("reverts with pausable error if contract is paused", async () => {
-      await crowdSale.connect(developerAndDao).pause();
+      await crowdSale.connect(dao).pause();
       await expect(
         crowdSale
           .connect(purchaser)
           .buyInUST(purchaser.address, { value: stablecoinAmount.toString() })
-      ).to.be.revertedWith("Pausable: paused")
-    })
+      ).to.be.revertedWith("Pausable: paused");
+    });
 
     it("purchaser has 100 ust_stablecoin in wallet", async function () {
-      expect(await ust_stablecoin.balanceOf(purchaser.address)).to.equal(seedUserStableCoinAmount);
+      expect(await ust_stablecoin.balanceOf(purchaser.address)).to.equal(
+        seedUserStableCoinAmount
+      );
     });
 
     it("has an oracle price feed", async function () {
@@ -540,8 +569,12 @@ describe("📦 CrowdSale of GAMER token", async function () {
           startingPriceUSDCents.toString()
         );
       expect(await crowdSale.GAMER()).to.equal(token.address);
-      expect(await ust_stablecoin.balanceOf(purchaser.address)).to.equal(ethers.utils.parseUnits('90', stableCoinDecimals));
-      expect(await ust_stablecoin.balanceOf(treasury.address)).to.equal(ethers.utils.parseUnits('210', stableCoinDecimals));
+      expect(await ust_stablecoin.balanceOf(purchaser.address)).to.equal(
+        ethers.utils.parseUnits("90", stableCoinDecimals)
+      );
+      expect(await ust_stablecoin.balanceOf(treasury.address)).to.equal(
+        ethers.utils.parseUnits("210", stableCoinDecimals)
+      );
       expect(await token.balanceOf(purchaser.address)).to.equal(
         gamerPurchasedAmount.toString()
       );
@@ -553,49 +586,55 @@ describe("📦 CrowdSale of GAMER token", async function () {
 
   describe("buyer can purchase GAMER tokens using ETH", async () => {
     let stableCoinDecimals: number;
-    let seedUserStableCoinAmount: BigNumber; 
-    let seedTreasuryStableCoinAmount: BigNumber; 
-    let stablecoinAmount: BigNumber; 
+    let seedUserStableCoinAmount: BigNumber;
+    let seedTreasuryStableCoinAmount: BigNumber;
+    let stablecoinAmount: BigNumber;
 
-    let archivedPrice: BigNumber; 
-    let startingPriceUSDCents: BigNumber; 
-    let gamerPurchasedAmount: BigNumber; 
+    let archivedPrice: BigNumber;
+    let startingPriceUSDCents: BigNumber;
+    let gamerPurchasedAmount: BigNumber;
 
     beforeEach(async () => {
       stableCoinDecimals = await usdc_stablecoin.decimals();
-      seedUserStableCoinAmount = ethers.utils.parseUnits('100', stableCoinDecimals);  // 100 ETH
-      seedTreasuryStableCoinAmount = ethers.utils.parseUnits('200', stableCoinDecimals);  // 200 ETH
-      stablecoinAmount = ethers.utils.parseUnits('10', stableCoinDecimals);  // $10 ETH
+      seedUserStableCoinAmount = ethers.utils.parseUnits(
+        "100",
+        stableCoinDecimals
+      ); // 100 ETH
+      seedTreasuryStableCoinAmount = ethers.utils.parseUnits(
+        "200",
+        stableCoinDecimals
+      ); // 200 ETH
+      stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 ETH
 
-      archivedPrice = ethers.BigNumber.from('365993550000');
+      archivedPrice = ethers.BigNumber.from("365993550000");
       startingPriceUSDCents = ethers.BigNumber.from(7);
       gamerPurchasedAmount = stablecoinAmount
-        .mul(Math.pow(10, 18 - stableCoinDecimals))  // Converts stablecoins
+        .mul(Math.pow(10, 18 - stableCoinDecimals)) // Converts stablecoins
         .mul(archivedPrice)
         .div(startingPriceUSDCents)
-        .div(Math.pow(10, 8 - 2));  // Converts USD cents to 8 decimal
+        .div(Math.pow(10, 8 - 2)); // Converts USD cents to 8 decimal
 
       await eth_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
       await eth_stablecoin.mint(treasury.address, seedTreasuryStableCoinAmount);
       await eth_stablecoin
         .connect(purchaser)
         .approve(crowdSale.address, stablecoinAmount);
-      await token
-        .connect(developerAndDao)
-        .whitelistMint(crowdSale.address, true);
+      await token.connect(dao).whitelistMint(crowdSale.address, true);
     });
 
     it("reverts with pausable error if contract is paused", async () => {
-      await crowdSale.connect(developerAndDao).pause();
+      await crowdSale.connect(dao).pause();
       await expect(
         crowdSale
           .connect(purchaser)
           .buyInETH(purchaser.address, { value: stablecoinAmount.toString() })
-      ).to.be.revertedWith("Pausable: paused")
-    })
+      ).to.be.revertedWith("Pausable: paused");
+    });
 
     it("purchaser has 100 eth_stablecoin in wallet", async function () {
-      expect(await eth_stablecoin.balanceOf(purchaser.address)).to.equal(seedUserStableCoinAmount);
+      expect(await eth_stablecoin.balanceOf(purchaser.address)).to.equal(
+        seedUserStableCoinAmount
+      );
     });
 
     it("has an oracle price feed", async function () {
@@ -622,8 +661,12 @@ describe("📦 CrowdSale of GAMER token", async function () {
           startingPriceUSDCents.toString()
         );
       expect(await crowdSale.GAMER()).to.equal(token.address);
-      expect(await eth_stablecoin.balanceOf(purchaser.address)).to.equal(ethers.utils.parseUnits('90', stableCoinDecimals));
-      expect(await eth_stablecoin.balanceOf(treasury.address)).to.equal(ethers.utils.parseUnits('210', stableCoinDecimals));
+      expect(await eth_stablecoin.balanceOf(purchaser.address)).to.equal(
+        ethers.utils.parseUnits("90", stableCoinDecimals)
+      );
+      expect(await eth_stablecoin.balanceOf(treasury.address)).to.equal(
+        ethers.utils.parseUnits("210", stableCoinDecimals)
+      );
       expect(await token.balanceOf(purchaser.address)).to.equal(
         gamerPurchasedAmount.toString()
       );
@@ -635,49 +678,55 @@ describe("📦 CrowdSale of GAMER token", async function () {
 
   describe("buyer can purchase GAMER tokens using DAI", async () => {
     let stableCoinDecimals: number;
-    let seedUserStableCoinAmount: BigNumber; 
-    let seedTreasuryStableCoinAmount: BigNumber; 
-    let stablecoinAmount: BigNumber; 
+    let seedUserStableCoinAmount: BigNumber;
+    let seedTreasuryStableCoinAmount: BigNumber;
+    let stablecoinAmount: BigNumber;
 
-    let archivedPrice: BigNumber; 
-    let startingPriceUSDCents: BigNumber; 
-    let gamerPurchasedAmount: BigNumber; 
+    let archivedPrice: BigNumber;
+    let startingPriceUSDCents: BigNumber;
+    let gamerPurchasedAmount: BigNumber;
 
     beforeEach(async () => {
       stableCoinDecimals = await usdc_stablecoin.decimals();
-      seedUserStableCoinAmount = ethers.utils.parseUnits('100', stableCoinDecimals);  // 100 USD
-      seedTreasuryStableCoinAmount = ethers.utils.parseUnits('200', stableCoinDecimals);  // 200 USD
-      stablecoinAmount = ethers.utils.parseUnits('10', stableCoinDecimals);  // $10 USD
+      seedUserStableCoinAmount = ethers.utils.parseUnits(
+        "100",
+        stableCoinDecimals
+      ); // 100 USD
+      seedTreasuryStableCoinAmount = ethers.utils.parseUnits(
+        "200",
+        stableCoinDecimals
+      ); // 200 USD
+      stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 USD
 
-      archivedPrice = ethers.BigNumber.from('100036216');
+      archivedPrice = ethers.BigNumber.from("100036216");
       startingPriceUSDCents = ethers.BigNumber.from(7);
       gamerPurchasedAmount = stablecoinAmount
-        .mul(Math.pow(10, 18 - stableCoinDecimals))  // Converts stablecoins
+        .mul(Math.pow(10, 18 - stableCoinDecimals)) // Converts stablecoins
         .mul(archivedPrice)
         .div(startingPriceUSDCents)
-        .div(Math.pow(10, 8 - 2));  // Converts USD cents to 8 decimal
+        .div(Math.pow(10, 8 - 2)); // Converts USD cents to 8 decimal
 
       await dai_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
       await dai_stablecoin.mint(treasury.address, seedTreasuryStableCoinAmount);
       await dai_stablecoin
         .connect(purchaser)
         .approve(crowdSale.address, stablecoinAmount);
-      await token
-        .connect(developerAndDao)
-        .whitelistMint(crowdSale.address, true);
+      await token.connect(dao).whitelistMint(crowdSale.address, true);
     });
 
     it("reverts with pausable error if contract is paused", async () => {
-      await crowdSale.connect(developerAndDao).pause();
+      await crowdSale.connect(dao).pause();
       await expect(
         crowdSale
           .connect(purchaser)
           .buyInDAI(purchaser.address, { value: stablecoinAmount.toString() })
-      ).to.be.revertedWith("Pausable: paused")
-    })
+      ).to.be.revertedWith("Pausable: paused");
+    });
 
     it("purchaser has 100 dai_stablecoin in wallet", async function () {
-      expect(await dai_stablecoin.balanceOf(purchaser.address)).to.equal(seedUserStableCoinAmount);
+      expect(await dai_stablecoin.balanceOf(purchaser.address)).to.equal(
+        seedUserStableCoinAmount
+      );
     });
 
     it("has an oracle price feed", async function () {
@@ -704,8 +753,12 @@ describe("📦 CrowdSale of GAMER token", async function () {
           startingPriceUSDCents.toString()
         );
       expect(await crowdSale.GAMER()).to.equal(token.address);
-      expect(await dai_stablecoin.balanceOf(purchaser.address)).to.equal(ethers.utils.parseUnits('90', stableCoinDecimals));
-      expect(await dai_stablecoin.balanceOf(treasury.address)).to.equal(ethers.utils.parseUnits('210', stableCoinDecimals));
+      expect(await dai_stablecoin.balanceOf(purchaser.address)).to.equal(
+        ethers.utils.parseUnits("90", stableCoinDecimals)
+      );
+      expect(await dai_stablecoin.balanceOf(treasury.address)).to.equal(
+        ethers.utils.parseUnits("210", stableCoinDecimals)
+      );
       expect(await token.balanceOf(purchaser.address)).to.equal(
         gamerPurchasedAmount.toString()
       );
@@ -717,41 +770,45 @@ describe("📦 CrowdSale of GAMER token", async function () {
 
   describe("buyer can purchase GAMER tokens using BNB", async () => {
     let stableCoinDecimals: number;
-    let seedUserStableCoinAmount: BigNumber; 
-    let seedTreasuryStableCoinAmount: BigNumber; 
-    let stablecoinAmount: BigNumber; 
+    let seedUserStableCoinAmount: BigNumber;
+    let seedTreasuryStableCoinAmount: BigNumber;
+    let stablecoinAmount: BigNumber;
 
-    let archivedPrice: BigNumber; 
-    let startingPriceUSDCents: BigNumber; 
-    let gamerPurchasedAmount: BigNumber; 
+    let archivedPrice: BigNumber;
+    let startingPriceUSDCents: BigNumber;
+    let gamerPurchasedAmount: BigNumber;
 
     beforeEach(async () => {
       stableCoinDecimals = await usdc_stablecoin.decimals();
-      seedUserStableCoinAmount = ethers.utils.parseUnits('100', stableCoinDecimals);  // 100 BNB
-      seedTreasuryStableCoinAmount = ethers.utils.parseUnits('200', stableCoinDecimals);  // 200 BNB
-      stablecoinAmount = ethers.utils.parseUnits('10', stableCoinDecimals);  // $10 BNB
+      seedUserStableCoinAmount = ethers.utils.parseUnits(
+        "100",
+        stableCoinDecimals
+      ); // 100 BNB
+      seedTreasuryStableCoinAmount = ethers.utils.parseUnits(
+        "200",
+        stableCoinDecimals
+      ); // 200 BNB
+      stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 BNB
 
-      archivedPrice = ethers.BigNumber.from('51618873955');
+      archivedPrice = ethers.BigNumber.from("51618873955");
       startingPriceUSDCents = ethers.BigNumber.from(7);
       gamerPurchasedAmount = stablecoinAmount
-        .mul(Math.pow(10, 18 - stableCoinDecimals))  // Converts stablecoins
+        .mul(Math.pow(10, 18 - stableCoinDecimals)) // Converts stablecoins
         .mul(archivedPrice)
         .div(startingPriceUSDCents)
-        .div(Math.pow(10, 8 - 2));  // Converts USD cents to 8 decimal
+        .div(Math.pow(10, 8 - 2)); // Converts USD cents to 8 decimal
 
-      await token
-        .connect(developerAndDao)
-        .whitelistMint(crowdSale.address, true);
+      await token.connect(dao).whitelistMint(crowdSale.address, true);
     });
 
     it("reverts with pausable error if contract is paused", async () => {
-      await crowdSale.connect(developerAndDao).pause();
+      await crowdSale.connect(dao).pause();
       await expect(
         crowdSale
           .connect(purchaser)
           .buyInBNB(purchaser.address, { value: stablecoinAmount.toString() })
-      ).to.be.revertedWith("Pausable: paused")
-    })
+      ).to.be.revertedWith("Pausable: paused");
+    });
 
     it("purchaser has more than 9999 na†ive BNB in wallet", async function () {
       expect(
@@ -791,18 +848,19 @@ describe("📦 CrowdSale of GAMER token", async function () {
           startingPriceUSDCents.toString()
         );
       expect(await crowdSale.GAMER()).to.equal(token.address);
-      expect((
-          await purchaser.getBalance()
-        ).gt(ethers.BigNumber.from("9989000000000000000000"))
+      expect(
+        (await purchaser.getBalance()).gt(
+          ethers.BigNumber.from("9989000000000000000000")
+        )
       ).to.be.equal(true);
-      expect((
-          await purchaser.getBalance()
-        ).lt(ethers.BigNumber.from("9999000000000000000000"))
+      expect(
+        (await purchaser.getBalance()).lt(
+          ethers.BigNumber.from("9999000000000000000000")
+        )
       ).to.be.equal(true);
-      console.log('treasury', (await treasury.getBalance()).toString())
-      expect((
-          await treasury.getBalance()
-        ).eq(
+      console.log("treasury", (await treasury.getBalance()).toString());
+      expect(
+        (await treasury.getBalance()).eq(
           stablecoinAmount.add(ethers.BigNumber.from("10000000000000000000000"))
         )
       ).to.be.equal(true);
