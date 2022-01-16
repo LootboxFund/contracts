@@ -32,6 +32,10 @@ contract Constants is
         address developer,
         address payable _treasury
     ) public initializer {
+        require(dao != address(0), "DAO cannot be zero");
+        require(developer != address(0), "Developer cannot be zero");
+        require(_treasury != address(0), "Treasury cannot be zero");
+
         __Pausable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
@@ -46,6 +50,7 @@ contract Constants is
         onlyRole(DAO_ROLE)
         whenNotPaused
     {
+        require(_treasury != address(0), "Treasury cannot be zero");
         treasury = _treasury;
     }
 

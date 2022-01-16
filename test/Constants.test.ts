@@ -33,6 +33,39 @@ describe("📦 Constants", async function () {
     await constants.deployed();
   });
 
+  it("initialization reverts if DAO address is zero", async () => {
+    const promise = upgrades.deployProxy(
+      Constants,
+      [ethers.constants.AddressZero, developer.address, treasury.address],
+      {
+        kind: "uups",
+      }
+    );
+    await expect(promise).to.be.revertedWith("DAO cannot be zero");
+  });
+
+  it("initialization reverts if developer address is zero", async () => {
+    const promise = upgrades.deployProxy(
+      Constants,
+      [dao.address, ethers.constants.AddressZero, treasury.address],
+      {
+        kind: "uups",
+      }
+    );
+    await expect(promise).to.be.revertedWith("Developer cannot be zero");
+  });
+
+  it("initialization reverts if treasury address is zero", async () => {
+    const promise = upgrades.deployProxy(
+      Constants,
+      [dao.address, developer.address, ethers.constants.AddressZero],
+      {
+        kind: "uups",
+      }
+    );
+    await expect(promise).to.be.revertedWith("Treasury cannot be zero");
+  });
+
   it("sets the guildFX treasury", async () => {
     expect(await constants.treasury()).to.eq(treasury.address);
     // TODO: Add assertion that the treasury is payable
@@ -49,7 +82,7 @@ describe("📦 Constants", async function () {
   });
 
   describe("updateTreasuryAddress()", () => {
-    it("revokes with access control error when not called by the dao", async () => {
+    it("reverts with access control error when not called by the dao", async () => {
       const wallets = [deployer, developer, purchaser];
       for (let wallet of wallets) {
         // Hack - mocha and chai do not seem to have good looping capabilities
@@ -62,18 +95,26 @@ describe("📦 Constants", async function () {
       }
     });
 
+    it("reverts when treasury address is zero", async () => {
+      await expect(
+        constants
+          .connect(dao)
+          .updateTreasuryAddress(ethers.constants.AddressZero)
+      ).to.be.revertedWith("Treasury cannot be zero");
+    });
+
     describe("when contract is paused", () => {
       beforeEach(async () => {
         await constants.connect(dao).pause();
       });
 
-      it('revokes with "Pausable: paused" error', async () => {
+      it('reverts with "Pausable: paused" error', async () => {
         await expect(
           constants.connect(dao).updateTreasuryAddress(deployer.address)
         ).to.be.revertedWith("Pausable: paused");
       });
 
-      it("revokes with access control error when not called by the dao", async () => {
+      it("reverts with access control error when not called by the dao", async () => {
         const wallets = [deployer, developer, purchaser];
         for (let wallet of wallets) {
           // Hack - mocha and chai do not seem to have good looping capabilities
