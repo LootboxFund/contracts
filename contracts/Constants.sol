@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
+// TODO: Add management to role DAO_ROLE with DEFAULT_ADMIN_ROLE and add function to set DEFAULT_ADMIN_ROLE to 0
 contract Constants is
     Initializable,
     PausableUpgradeable,
@@ -20,7 +21,7 @@ contract Constants is
     bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE");
 
     // GuildFX treasury
-    address public treasury;
+    address payable public treasury;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
@@ -29,7 +30,7 @@ contract Constants is
     function initialize(
         address dao,
         address developer,
-        address _treasury
+        address payable _treasury
     ) public initializer {
         __Pausable_init();
         __AccessControl_init();
@@ -40,7 +41,7 @@ contract Constants is
         treasury = _treasury;
     }
 
-    function updateTreasuryAddress(address _treasury)
+    function updateTreasuryAddress(address payable _treasury)
         public
         onlyRole(DAO_ROLE)
         whenNotPaused
@@ -56,15 +57,6 @@ contract Constants is
     function unpause() public onlyRole(DAO_ROLE) {
         _unpause();
     }
-
-    // TODO fix this
-    // function _beforeTokenTransfer(
-    //     address from,
-    //     address to,
-    //     uint256 amount
-    // ) internal override whenNotPaused {
-    //     super._beforeTokenTransfer(from, to, amount);
-    // }
 
     function _authorizeUpgrade(address newImplementation)
         internal

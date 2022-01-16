@@ -864,7 +864,6 @@ describe("📦 CrowdSale of GUILD token", async function () {
           ethers.BigNumber.from("9999000000000000000000")
         )
       ).to.be.equal(true);
-      console.log("treasury", (await treasury.getBalance()).toString());
       expect(
         (await treasury.getBalance()).eq(
           stablecoinAmount.add(ethers.BigNumber.from("10000000000000000000000"))

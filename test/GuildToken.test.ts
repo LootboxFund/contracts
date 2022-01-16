@@ -372,29 +372,6 @@ describe("📦 GUILD token", async () => {
       );
     });
 
-    // Skipping for now because grantRole is not used
-    describe.skip("when called with the MINTER_ROLE without being whitelisted", () => {
-      beforeEach(async () => {
-        await token.grantRole(MINTER_ROLE, purchaser.address);
-      });
-
-      it("reverts with 'Pausable: paused' error if contract is paused", async () => {
-        await token.connect(deployer).pause();
-        await expect(
-          token.connect(purchaser).mintRequest(treasury.address, 10)
-        ).to.be.revertedWith("Pausable: paused");
-      });
-
-      it("reverts when the mint has not been whitelisted", async () => {
-        const promise = token
-          .connect(purchaser)
-          .mintRequest(treasury.address, 10);
-        await expect(promise).to.be.revertedWith(
-          "Address must be whitelisted to request a mint"
-        );
-      });
-    });
-
     describe("when called by a whitelisted address", () => {
       let whitelistedAddress: SignerWithAddress;
 

@@ -33,21 +33,22 @@ describe("📦 Constants", async function () {
     await constants.deployed();
   });
 
-  it("correctly sets the guildFX treasury", async () => {
+  it("sets the guildFX treasury", async () => {
     expect(await constants.treasury()).to.eq(treasury.address);
+    // TODO: Add assertion that the treasury is payable
   });
 
-  it("correctly sets the DAO role", async () => {
+  it("grants DAO_ROLE to the dao", async () => {
     expect(await constants.hasRole(DAO_ROLE, dao.address)).to.be.equal(true);
   });
 
-  it("correctly sets the DEVELOPER role", async () => {
+  it("grants DEVELOPER_ROLE to the developer", async () => {
     expect(
       await constants.hasRole(DEVELOPER_ROLE, developer.address)
     ).to.be.equal(true);
   });
 
-  describe("updateTreasuryAddress", () => {
+  describe("updateTreasuryAddress()", () => {
     it("revokes with access control error when not called by the dao", async () => {
       const wallets = [deployer, developer, purchaser];
       for (let wallet of wallets) {
@@ -92,6 +93,7 @@ describe("📦 Constants", async function () {
 
       const updatedAddress = await constants.treasury();
       expect(updatedAddress).to.be.eq(targetAddress);
+      // TODO Add another assertion that updatedAddress is payable
     });
   });
 });
