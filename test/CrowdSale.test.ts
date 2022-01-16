@@ -76,6 +76,9 @@ describe("📦 CrowdSale of GAMER token", async function () {
   let dai_stablecoin: DAI;
   let dai_pricefeed = "0x132d3C0B1D2cEa0BC552588063bdBb210FDeecfA";
 
+  const GUILD_TOKEN_NAME = "GuildTokenTest";
+  const GUILD_TOKEN_SYMBOL = "GUILDT";
+
   const startingPriceInUSDCents = 7;
 
   before(async function () {
@@ -91,9 +94,12 @@ describe("📦 CrowdSale of GAMER token", async function () {
   });
 
   beforeEach(async function () {
-    token = (await upgrades.deployProxy(Token, { kind: "uups" })) as GuildToken;
+    token = (await upgrades.deployProxy(
+      Token,
+      [GUILD_TOKEN_NAME, GUILD_TOKEN_SYMBOL, dao, developer],
+      { kind: "uups" }
+    )) as GuildToken;
     await token.deployed();
-    await token.transferOwnershipToDAO(dao.address, developer.address);
 
     crowdSale = (await upgrades.deployProxy(
       CrowdSale,
