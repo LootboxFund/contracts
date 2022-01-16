@@ -9,7 +9,7 @@ import {
 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import { BigNumber, ContractTransaction } from "ethers";
+import { ContractTransaction } from "ethers";
 import {
   DAO_ROLE,
   DEVELOPER_ROLE,
@@ -49,6 +49,18 @@ describe("📦 GuildFactory", () => {
 
     guildFactory = await GuildFactory.deploy(dao.address, constants.address);
     await guildFactory.deployed();
+  });
+
+  it("initialization reverts if DAO address is zero", async () => {
+    await expect(
+      GuildFactory.deploy(ethers.constants.AddressZero, constants.address)
+    ).to.be.revertedWith("DAO address cannot be zero");
+  });
+
+  it("initialization reverts if FXConstants address is zero", async () => {
+    await expect(
+      GuildFactory.deploy(dao.address, ethers.constants.AddressZero)
+    ).to.be.revertedWith("FXConstants address cannot be zero");
   });
 
   it("set the address for the Constants contract", async () => {
@@ -127,6 +139,45 @@ describe("📦 GuildFactory", () => {
       guildToken = GuildTokenFactory.attach(guildTokenAddress);
     });
 
+    it("reverts if guildName is empty string", async () => {
+      await expect(
+        guildFactory.createGuild(
+          "",
+          guildSymbol,
+          dao.address,
+          developer.address
+        )
+      ).to.be.revertedWith("Guild name cannot be empty");
+    });
+
+    it("reverts if guildSymbol is empty string", async () => {
+      await expect(
+        guildFactory.createGuild(guildName, "", dao.address, developer.address)
+      ).to.be.revertedWith("Guild symbol cannot be empty");
+    });
+
+    it("reverts if dao is zero", async () => {
+      await expect(
+        guildFactory.createGuild(
+          guildName,
+          guildSymbol,
+          ethers.constants.AddressZero,
+          developer.address
+        )
+      ).to.be.revertedWith("DAO address cannot be zero");
+    });
+
+    it("reverts if developer is zero", async () => {
+      await expect(
+        guildFactory.createGuild(
+          guildName,
+          guildSymbol,
+          dao.address,
+          ethers.constants.AddressZero
+        )
+      ).to.be.revertedWith("Developer address cannot be zero");
+    });
+
     it("reverts with 'Pausable: paused' error if contract is paused", async () => {
       await guildFactory.connect(dao).pause();
       await expect(
@@ -159,7 +210,7 @@ describe("📦 GuildFactory", () => {
 
     it("sets the guildToken's address", async () => {
       expect(typeof guildTokenAddress).to.eq("string");
-      expect(guildTokenAddress.slice(0, 2)).to.eq("0x");
+      expect(ethers.utils.isAddress(guildTokenAddress)).to.be.true;
       expect(guildTokenAddress.length).to.eq(42);
       expect(guildToken.address).to.eq(guildTokenAddress);
     });
@@ -212,7 +263,7 @@ describe("📦 GuildFactory", () => {
 
       it("creates a distinguished address from the first", async () => {
         expect(typeof secondGuildTokenAddress).to.eq("string");
-        expect(secondGuildTokenAddress.slice(0, 2)).to.eq("0x");
+        expect(ethers.utils.isAddress(secondGuildTokenAddress)).to.be.true;
         expect(secondGuildTokenAddress).to.not.eq(guildTokenAddress);
       });
     });
