@@ -51,9 +51,6 @@ describe("📦 GuildFactory", () => {
     await guildFactory.deployed();
   });
 
-  // Skipped because tokenImplementation is internal
-  it.skip("set the proxy tokenImplementation variable");
-
   it("set the address for the Constants contract", async () => {
     const guildFactoryAddress = await guildFactory.fxConstants();
     expect(typeof guildFactoryAddress).to.eq("string");
