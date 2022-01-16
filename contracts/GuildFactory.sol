@@ -43,7 +43,9 @@ contract GuildFactory is Pausable, AccessControl {
         string memory guildSymbol,
         address dao,
         address developer
-    ) public payable whenNotPaused returns (address) {
+    ) public whenNotPaused returns (address) {
+        // TODO does this function need to be payable?
+
         // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
         ERC1967Proxy proxy = new ERC1967Proxy(
             tokenImplementation,

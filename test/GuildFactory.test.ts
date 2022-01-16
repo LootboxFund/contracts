@@ -10,7 +10,12 @@ import {
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { BigNumber, ContractTransaction } from "ethers";
-import { DAO_ROLE, DEVELOPER_ROLE, stripZeros } from "./helpers/test-helpers";
+import {
+  DAO_ROLE,
+  DEVELOPER_ROLE,
+  generatePermissionRevokeMessage,
+  stripZeros,
+} from "./helpers/test-helpers";
 
 describe("📦 GuildFactory", () => {
   let deployer: SignerWithAddress;
@@ -106,7 +111,6 @@ describe("📦 GuildFactory", () => {
     const guildName: string = "GuildFXTest";
     const guildSymbol: string = "GFXT";
     const guildDecimals: number = 18;
-    const initialSupply: BigNumber = ethers.utils.parseUnits("100", 18);
 
     before(async () => {
       GuildTokenFactory = await ethers.getContractFactory("GuildToken");
@@ -138,20 +142,23 @@ describe("📦 GuildFactory", () => {
       ).to.be.revertedWith("Pausable: paused");
     });
 
-    // TODO
     it.skip("is payable and can receive native token");
 
     it("emits a GuildCreated event", async () => {
       await expect(transaction).to.emit(guildFactory, "GuildCreated");
-      // TODO add explicit arg check (guildTokenAddress is all lowercase and not matching)
-      // .withArgs(
-      //   guildTokenAddress,
+      // await expect(transaction).to.emit(guildFactory, "GuildCreated").withArgs(
+      //   guildTokenAddress, // TODO add explicit arg check (guildTokenAddress is all lowercase and not matching)
       //   guildName,
       //   guildSymbol,
       //   dao.address,
       //   developer.address
       // );
     });
+
+    // TODO
+    it.skip(
+      "returns a hashed transaction resolving into the guildToken's proxy address"
+    );
 
     it("sets the guildToken's address", async () => {
       expect(typeof guildTokenAddress).to.eq("string");
@@ -188,18 +195,6 @@ describe("📦 GuildFactory", () => {
       );
     });
 
-    it.skip(`mints ${initialSupply.toString()} initial tokens`, async () => {
-      console.log("starting");
-      const supply = await guildToken.currentSupply();
-      console.log("supply:", supply);
-      expect(supply).to.eq(initialSupply);
-    });
-
-    it.skip("sets the correct guildFX treasury value in the deployed contract", () => {
-      // THIS SHOULD BE USED FROM THE CONSTANTS CONTRACT
-      // const guildToken = GuildTokenFactory.attach(guildTokenAddress);
-    });
-
     describe("when making a second guildToken", () => {
       let secondGuildTokenAddress: string;
       let secondGuildToken: GuildToken;
@@ -224,8 +219,55 @@ describe("📦 GuildFactory", () => {
         expect(secondGuildTokenAddress).to.not.eq(guildTokenAddress);
       });
     });
-  });
+    describe("pause()", () => {
+      it("reverts with access control error if not called by the DAO", async () => {
+        await expect(guildToken.connect(purchaser).pause()).to.be.revertedWith(
+          generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
+        );
+      });
 
-  describe.skip("pause()", () => {});
-  describe.skip("unpause()", () => {});
+      describe("called by address with the DAO_ROLE", () => {
+        let transaction: ContractTransaction;
+
+        beforeEach(async () => {
+          transaction = await guildFactory.connect(dao).pause();
+        });
+
+        it("pauses the contract", async () => {
+          expect(await guildFactory.paused()).to.be.equal(true);
+        });
+
+        it("emits a paused event", async () => {
+          await expect(transaction).to.emit(guildFactory, "Paused");
+        });
+      });
+    });
+
+    describe("unpause()", () => {
+      it("reverts with with access control error", async () => {
+        await expect(
+          guildFactory.connect(purchaser).unpause()
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
+        );
+      });
+
+      describe("called by address with the DAO_ROLE", () => {
+        let transaction: ContractTransaction;
+
+        beforeEach(async () => {
+          await guildFactory.connect(dao).pause();
+          transaction = await guildFactory.connect(dao).unpause();
+        });
+
+        it("unpauses the contract", async () => {
+          expect(await guildFactory.paused()).to.be.equal(false);
+        });
+
+        it("emits an unpaused event", async () => {
+          await expect(transaction).to.emit(guildFactory, "Unpaused");
+        });
+      });
+    });
+  });
 });
