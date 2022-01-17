@@ -535,4 +535,90 @@ describe("📦 GuildFactory", () => {
       });
     });
   });
+
+  describe("🗳 createGuildWithCrowdSale()", () => {
+    let crowdSaleAddress: string;
+    let guildTokenAddress: string;
+    let initialNumberOfGuilds: number;
+    let initialNumberOfCrowdSales: number;
+
+    let GuildTokenFactory: GuildToken__factory;
+    let guildToken: GuildToken;
+    let CrowdSaleFactory: CrowdSale__factory;
+    let crowdSale: CrowdSale;
+
+    let transaction: ContractTransaction;
+
+    const guildName: string = "GuildFXTest";
+    const guildSymbol: string = "GFXT";
+    const guildDecimals: number = 18;
+
+    const startingPriceInUSDCents = 7;
+
+    beforeEach(async () => {
+      initialNumberOfGuilds = (await guildFactory.viewGuildTokens()).length;
+      initialNumberOfCrowdSales = (await guildFactory.viewCrowdSales()).length;
+
+      transaction = await guildFactory.createGuildWithCrowdSale(
+        guildName,
+        guildSymbol,
+        dao.address,
+        developer.address,
+        treasury.address,
+        startingPriceInUSDCents
+      );
+    });
+
+    it("reverts when contract paused", async () => {
+      await guildFactory.connect(dao).pause();
+      await expect(
+        guildFactory.createGuildWithCrowdSale(
+          guildName,
+          guildSymbol,
+          dao.address,
+          developer.address,
+          treasury.address,
+          startingPriceInUSDCents
+        )
+      ).to.be.revertedWith("Pausable: paused");
+    });
+
+    it("emits a GuildCrowdsalePairCreated event", async () => {
+      const guildTokens = (await guildFactory.viewGuildTokens()).map(
+        stripZeros
+      );
+      const guildCrowdSales = (await guildFactory.viewCrowdSales()).map(
+        stripZeros
+      );
+      expect(guildTokens.length).gt(initialNumberOfGuilds);
+      expect(guildCrowdSales.length).gt(initialNumberOfCrowdSales);
+      await expect(transaction).to.emit(
+        guildFactory,
+        "GuildCrowdsalePairCreated"
+      );
+      // TODO: enable args checking - address capitalization is retained in the EnumberableSet
+      // .withArgs(
+      //   guildTokens[guildTokens.length - 1],
+      //   guildCrowdSales[guildCrowdSales.length - 1]
+      // );
+    });
+
+    it("adds an address in the GUILD_TOKEN_PROXIES set", async () => {
+      const guildTokens = (await guildFactory.viewGuildTokens()).map(
+        stripZeros
+      );
+      expect(guildTokens.length).eq(initialNumberOfGuilds + 1);
+      expect(ethers.utils.isAddress(guildTokens[guildTokens.length - 1])).to.be
+        .true;
+    });
+
+    it("adds an address in the CROWD_SALE_PROXIES set", async () => {
+      const crowdSales = (await guildFactory.viewCrowdSales()).map(stripZeros);
+      expect(crowdSales.length).eq(initialNumberOfCrowdSales + 1);
+      expect(ethers.utils.isAddress(crowdSales[crowdSales.length - 1])).to.be
+        .true;
+    });
+
+    it.skip("returns a hash resolving in the guild token and crowdsale addresses", async () => {});
+  });
 });

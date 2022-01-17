@@ -147,7 +147,7 @@ contract GuildFactory is Pausable, AccessControl {
         address developer,
         address payable treasury,
         uint256 startingPriceInUSDCents
-    ) public whenNotPaused returns (address) {
+    ) public whenNotPaused returns (address, address) {
         // TODO does this function need to be payable?
 
         address guildToken = this.createGuild(
@@ -166,6 +166,7 @@ contract GuildFactory is Pausable, AccessControl {
         );
 
         emit GuildCrowdsalePairCreated(guildToken, crowdSale);
+        return (address(guildToken), address(crowdSale));
     }
 
     function viewGuildTokens() public view returns (bytes32[] memory) {
