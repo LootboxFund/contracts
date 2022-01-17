@@ -7,7 +7,6 @@ pragma solidity 0.8.4;
 
 import "hardhat/console.sol";
 
-import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -42,7 +41,7 @@ interface IERC20 {
 }
 
 
-contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
+contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
     
     AggregatorV3Interface internal priceFeedBNB;
     AggregatorV3Interface internal priceFeedETH;
@@ -54,7 +53,6 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
     // only the DAO can control Treasury
     bytes32 constant DAO_ROLE = keccak256("DAO_ROLE");
     bytes32 constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE");
-    bytes32 constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE");
 
 	uint currentPriceUSDCents;
 
@@ -79,7 +77,7 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
 
-    // ERC1967 UUPS Upgradeable
+    // UUPS Upgradeable
     function initialize(
         address _guildToken,
         address _daoAddress, 
@@ -87,7 +85,6 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
         address payable _treasuryAddress,
         uint _startingPriceInUSDCents
     ) initializer public {
-        __ERC20_init("CrowdSale", "CROWDSALE_GUILD_TOKEN");
         __Pausable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
@@ -99,8 +96,6 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
 		GUILD = _guildToken;
 
         _grantRole(DAO_ROLE, _daoAddress);
-        _grantRole(GOVERNOR_ROLE, _daoAddress);
-        _grantRole(GOVERNOR_ROLE, msg.sender);
         _grantRole(DEVELOPER_ROLE, _developerAddress);
 
 	}
@@ -369,11 +364,11 @@ contract CrowdSale is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
         emit Purchase(_beneficiary, address(0), msg.value, guildPurchasedAmount, currentPriceUSDCents);
     }
     
-    function pause() public onlyRole(GOVERNOR_ROLE) {
+    function pause() public onlyRole(DAO_ROLE) {
         _pause();
     }
 
-    function unpause() public onlyRole(GOVERNOR_ROLE) {
+    function unpause() public onlyRole(DAO_ROLE) {
         _unpause();
     }
 

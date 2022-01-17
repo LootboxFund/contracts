@@ -1,10 +1,7 @@
 import { expect } from "chai";
 import { ethers, upgrades } from "hardhat";
-// @ts-ignore Seems like they don't have any type declarations at this time
-import { constants } from "@openzeppelin/test-helpers";
 import {
   DAO_ROLE,
-  GOVERNOR_ROLE,
   generatePermissionRevokeMessage,
   MINTER_ROLE,
 } from "./helpers/test-helpers";
@@ -39,7 +36,7 @@ declare module "mocha" {
   }
 }
 
-describe("📦 CrowdSale of GAMER token", async function () {
+describe("📦 CrowdSale of GUILD token", async function () {
   let deployer: SignerWithAddress;
   let treasury: SignerWithAddress;
   let purchaser: SignerWithAddress;
@@ -76,6 +73,9 @@ describe("📦 CrowdSale of GAMER token", async function () {
   let dai_stablecoin: DAI;
   let dai_pricefeed = "0x132d3C0B1D2cEa0BC552588063bdBb210FDeecfA";
 
+  const GUILD_TOKEN_NAME = "GuildTokenTest";
+  const GUILD_TOKEN_SYMBOL = "GUILDT";
+
   const startingPriceInUSDCents = 7;
 
   before(async function () {
@@ -91,9 +91,12 @@ describe("📦 CrowdSale of GAMER token", async function () {
   });
 
   beforeEach(async function () {
-    token = (await upgrades.deployProxy(Token, { kind: "uups" })) as GuildToken;
+    token = (await upgrades.deployProxy(
+      Token,
+      [GUILD_TOKEN_NAME, GUILD_TOKEN_SYMBOL, dao.address, developer.address],
+      { kind: "uups" }
+    )) as GuildToken;
     await token.deployed();
-    await token.transferOwnershipToDAO(dao.address, developer.address);
 
     crowdSale = (await upgrades.deployProxy(
       CrowdSale,
@@ -141,20 +144,8 @@ describe("📦 CrowdSale of GAMER token", async function () {
       );
   });
 
-  it("has CrowdSale name", async function () {
-    expect(await crowdSale.name()).to.eq("CrowdSale");
-  });
-
-  it("has CROWDSALE_GAMER_TOKEN symbol", async function () {
-    expect(await crowdSale.symbol()).to.eq("CROWDSALE_GAMER_TOKEN");
-  });
-
-  it("has 18 decimals", async function () {
-    expect(await crowdSale.decimals()).to.eq(18);
-  });
-
-  it("sets the GAMER token address correctly", async function () {
-    expect(await crowdSale.GAMER()).to.eq(token.address);
+  it("sets the GUILD token address correctly", async function () {
+    expect(await crowdSale.GUILD()).to.eq(token.address);
   });
 
   it("sets the treasury address correctly", async function () {
@@ -251,7 +242,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
     );
   });
 
-  describe("pause()", () => {
+  describe("🗳 pause()", () => {
     describe("called by address with the GOVERNOR_ROLE", () => {
       let promise: Promise<any>;
 
@@ -269,15 +260,15 @@ describe("📦 CrowdSale of GAMER token", async function () {
       });
     });
 
-    it("reverts with access control error when called with address without GOVERNOR_ROLE", async () => {
+    it("reverts with access control error when called with address without DAO_ROLE", async () => {
       await expect(crowdSale.connect(purchaser).pause()).to.be.revertedWith(
-        generatePermissionRevokeMessage(purchaser.address, GOVERNOR_ROLE)
+        generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
       );
     });
   });
 
-  describe("unpause()", () => {
-    describe("called by address with the GOVERNOR_ROLE", function () {
+  describe("🗳 unpause()", () => {
+    describe("called by address with the DAO_ROLE", function () {
       let promise: Promise<any>;
 
       beforeEach(async () => {
@@ -295,14 +286,14 @@ describe("📦 CrowdSale of GAMER token", async function () {
       });
     });
 
-    it("reverts with access control error when called with address without GOVERNOR_ROLE", async () => {
+    it("reverts with access control error when called with address without DAO_ROLE", async () => {
       await expect(crowdSale.connect(purchaser).unpause()).to.be.revertedWith(
-        generatePermissionRevokeMessage(purchaser.address, GOVERNOR_ROLE)
+        generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
       );
     });
   });
 
-  describe("buyer can purchase GAMER tokens using USDC", async () => {
+  describe("buyer can purchase GUILD tokens using USDC", async () => {
     let stableCoinDecimals: number;
     let seedUserStableCoinAmount: BigNumber;
     let seedTreasuryStableCoinAmount: BigNumber;
@@ -370,7 +361,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
       ).to.equal(stablecoinAmount);
     });
 
-    it("purchaser exchanges 10 USDC for ~142 GAMER at a price of $0.07/GAMER", async () => {
+    it("purchaser exchanges 10 USDC for ~142 GUILD at a price of $0.07/GUILD", async () => {
       await expect(
         await crowdSale.connect(purchaser).buyInUSDC(stablecoinAmount)
       )
@@ -382,7 +373,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
           gamerPurchasedAmount.toString(),
           startingPriceUSDCents.toString()
         );
-      expect(await crowdSale.GAMER()).to.equal(token.address);
+      expect(await crowdSale.GUILD()).to.equal(token.address);
       expect(await usdc_stablecoin.balanceOf(purchaser.address)).to.equal(
         ethers.utils.parseUnits("90", stableCoinDecimals)
       );
@@ -398,7 +389,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
     });
   });
 
-  describe("buyer can purchase GAMER tokens using USDT", async () => {
+  describe("buyer can purchase GUILD tokens using USDT", async () => {
     let stableCoinDecimals: number;
     let seedUserStableCoinAmount: BigNumber;
     let seedTreasuryStableCoinAmount: BigNumber;
@@ -465,7 +456,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
       ).to.equal(stablecoinAmount);
     });
 
-    it("purchaser exchanges 10 USDT for ~142 GAMER at a price of $0.07/GAMER", async () => {
+    it("purchaser exchanges 10 USDT for ~142 GUILD at a price of $0.07/GUILD", async () => {
       await expect(
         await crowdSale.connect(purchaser).buyInUSDT(stablecoinAmount)
       )
@@ -477,7 +468,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
           gamerPurchasedAmount.toString(),
           startingPriceUSDCents.toString()
         );
-      expect(await crowdSale.GAMER()).to.equal(token.address);
+      expect(await crowdSale.GUILD()).to.equal(token.address);
       expect(await usdt_stablecoin.balanceOf(purchaser.address)).to.equal(
         ethers.utils.parseUnits("90", stableCoinDecimals)
       );
@@ -493,7 +484,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
     });
   });
 
-  describe("buyer can purchase GAMER tokens using UST", async () => {
+  describe("buyer can purchase GUILD tokens using UST", async () => {
     let stableCoinDecimals: number;
     let seedUserStableCoinAmount: BigNumber;
     let seedTreasuryStableCoinAmount: BigNumber;
@@ -556,7 +547,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
       ).to.equal(stablecoinAmount);
     });
 
-    it("purchaser exchanges 10 UST for ~142 GAMER at a price of $0.07/GAMER", async () => {
+    it("purchaser exchanges 10 UST for ~142 GUILD at a price of $0.07/GUILD", async () => {
       await expect(
         await crowdSale.connect(purchaser).buyInUST(stablecoinAmount)
       )
@@ -568,7 +559,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
           gamerPurchasedAmount.toString(),
           startingPriceUSDCents.toString()
         );
-      expect(await crowdSale.GAMER()).to.equal(token.address);
+      expect(await crowdSale.GUILD()).to.equal(token.address);
       expect(await ust_stablecoin.balanceOf(purchaser.address)).to.equal(
         ethers.utils.parseUnits("90", stableCoinDecimals)
       );
@@ -584,7 +575,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
     });
   });
 
-  describe("buyer can purchase GAMER tokens using ETH", async () => {
+  describe("buyer can purchase GUILD tokens using ETH", async () => {
     let stableCoinDecimals: number;
     let seedUserStableCoinAmount: BigNumber;
     let seedTreasuryStableCoinAmount: BigNumber;
@@ -648,7 +639,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
       ).to.equal(stablecoinAmount);
     });
 
-    it("purchaser exchanges ETH for GAMER at a price of $0.07/GAMER", async () => {
+    it("purchaser exchanges ETH for GUILD at a price of $0.07/GUILD", async () => {
       await expect(
         await crowdSale.connect(purchaser).buyInETH(stablecoinAmount)
       )
@@ -660,7 +651,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
           gamerPurchasedAmount.toString(),
           startingPriceUSDCents.toString()
         );
-      expect(await crowdSale.GAMER()).to.equal(token.address);
+      expect(await crowdSale.GUILD()).to.equal(token.address);
       expect(await eth_stablecoin.balanceOf(purchaser.address)).to.equal(
         ethers.utils.parseUnits("90", stableCoinDecimals)
       );
@@ -676,7 +667,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
     });
   });
 
-  describe("buyer can purchase GAMER tokens using DAI", async () => {
+  describe("buyer can purchase GUILD tokens using DAI", async () => {
     let stableCoinDecimals: number;
     let seedUserStableCoinAmount: BigNumber;
     let seedTreasuryStableCoinAmount: BigNumber;
@@ -740,7 +731,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
       ).to.equal(stablecoinAmount);
     });
 
-    it("purchaser exchanges 10 DAI for ~142 GAMER at a price of $0.07/GAMER", async () => {
+    it("purchaser exchanges 10 DAI for ~142 GUILD at a price of $0.07/GUILD", async () => {
       await expect(
         await crowdSale.connect(purchaser).buyInDAI(stablecoinAmount)
       )
@@ -752,7 +743,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
           gamerPurchasedAmount.toString(),
           startingPriceUSDCents.toString()
         );
-      expect(await crowdSale.GAMER()).to.equal(token.address);
+      expect(await crowdSale.GUILD()).to.equal(token.address);
       expect(await dai_stablecoin.balanceOf(purchaser.address)).to.equal(
         ethers.utils.parseUnits("90", stableCoinDecimals)
       );
@@ -768,7 +759,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
     });
   });
 
-  describe("buyer can purchase GAMER tokens using BNB", async () => {
+  describe("buyer can purchase GUILD tokens using BNB", async () => {
     let stableCoinDecimals: number;
     let seedUserStableCoinAmount: BigNumber;
     let seedTreasuryStableCoinAmount: BigNumber;
@@ -833,7 +824,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
       expect(stablecoinPrice.toNumber()).to.be.equal(archivedPrice);
     });
 
-    it("purchaser exchanges native BNB for GAMER at a price of $0.07/GAMER", async () => {
+    it("purchaser exchanges native BNB for GUILD at a price of $0.07/GUILD", async () => {
       await expect(
         await crowdSale
           .connect(purchaser)
@@ -847,7 +838,7 @@ describe("📦 CrowdSale of GAMER token", async function () {
           gamerPurchasedAmount.toString(),
           startingPriceUSDCents.toString()
         );
-      expect(await crowdSale.GAMER()).to.equal(token.address);
+      expect(await crowdSale.GUILD()).to.equal(token.address);
       expect(
         (await purchaser.getBalance()).gt(
           ethers.BigNumber.from("9989000000000000000000")
@@ -858,7 +849,6 @@ describe("📦 CrowdSale of GAMER token", async function () {
           ethers.BigNumber.from("9999000000000000000000")
         )
       ).to.be.equal(true);
-      console.log("treasury", (await treasury.getBalance()).toString());
       expect(
         (await treasury.getBalance()).eq(
           stablecoinAmount.add(ethers.BigNumber.from("10000000000000000000000"))
