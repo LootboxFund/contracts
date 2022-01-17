@@ -81,7 +81,7 @@ describe("📦 Constants", async function () {
     ).to.be.equal(true);
   });
 
-  describe("updateTreasuryAddress()", () => {
+  describe("🗳 updateTreasuryAddress()", () => {
     it("reverts with access control error when not called by the dao", async () => {
       const wallets = [deployer, developer, purchaser];
       for (let wallet of wallets) {

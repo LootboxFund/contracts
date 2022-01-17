@@ -47,6 +47,8 @@ contract GuildFactory is Pausable, AccessControl {
         uint256 startingPriceInUSDCents
     );
 
+    event GuildCrowdsalePairCreated(address guildToken, address crowdsale);
+
     constructor(address dao, address _fxConstants) {
         require(dao != address(0), "DAO address cannot be zero");
         require(
@@ -65,6 +67,7 @@ contract GuildFactory is Pausable, AccessControl {
         address dao,
         address developer
     ) public whenNotPaused returns (address) {
+        // TODO set this to internal
         // TODO does this function need to be payable?
         require(bytes(guildName).length != 0, "Guild name cannot be empty");
         require(bytes(guildSymbol).length != 0, "Guild symbol cannot be empty");
@@ -100,6 +103,7 @@ contract GuildFactory is Pausable, AccessControl {
         address payable treasury,
         uint256 startingPriceInUSDCents
     ) public whenNotPaused returns (address) {
+        // TODO set this to internal
         // TODO does this function need to be payable?
         // require(bytes(guildName).length != 0, "Guild name cannot be empty");
         // require(bytes(guildSymbol).length != 0, "Guild symbol cannot be empty");
@@ -136,42 +140,33 @@ contract GuildFactory is Pausable, AccessControl {
         return address(proxy);
     }
 
-    // function createGuildWithCrowdSale(
-    //     string memory guildName,
-    //     string memory guildSymbol,
-    //     address dao,
-    //     address developer
-    // ) public whenNotPaused returns (address) {
-    //     // TODO does this function need to be payable?
+    function createGuildWithCrowdSale(
+        string memory guildName,
+        string memory guildSymbol,
+        address dao,
+        address developer,
+        address payable treasury,
+        uint256 startingPriceInUSDCents
+    ) public whenNotPaused returns (address) {
+        // TODO does this function need to be payable?
 
-    //     address guildToken = this.createGuild(
-    //         guildName,
-    //         guildSymbol,
-    //         dao,
-    //         developer
-    //     );
+        address guildToken = this.createGuild(
+            guildName,
+            guildSymbol,
+            dao,
+            developer
+        );
 
-    //     // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
-    //     ERC1967Proxy proxy = new ERC1967Proxy(
-    //         tokenImplementation,
-    //         abi.encodeWithSelector(
-    //             GuildToken(address(0)).initialize.selector,
-    //             guildName,
-    //             guildSymbol,
-    //             dao,
-    //             developer
-    //         )
-    //     );
-    //     GUILD_TOKEN_PROXIES.add(address(proxy));
-    //     emit GuildCreated(
-    //         address(proxy),
-    //         guildName,
-    //         guildSymbol,
-    //         dao,
-    //         developer
-    //     );
-    //     return address(proxy);
-    // }
+        address crowdSale = this.createCrowdSale(
+            guildToken,
+            dao,
+            developer,
+            treasury,
+            startingPriceInUSDCents
+        );
+
+        emit GuildCrowdsalePairCreated(guildToken, crowdSale);
+    }
 
     function viewGuildTokens() public view returns (bytes32[] memory) {
         // TODO investigate memory usage if GUILD_TOKEN_PROXIES can be huge

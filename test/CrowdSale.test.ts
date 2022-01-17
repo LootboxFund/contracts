@@ -242,7 +242,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     );
   });
 
-  describe("pause()", () => {
+  describe("🗳 pause()", () => {
     describe("called by address with the GOVERNOR_ROLE", () => {
       let promise: Promise<any>;
 
@@ -267,7 +267,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     });
   });
 
-  describe("unpause()", () => {
+  describe("🗳 unpause()", () => {
     describe("called by address with the DAO_ROLE", function () {
       let promise: Promise<any>;
 

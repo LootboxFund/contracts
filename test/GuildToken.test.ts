@@ -93,7 +93,7 @@ describe("📦 GUILD token", async () => {
     ).to.be.equal(false);
   });
 
-  describe("pause()", () => {
+  describe("🗳 pause()", () => {
     describe("called by address with the DAO_ROLE", () => {
       let promise: Promise<unknown>;
 
@@ -126,7 +126,7 @@ describe("📦 GUILD token", async () => {
     });
   });
 
-  describe("unpause()", () => {
+  describe("🗳 unpause()", () => {
     describe("called by address with the DAO_ROLE", () => {
       let promise: Promise<unknown>;
 
@@ -161,7 +161,7 @@ describe("📦 GUILD token", async () => {
     });
   });
 
-  describe("whitelistMint()", () => {
+  describe("🗳 whitelistMint()", () => {
     it("reverts with access control error if not called by the DAO", async () => {
       await expect(
         token.connect(purchaser).whitelistMint(purchaser.address, true)
@@ -334,7 +334,7 @@ describe("📦 GUILD token", async () => {
     });
   });
 
-  describe("viewMintsWhitelist()", () => {
+  describe("🗳 viewMintsWhitelist()", () => {
     it("returns an empty array when no mints have been whitelisted", async () => {
       expect(await token.viewMintsWhitelist()).to.deep.equal([]);
     });
@@ -362,7 +362,7 @@ describe("📦 GUILD token", async () => {
     });
   });
 
-  describe("mintRequest()", () => {
+  describe("🗳 mintRequest()", () => {
     it("reverts with permission error when not called with MINTER_ROLE", async () => {
       const promise = token
         .connect(purchaser)
@@ -473,7 +473,7 @@ describe("📦 GUILD token", async () => {
     });
   });
 
-  describe("burn()", () => {
+  describe("🗳 burn()", () => {
     it("reverts with 'Pausable: paused' error if contract is paused", async () => {
       await token.connect(dao).pause();
       await expect(token.connect(dao).burn(1)).to.be.revertedWith(

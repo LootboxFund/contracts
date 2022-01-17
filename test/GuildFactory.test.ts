@@ -75,7 +75,7 @@ describe("📦 GuildFactory", () => {
     expect(await guildFactory.hasRole(DAO_ROLE, dao.address)).to.be.true;
   });
 
-  describe("pause()", () => {
+  describe("🗳 pause()", () => {
     it("reverts with access control error if not called by the DAO", async () => {
       await expect(guildFactory.connect(purchaser).pause()).to.be.revertedWith(
         generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
@@ -99,7 +99,7 @@ describe("📦 GuildFactory", () => {
     });
   });
 
-  describe("unpause()", () => {
+  describe("🗳 unpause()", () => {
     it("reverts with with access control error", async () => {
       await expect(
         guildFactory.connect(purchaser).unpause()
@@ -126,7 +126,7 @@ describe("📦 GuildFactory", () => {
     });
   });
 
-  describe("viewGuildTokens()", () => {
+  describe("🗳 viewGuildTokens()", () => {
     it("returns empty array when no guildTokens have been created yet", async () => {
       expect(await guildFactory.viewGuildTokens()).to.deep.eq([]);
     });
@@ -165,7 +165,7 @@ describe("📦 GuildFactory", () => {
     });
   });
 
-  describe("viewCrowdSales()", () => {
+  describe("🗳 viewCrowdSales()", () => {
     it("returns empty array when no crowdSales have been created yet", async () => {
       expect(await guildFactory.viewCrowdSales()).to.deep.eq([]);
     });
@@ -174,11 +174,11 @@ describe("📦 GuildFactory", () => {
       const nContractsToMake = 5;
       for (let n = 0; n < nContractsToMake; n++) {
         await guildFactory.createCrowdSale(
-            deployer.address, // Should be erc20 address, but does not matter for these tests
-            dao.address,
-            developer.address,
-            treasury.address,
-            1
+          deployer.address, // Should be erc20 address, but does not matter for these tests
+          dao.address,
+          developer.address,
+          treasury.address,
+          1
         );
         const proxies = await guildFactory.viewCrowdSales();
         expect(proxies.length).to.eq(n + 1);
@@ -192,11 +192,11 @@ describe("📦 GuildFactory", () => {
       const nContractsToMake = 5;
       for (let n = 0; n < nContractsToMake; n++) {
         await guildFactory.createCrowdSale(
-            deployer.address, // Should be erc20 address, but does not matter for these tests
-            dao.address,
-            developer.address,
-            treasury.address,
-            1
+          deployer.address, // Should be erc20 address, but does not matter for these tests
+          dao.address,
+          developer.address,
+          treasury.address,
+          1
         );
       }
       const proxies = await guildFactory.viewCrowdSales();
@@ -206,7 +206,7 @@ describe("📦 GuildFactory", () => {
     });
   });
 
-  describe("createGuild()", () => {
+  describe("🗳 createGuild()", () => {
     let guildTokenAddress: string;
     let GuildTokenFactory: GuildToken__factory;
     let guildToken: GuildToken;
@@ -363,13 +363,13 @@ describe("📦 GuildFactory", () => {
     });
   });
 
-  describe("createCrowdSale()", () => {
+  describe("🗳 createCrowdSale()", () => {
     let crowdSaleAddress: string;
     let CrowdSaleFactory: CrowdSale__factory;
     let crowdSale: CrowdSale;
     let transaction: ContractTransaction;
     const startingPriceInUSDCents = 7;
-    
+
     before(async () => {
       CrowdSaleFactory = await ethers.getContractFactory("CrowdSale");
     });
@@ -456,8 +456,8 @@ describe("📦 GuildFactory", () => {
           ethers.constants.AddressZero,
           -1
         )
-      // ).to.be.revertedWith('Error: value out-of-bounds (argument="startingPriceInUSDCents", value=-1, code=INVALID_ARGUMENT, version=abi/5.5.0)');
-      // TODO: specify revert message
+        // ).to.be.revertedWith('Error: value out-of-bounds (argument="startingPriceInUSDCents", value=-1, code=INVALID_ARGUMENT, version=abi/5.5.0)');
+        // TODO: specify revert message
       ).to.be.reverted;
     });
 
