@@ -7,7 +7,7 @@ import { ethers, upgrades } from "hardhat";
 import { DAI, ETH, USDC, USDT, UST } from "../typechain";
 import { logToFile } from "./helpers/logger";
 
-const OxSoil = "0xaC15B26acF4334a62961237a0DCEC90eDFE1B251";
+const Oxnewton = "0xaC15B26acF4334a62961237a0DCEC90eDFE1B251";
 const Oxterran = "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F";
 
 // Needed to slow down transactions to avoid "replacement fee too low" errors...
@@ -48,6 +48,9 @@ const STABLECOINS = {
 
 const ENVIRONMENT = "development";
 
+const GUILD_TOKEN_NAME = "GuildFX";
+const GUILD_TOKEN_SYMBOL = "GUILD";
+
 async function main() {
   const [deployer, treasury, dao, developer, purchaser] =
     await ethers.getSigners();
@@ -74,7 +77,7 @@ async function main() {
   );
   await sleep();
   await ethStablecoin.mint(
-    OxSoil,
+    Oxnewton,
     ethers.BigNumber.from("100000000000000000000")
   );
   await sleep();
@@ -104,7 +107,7 @@ async function main() {
   );
   await sleep();
   await usdcStablecoin.mint(
-    OxSoil,
+    Oxnewton,
     ethers.BigNumber.from("100000000000000000000")
   );
   await sleep();
@@ -127,7 +130,7 @@ async function main() {
   );
   await sleep();
   await usdtStablecoin.mint(
-    OxSoil,
+    Oxnewton,
     ethers.BigNumber.from("100000000000000000000")
   );
   await sleep();
@@ -150,7 +153,7 @@ async function main() {
   );
   await sleep();
   await ustStablecoin.mint(
-    OxSoil,
+    Oxnewton,
     ethers.BigNumber.from("100000000000000000000")
   );
   await sleep();
@@ -173,7 +176,7 @@ async function main() {
   );
   await sleep();
   await daiStablecoin.mint(
-    OxSoil,
+    Oxnewton,
     ethers.BigNumber.from("100000000000000000000")
   );
   await sleep();
@@ -189,18 +192,18 @@ async function main() {
 
   // --------- Deploy GUILD Token --------- //
   const GuildToken = await ethers.getContractFactory("GuildToken");
-  const guildtoken = await upgrades.deployProxy(GuildToken, { kind: "uups" });
+  const guildtoken = await upgrades.deployProxy(
+    GuildToken,
+    [GUILD_TOKEN_NAME, GUILD_TOKEN_SYMBOL, dao.address, developer.address],
+    { kind: "uups" }
+  );
   await guildtoken.deployed();
-  await sleep();
   const GUILD_TOKEN_ADDRESS = guildtoken.address;
   const GUILD = await GuildToken.attach(GUILD_TOKEN_ADDRESS);
   logToFile(
     `---- ${GUILD_TOKEN_ADDRESS} ---> GUILD Token Address\n`,
     LOG_FILE_PATH
   );
-  (
-    await GUILD.transferOwnershipToDAO(DEPLOYER_ADDRESS, DEPLOYER_ADDRESS)
-  ).wait();
   await sleep();
 
   // --------- Deploy the Crowdsale --------- //

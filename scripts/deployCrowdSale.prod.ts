@@ -40,6 +40,9 @@ const STABLECOINS = {
 
 const ENVIRONMENT = "production";
 
+const GUILD_TOKEN_NAME = "GuildFX";
+const GUILD_TOKEN_SYMBOL = "GUILD";
+
 // Needed to slow down transactions to avoid "replacement fee too low" errors...
 const sleep = async (ms = 1000) => {
   return new Promise<void>((resolve) => {
@@ -66,21 +69,18 @@ async function main() {
 
   // --------- Deploy GUILD Token --------- //
   const GuildToken = await ethers.getContractFactory("GuildToken");
-  const guildtoken = await upgrades.deployProxy(GuildToken, { kind: "uups" });
+  const guildtoken = await upgrades.deployProxy(
+    GuildToken,
+    [GUILD_TOKEN_NAME, GUILD_TOKEN_SYMBOL, dao.address, developer.address],
+    { kind: "uups" }
+  );
   await guildtoken.deployed();
   console.log(
     `✅ Deployed Guild Token at contract address ${guildtoken.address}`
   );
-  await sleep();
   const GUILD_TOKEN_ADDRESS = guildtoken.address;
   const GUILD = await GuildToken.attach(GUILD_TOKEN_ADDRESS);
   console.log(`---- ${GUILD_TOKEN_ADDRESS} ---> GUILD Token Address`);
-  (
-    await GUILD.transferOwnershipToDAO(DEPLOYER_ADDRESS, DEPLOYER_ADDRESS)
-  ).wait();
-  console.log(
-    `✅ Transfer ownership to DAO = ${DEPLOYER_ADDRESS} and DEV = ${DEVELOPER_ROLE}`
-  );
   await sleep();
 
   // --------- Deploy the Crowdsale --------- //
