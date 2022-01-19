@@ -9,7 +9,6 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-// TODO: Add management to role DAO_ROLE with DEFAULT_ADMIN_ROLE and add function to set DEFAULT_ADMIN_ROLE to 0
 contract Constants is
     Initializable,
     PausableUpgradeable,
@@ -22,6 +21,19 @@ contract Constants is
 
     // GuildFX treasury
     address payable public treasury;
+    // Addresses for crowdsale
+    address public ETH_ADDRESS;
+    address public USDC_ADDRESS;
+    address public USDT_ADDRESS;
+    address public UST_ADDRESS;
+    address public DAI_ADDRESS;
+    // Addresses for crowdsale price feed
+    address public BNB_PRICE_FEED;
+    address public ETH_PRICE_FEED;
+    address public USDC_PRICE_FEED;
+    address public USDT_PRICE_FEED;
+    address public UST_PRICE_FEED;
+    address public DAI_PRICE_FEED;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
@@ -45,7 +57,49 @@ contract Constants is
         treasury = _treasury;
     }
 
-    function updateTreasuryAddress(address payable _treasury)
+    function setCrowdSaleStableCoins(
+        address eth,
+        address usdc,
+        address usdt,
+        address ust,
+        address dai
+    ) public onlyRole(DAO_ROLE) whenNotPaused {
+        require(eth != address(0), "ETH cannot be zero");
+        require(usdc != address(0), "USDC cannot be zero");
+        require(usdt != address(0), "USDT cannot be zero");
+        require(ust != address(0), "UST cannot be zero");
+        require(dai != address(0), "DAI cannot be zero");
+
+        ETH_ADDRESS = eth;
+        USDC_ADDRESS = usdc;
+        USDT_ADDRESS = usdt;
+        UST_ADDRESS = ust;
+        DAI_ADDRESS = dai;
+    }
+
+    function setOraclePriceFeeds(
+        address bnbPriceFeed,
+        address ethPriceFeed,
+        address usdcPriceFeed,
+        address usdtPriceFeed,
+        address ustPriceFeed,
+        address daiPriceFeed
+    ) public onlyRole(DAO_ROLE) whenNotPaused {
+        require(bnbPriceFeed != address(0), "BNB price feed cannot be zero");
+        require(ethPriceFeed != address(0), "ETH price feed cannot be zero");
+        require(usdcPriceFeed != address(0), "USDC price feed cannot be zero");
+        require(usdtPriceFeed != address(0), "USDT price feed cannot be zero");
+        require(ustPriceFeed != address(0), "UST price feed cannot be zero");
+        require(daiPriceFeed != address(0), "DAI price feed cannot be zero");
+        BNB_PRICE_FEED = bnbPriceFeed;
+        ETH_PRICE_FEED = ethPriceFeed;
+        USDC_PRICE_FEED = usdcPriceFeed;
+        USDT_PRICE_FEED = usdtPriceFeed;
+        UST_PRICE_FEED = ustPriceFeed;
+        DAI_PRICE_FEED = daiPriceFeed;
+    }
+
+    function setTreasuryAddress(address payable _treasury)
         public
         onlyRole(DAO_ROLE)
         whenNotPaused
