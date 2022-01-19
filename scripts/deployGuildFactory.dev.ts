@@ -21,7 +21,7 @@ const sleep = async (ms = 1000) => {
 };
 
 const STARTING_GUILD_PRICE_IN_USD_CENTS = 7;
-const LOG_FILE_PATH = `${__dirname}/logs/deployGuildFActory_log_${Date.now()}.dev.txt`;
+const LOG_FILE_PATH = `${__dirname}/logs/deployGuildFactory_log_${Date.now()}.dev.txt`;
 
 const ENVIRONMENT = "development";
 
