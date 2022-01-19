@@ -40,6 +40,9 @@ const STABLECOINS = {
 
 const ENVIRONMENT = "production";
 
+const GUILD_TOKEN_NAME = "GuildFX";
+const GUILD_TOKEN_SYMBOL = "GUILD";
+
 // Needed to slow down transactions to avoid "replacement fee too low" errors...
 const sleep = async (ms = 1000) => {
   return new Promise<void>((resolve) => {
@@ -64,23 +67,61 @@ async function main() {
   const DEPLOYER_ADDRESS = deployer.address;
   console.log(`---- ${DEPLOYER_ADDRESS} ---> Deployer Address`);
 
+  // --------- Deploy Constants Contract --------- //
+  const Constants = await ethers.getContractFactory("Constants");
+  const constants = await upgrades.deployProxy(
+    Constants,
+    [dao.address, developer.address, treasury.address],
+    {
+      kind: "uups",
+    }
+  );
+  await constants.deployed();
+  const CONSTANTS_ADDRESS = constants.address;
+  console.log(`✅ Deployed Constants Contract ${CONSTANTS_ADDRESS}`);
+  await sleep();
+
+  // --------- Sets Stable Coin Addresses --------- //
+  await constants
+    .connect(dao)
+    .setCrowdSaleStableCoins(
+      STABLECOINS[ENVIRONMENT].ETH.address,
+      STABLECOINS[ENVIRONMENT].USDC.address,
+      STABLECOINS[ENVIRONMENT].USDT.address,
+      STABLECOINS[ENVIRONMENT].UST.address,
+      STABLECOINS[ENVIRONMENT].UST.address
+    );
+  console.log(`✅ Set Stablecoin Addresses`);
+  await sleep();
+
+  // --------- Set Stable Coin Price Feed Addresses --------- //
+  await constants
+    .connect(dao)
+    .setOraclePriceFeeds(
+      STABLECOINS[ENVIRONMENT].BNB.priceFeed,
+      STABLECOINS[ENVIRONMENT].ETH.priceFeed,
+      STABLECOINS[ENVIRONMENT].USDC.priceFeed,
+      STABLECOINS[ENVIRONMENT].USDT.priceFeed,
+      STABLECOINS[ENVIRONMENT].UST.priceFeed,
+      STABLECOINS[ENVIRONMENT].UST.priceFeed
+    );
+  console.log(`✅ Set Stablecoin Price Feed Addresses`);
+  await sleep();
+
   // --------- Deploy GUILD Token --------- //
   const GuildToken = await ethers.getContractFactory("GuildToken");
-  const guildtoken = await upgrades.deployProxy(GuildToken, { kind: "uups" });
+  const guildtoken = await upgrades.deployProxy(
+    GuildToken,
+    [GUILD_TOKEN_NAME, GUILD_TOKEN_SYMBOL, dao.address, developer.address],
+    { kind: "uups" }
+  );
   await guildtoken.deployed();
   console.log(
     `✅ Deployed Guild Token at contract address ${guildtoken.address}`
   );
-  await sleep();
   const GUILD_TOKEN_ADDRESS = guildtoken.address;
   const GUILD = await GuildToken.attach(GUILD_TOKEN_ADDRESS);
   console.log(`---- ${GUILD_TOKEN_ADDRESS} ---> GUILD Token Address`);
-  (
-    await GUILD.transferOwnershipToDAO(DEPLOYER_ADDRESS, DEPLOYER_ADDRESS)
-  ).wait();
-  console.log(
-    `✅ Transfer ownership to DAO = ${DEPLOYER_ADDRESS} and DEV = ${DEVELOPER_ROLE}`
-  );
   await sleep();
 
   // --------- Deploy the Crowdsale --------- //
@@ -91,6 +132,7 @@ async function main() {
       GUILD_TOKEN_ADDRESS,
       DEPLOYER_ADDRESS,
       DEPLOYER_ADDRESS,
+      CONSTANTS_ADDRESS,
       treasury.address,
       STARTING_GUILD_PRICE_IN_USD_CENTS,
     ],
@@ -102,32 +144,9 @@ async function main() {
   const CROWDSALE_ADDRESS = crowdsale.address;
   const CROWDSALE = await Crowdsale.attach(CROWDSALE_ADDRESS);
   console.log(`---- ${CROWDSALE_ADDRESS} ---> GUILD Crowdsale Address`);
-  (
-    await CROWDSALE.setStablecoins(
-      STABLECOINS[ENVIRONMENT].ETH.address,
-      STABLECOINS[ENVIRONMENT].USDC.address,
-      STABLECOINS[ENVIRONMENT].USDT.address,
-      STABLECOINS[ENVIRONMENT].UST.address,
-      STABLECOINS[ENVIRONMENT].DAI.address
-    )
-  ).wait();
-  console.log(`✅ Set the stablecoins`);
-  await sleep();
-  (
-    await CROWDSALE.setOracles(
-      STABLECOINS[ENVIRONMENT].BNB.priceFeed,
-      STABLECOINS[ENVIRONMENT].ETH.priceFeed,
-      STABLECOINS[ENVIRONMENT].USDC.priceFeed,
-      STABLECOINS[ENVIRONMENT].USDT.priceFeed,
-      STABLECOINS[ENVIRONMENT].UST.priceFeed,
-      STABLECOINS[ENVIRONMENT].DAI.priceFeed
-    )
-  ).wait();
-  await sleep();
-  console.log(`✅ Set the oracles`);
 
   // --------- Whitelist the CrowdSale with MINTER_ROLE --------- //
-  (await GUILD.whitelistMint(crowdsale.address, true)).wait();
+  (await GUILD.connect(dao).whitelistMint(crowdsale.address, true)).wait();
   console.log(`✅ Whitelisted the Mint`);
   await sleep();
 }

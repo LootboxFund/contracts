@@ -17,6 +17,7 @@ import {
   DEVELOPER_ROLE,
   generatePermissionRevokeMessage,
   stripZeros,
+  generateMockAddress,
 } from "./helpers/test-helpers";
 
 describe("📦 GuildFactory", () => {
@@ -46,7 +47,6 @@ describe("📦 GuildFactory", () => {
         kind: "uups",
       }
     )) as Constants;
-
     await constants.deployed();
 
     guildFactory = await GuildFactory.deploy(dao.address, constants.address);
@@ -497,6 +497,12 @@ describe("📦 GuildFactory", () => {
       expect(ethers.utils.isAddress(crowdSaleAddress)).to.be.true;
       expect(crowdSaleAddress.length).to.eq(42);
       expect(crowdSale.address).to.eq(crowdSaleAddress);
+    });
+
+    it("sets the FXConstants address in the crowdsale", async () => {
+      const constantsAddress = await crowdSale.CONSTANTS();
+      expect(ethers.utils.isAddress(constantsAddress)).to.be.true;
+      expect(constantsAddress).to.eq(constants.address);
     });
 
     it("grants the crowdSale's DAO_ROLE to the dao", async () => {

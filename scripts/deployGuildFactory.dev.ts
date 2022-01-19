@@ -4,8 +4,9 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 import { ethers, upgrades } from "hardhat";
-import { DAI, ETH, USDC, USDT, UST, Constants } from "../typechain";
+import { Constants, DAI, ETH, USDC, USDT, UST } from "../typechain";
 import { logToFile } from "./helpers/logger";
+import { stripZeros } from "../test/helpers/test-helpers";
 
 const Oxnewton = "0xaC15B26acF4334a62961237a0DCEC90eDFE1B251";
 const Oxterran = "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F";
@@ -20,7 +21,12 @@ const sleep = async (ms = 1000) => {
 };
 
 const STARTING_GUILD_PRICE_IN_USD_CENTS = 7;
-const LOG_FILE_PATH = `${__dirname}/logs/deployCrowdSale_log_${Date.now()}.txt`;
+const LOG_FILE_PATH = `${__dirname}/logs/deployGuildFActory_log_${Date.now()}.dev.txt`;
+
+const ENVIRONMENT = "development";
+
+const GUILD_TOKEN_NAME = "GuildFX";
+const GUILD_TOKEN_SYMBOL = "GUILD";
 
 // Chainlink addresses from https://docs.chain.link/docs/binance-smart-chain-addresses
 const STABLECOINS = {
@@ -46,11 +52,6 @@ const STABLECOINS = {
   },
 };
 
-const ENVIRONMENT = "development";
-
-const GUILD_TOKEN_NAME = "GuildFX";
-const GUILD_TOKEN_SYMBOL = "GUILD";
-
 async function main() {
   const [deployer, treasury, dao, developer, purchaser] =
     await ethers.getSigners();
@@ -58,7 +59,7 @@ async function main() {
   logToFile(
     `
   
----------- DEPLOY CROWDSALE (development) ----------
+---------- DEPLOY GUILD FACTORY (development) ----------
   
 ---- Script starting
 
@@ -218,7 +219,7 @@ async function main() {
       daiStablecoin.address
     );
   logToFile(
-    `-------------------------------> Set Stablecoin Addresses\n`,
+    `---------------------------------------------------> Set Stablecoin Addresses\n`,
     LOG_FILE_PATH
   );
   await sleep();
@@ -235,57 +236,59 @@ async function main() {
       STABLECOINS[ENVIRONMENT].UST.priceFeed
     );
   logToFile(
-    `-------------------------------> Set Stablecoin Price Feed Addresses\n`,
+    `---------------------------------------------------> Set Stablecoin Price Feed Addresses\n`,
     LOG_FILE_PATH
   );
   await sleep();
 
-  // --------- Deploy GUILD Token --------- //
-  const GuildToken = await ethers.getContractFactory("GuildToken");
-  const guildtoken = await upgrades.deployProxy(
-    GuildToken,
-    [GUILD_TOKEN_NAME, GUILD_TOKEN_SYMBOL, dao.address, developer.address],
-    { kind: "uups" }
+  // --------- Deploy Guild Factory --------- //
+  const GuildFactory = await ethers.getContractFactory("GuildFactory");
+  const guildFactory = await GuildFactory.deploy(
+    dao.address,
+    constants.address
   );
-  await guildtoken.deployed();
-  const GUILD_TOKEN_ADDRESS = guildtoken.address;
-  const GUILD = await GuildToken.attach(GUILD_TOKEN_ADDRESS);
+  await guildFactory.deployed();
   logToFile(
-    `---- ${GUILD_TOKEN_ADDRESS} ---> GUILD Token Address\n`,
+    `---- ${guildFactory.address} ---> Guild Factory Contract Address\n`,
     LOG_FILE_PATH
   );
   await sleep();
 
-  // --------- Deploy the Crowdsale --------- //
-  const Crowdsale = await ethers.getContractFactory("CrowdSale");
-  const crowdsale = await upgrades.deployProxy(
-    Crowdsale,
-    [
-      GUILD_TOKEN_ADDRESS,
-      dao.address,
-      developer.address,
-      constants.address,
-      treasury.address,
-      STARTING_GUILD_PRICE_IN_USD_CENTS,
-    ],
-    { kind: "uups" }
+  // --------- Create the GuildToken and Crowdsale --------- //
+  const tx = await guildFactory.createGuildWithCrowdSale(
+    GUILD_TOKEN_NAME,
+    GUILD_TOKEN_SYMBOL,
+    dao.address,
+    developer.address,
+    treasury.address,
+    STARTING_GUILD_PRICE_IN_USD_CENTS
   );
-  await crowdsale.deployed();
-  await sleep();
-  const CROWDSALE_ADDRESS = crowdsale.address;
-  const CROWDSALE = await Crowdsale.attach(CROWDSALE_ADDRESS);
-  await sleep();
+
+  await tx.wait();
+  const [guildTokenAddress] = (await guildFactory.viewGuildTokens()).map(
+    stripZeros
+  );
+  const [crowdsaleAddress] = (await guildFactory.viewGuildTokens()).map(
+    stripZeros
+  );
   logToFile(
-    `---- ${CROWDSALE_ADDRESS} ---> GUILD Crowdsale Address\n`,
+    `---- ${guildTokenAddress} ---> Guild Token Address\n`,
     LOG_FILE_PATH
   );
+  logToFile(`---- ${crowdsaleAddress} ---> Crowdsale Address\n`, LOG_FILE_PATH);
+  await sleep();
 
   // --------- Whitelist the CrowdSale with MINTER_ROLE --------- //
-  (await GUILD.connect(dao).whitelistMint(crowdsale.address, true)).wait();
+  const guildToken = (await ethers.getContractFactory("GuildToken")).attach(
+    guildTokenAddress
+  );
+
+  (await guildToken.connect(dao).whitelistMint(crowdsaleAddress, true)).wait();
+
   logToFile(
     `
     ---- Whitelist a mint!
-    Crowdsale = ${crowdsale.address}
+    Crowdsale = ${crowdsaleAddress}
   \n`,
     LOG_FILE_PATH
   );

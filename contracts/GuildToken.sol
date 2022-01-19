@@ -63,8 +63,6 @@ contract GuildToken is
         // set current supply
         currentSupply = 0;
 
-        // temporarily grant default admin role to the original deployer
-        // be careful not to lose the original deployer while finishing the entire deploy script
         _grantRole(DAO_ROLE, _dao);
         _grantRole(DEVELOPER_ROLE, _developer);
     }
