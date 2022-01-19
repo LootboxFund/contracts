@@ -189,7 +189,6 @@ contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeab
             uint timeStamp,
             uint80 answeredInRound
         ) = priceFeedETH.latestRoundData();
-        // console.log("ETH price in USD: %s", price);
         // If the round is not complete yet, timestamp is 0
         require(timeStamp > 0, "Round not complete");
         return price;
