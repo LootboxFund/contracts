@@ -4,7 +4,7 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 import { ethers, upgrades } from "hardhat";
-import { DAI, ETH, USDC, USDT, UST } from "../typechain";
+import { DAI, ETH, USDC, USDT, UST, Constants } from "../typechain";
 import { logToFile } from "./helpers/logger";
 
 const Oxnewton = "0xaC15B26acF4334a62961237a0DCEC90eDFE1B251";
@@ -190,6 +190,56 @@ async function main() {
     LOG_FILE_PATH
   );
 
+  // --------- Deploy Constants Contract --------- //
+  const Constants = await ethers.getContractFactory("Constants");
+  const constants = (await upgrades.deployProxy(
+    Constants,
+    [dao.address, developer.address, treasury.address],
+    {
+      kind: "uups",
+    }
+  )) as Constants;
+  await constants.deployed();
+  const CONSTANTS_ADDRESS = constants.address;
+  logToFile(
+    `---- ${CONSTANTS_ADDRESS} ---> Constants Token Address\n`,
+    LOG_FILE_PATH
+  );
+  await sleep();
+
+  // --------- Sets Stable Coin Addresses --------- //
+  await constants
+    .connect(dao)
+    .setCrowdSaleStableCoins(
+      ethStablecoin.address,
+      usdcStablecoin.address,
+      usdtStablecoin.address,
+      ustStablecoin.address,
+      daiStablecoin.address
+    );
+  logToFile(
+    `-------------------------------> Set Stablecoin Addresses\n`,
+    LOG_FILE_PATH
+  );
+  await sleep();
+
+  // --------- Set Stable Coin Price Feed Addresses --------- //
+  await constants
+    .connect(dao)
+    .setOraclePriceFeeds(
+      STABLECOINS[ENVIRONMENT].BNB.priceFeed,
+      STABLECOINS[ENVIRONMENT].ETH.priceFeed,
+      STABLECOINS[ENVIRONMENT].USDC.priceFeed,
+      STABLECOINS[ENVIRONMENT].USDT.priceFeed,
+      STABLECOINS[ENVIRONMENT].UST.priceFeed,
+      STABLECOINS[ENVIRONMENT].UST.priceFeed
+    );
+  logToFile(
+    `-------------------------------> Set Stablecoin Price Feed Addresses\n`,
+    LOG_FILE_PATH
+  );
+  await sleep();
+
   // --------- Deploy GUILD Token --------- //
   const GuildToken = await ethers.getContractFactory("GuildToken");
   const guildtoken = await upgrades.deployProxy(
@@ -214,6 +264,7 @@ async function main() {
       GUILD_TOKEN_ADDRESS,
       dao.address,
       developer.address,
+      constants.address,
       treasury.address,
       STARTING_GUILD_PRICE_IN_USD_CENTS,
     ],
@@ -229,65 +280,8 @@ async function main() {
     LOG_FILE_PATH
   );
 
-  logToFile(
-    `
-    // ----- Deploy Stablecoins
-    ETH = ${ethStablecoin.address}
-    USDC = ${usdcStablecoin.address}
-    USDT = ${usdtStablecoin.address}
-    UST = ${ustStablecoin.address}
-    DAI = ${daiStablecoin.address}
-  \n`,
-    LOG_FILE_PATH
-  );
-
-  (
-    await CROWDSALE.connect(dao).setStablecoins(
-      ethStablecoin.address,
-      usdcStablecoin.address,
-      usdtStablecoin.address,
-      ustStablecoin.address,
-      daiStablecoin.address
-    )
-  ).wait();
-  logToFile(
-    `
-    ---- Set stablecoins!
-    ETH = ${ethStablecoin.address}
-    USDC = ${usdcStablecoin.address}
-    USDT = ${usdtStablecoin.address}
-    UST = ${ustStablecoin.address}
-    DAI = ${daiStablecoin.address}
-  \n`,
-    LOG_FILE_PATH
-  );
-  await sleep();
-  (
-    await CROWDSALE.connect(dao).setOracles(
-      STABLECOINS[ENVIRONMENT].BNB.priceFeed,
-      STABLECOINS[ENVIRONMENT].ETH.priceFeed,
-      STABLECOINS[ENVIRONMENT].USDC.priceFeed,
-      STABLECOINS[ENVIRONMENT].USDT.priceFeed,
-      STABLECOINS[ENVIRONMENT].UST.priceFeed,
-      STABLECOINS[ENVIRONMENT].DAI.priceFeed
-    )
-  ).wait();
-  logToFile(
-    `
-    ---- Set oracles!
-    BNB = ${STABLECOINS[ENVIRONMENT].BNB.priceFeed}
-    ETH = ${STABLECOINS[ENVIRONMENT].ETH.priceFeed}
-    USDC = ${STABLECOINS[ENVIRONMENT].USDC.priceFeed}
-    USDT = ${STABLECOINS[ENVIRONMENT].USDT.priceFeed}
-    UST = ${STABLECOINS[ENVIRONMENT].UST.priceFeed}
-    DAI = ${STABLECOINS[ENVIRONMENT].DAI.priceFeed}
-  \n`,
-    LOG_FILE_PATH
-  );
-  await sleep();
-
   // --------- Whitelist the CrowdSale with MINTER_ROLE --------- //
-  (await GUILD.whitelistMint(crowdsale.address, true)).wait();
+  (await GUILD.connect(dao).whitelistMint(crowdsale.address, true)).wait();
   logToFile(
     `
     ---- Whitelist a mint!
