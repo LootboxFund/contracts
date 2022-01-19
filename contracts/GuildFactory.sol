@@ -68,7 +68,7 @@ contract GuildFactory is Pausable, AccessControl {
         address dao,
         address developer
     ) public whenNotPaused returns (address) {
-        // TODO set this to internal
+        // TODO set this to private
         // TODO does this function need to be payable?
         require(bytes(guildName).length != 0, "Guild name cannot be empty");
         require(bytes(guildSymbol).length != 0, "Guild symbol cannot be empty");
@@ -104,7 +104,7 @@ contract GuildFactory is Pausable, AccessControl {
         address payable treasury,
         uint256 startingPriceInUSDCents
     ) public whenNotPaused returns (address) {
-        // TODO set this to internal
+        // TODO set this to private
         // TODO does this function need to be payable?
         require(guildToken != address(0), "Guild token cannot be zero");
         require(dao != address(0), "DAO address cannot be zero");

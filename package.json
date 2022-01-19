@@ -7,7 +7,7 @@
     "test": "npx hardhat test",
     "geth-local": "npx hardhat node",
     "deploy-local": "npx hardhat compile && npx hardhat run scripts/deploy.ts --network localhost",
-    "deploy-testnet": "npx hardhat compile && npx hardhat run scripts/deployCrowdSale.dev.ts --network binance_testnet"
+    "deploy-testnet": "npx hardhat compile && npx hardhat run scripts/deployGuildFactory.dev.ts --network binance_testnet"
   },
   "author": "",
   "license": "ISC",
