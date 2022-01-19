@@ -40,6 +40,19 @@ interface IERC20 {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+interface ICONSTANTS {
+    function ETH_ADDRESS() external view returns (address);
+    function USDC_ADDRESS() external view returns (address);
+    function USDT_ADDRESS() external view returns (address);
+    function UST_ADDRESS() external view returns (address);
+    function DAI_ADDRESS() external view returns (address);
+    function BNB_PRICE_FEED() external view returns (address);
+    function ETH_PRICE_FEED() external view returns (address);
+    function USDC_PRICE_FEED() external view returns (address);
+    function USDT_PRICE_FEED() external view returns (address);
+    function UST_PRICE_FEED() external view returns (address);
+    function DAI_PRICE_FEED() external view returns (address);
+}
 
 contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
     
@@ -58,21 +71,14 @@ contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeab
 
     address payable public TREASURY;
 	address public GUILD;
-
-    address public ETH;
-    address public USDC;
-    address public USDT;
-    address public UST; 
-    address public DAI;
+    address public CONSTANTS;
 
     uint256 deploymentStartTime;
     uint256 deploymentEndTime;
 
     bool public isRetired;
 
-    event TestEvent(address indexed _tester, string _message);
     event Purchase(address indexed _buyer, address indexed _stablecoin, uint _stablecoinPaid, uint _guildReceived, uint _priceInUSDCents);
-    event ErrorLog(string _error);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
@@ -82,9 +88,10 @@ contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeab
         address _guildToken,
         address _daoAddress, 
         address _developerAddress, 
+        address _constantsAddress,
         address payable _treasuryAddress,
         uint _startingPriceInUSDCents
-    ) initializer public {
+    ) public initializer {
         __Pausable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
@@ -94,44 +101,22 @@ contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeab
 
         TREASURY = _treasuryAddress;
 		GUILD = _guildToken;
+        CONSTANTS = _constantsAddress;
 
         _grantRole(DAO_ROLE, _daoAddress);
         _grantRole(DEVELOPER_ROLE, _developerAddress);
-
+        
+        setOracles();
 	}
 
-    function testEventLogging() public {
-        emit TestEvent(msg.sender, "This is a test");
-    }
-
-	function setStablecoins(
-        address _eth,
-        address _usdc,
-        address _usdt,
-        address _ust,
-        address _dai
-	) public onlyRole(DAO_ROLE) {
-        ETH = _eth;
-        USDC = _usdc;
-        USDT = _usdt;
-        UST = _ust;
-        DAI = _dai;
-	}
-
-    function setOracles(
-        address _priceFeedBNB,
-        address _priceFeedETH,
-        address _priceFeedUSDC,
-        address _priceFeedUSDT,
-        address _priceFeedUST,
-        address _priceFeedDAI
-    ) public onlyRole(DAO_ROLE) {
-        priceFeedBNB = AggregatorV3Interface(_priceFeedBNB);
-        priceFeedETH = AggregatorV3Interface(_priceFeedETH);
-        priceFeedUSDC = AggregatorV3Interface(_priceFeedUSDC);
-        priceFeedUSDT = AggregatorV3Interface(_priceFeedUSDT);
-        priceFeedUST = AggregatorV3Interface(_priceFeedUST);
-        priceFeedDAI = AggregatorV3Interface(_priceFeedDAI);
+    function setOracles() private {
+        ICONSTANTS constants = ICONSTANTS(CONSTANTS);
+        priceFeedBNB = AggregatorV3Interface(constants.BNB_PRICE_FEED());
+        priceFeedETH = AggregatorV3Interface(constants.ETH_PRICE_FEED());
+        priceFeedUSDC = AggregatorV3Interface(constants.USDC_PRICE_FEED());
+        priceFeedUSDT = AggregatorV3Interface(constants.USDT_PRICE_FEED());
+        priceFeedUST = AggregatorV3Interface(constants.UST_PRICE_FEED());
+        priceFeedDAI = AggregatorV3Interface(constants.DAI_PRICE_FEED());
     }
 
     function setCurrentUSDPriceInCents (uint _price) public onlyRole(DAO_ROLE) {
@@ -234,6 +219,8 @@ contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeab
 		) = priceFeedUSDC.latestRoundData();
         uint guildTokenDecimals = 18;
         uint oracleDecimals = 8;
+        ICONSTANTS constants = ICONSTANTS(CONSTANTS);
+        address USDC = constants.USDC_ADDRESS();
         IERC20 tokenUSDC = IERC20(USDC);
         // calculate the received GUILD at the current prices of USDC & GUILD
 		uint guildPurchasedAmount = _amount * uint(price) * 10**(guildTokenDecimals - uint(tokenUSDC.decimals())) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
@@ -258,6 +245,8 @@ contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeab
         ) = priceFeedUSDT.latestRoundData();
         uint guildTokenDecimals = 18;
         uint oracleDecimals = 8;
+        ICONSTANTS constants = ICONSTANTS(CONSTANTS);
+        address USDT = constants.USDT_ADDRESS();
         IERC20 tokenUSDT = IERC20(USDT);
         // calculate the received GUILD at the current prices of USDT & GUILD
         uint guildPurchasedAmount = _amount * uint(price) * 10**(guildTokenDecimals - uint(tokenUSDT.decimals())) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
@@ -281,6 +270,8 @@ contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeab
         ) = priceFeedUST.latestRoundData();
         uint guildTokenDecimals = 18;
         uint oracleDecimals = 8;
+        ICONSTANTS constants = ICONSTANTS(CONSTANTS);
+        address UST = constants.UST_ADDRESS();
         IERC20 tokenUST = IERC20(UST);
         // calculate the received GUILD at the current prices of USDT & GUILD
         uint guildPurchasedAmount = _amount * uint(price) * 10**(guildTokenDecimals - uint(tokenUST.decimals())) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
@@ -304,6 +295,8 @@ contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeab
         ) = priceFeedETH.latestRoundData();
         uint guildTokenDecimals = 18;
         uint oracleDecimals = 8;
+        ICONSTANTS constants = ICONSTANTS(CONSTANTS);
+        address ETH = constants.ETH_ADDRESS();
         IERC20 tokenETH = IERC20(ETH);
         // calculate the received GUILD at the current prices of ETH & GUILD
         uint guildPurchasedAmount = _amount * uint(price) * 10**(guildTokenDecimals - uint(tokenETH.decimals())) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
@@ -327,6 +320,8 @@ contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeab
         ) = priceFeedDAI.latestRoundData();
         uint guildTokenDecimals = 18;
         uint oracleDecimals = 8;
+        ICONSTANTS constants = ICONSTANTS(CONSTANTS);
+        address DAI = constants.DAI_ADDRESS();
         IERC20 tokenDAI = IERC20(DAI);
         // calculate the received GUILD at the current prices of ETH & GUILD
         uint guildPurchasedAmount = _amount * uint(price) * 10**(guildTokenDecimals - uint(tokenDAI.decimals())) / (currentPriceUSDCents * 10**(oracleDecimals - 2));

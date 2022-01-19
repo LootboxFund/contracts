@@ -10,6 +10,8 @@ import {
 import {
   BNB,
   BNB__factory,
+  Constants,
+  Constants__factory,
   CrowdSale,
   CrowdSale__factory,
   DAI,
@@ -28,14 +30,6 @@ import {
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 
-declare module "mocha" {
-  export interface Suite {
-    // TODO: get explicit typing
-    GuildToken: any;
-    token: any;
-  }
-}
-
 describe("📦 CrowdSale of GUILD token", async function () {
   let deployer: SignerWithAddress;
   let treasury: SignerWithAddress;
@@ -48,6 +42,9 @@ describe("📦 CrowdSale of GUILD token", async function () {
 
   let CrowdSale: CrowdSale__factory;
   let crowdSale: CrowdSale;
+
+  let Constants: Constants__factory;
+  let constants: Constants;
 
   let Eth: ETH__factory;
   let eth_stablecoin: ETH;
@@ -82,6 +79,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     [deployer, treasury, dao, developer, purchaser] = await ethers.getSigners();
     Token = await ethers.getContractFactory("GuildToken");
     CrowdSale = await ethers.getContractFactory("CrowdSale");
+    Constants = await ethers.getContractFactory("Constants");
     Eth = await ethers.getContractFactory("ETH");
     Bnb = await ethers.getContractFactory("BNB");
     Usdc = await ethers.getContractFactory("USDC");
@@ -91,6 +89,45 @@ describe("📦 CrowdSale of GUILD token", async function () {
   });
 
   beforeEach(async function () {
+    constants = (await upgrades.deployProxy(
+      Constants,
+      [dao.address, developer.address, treasury.address],
+      {
+        kind: "uups",
+      }
+    )) as Constants;
+    await constants.deployed();
+
+    eth_stablecoin = (await Eth.deploy(0)) as ETH;
+    bnb_stablecoin = (await Bnb.deploy(0)) as BNB;
+    usdc_stablecoin = (await Usdc.deploy(0)) as USDC;
+    usdt_stablecoin = (await Usdt.deploy(0)) as USDT;
+    ust_stablecoin = (await Ust.deploy(0)) as UST;
+    dai_stablecoin = (await Dai.deploy(0)) as DAI;
+
+    // set the stablecoins in the constants contract
+    await constants
+      .connect(dao)
+      .setCrowdSaleStableCoins(
+        eth_stablecoin.address,
+        usdc_stablecoin.address,
+        usdt_stablecoin.address,
+        ust_stablecoin.address,
+        dai_stablecoin.address
+      );
+
+    // set the price feeds in constants
+    await constants
+      .connect(dao)
+      .setOraclePriceFeeds(
+        bnb_pricefeed,
+        eth_pricefeed,
+        usdc_pricefeed,
+        usdt_pricefeed,
+        ust_pricefeed,
+        dai_pricefeed
+      );
+
     token = (await upgrades.deployProxy(
       Token,
       [GUILD_TOKEN_NAME, GUILD_TOKEN_SYMBOL, dao.address, developer.address],
@@ -104,6 +141,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
         token.address,
         dao.address,
         developer.address,
+        constants.address,
         treasury.address,
         startingPriceInUSDCents,
       ],
@@ -112,36 +150,6 @@ describe("📦 CrowdSale of GUILD token", async function () {
       }
     )) as CrowdSale;
     await crowdSale.deployed();
-
-    eth_stablecoin = (await Eth.deploy(0)) as ETH;
-    bnb_stablecoin = (await Bnb.deploy(0)) as BNB;
-    usdc_stablecoin = (await Usdc.deploy(0)) as USDC;
-    usdt_stablecoin = (await Usdt.deploy(0)) as USDT;
-    ust_stablecoin = (await Ust.deploy(0)) as UST;
-    dai_stablecoin = (await Dai.deploy(0)) as DAI;
-
-    // set the stablecoins in crowdsale
-    await crowdSale
-      .connect(dao)
-      .setStablecoins(
-        eth_stablecoin.address,
-        usdc_stablecoin.address,
-        usdt_stablecoin.address,
-        ust_stablecoin.address,
-        dai_stablecoin.address
-      );
-
-    // set the price feeds in crowdsale
-    await crowdSale
-      .connect(dao)
-      .setOracles(
-        bnb_pricefeed,
-        eth_pricefeed,
-        usdc_pricefeed,
-        usdt_pricefeed,
-        ust_pricefeed,
-        dai_pricefeed
-      );
   });
 
   it("sets the GUILD token address correctly", async function () {
@@ -152,61 +160,8 @@ describe("📦 CrowdSale of GUILD token", async function () {
     expect(await crowdSale.TREASURY()).to.eq(treasury.address);
   });
 
-  it("only allows DAO to set stablecoins and pricefeeds", async function () {
-    await expect(
-      crowdSale
-        .connect(purchaser)
-        .setStablecoins(
-          eth_stablecoin.address,
-          usdc_stablecoin.address,
-          usdt_stablecoin.address,
-          ust_stablecoin.address,
-          dai_stablecoin.address
-        )
-    ).to.be.revertedWith(
-      generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
-    );
-    await expect(
-      crowdSale
-        .connect(dao)
-        .setStablecoins(
-          eth_stablecoin.address,
-          usdc_stablecoin.address,
-          usdt_stablecoin.address,
-          ust_stablecoin.address,
-          dai_stablecoin.address
-        )
-    ).to.not.be.revertedWith(
-      generatePermissionRevokeMessage(dao.address, DAO_ROLE)
-    );
-    await expect(
-      crowdSale
-        .connect(purchaser)
-        .setOracles(
-          bnb_pricefeed,
-          eth_pricefeed,
-          usdc_pricefeed,
-          usdt_pricefeed,
-          ust_pricefeed,
-          dai_pricefeed
-        )
-    ).to.be.revertedWith(
-      generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
-    );
-    await expect(
-      crowdSale
-        .connect(dao)
-        .setOracles(
-          bnb_pricefeed,
-          eth_pricefeed,
-          usdc_pricefeed,
-          usdt_pricefeed,
-          ust_pricefeed,
-          dai_pricefeed
-        )
-    ).to.not.be.revertedWith(
-      generatePermissionRevokeMessage(dao.address, DAO_ROLE)
-    );
+  it("sets the constants address correctly", async function () {
+    expect(await crowdSale.CONSTANTS()).to.eq(constants.address);
   });
 
   it("allows DAO to change the currentPriceInUSDCents", async function () {
@@ -242,8 +197,38 @@ describe("📦 CrowdSale of GUILD token", async function () {
     );
   });
 
+  it("has a bnb oracle price feed", async function () {
+    const stablecoinPrice = await crowdSale.getBNBPrice();
+    expect(stablecoinPrice.toNumber()).gt(0);
+  });
+
+  it("has a eth oracle price feed", async function () {
+    const stablecoinPrice = await crowdSale.getETHPrice();
+    expect(stablecoinPrice.toNumber()).gt(0);
+  });
+
+  it("has a usdc oracle price feed", async function () {
+    const stablecoinPrice = await crowdSale.getUSDCPrice();
+    expect(stablecoinPrice.toNumber()).gt(0);
+  });
+
+  it("has a usdt oracle price feed", async function () {
+    const stablecoinPrice = await crowdSale.getUSDTPrice();
+    expect(stablecoinPrice.toNumber()).gt(0);
+  });
+
+  it("has a ust oracle price feed", async function () {
+    const stablecoinPrice = await crowdSale.getUSTPrice();
+    expect(stablecoinPrice.toNumber()).gt(0);
+  });
+
+  it("has a dai oracle price feed", async function () {
+    const stablecoinPrice = await crowdSale.getDAIPrice();
+    expect(stablecoinPrice.toNumber()).gt(0);
+  });
+
   describe("🗳 pause()", () => {
-    describe("called by address with the GOVERNOR_ROLE", () => {
+    describe("called by address with the DAO_ROLE", () => {
       let promise: Promise<any>;
 
       beforeEach(async () => {
