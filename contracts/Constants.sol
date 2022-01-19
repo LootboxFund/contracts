@@ -20,8 +20,8 @@ contract Constants is
     bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE");
 
     // GuildFX treasury
-    address payable public treasury;
-    // Addresses for crowdsale
+    address payable public TREASURY;
+    // Addresses for crowdsale stable coins
     address public ETH_ADDRESS;
     address public USDC_ADDRESS;
     address public USDT_ADDRESS;
@@ -54,7 +54,7 @@ contract Constants is
 
         _grantRole(DAO_ROLE, dao);
         _grantRole(DEVELOPER_ROLE, developer);
-        treasury = _treasury;
+        TREASURY = _treasury;
     }
 
     function setCrowdSaleStableCoins(
@@ -97,15 +97,6 @@ contract Constants is
         USDT_PRICE_FEED = usdtPriceFeed;
         UST_PRICE_FEED = ustPriceFeed;
         DAI_PRICE_FEED = daiPriceFeed;
-    }
-
-    function setTreasuryAddress(address payable _treasury)
-        public
-        onlyRole(DAO_ROLE)
-        whenNotPaused
-    {
-        require(_treasury != address(0), "Treasury cannot be zero");
-        treasury = _treasury;
     }
 
     // --------- Managing the Token ---------

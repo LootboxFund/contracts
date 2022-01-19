@@ -68,7 +68,7 @@ describe("📦 Constants", async function () {
   });
 
   it("sets the guildFX treasury", async () => {
-    expect(await constants.treasury()).to.eq(treasury.address);
+    expect(await constants.TREASURY()).to.eq(treasury.address);
     // TODO: Add assertion that the treasury is payable
   });
 
@@ -80,61 +80,6 @@ describe("📦 Constants", async function () {
     expect(
       await constants.hasRole(DEVELOPER_ROLE, developer.address)
     ).to.be.equal(true);
-  });
-
-  describe("🗳 setTreasuryAddress()", () => {
-    it("reverts with access control error when not called by the dao", async () => {
-      const wallets = [deployer, developer, purchaser];
-      for (let wallet of wallets) {
-        // Hack - mocha and chai do not seem to have good looping capabilities
-        // I.e. it would be desirable to use it.each or expect.assertions(3) similar to jest
-        await expect(
-          constants.connect(wallet).setTreasuryAddress(wallet.address)
-        ).to.be.revertedWith(
-          generatePermissionRevokeMessage(wallet.address, DAO_ROLE)
-        );
-      }
-    });
-
-    it("reverts when treasury address is zero", async () => {
-      await expect(
-        constants.connect(dao).setTreasuryAddress(ethers.constants.AddressZero)
-      ).to.be.revertedWith("Treasury cannot be zero");
-    });
-
-    describe("when contract is paused", () => {
-      beforeEach(async () => {
-        await constants.connect(dao).pause();
-      });
-
-      it('reverts with "Pausable: paused" error', async () => {
-        await expect(
-          constants.connect(dao).setTreasuryAddress(deployer.address)
-        ).to.be.revertedWith("Pausable: paused");
-      });
-
-      it("reverts with access control error when not called by the dao", async () => {
-        const wallets = [deployer, developer, purchaser];
-        for (let wallet of wallets) {
-          // Hack - mocha and chai do not seem to have good looping capabilities
-          // I.e. it would be desirable to use it.each or expect.assertions(3) similar to jest
-          await expect(
-            constants.connect(wallet).setTreasuryAddress(wallet.address)
-          ).to.be.revertedWith(
-            generatePermissionRevokeMessage(wallet.address, DAO_ROLE)
-          );
-        }
-      });
-    });
-
-    it("successfully updates the treasury", async () => {
-      const targetAddress = deployer.address;
-      await constants.connect(dao).setTreasuryAddress(targetAddress);
-
-      const updatedAddress = await constants.treasury();
-      expect(updatedAddress).to.be.eq(targetAddress);
-      // TODO Add another assertion that updatedAddress is payable
-    });
   });
 
   describe("🗳 setCrowdSaleStableCoins()", () => {
