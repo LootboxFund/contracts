@@ -7,7 +7,7 @@ import { ethers, upgrades } from "hardhat";
 import { DEVELOPER_ROLE } from "../test/helpers/test-helpers";
 
 // $0.07 = 7*10^6
-const STARTING_GUILD_PRICE_IN_USD_CENTS = 7;
+const STARTING_GUILD_PRICE_IN_USD = ethers.BigNumber.from('7000000');  // ~0.07 USD in 18 decimals 
 
 const STABLECOINS = {
   production: {
@@ -134,7 +134,7 @@ async function main() {
       DEPLOYER_ADDRESS,
       CONSTANTS_ADDRESS,
       treasury.address,
-      STARTING_GUILD_PRICE_IN_USD_CENTS,
+      STARTING_GUILD_PRICE_IN_USD,
     ],
     { kind: "uups" }
   );

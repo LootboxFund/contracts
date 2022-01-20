@@ -67,7 +67,7 @@ contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeab
     bytes32 constant DAO_ROLE = keccak256("DAO_ROLE");
     bytes32 constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE");
 
-	uint currentPriceUSDCents;
+	uint currentPriceUSD;  // 8 decimals
 
     address payable public TREASURY;
 	address public GUILD;
@@ -78,7 +78,7 @@ contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeab
 
     bool public isRetired;
 
-    event Purchase(address indexed _buyer, address indexed _stablecoin, uint _stablecoinPaid, uint _guildReceived, uint _priceInUSDCents);
+    event Purchase(address indexed _buyer, address indexed _stablecoin, uint _stablecoinPaid, uint _guildReceived, uint _priceInUSD);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
@@ -90,14 +90,14 @@ contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeab
         address _developerAddress, 
         address _constantsAddress,
         address payable _treasuryAddress,
-        uint _startingPriceInUSDCents
+        uint _startingPriceInUSD
     ) public initializer {
         __Pausable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
  
         deploymentStartTime = block.timestamp;
-        currentPriceUSDCents = _startingPriceInUSDCents;
+        currentPriceUSD = _startingPriceInUSD;
 
         TREASURY = _treasuryAddress;
 		GUILD = _guildToken;
@@ -119,12 +119,18 @@ contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeab
         priceFeedDAI = AggregatorV3Interface(constants.DAI_PRICE_FEED());
     }
 
-    function setCurrentUSDPriceInCents (uint _price) public onlyRole(DAO_ROLE) {
-        currentPriceUSDCents = _price;
+    function setCurrentUSDPrice (uint256 _price) public onlyRole(DAO_ROLE) {
+        currentPriceUSD = _price;
     }
 
-    function getCurrentUSDPriceInCents () external view returns (uint) {
-        return currentPriceUSDCents;
+    function getCurrentUSDPrice () external view returns (uint) {
+        return currentPriceUSD;
+    }
+
+    function getGuildTokenPurchaseAmount (uint256 amountOfStableCoin, uint stablecoinDecimals, uint256 stableCoinPrice) internal view returns (uint256) {
+        // Assumes currentPriceUSD & stableCoinPrice is 8 decimals
+        uint guildTokenDecimals = 18;
+        return amountOfStableCoin * stableCoinPrice * 10 **(guildTokenDecimals - stablecoinDecimals) / currentPriceUSD;
     }
 
     // price is to 8th decimal
@@ -216,13 +222,11 @@ contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeab
 			uint timeStamp,
 			uint80 answeredInRound
 		) = priceFeedUSDC.latestRoundData();
-        uint guildTokenDecimals = 18;
-        uint oracleDecimals = 8;
         ICONSTANTS constants = ICONSTANTS(CONSTANTS);
         address USDC = constants.USDC_ADDRESS();
         IERC20 tokenUSDC = IERC20(USDC);
-        // calculate the received GUILD at the current prices of USDC & GUILD
-		uint guildPurchasedAmount = _amount * uint(price) * 10**(guildTokenDecimals - uint(tokenUSDC.decimals())) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
+        uint guildPurchasedAmount = getGuildTokenPurchaseAmount(_amount, tokenUSDC.decimals(), uint(price));
+
         // transfer stablecoin from buyer wallet to treasury
         tokenUSDC.transferFrom(msg.sender, TREASURY, _amount);
 
@@ -230,7 +234,7 @@ contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeab
         IERC20GUILD tokenGUILD = IERC20GUILD(GUILD);
         tokenGUILD.mintRequest(msg.sender, guildPurchasedAmount);
         // emit purchase event
-        emit Purchase(msg.sender, USDC, _amount, guildPurchasedAmount, currentPriceUSDCents);
+        emit Purchase(msg.sender, USDC, _amount, guildPurchasedAmount, currentPriceUSD);
 	}
 
     function buyInUSDT(uint256 _amount) public payable whenNotPaused {
@@ -242,20 +246,18 @@ contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeab
             uint timeStamp,
             uint80 answeredInRound
         ) = priceFeedUSDT.latestRoundData();
-        uint guildTokenDecimals = 18;
-        uint oracleDecimals = 8;
         ICONSTANTS constants = ICONSTANTS(CONSTANTS);
         address USDT = constants.USDT_ADDRESS();
         IERC20 tokenUSDT = IERC20(USDT);
         // calculate the received GUILD at the current prices of USDT & GUILD
-        uint guildPurchasedAmount = _amount * uint(price) * 10**(guildTokenDecimals - uint(tokenUSDT.decimals())) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
+        uint guildPurchasedAmount = getGuildTokenPurchaseAmount(_amount, tokenUSDT.decimals(), uint(price));
         // transfer stablecoin from buyer wallet to treasury
         tokenUSDT.transferFrom(msg.sender, TREASURY, _amount);
         // transfer GUILD from newly minted, to buyer wallet
         IERC20GUILD tokenGUILD = IERC20GUILD(GUILD);
         tokenGUILD.mintRequest(msg.sender, guildPurchasedAmount);
         // emit purchase event
-        emit Purchase(msg.sender, USDT, _amount, guildPurchasedAmount, currentPriceUSDCents);
+        emit Purchase(msg.sender, USDT, _amount, guildPurchasedAmount, currentPriceUSD);
     }
 
     function buyInUST(uint256 _amount) public payable whenNotPaused {
@@ -267,20 +269,18 @@ contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeab
             uint timeStamp,
             uint80 answeredInRound
         ) = priceFeedUST.latestRoundData();
-        uint guildTokenDecimals = 18;
-        uint oracleDecimals = 8;
         ICONSTANTS constants = ICONSTANTS(CONSTANTS);
         address UST = constants.UST_ADDRESS();
         IERC20 tokenUST = IERC20(UST);
         // calculate the received GUILD at the current prices of USDT & GUILD
-        uint guildPurchasedAmount = _amount * uint(price) * 10**(guildTokenDecimals - uint(tokenUST.decimals())) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
+        uint guildPurchasedAmount = getGuildTokenPurchaseAmount(_amount, tokenUST.decimals(), uint(price));
         // transfer stablecoin from buyer wallet to treasury
         tokenUST.transferFrom(msg.sender, TREASURY, _amount);
         // transfer GUILD from newly minted, to buyer wallet
         IERC20GUILD tokenGUILD = IERC20GUILD(GUILD);
         tokenGUILD.mintRequest(msg.sender, guildPurchasedAmount);
         // emit purchase event
-        emit Purchase(msg.sender, UST, _amount, guildPurchasedAmount, currentPriceUSDCents);
+        emit Purchase(msg.sender, UST, _amount, guildPurchasedAmount, currentPriceUSD);
     }
 
     function buyInETH(uint256 _amount) public payable whenNotPaused {
@@ -292,20 +292,18 @@ contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeab
             uint timeStamp,
             uint80 answeredInRound
         ) = priceFeedETH.latestRoundData();
-        uint guildTokenDecimals = 18;
-        uint oracleDecimals = 8;
         ICONSTANTS constants = ICONSTANTS(CONSTANTS);
         address ETH = constants.ETH_ADDRESS();
         IERC20 tokenETH = IERC20(ETH);
         // calculate the received GUILD at the current prices of ETH & GUILD
-        uint guildPurchasedAmount = _amount * uint(price) * 10**(guildTokenDecimals - uint(tokenETH.decimals())) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
+        uint guildPurchasedAmount = getGuildTokenPurchaseAmount(_amount, tokenETH.decimals(), uint(price));
         // transfer stablecoin from buyer wallet to treasury
         tokenETH.transferFrom(msg.sender, TREASURY, _amount);
         // transfer GUILD from newly minted, to buyer wallet
         IERC20GUILD tokenGUILD = IERC20GUILD(GUILD);
         tokenGUILD.mintRequest(msg.sender, guildPurchasedAmount);
         // emit purchase event
-        emit Purchase(msg.sender, ETH, _amount, guildPurchasedAmount, currentPriceUSDCents);
+        emit Purchase(msg.sender, ETH, _amount, guildPurchasedAmount, currentPriceUSD);
     }
 
     function buyInDAI(uint256 _amount) public payable whenNotPaused {
@@ -323,14 +321,14 @@ contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeab
         address DAI = constants.DAI_ADDRESS();
         IERC20 tokenDAI = IERC20(DAI);
         // calculate the received GUILD at the current prices of ETH & GUILD
-        uint guildPurchasedAmount = _amount * uint(price) * 10**(guildTokenDecimals - uint(tokenDAI.decimals())) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
+        uint guildPurchasedAmount = getGuildTokenPurchaseAmount(_amount, tokenDAI.decimals(), uint(price));
         // transfer stablecoin from buyer wallet to treasury
         tokenDAI.transferFrom(msg.sender, TREASURY, _amount);
         // transfer GUILD from newly minted, to buyer wallet
         IERC20GUILD tokenGUILD = IERC20GUILD(GUILD);
         tokenGUILD.mintRequest(msg.sender, guildPurchasedAmount);
         // emit purchase event
-        emit Purchase(msg.sender, DAI, _amount, guildPurchasedAmount, currentPriceUSDCents);
+        emit Purchase(msg.sender, DAI, _amount, guildPurchasedAmount, currentPriceUSD);
     }
     
     function buyInBNB(address payable _beneficiary) public payable whenNotPaused {
@@ -342,12 +340,9 @@ contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeab
             uint timeStamp, 
             uint80 answeredInRound
         ) = priceFeedBNB.latestRoundData();
-        uint guildTokenDecimals = 18;
         uint bnbDecimals = 18;
-        uint oracleDecimals = 8;
         // calculate the received GUILD at the current prices of BNB & GUILD
-        uint guildPurchasedAmount = msg.value * uint(price) * 10**(guildTokenDecimals - bnbDecimals) / (currentPriceUSDCents * 10**(oracleDecimals - 2));
-
+        uint guildPurchasedAmount = getGuildTokenPurchaseAmount(msg.value, bnbDecimals, uint(price));
         // forward BNB to beneficiary
         TREASURY.transfer(msg.value); 
 
@@ -355,7 +350,7 @@ contract CrowdSale is Initializable, PausableUpgradeable, AccessControlUpgradeab
         IERC20GUILD tokenGUILD = IERC20GUILD(GUILD);
         tokenGUILD.mintRequest(_beneficiary, guildPurchasedAmount);
         // emit purchase event
-        emit Purchase(_beneficiary, address(0), msg.value, guildPurchasedAmount, currentPriceUSDCents);
+        emit Purchase(_beneficiary, address(0), msg.value, guildPurchasedAmount, currentPriceUSD);
     }
     
     function pause() public onlyRole(DAO_ROLE) {
