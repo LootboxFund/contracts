@@ -19,7 +19,7 @@ const sleep = async (ms = 1000) => {
   });
 };
 
-const STARTING_GUILD_PRICE_IN_USD_CENTS = 7;
+const STARTING_GUILD_PRICE_IN_USD = ethers.BigNumber.from('7000000');  // ~0.07 USD in 8 decimals
 const LOG_FILE_PATH = `${__dirname}/logs/deployCrowdSale_log_${Date.now()}.txt`;
 
 // Chainlink addresses from https://docs.chain.link/docs/binance-smart-chain-addresses
@@ -266,7 +266,7 @@ async function main() {
       developer.address,
       constants.address,
       treasury.address,
-      STARTING_GUILD_PRICE_IN_USD_CENTS,
+      STARTING_GUILD_PRICE_IN_USD,
     ],
     { kind: "uups" }
   );

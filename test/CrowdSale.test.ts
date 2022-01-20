@@ -73,7 +73,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
   const GUILD_TOKEN_NAME = "GuildTokenTest";
   const GUILD_TOKEN_SYMBOL = "GUILDT";
 
-  const startingPriceInUSDCents = 7;
+  const startingPriceInUSD = '7000000';  // 7 usd cents
 
   before(async function () {
     [deployer, treasury, dao, developer, purchaser] = await ethers.getSigners();
@@ -143,7 +143,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
         developer.address,
         constants.address,
         treasury.address,
-        startingPriceInUSDCents,
+        startingPriceInUSD,
       ],
       {
         kind: "uups",
@@ -164,21 +164,21 @@ describe("📦 CrowdSale of GUILD token", async function () {
     expect(await crowdSale.CONSTANTS()).to.eq(constants.address);
   });
 
-  it("allows DAO to change the currentPriceInUSDCents", async function () {
-    expect(await crowdSale.getCurrentUSDPriceInCents()).to.eq(
-      startingPriceInUSDCents
+  it("allows DAO to change the currentPriceInUSD", async function () {
+    expect(await crowdSale.getCurrentUSDPrice()).to.eq(
+      startingPriceInUSD
     );
     await expect(
-      crowdSale.connect(purchaser).setCurrentUSDPriceInCents(8)
+      crowdSale.connect(purchaser).setCurrentUSDPrice('8000000')
     ).to.be.revertedWith(
       generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
     );
     await expect(
-      crowdSale.connect(dao).setCurrentUSDPriceInCents(8)
+      crowdSale.connect(dao).setCurrentUSDPrice('8000000')
     ).to.not.be.revertedWith(
       generatePermissionRevokeMessage(crowdSale.address, DAO_ROLE)
     );
-    expect(await crowdSale.getCurrentUSDPriceInCents()).to.eq(8);
+    expect(await crowdSale.getCurrentUSDPrice()).to.eq('8000000');
   });
 
   it("purchasing fails if CrowdSale is not a whitelisted mint", async () => {
@@ -283,9 +283,8 @@ describe("📦 CrowdSale of GUILD token", async function () {
     let seedUserStableCoinAmount: BigNumber;
     let seedTreasuryStableCoinAmount: BigNumber;
     let stablecoinAmount: BigNumber;
-
     let archivedPrice: BigNumber;
-    let startingPriceUSDCents: BigNumber;
+    let startingPriceUSD: BigNumber;
     let gamerPurchasedAmount: BigNumber;
 
     beforeEach(async () => {
@@ -301,12 +300,8 @@ describe("📦 CrowdSale of GUILD token", async function () {
       stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 USD
 
       archivedPrice = ethers.BigNumber.from("100005159");
-      startingPriceUSDCents = ethers.BigNumber.from(7);
-      gamerPurchasedAmount = stablecoinAmount
-        .mul(Math.pow(10, 18 - stableCoinDecimals)) // Converts stablecoins
-        .mul(archivedPrice)
-        .div(startingPriceUSDCents)
-        .div(Math.pow(10, 8 - 2)); // Converts USD cents to 8 decimal
+      startingPriceUSD = ethers.BigNumber.from("7000000");  // ~7 usd cents
+      gamerPurchasedAmount = ethers.BigNumber.from('142864512857142857142');  // ~142 tokens in 18 decimals
 
       await usdc_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
       await usdc_stablecoin.mint(
@@ -336,7 +331,6 @@ describe("📦 CrowdSale of GUILD token", async function () {
 
     it("has an oracle price feed", async function () {
       const stablecoinPrice = await crowdSale.getUSDCPrice();
-      const archivedPrice = 100005159;
       expect(stablecoinPrice.toNumber()).to.be.equal(archivedPrice);
     });
 
@@ -356,7 +350,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
           usdc_stablecoin.address,
           stablecoinAmount,
           gamerPurchasedAmount.toString(),
-          startingPriceUSDCents.toString()
+          startingPriceUSD.toString()
         );
       expect(await crowdSale.GUILD()).to.equal(token.address);
       expect(await usdc_stablecoin.balanceOf(purchaser.address)).to.equal(
@@ -381,7 +375,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     let stablecoinAmount: BigNumber;
 
     let archivedPrice: BigNumber;
-    let startingPriceUSDCents: BigNumber;
+    let startingPriceUSD: BigNumber;
     let gamerPurchasedAmount: BigNumber;
 
     beforeEach(async () => {
@@ -397,12 +391,8 @@ describe("📦 CrowdSale of GUILD token", async function () {
       stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 USD
 
       archivedPrice = ethers.BigNumber.from("100018962");
-      startingPriceUSDCents = ethers.BigNumber.from(7);
-      gamerPurchasedAmount = stablecoinAmount
-        .mul(Math.pow(10, 18 - stableCoinDecimals)) // Converts stablecoins
-        .mul(archivedPrice)
-        .div(startingPriceUSDCents)
-        .div(Math.pow(10, 8 - 2)); // Converts USD cents to 8 decimal
+      startingPriceUSD = ethers.BigNumber.from('7000000');
+      gamerPurchasedAmount = ethers.BigNumber.from('142884231428571428571')
 
       await usdt_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
       await usdt_stablecoin.mint(
@@ -451,7 +441,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
           usdt_stablecoin.address,
           stablecoinAmount,
           gamerPurchasedAmount.toString(),
-          startingPriceUSDCents.toString()
+          startingPriceUSD.toString()
         );
       expect(await crowdSale.GUILD()).to.equal(token.address);
       expect(await usdt_stablecoin.balanceOf(purchaser.address)).to.equal(
@@ -476,7 +466,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     let stablecoinAmount: BigNumber;
 
     let archivedPrice: BigNumber;
-    let startingPriceUSDCents: BigNumber;
+    let startingPriceUSD: BigNumber;
     let gamerPurchasedAmount: BigNumber;
 
     beforeEach(async () => {
@@ -492,12 +482,9 @@ describe("📦 CrowdSale of GUILD token", async function () {
       stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 USD
 
       archivedPrice = ethers.BigNumber.from("100058710");
-      startingPriceUSDCents = ethers.BigNumber.from(7);
-      gamerPurchasedAmount = stablecoinAmount
-        .mul(Math.pow(10, 18 - stableCoinDecimals)) // Converts stablecoins
-        .mul(archivedPrice)
-        .div(startingPriceUSDCents)
-        .div(Math.pow(10, 8 - 2)); // Converts USD cents to 8 decimal
+      startingPriceUSD = ethers.BigNumber.from('7000000');
+      gamerPurchasedAmount = ethers.BigNumber.from('142941014285714285714')
+
       await ust_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
       await ust_stablecoin.mint(treasury.address, seedTreasuryStableCoinAmount);
       await ust_stablecoin
@@ -542,7 +529,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
           ust_stablecoin.address,
           stablecoinAmount,
           gamerPurchasedAmount.toString(),
-          startingPriceUSDCents.toString()
+          startingPriceUSD.toString()
         );
       expect(await crowdSale.GUILD()).to.equal(token.address);
       expect(await ust_stablecoin.balanceOf(purchaser.address)).to.equal(
@@ -567,7 +554,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     let stablecoinAmount: BigNumber;
 
     let archivedPrice: BigNumber;
-    let startingPriceUSDCents: BigNumber;
+    let startingPriceUSD: BigNumber;
     let gamerPurchasedAmount: BigNumber;
 
     beforeEach(async () => {
@@ -580,15 +567,11 @@ describe("📦 CrowdSale of GUILD token", async function () {
         "200",
         stableCoinDecimals
       ); // 200 ETH
-      stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 ETH
+      stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // 10 ETH
 
       archivedPrice = ethers.BigNumber.from("365993550000");
-      startingPriceUSDCents = ethers.BigNumber.from(7);
-      gamerPurchasedAmount = stablecoinAmount
-        .mul(Math.pow(10, 18 - stableCoinDecimals)) // Converts stablecoins
-        .mul(archivedPrice)
-        .div(startingPriceUSDCents)
-        .div(Math.pow(10, 8 - 2)); // Converts USD cents to 8 decimal
+      startingPriceUSD = ethers.BigNumber.from('7000000');
+      gamerPurchasedAmount = ethers.BigNumber.from("522847928571428571428571")
 
       await eth_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
       await eth_stablecoin.mint(treasury.address, seedTreasuryStableCoinAmount);
@@ -634,7 +617,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
           eth_stablecoin.address,
           stablecoinAmount,
           gamerPurchasedAmount.toString(),
-          startingPriceUSDCents.toString()
+          startingPriceUSD.toString()
         );
       expect(await crowdSale.GUILD()).to.equal(token.address);
       expect(await eth_stablecoin.balanceOf(purchaser.address)).to.equal(
@@ -659,7 +642,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     let stablecoinAmount: BigNumber;
 
     let archivedPrice: BigNumber;
-    let startingPriceUSDCents: BigNumber;
+    let startingPriceUSD: BigNumber;
     let gamerPurchasedAmount: BigNumber;
 
     beforeEach(async () => {
@@ -675,12 +658,8 @@ describe("📦 CrowdSale of GUILD token", async function () {
       stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 USD
 
       archivedPrice = ethers.BigNumber.from("100036216");
-      startingPriceUSDCents = ethers.BigNumber.from(7);
-      gamerPurchasedAmount = stablecoinAmount
-        .mul(Math.pow(10, 18 - stableCoinDecimals)) // Converts stablecoins
-        .mul(archivedPrice)
-        .div(startingPriceUSDCents)
-        .div(Math.pow(10, 8 - 2)); // Converts USD cents to 8 decimal
+      startingPriceUSD = ethers.BigNumber.from('7000000');
+      gamerPurchasedAmount = ethers.BigNumber.from('142908880000000000000')
 
       await dai_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
       await dai_stablecoin.mint(treasury.address, seedTreasuryStableCoinAmount);
@@ -726,7 +705,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
           dai_stablecoin.address,
           stablecoinAmount,
           gamerPurchasedAmount.toString(),
-          startingPriceUSDCents.toString()
+          startingPriceUSD.toString()
         );
       expect(await crowdSale.GUILD()).to.equal(token.address);
       expect(await dai_stablecoin.balanceOf(purchaser.address)).to.equal(
@@ -751,7 +730,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     let stablecoinAmount: BigNumber;
 
     let archivedPrice: BigNumber;
-    let startingPriceUSDCents: BigNumber;
+    let startingPriceUSD: BigNumber;
     let gamerPurchasedAmount: BigNumber;
 
     beforeEach(async () => {
@@ -767,12 +746,8 @@ describe("📦 CrowdSale of GUILD token", async function () {
       stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 BNB
 
       archivedPrice = ethers.BigNumber.from("51618873955");
-      startingPriceUSDCents = ethers.BigNumber.from(7);
-      gamerPurchasedAmount = stablecoinAmount
-        .mul(Math.pow(10, 18 - stableCoinDecimals)) // Converts stablecoins
-        .mul(archivedPrice)
-        .div(startingPriceUSDCents)
-        .div(Math.pow(10, 8 - 2)); // Converts USD cents to 8 decimal
+      startingPriceUSD = ethers.BigNumber.from('7000000');
+      gamerPurchasedAmount = ethers.BigNumber.from('73741248507142857142857')
 
       await token.connect(dao).whitelistMint(crowdSale.address, true);
     });
@@ -821,7 +796,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
           ethers.constants.AddressZero,
           stablecoinAmount.toString(),
           gamerPurchasedAmount.toString(),
-          startingPriceUSDCents.toString()
+          startingPriceUSD.toString()
         );
       expect(await crowdSale.GUILD()).to.equal(token.address);
       expect(

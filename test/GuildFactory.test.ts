@@ -368,7 +368,7 @@ describe("📦 GuildFactory", () => {
     let CrowdSaleFactory: CrowdSale__factory;
     let crowdSale: CrowdSale;
     let transaction: ContractTransaction;
-    const startingPriceInUSDCents = 7;
+    const startingPriceInUSD = ethers.BigNumber.from('7000000');
 
     before(async () => {
       CrowdSaleFactory = await ethers.getContractFactory("CrowdSale");
@@ -380,7 +380,7 @@ describe("📦 GuildFactory", () => {
         dao.address,
         developer.address,
         treasury.address,
-        startingPriceInUSDCents
+        startingPriceInUSD
       );
 
       [crowdSaleAddress] = (await guildFactory.viewCrowdSales()).map(
@@ -396,7 +396,7 @@ describe("📦 GuildFactory", () => {
           dao.address,
           developer.address,
           treasury.address,
-          startingPriceInUSDCents
+          startingPriceInUSD
         )
       ).to.be.revertedWith("Guild token cannot be zero");
     });
@@ -408,7 +408,7 @@ describe("📦 GuildFactory", () => {
           ethers.constants.AddressZero,
           developer.address,
           treasury.address,
-          startingPriceInUSDCents
+          startingPriceInUSD
         )
       ).to.be.revertedWith("DAO address cannot be zero");
     });
@@ -420,7 +420,7 @@ describe("📦 GuildFactory", () => {
           dao.address,
           ethers.constants.AddressZero,
           treasury.address,
-          startingPriceInUSDCents
+          startingPriceInUSD
         )
       ).to.be.revertedWith("Developer address cannot be zero");
     });
@@ -432,12 +432,12 @@ describe("📦 GuildFactory", () => {
           dao.address,
           developer.address,
           ethers.constants.AddressZero,
-          startingPriceInUSDCents
+          startingPriceInUSD
         )
       ).to.be.revertedWith("Treasury address cannot be zero");
     });
 
-    it("reverts if startingPriceInUSDCents less than or equal to zero", async () => {
+    it("reverts if startingPriceInUSD less than or equal to zero", async () => {
       await expect(
         guildFactory.createCrowdSale(
           deployer.address, // Should be erc20 address, but does not matter for these tests
@@ -456,7 +456,7 @@ describe("📦 GuildFactory", () => {
           ethers.constants.AddressZero,
           -1
         )
-        // ).to.be.revertedWith('Error: value out-of-bounds (argument="startingPriceInUSDCents", value=-1, code=INVALID_ARGUMENT, version=abi/5.5.0)');
+        // ).to.be.revertedWith('Error: value out-of-bounds (argument="startingPriceInUSD", value=-1, code=INVALID_ARGUMENT, version=abi/5.5.0)');
         // TODO: specify revert message
       ).to.be.reverted;
     });
@@ -469,7 +469,7 @@ describe("📦 GuildFactory", () => {
           dao.address,
           developer.address,
           treasury.address,
-          startingPriceInUSDCents
+          startingPriceInUSD
         )
       ).to.be.revertedWith("Pausable: paused");
     });
@@ -525,7 +525,7 @@ describe("📦 GuildFactory", () => {
           dao.address,
           developer.address,
           treasury.address,
-          startingPriceInUSDCents
+          startingPriceInUSD
         );
         let _;
         [_, secondCrowdSaleAddress] = (await guildFactory.viewCrowdSales()).map(
@@ -543,23 +543,15 @@ describe("📦 GuildFactory", () => {
   });
 
   describe("🗳 createGuildWithCrowdSale()", () => {
-    let crowdSaleAddress: string;
-    let guildTokenAddress: string;
     let initialNumberOfGuilds: number;
     let initialNumberOfCrowdSales: number;
-
-    let GuildTokenFactory: GuildToken__factory;
-    let guildToken: GuildToken;
-    let CrowdSaleFactory: CrowdSale__factory;
-    let crowdSale: CrowdSale;
-
     let transaction: ContractTransaction;
 
     const guildName: string = "GuildFXTest";
     const guildSymbol: string = "GFXT";
     const guildDecimals: number = 18;
 
-    const startingPriceInUSDCents = 7;
+    const startingPriceInUSD = ethers.BigNumber.from('7000000');
 
     beforeEach(async () => {
       initialNumberOfGuilds = (await guildFactory.viewGuildTokens()).length;
@@ -571,7 +563,7 @@ describe("📦 GuildFactory", () => {
         dao.address,
         developer.address,
         treasury.address,
-        startingPriceInUSDCents
+        startingPriceInUSD
       );
     });
 
@@ -584,7 +576,7 @@ describe("📦 GuildFactory", () => {
           dao.address,
           developer.address,
           treasury.address,
-          startingPriceInUSDCents
+          startingPriceInUSD
         )
       ).to.be.revertedWith("Pausable: paused");
     });

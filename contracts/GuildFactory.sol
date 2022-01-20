@@ -45,7 +45,7 @@ contract GuildFactory is Pausable, AccessControl {
         address developer,
         address fxConstants,
         address treasury,
-        uint256 startingPriceInUSDCents
+        uint256 startingPriceInUSD
     );
 
     event GuildCrowdsalePairCreated(address guildToken, address crowdsale);
@@ -102,7 +102,7 @@ contract GuildFactory is Pausable, AccessControl {
         address dao,
         address developer,
         address payable treasury,
-        uint256 startingPriceInUSDCents
+        uint256 startingPriceInUSD
     ) public whenNotPaused returns (address) {
         // TODO set this to private
         // TODO does this function need to be payable?
@@ -111,7 +111,7 @@ contract GuildFactory is Pausable, AccessControl {
         require(developer != address(0), "Developer address cannot be zero");
         require(treasury != address(0), "Treasury address cannot be zero");
         require(
-            startingPriceInUSDCents > 0,
+            startingPriceInUSD > 0,
             "Starting price should be greater than zero"
         );
 
@@ -125,7 +125,7 @@ contract GuildFactory is Pausable, AccessControl {
                 developer,
                 fxConstants,
                 treasury,
-                startingPriceInUSDCents
+                startingPriceInUSD
             )
         );
         CROWD_SALE_PROXIES.add(address(proxy));
@@ -136,7 +136,7 @@ contract GuildFactory is Pausable, AccessControl {
             developer,
             fxConstants,
             treasury,
-            startingPriceInUSDCents
+            startingPriceInUSD
         );
         return address(proxy);
     }
@@ -147,7 +147,7 @@ contract GuildFactory is Pausable, AccessControl {
         address dao,
         address developer,
         address payable treasury,
-        uint256 startingPriceInUSDCents
+        uint256 startingPriceInUSD
     ) public whenNotPaused returns (address, address) {
         // TODO does this function need to be payable?
 
@@ -163,7 +163,7 @@ contract GuildFactory is Pausable, AccessControl {
             dao,
             developer,
             treasury,
-            startingPriceInUSDCents
+            startingPriceInUSD
         );
 
         emit GuildCrowdsalePairCreated(guildToken, crowdSale);

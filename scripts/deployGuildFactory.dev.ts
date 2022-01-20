@@ -20,7 +20,7 @@ const sleep = async (ms = 1000) => {
   });
 };
 
-const STARTING_GUILD_PRICE_IN_USD_CENTS = 7;
+const STARTING_GUILD_PRICE_IN_USD = ethers.BigNumber.from('7000000');
 const LOG_FILE_PATH = `${__dirname}/logs/deployGuildFactory_log_${Date.now()}.dev.txt`;
 
 const ENVIRONMENT = "development";
@@ -261,7 +261,7 @@ async function main() {
     dao.address,
     developer.address,
     treasury.address,
-    STARTING_GUILD_PRICE_IN_USD_CENTS
+    STARTING_GUILD_PRICE_IN_USD
   );
 
   await tx.wait();
