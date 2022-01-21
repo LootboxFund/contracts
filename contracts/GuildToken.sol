@@ -5,6 +5,7 @@
 pragma solidity 0.8.4;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -19,7 +20,8 @@ contract GuildToken is
     ERC20BurnableUpgradeable,
     PausableUpgradeable,
     AccessControlUpgradeable,
-    UUPSUpgradeable
+    UUPSUpgradeable,
+    ERC20VotesUpgradeable
 {
     // roles to trusted smart contracts & the DAO
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE"); // our mint smart contracts
@@ -107,6 +109,14 @@ contract GuildToken is
         return ACTIVE_MINTS._inner._values;
     }
 
+    function _mint(address to, uint256 amount) internal override(ERC20Upgradeable, ERC20VotesUpgradeable) {
+        super._mint(to, amount);
+    }
+
+    function _burn(address account, uint256 amount) internal override(ERC20Upgradeable, ERC20VotesUpgradeable) {
+        super._burn(account, amount);
+    }
+
     // --------- Managing the Token ---------
     function pause() public onlyRole(DAO_ROLE) {
         _pause();
@@ -114,6 +124,13 @@ contract GuildToken is
 
     function unpause() public onlyRole(DAO_ROLE) {
         _unpause();
+    }
+
+    function _afterTokenTransfer(address from, address to, uint256 amount)
+        internal
+        override(ERC20Upgradeable, ERC20VotesUpgradeable)
+    {
+        super._afterTokenTransfer(from, to, amount);
     }
 
     function _beforeTokenTransfer(
