@@ -13,6 +13,8 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/draft-ERC20PermitUpgradeable.sol";
 
 contract GuildToken is
     Initializable,
@@ -21,6 +23,7 @@ contract GuildToken is
     PausableUpgradeable,
     AccessControlUpgradeable,
     UUPSUpgradeable,
+    ERC20PermitUpgradeable,
     ERC20VotesUpgradeable
 {
     // roles to trusted smart contracts & the DAO
@@ -57,6 +60,7 @@ contract GuildToken is
         address _developer
     ) public initializer {
         __ERC20_init(_name, _symbol);
+        __ERC20Permit_init(_name);
         __ERC20Burnable_init();
         __Pausable_init();
         __AccessControl_init();
