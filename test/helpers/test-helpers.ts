@@ -22,6 +22,14 @@ export const MINTER_ROLE = ethers.utils.solidityKeccak256(
   ["string"],
   ["MINTER_ROLE"]
 );
+export const GUILD_MANAGER_ROLE = ethers.utils.solidityKeccak256(
+  ["string"],
+  ["GUILD_MANAGER_ROLE"]
+);
+export const GUILD_OWNER_ROLE = ethers.utils.solidityKeccak256(
+  ["string"],
+  ["GUILD_OWNER_ROLE"]
+);
 
 export const DEFAULT_ADMIN_ROLE =
   "0x0000000000000000000000000000000000000000000000000000000000000000";

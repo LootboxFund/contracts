@@ -15,9 +15,11 @@ contract GuildFactory is Pausable, AccessControl {
     address internal immutable tokenImplementation;
     address internal immutable crowdsaleImplementation;
 
-    // Only the DAO (GuildFX) can control token
-    bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
-    bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE");
+    bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE"); // GuildFX DAO
+    bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE"); // GuildFX devs
+    bytes32 public constant GUILD_OWNER_ROLE = keccak256("GUILD_OWNER_ROLE"); // People who can create a guild
+    bytes32 public constant GUILD_MANAGER_ROLE =
+        keccak256("GUILD_MANAGER_ROLE"); // People who can whitelist guild owners
 
     // GuildFX constants
     address public fxConstants;
@@ -35,9 +37,9 @@ contract GuildFactory is Pausable, AccessControl {
         string name,
         string token,
         address dao,
-        address developer
+        address developer,
+        address creator
     );
-
     event CrowdSaleCreated(
         address contractAddress,
         address guildToken,
@@ -45,10 +47,16 @@ contract GuildFactory is Pausable, AccessControl {
         address developer,
         address fxConstants,
         address treasury,
-        uint256 startingPriceInUSD
+        uint256 startingPriceInUSD,
+        address creator
     );
-
-    event GuildCrowdsalePairCreated(address guildToken, address crowdsale);
+    event GuildCrowdsalePairCreated(
+        address guildToken,
+        address crowdsale,
+        address creator
+    );
+    event GuildManagerWhitelist(address guildManager, bool isActive);
+    event GuildOwnerWhitelist(address guildOwner, bool isActive);
 
     constructor(address dao, address _fxConstants) {
         require(dao != address(0), "DAO address cannot be zero");
@@ -59,7 +67,9 @@ contract GuildFactory is Pausable, AccessControl {
         tokenImplementation = address(new GuildToken());
         crowdsaleImplementation = address(new CrowdSale());
         fxConstants = _fxConstants;
-        _grantRole(DAO_ROLE, dao); // TODO: Add way to update DAO_ROLE with DEFAULT_ADMIN_ROLE & add function to set DEFAULT_ADMIN_ROLE to 0
+        _grantRole(DAO_ROLE, dao);
+        _grantRole(GUILD_MANAGER_ROLE, dao);
+        _grantRole(GUILD_OWNER_ROLE, dao);
     }
 
     function createGuild(
@@ -67,9 +77,7 @@ contract GuildFactory is Pausable, AccessControl {
         string memory guildSymbol,
         address dao,
         address developer
-    ) public whenNotPaused returns (address) {
-        // TODO set this to private
-        // TODO does this function need to be payable?
+    ) internal returns (address) {
         require(bytes(guildName).length != 0, "Guild name cannot be empty");
         require(bytes(guildSymbol).length != 0, "Guild symbol cannot be empty");
         require(dao != address(0), "DAO address cannot be zero");
@@ -92,7 +100,8 @@ contract GuildFactory is Pausable, AccessControl {
             guildName,
             guildSymbol,
             dao,
-            developer
+            developer,
+            msg.sender
         );
         return address(proxy);
     }
@@ -103,9 +112,7 @@ contract GuildFactory is Pausable, AccessControl {
         address developer,
         address payable treasury,
         uint256 startingPriceInUSD
-    ) public whenNotPaused returns (address) {
-        // TODO set this to private
-        // TODO does this function need to be payable?
+    ) internal returns (address) {
         require(guildToken != address(0), "Guild token cannot be zero");
         require(dao != address(0), "DAO address cannot be zero");
         require(developer != address(0), "Developer address cannot be zero");
@@ -136,7 +143,8 @@ contract GuildFactory is Pausable, AccessControl {
             developer,
             fxConstants,
             treasury,
-            startingPriceInUSD
+            startingPriceInUSD,
+            msg.sender
         );
         return address(proxy);
     }
@@ -148,17 +156,20 @@ contract GuildFactory is Pausable, AccessControl {
         address developer,
         address payable treasury,
         uint256 startingPriceInUSD
-    ) public whenNotPaused returns (address, address) {
-        // TODO does this function need to be payable?
-
-        address guildToken = this.createGuild(
+    )
+        public
+        onlyRole(GUILD_OWNER_ROLE)
+        whenNotPaused
+        returns (address, address)
+    {
+        address guildToken = createGuild(
             guildName,
             guildSymbol,
             dao,
             developer
         );
 
-        address crowdSale = this.createCrowdSale(
+        address crowdSale = createCrowdSale(
             guildToken,
             dao,
             developer,
@@ -166,8 +177,34 @@ contract GuildFactory is Pausable, AccessControl {
             startingPriceInUSD
         );
 
-        emit GuildCrowdsalePairCreated(guildToken, crowdSale);
+        emit GuildCrowdsalePairCreated(guildToken, crowdSale, msg.sender);
         return (address(guildToken), address(crowdSale));
+    }
+
+    function whitelistGuildOwner(address guildOwner, bool isActive)
+        public
+        onlyRole(GUILD_MANAGER_ROLE)
+        whenNotPaused
+    {
+        if (isActive) {
+            _grantRole(GUILD_OWNER_ROLE, guildOwner);
+        } else {
+            _revokeRole(GUILD_OWNER_ROLE, guildOwner);
+        }
+        emit GuildOwnerWhitelist(guildOwner, isActive);
+    }
+
+    function whitelistGuildManager(address guildManager, bool isActive)
+        public
+        onlyRole(DAO_ROLE)
+        whenNotPaused
+    {
+        if (isActive) {
+            _grantRole(GUILD_MANAGER_ROLE, guildManager);
+        } else {
+            _revokeRole(GUILD_MANAGER_ROLE, guildManager);
+        }
+        emit GuildManagerWhitelist(guildManager, isActive);
     }
 
     function viewGuildTokens() public view returns (bytes32[] memory) {

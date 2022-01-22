@@ -15,9 +15,10 @@ import { ContractTransaction } from "ethers";
 import {
   DAO_ROLE,
   DEVELOPER_ROLE,
+  GUILD_MANAGER_ROLE,
+  GUILD_OWNER_ROLE,
   generatePermissionRevokeMessage,
   stripZeros,
-  generateMockAddress,
 } from "./helpers/test-helpers";
 
 describe("📦 GuildFactory", () => {
@@ -73,6 +74,112 @@ describe("📦 GuildFactory", () => {
 
   it("assignes the dao the DAO_ROLE", async () => {
     expect(await guildFactory.hasRole(DAO_ROLE, dao.address)).to.be.true;
+  });
+
+  it("assignes the dao the GUILD_MANAGER_ROLE", async () => {
+    expect(await guildFactory.hasRole(GUILD_MANAGER_ROLE, dao.address)).to.be
+      .true;
+  });
+
+  it("assignes the dao the GUILD_OWNER_ROLE", async () => {
+    expect(await guildFactory.hasRole(GUILD_OWNER_ROLE, dao.address)).to.be
+      .true;
+  });
+
+  describe("🗳 whitelistGuildManager()", () => {
+    it("reverts with access control error when not called by DAO_ROLE", async () => {
+      await expect(
+        guildFactory
+          .connect(deployer)
+          .whitelistGuildManager(purchaser.address, true)
+      ).to.be.revertedWith(
+        generatePermissionRevokeMessage(deployer.address, DAO_ROLE)
+      );
+    });
+
+    it("reverts with pausable error when contract is paused", async () => {
+      await guildFactory.connect(dao).pause();
+      await expect(
+        guildFactory.connect(dao).whitelistGuildManager(purchaser.address, true)
+      ).to.be.revertedWith("Pausable: paused");
+    });
+
+    it("assigns and revokes the guild manager the GUILD_MANAGER_ROLE", async () => {
+      await guildFactory
+        .connect(dao)
+        .whitelistGuildManager(purchaser.address, true);
+      expect(await guildFactory.hasRole(GUILD_MANAGER_ROLE, purchaser.address))
+        .to.be.true;
+      await guildFactory
+        .connect(dao)
+        .whitelistGuildManager(purchaser.address, false);
+      expect(await guildFactory.hasRole(GUILD_MANAGER_ROLE, purchaser.address))
+        .to.be.false;
+    });
+
+    it("emits a GuildManagerWhitelist event", async () => {
+      const request = guildFactory
+        .connect(dao)
+        .whitelistGuildManager(purchaser.address, true);
+      expect(request)
+        .to.emit(guildFactory, "GuildManagerWhitelist")
+        .withArgs(purchaser.address, true);
+
+      const requestRevoke = guildFactory
+        .connect(dao)
+        .whitelistGuildManager(purchaser.address, false);
+      expect(requestRevoke)
+        .to.emit(guildFactory, "GuildManagerWhitelist")
+        .withArgs(purchaser.address, false);
+    });
+  });
+
+  describe("🗳 whitelistGuildOwner()", () => {
+    it("reverts with access control error when not called by GUILD_MANAGER_ROLE", async () => {
+      await expect(
+        guildFactory
+          .connect(deployer)
+          .whitelistGuildOwner(purchaser.address, true)
+      ).to.be.revertedWith(
+        generatePermissionRevokeMessage(deployer.address, GUILD_MANAGER_ROLE)
+      );
+    });
+
+    it("reverts with pausable error when contract is paused", async () => {
+      await guildFactory.connect(dao).pause();
+      await expect(
+        guildFactory.connect(dao).whitelistGuildOwner(purchaser.address, true)
+      ).to.be.revertedWith("Pausable: paused");
+    });
+
+    it("assigns and revokes the guild manager the GUILD_OWNER_ROLE", async () => {
+      await guildFactory
+        .connect(dao)
+        .whitelistGuildOwner(purchaser.address, true);
+      expect(await guildFactory.hasRole(GUILD_OWNER_ROLE, purchaser.address)).to
+        .be.true;
+      await guildFactory
+        .connect(dao)
+        .whitelistGuildOwner(purchaser.address, false);
+      expect(await guildFactory.hasRole(GUILD_OWNER_ROLE, purchaser.address)).to
+        .be.false;
+    });
+
+    it("emits a GuildManagerWhitelist event", async () => {
+      const request = guildFactory
+        .connect(dao)
+        .whitelistGuildOwner(purchaser.address, true);
+      expect(request)
+        .to.emit(guildFactory, "GuildOwnerWhitelist")
+        .withArgs(purchaser.address, true);
+
+      const requestRevoke = guildFactory
+        .connect(dao)
+        .whitelistGuildOwner(purchaser.address, false);
+      expect(requestRevoke)
+        .to.emit(guildFactory, "GuildOwnerWhitelist")
+        .withArgs(purchaser.address, false);
+    });
   });
 
   describe("🗳 pause()", () => {
@@ -134,12 +241,16 @@ describe("📦 GuildFactory", () => {
     it("returns the correct array length and type of guildToken proxy addresses", async () => {
       const nTokensToMake = 5;
       for (let n = 0; n < nTokensToMake; n++) {
-        await guildFactory.createGuild(
-          "TestGuild" + nTokensToMake.toString(),
-          "GUILDT" + nTokensToMake.toString(),
-          dao.address,
-          developer.address
-        );
+        await guildFactory
+          .connect(dao)
+          .createGuildWithCrowdSale(
+            "TestGuild" + n.toString(),
+            "GUILDT" + n.toString(),
+            dao.address,
+            developer.address,
+            treasury.address,
+            "7000000"
+          );
         const proxies = await guildFactory.viewGuildTokens();
         expect(proxies.length).to.eq(n + 1);
         // expect(proxies.every((addr: string) => typeof addr === "string" && )).to.deep.eq()
@@ -151,12 +262,16 @@ describe("📦 GuildFactory", () => {
     it("returns a distinct array", async () => {
       const nTokensToMake = 5;
       for (let n = 0; n < nTokensToMake; n++) {
-        await guildFactory.createGuild(
-          "TestGuild" + nTokensToMake.toString(),
-          "GUILDT" + nTokensToMake.toString(),
-          dao.address,
-          developer.address
-        );
+        await guildFactory
+          .connect(dao)
+          .createGuildWithCrowdSale(
+            "TestGuild" + nTokensToMake.toString(),
+            "GUILDT" + nTokensToMake.toString(),
+            dao.address,
+            developer.address,
+            treasury.address,
+            "7000000"
+          );
       }
       const proxies = await guildFactory.viewGuildTokens();
       expect(proxies.filter((v, i, a) => a.indexOf(v) === i).length).to.eq(
@@ -173,13 +288,16 @@ describe("📦 GuildFactory", () => {
     it("returns the correct array length and type of crowdSale proxy addresses", async () => {
       const nContractsToMake = 5;
       for (let n = 0; n < nContractsToMake; n++) {
-        await guildFactory.createCrowdSale(
-          deployer.address, // Should be erc20 address, but does not matter for these tests
-          dao.address,
-          developer.address,
-          treasury.address,
-          1
-        );
+        await guildFactory
+          .connect(dao)
+          .createGuildWithCrowdSale(
+            "TestGuild" + n.toString(),
+            "GUILDT" + n.toString(),
+            dao.address,
+            developer.address,
+            treasury.address,
+            "7000000"
+          );
         const proxies = await guildFactory.viewCrowdSales();
         expect(proxies.length).to.eq(n + 1);
         // expect(proxies.every((addr: string) => typeof addr === "string" && )).to.deep.eq()
@@ -191,354 +309,21 @@ describe("📦 GuildFactory", () => {
     it("returns a distinct array", async () => {
       const nContractsToMake = 5;
       for (let n = 0; n < nContractsToMake; n++) {
-        await guildFactory.createCrowdSale(
-          deployer.address, // Should be erc20 address, but does not matter for these tests
-          dao.address,
-          developer.address,
-          treasury.address,
-          1
-        );
+        await guildFactory
+          .connect(dao)
+          .createGuildWithCrowdSale(
+            "TestGuild" + n.toString(),
+            "GUILDT" + n.toString(),
+            dao.address,
+            developer.address,
+            treasury.address,
+            "7000000"
+          );
       }
       const proxies = await guildFactory.viewCrowdSales();
       expect(proxies.filter((v, i, a) => a.indexOf(v) === i).length).to.eq(
         nContractsToMake
       );
-    });
-  });
-
-  describe("🗳 createGuild()", () => {
-    let guildTokenAddress: string;
-    let GuildTokenFactory: GuildToken__factory;
-    let guildToken: GuildToken;
-    let transaction: ContractTransaction;
-    const guildName: string = "GuildFXTest";
-    const guildSymbol: string = "GFXT";
-    const guildDecimals: number = 18;
-
-    before(async () => {
-      GuildTokenFactory = await ethers.getContractFactory("GuildToken");
-    });
-
-    beforeEach(async () => {
-      transaction = await guildFactory.createGuild(
-        guildName,
-        guildSymbol,
-        dao.address,
-        developer.address
-      );
-
-      [guildTokenAddress] = (await guildFactory.viewGuildTokens()).map(
-        stripZeros
-      );
-      guildToken = GuildTokenFactory.attach(guildTokenAddress);
-    });
-
-    it("reverts if guildName is empty string", async () => {
-      await expect(
-        guildFactory.createGuild(
-          "",
-          guildSymbol,
-          dao.address,
-          developer.address
-        )
-      ).to.be.revertedWith("Guild name cannot be empty");
-    });
-
-    it("reverts if guildSymbol is empty string", async () => {
-      await expect(
-        guildFactory.createGuild(guildName, "", dao.address, developer.address)
-      ).to.be.revertedWith("Guild symbol cannot be empty");
-    });
-
-    it("reverts if dao is zero", async () => {
-      await expect(
-        guildFactory.createGuild(
-          guildName,
-          guildSymbol,
-          ethers.constants.AddressZero,
-          developer.address
-        )
-      ).to.be.revertedWith("DAO address cannot be zero");
-    });
-
-    it("reverts if developer is zero", async () => {
-      await expect(
-        guildFactory.createGuild(
-          guildName,
-          guildSymbol,
-          dao.address,
-          ethers.constants.AddressZero
-        )
-      ).to.be.revertedWith("Developer address cannot be zero");
-    });
-
-    it("reverts with 'Pausable: paused' error if contract is paused", async () => {
-      await guildFactory.connect(dao).pause();
-      await expect(
-        guildFactory.createGuild(
-          guildName,
-          guildSymbol,
-          dao.address,
-          developer.address
-        )
-      ).to.be.revertedWith("Pausable: paused");
-    });
-
-    it.skip("is payable and can receive native token");
-
-    it("emits a GuildCreated event", async () => {
-      await expect(transaction).to.emit(guildFactory, "GuildCreated");
-      // await expect(transaction).to.emit(guildFactory, "GuildCreated").withArgs(
-      //   guildTokenAddress, // TODO add explicit arg check (guildTokenAddress is all lowercase and not matching)
-      //   guildName,
-      //   guildSymbol,
-      //   dao.address,
-      //   developer.address
-      // );
-    });
-
-    // TODO
-    it.skip(
-      "returns a hashed transaction resolving into the guildToken's proxy address"
-    );
-
-    it("sets the guildToken's address", async () => {
-      expect(typeof guildTokenAddress).to.eq("string");
-      expect(ethers.utils.isAddress(guildTokenAddress)).to.be.true;
-      expect(guildTokenAddress.length).to.eq(42);
-      expect(guildToken.address).to.eq(guildTokenAddress);
-    });
-
-    it(`sets guildToken's decimals to ${guildDecimals}`, async () => {
-      const decimals = await guildToken.decimals();
-      expect(typeof decimals).to.eq("number");
-      expect(decimals).to.eq(guildDecimals);
-    });
-
-    it(`sets the guildToken's name to ${guildName}`, async () => {
-      const name = await guildToken.name();
-      expect(typeof name).to.eq("string");
-      expect(name).to.eq(guildName);
-    });
-
-    it(`sets the guildToken's symbol to ${guildSymbol}`, async () => {
-      const symbol = await guildToken.symbol();
-      expect(typeof symbol).to.eq("string");
-      expect(symbol).to.eq(guildSymbol);
-    });
-
-    it("grants the guildToken's DAO_ROLE to the dao", async () => {
-      expect(await guildToken.hasRole(DAO_ROLE, dao.address)).to.eq(true);
-    });
-
-    it("grants the guildTokens's DEVELOPER_ROLE to the developer", async () => {
-      expect(await guildToken.hasRole(DEVELOPER_ROLE, developer.address)).to.eq(
-        true
-      );
-    });
-
-    describe("when making a second guildToken", () => {
-      let secondGuildTokenAddress: string;
-      let secondGuildToken: GuildToken;
-
-      beforeEach(async () => {
-        await guildFactory.createGuild(
-          "GuildNumber2",
-          "GN2",
-          purchaser.address,
-          purchaser.address
-        );
-        let _;
-        [_, secondGuildTokenAddress] = (
-          await guildFactory.viewGuildTokens()
-        ).map(stripZeros);
-        secondGuildToken = GuildTokenFactory.attach(secondGuildTokenAddress);
-      });
-
-      it("creates a distinguished address from the first", async () => {
-        expect(typeof secondGuildTokenAddress).to.eq("string");
-        expect(ethers.utils.isAddress(secondGuildTokenAddress)).to.be.true;
-        expect(secondGuildTokenAddress).to.not.eq(guildTokenAddress);
-      });
-    });
-  });
-
-  describe("🗳 createCrowdSale()", () => {
-    let crowdSaleAddress: string;
-    let CrowdSaleFactory: CrowdSale__factory;
-    let crowdSale: CrowdSale;
-    let transaction: ContractTransaction;
-    const startingPriceInUSD = ethers.BigNumber.from('7000000');
-
-    before(async () => {
-      CrowdSaleFactory = await ethers.getContractFactory("CrowdSale");
-    });
-
-    beforeEach(async () => {
-      transaction = await guildFactory.createCrowdSale(
-        deployer.address, // Should be erc20 address, but does not matter for these tests
-        dao.address,
-        developer.address,
-        treasury.address,
-        startingPriceInUSD
-      );
-
-      [crowdSaleAddress] = (await guildFactory.viewCrowdSales()).map(
-        stripZeros
-      );
-      crowdSale = CrowdSaleFactory.attach(crowdSaleAddress);
-    });
-
-    it("reverts if guildToken is zero", async () => {
-      await expect(
-        guildFactory.createCrowdSale(
-          ethers.constants.AddressZero, // Should be erc20 address, but does not matter for these tests
-          dao.address,
-          developer.address,
-          treasury.address,
-          startingPriceInUSD
-        )
-      ).to.be.revertedWith("Guild token cannot be zero");
-    });
-
-    it("reverts if dao is zero", async () => {
-      await expect(
-        guildFactory.createCrowdSale(
-          deployer.address, // Should be erc20 address, but does not matter for these tests
-          ethers.constants.AddressZero,
-          developer.address,
-          treasury.address,
-          startingPriceInUSD
-        )
-      ).to.be.revertedWith("DAO address cannot be zero");
-    });
-
-    it("reverts if developer is zero", async () => {
-      await expect(
-        guildFactory.createCrowdSale(
-          deployer.address, // Should be erc20 address, but does not matter for these tests
-          dao.address,
-          ethers.constants.AddressZero,
-          treasury.address,
-          startingPriceInUSD
-        )
-      ).to.be.revertedWith("Developer address cannot be zero");
-    });
-
-    it("reverts if treasury is zero", async () => {
-      await expect(
-        guildFactory.createCrowdSale(
-          deployer.address, // Should be erc20 address, but does not matter for these tests
-          dao.address,
-          developer.address,
-          ethers.constants.AddressZero,
-          startingPriceInUSD
-        )
-      ).to.be.revertedWith("Treasury address cannot be zero");
-    });
-
-    it("reverts if startingPriceInUSD less than or equal to zero", async () => {
-      await expect(
-        guildFactory.createCrowdSale(
-          deployer.address, // Should be erc20 address, but does not matter for these tests
-          dao.address,
-          developer.address,
-          treasury.address,
-          0
-        )
-      ).to.be.revertedWith("Starting price should be greater than zero");
-
-      await expect(
-        guildFactory.createCrowdSale(
-          deployer.address, // Should be erc20 address, but does not matter for these tests
-          dao.address,
-          developer.address,
-          ethers.constants.AddressZero,
-          -1
-        )
-        // ).to.be.revertedWith('Error: value out-of-bounds (argument="startingPriceInUSD", value=-1, code=INVALID_ARGUMENT, version=abi/5.5.0)');
-        // TODO: specify revert message
-      ).to.be.reverted;
-    });
-
-    it("reverts with 'Pausable: paused' error if contract is paused", async () => {
-      await guildFactory.connect(dao).pause();
-      await expect(
-        guildFactory.createCrowdSale(
-          deployer.address, // Should be erc20 address, but does not matter for these tests
-          dao.address,
-          developer.address,
-          treasury.address,
-          startingPriceInUSD
-        )
-      ).to.be.revertedWith("Pausable: paused");
-    });
-
-    it.skip("is payable and can receive native token");
-
-    it("emits a CrowdSaleCreated event", async () => {
-      await expect(transaction).to.emit(guildFactory, "CrowdSaleCreated");
-      // await expect(transaction).to.emit(guildFactory, "GuildCreated").withArgs(
-      //   crowdSaleAddress, // TODO add explicit arg check (crowdSaleAddress is all lowercase and not matching)
-      //   guildName,
-      //   guildSymbol,
-      //   dao.address,
-      //   developer.address
-      // );
-    });
-
-    // TODO
-    it.skip(
-      "returns a hashed transaction resolving into the crowdSale's proxy address"
-    );
-
-    it("sets the crowdSale's address", async () => {
-      expect(typeof crowdSaleAddress).to.eq("string");
-      expect(ethers.utils.isAddress(crowdSaleAddress)).to.be.true;
-      expect(crowdSaleAddress.length).to.eq(42);
-      expect(crowdSale.address).to.eq(crowdSaleAddress);
-    });
-
-    it("sets the FXConstants address in the crowdsale", async () => {
-      const constantsAddress = await crowdSale.CONSTANTS();
-      expect(ethers.utils.isAddress(constantsAddress)).to.be.true;
-      expect(constantsAddress).to.eq(constants.address);
-    });
-
-    it("grants the crowdSale's DAO_ROLE to the dao", async () => {
-      expect(await crowdSale.hasRole(DAO_ROLE, dao.address)).to.eq(true);
-    });
-
-    it("grants the crowdSales's DEVELOPER_ROLE to the developer", async () => {
-      expect(await crowdSale.hasRole(DEVELOPER_ROLE, developer.address)).to.eq(
-        true
-      );
-    });
-
-    describe("when making a second crowdSale", () => {
-      let secondCrowdSaleAddress: string;
-      let secondCrowdSale: CrowdSale;
-
-      beforeEach(async () => {
-        await guildFactory.createCrowdSale(
-          deployer.address, // Should be erc20 address, but does not matter for these tests
-          dao.address,
-          developer.address,
-          treasury.address,
-          startingPriceInUSD
-        );
-        let _;
-        [_, secondCrowdSaleAddress] = (await guildFactory.viewCrowdSales()).map(
-          stripZeros
-        );
-        secondCrowdSale = CrowdSaleFactory.attach(secondCrowdSaleAddress);
-      });
-
-      it("creates a distinguished address from the first", async () => {
-        expect(typeof secondCrowdSaleAddress).to.eq("string");
-        expect(ethers.utils.isAddress(secondCrowdSaleAddress)).to.be.true;
-        expect(secondCrowdSaleAddress).to.not.eq(crowdSaleAddress);
-      });
     });
   });
 
@@ -551,33 +336,142 @@ describe("📦 GuildFactory", () => {
     const guildSymbol: string = "GFXT";
     const guildDecimals: number = 18;
 
-    const startingPriceInUSD = ethers.BigNumber.from('7000000');
+    const startingPriceInUSD = ethers.BigNumber.from("7000000");
 
     beforeEach(async () => {
       initialNumberOfGuilds = (await guildFactory.viewGuildTokens()).length;
       initialNumberOfCrowdSales = (await guildFactory.viewCrowdSales()).length;
 
-      transaction = await guildFactory.createGuildWithCrowdSale(
-        guildName,
-        guildSymbol,
-        dao.address,
-        developer.address,
-        treasury.address,
-        startingPriceInUSD
-      );
-    });
-
-    it("reverts when contract paused", async () => {
-      await guildFactory.connect(dao).pause();
-      await expect(
-        guildFactory.createGuildWithCrowdSale(
+      transaction = await guildFactory
+        .connect(dao)
+        .createGuildWithCrowdSale(
           guildName,
           guildSymbol,
           dao.address,
           developer.address,
           treasury.address,
           startingPriceInUSD
-        )
+        );
+    });
+
+    it("reverts if dao is zero", async () => {
+      await expect(
+        guildFactory
+          .connect(dao)
+          .createGuildWithCrowdSale(
+            guildName,
+            guildSymbol,
+            ethers.constants.AddressZero,
+            developer.address,
+            treasury.address,
+            startingPriceInUSD
+          )
+      ).to.be.revertedWith("DAO address cannot be zero");
+    });
+
+    it("reverts if developer is zero", async () => {
+      await expect(
+        guildFactory
+          .connect(dao)
+          .createGuildWithCrowdSale(
+            guildName,
+            guildSymbol,
+            dao.address,
+            ethers.constants.AddressZero,
+            treasury.address,
+            startingPriceInUSD
+          )
+      ).to.be.revertedWith("Developer address cannot be zero");
+    });
+
+    it("reverts if treasury is zero", async () => {
+      await expect(
+        guildFactory
+          .connect(dao)
+          .createGuildWithCrowdSale(
+            guildName,
+            guildSymbol,
+            dao.address,
+            developer.address,
+            ethers.constants.AddressZero,
+            startingPriceInUSD
+          )
+      ).to.be.revertedWith("Treasury address cannot be zero");
+    });
+
+    it("reverts if guildName is empty string", async () => {
+      await expect(
+        guildFactory
+          .connect(dao)
+          .createGuildWithCrowdSale(
+            "",
+            guildSymbol,
+            dao.address,
+            developer.address,
+            ethers.constants.AddressZero,
+            startingPriceInUSD
+          )
+      ).to.be.revertedWith("Guild name cannot be empty");
+    });
+
+    it("reverts if guildSymbol is empty string", async () => {
+      await expect(
+        guildFactory
+          .connect(dao)
+          .createGuildWithCrowdSale(
+            guildName,
+            "",
+            dao.address,
+            developer.address,
+            ethers.constants.AddressZero,
+            startingPriceInUSD
+          )
+      ).to.be.revertedWith("Guild symbol cannot be empty");
+    });
+
+    it("reverts if startingPriceInUSD less than or equal to zero", async () => {
+      await expect(
+        guildFactory
+          .connect(dao)
+          .createGuildWithCrowdSale(
+            guildName,
+            guildSymbol,
+            dao.address,
+            developer.address,
+            treasury.address,
+            0
+          )
+      ).to.be.revertedWith("Starting price should be greater than zero");
+
+      await expect(
+        guildFactory
+          .connect(dao)
+          .createGuildWithCrowdSale(
+            guildName,
+            guildSymbol,
+            dao.address,
+            developer.address,
+            treasury.address,
+            -1
+          )
+        // ).to.be.revertedWith('Error: value out-of-bounds (argument="startingPriceInUSD", value=-1, code=INVALID_ARGUMENT, version=abi/5.5.0)');
+        // TODO: specify revert message
+      ).to.be.reverted;
+    });
+
+    it("reverts when contract paused", async () => {
+      await guildFactory.connect(dao).pause();
+      await expect(
+        guildFactory
+          .connect(dao)
+          .createGuildWithCrowdSale(
+            guildName,
+            guildSymbol,
+            dao.address,
+            developer.address,
+            treasury.address,
+            startingPriceInUSD
+          )
       ).to.be.revertedWith("Pausable: paused");
     });
 
@@ -618,5 +512,199 @@ describe("📦 GuildFactory", () => {
     });
 
     it.skip("returns a hash resolving in the guild token and crowdsale addresses", async () => {});
+
+    describe("🗳 createGuild()", () => {
+      let guildTokenAddress: string;
+      let GuildTokenFactory: GuildToken__factory;
+      let guildToken: GuildToken;
+
+      before(async () => {
+        GuildTokenFactory = await ethers.getContractFactory("GuildToken");
+      });
+
+      beforeEach(async () => {
+        [guildTokenAddress] = (await guildFactory.viewGuildTokens()).map(
+          stripZeros
+        );
+        guildToken = GuildTokenFactory.attach(guildTokenAddress);
+      });
+
+      it.skip("is payable and can receive native token");
+
+      it("emits a GuildCreated event", async () => {
+        await expect(transaction).to.emit(guildFactory, "GuildCreated");
+        // await expect(transaction).to.emit(guildFactory, "GuildCreated").withArgs(
+        //   guildTokenAddress, // TODO add explicit arg check (guildTokenAddress is all lowercase and not matching)
+        //   guildName,
+        //   guildSymbol,
+        //   dao.address,
+        //   developer.address
+        // );
+      });
+
+      // TODO
+      it.skip(
+        "returns a hashed transaction resolving into the guildToken's proxy address"
+      );
+
+      it("sets the guildToken's address", async () => {
+        expect(typeof guildTokenAddress).to.eq("string");
+        expect(ethers.utils.isAddress(guildTokenAddress)).to.be.true;
+        expect(guildTokenAddress.length).to.eq(42);
+        expect(guildToken.address).to.eq(guildTokenAddress);
+      });
+
+      it(`sets guildToken's decimals to ${guildDecimals}`, async () => {
+        const decimals = await guildToken.decimals();
+        expect(typeof decimals).to.eq("number");
+        expect(decimals).to.eq(guildDecimals);
+      });
+
+      it(`sets the guildToken's name to ${guildName}`, async () => {
+        const name = await guildToken.name();
+        expect(typeof name).to.eq("string");
+        expect(name).to.eq(guildName);
+      });
+
+      it(`sets the guildToken's symbol to ${guildSymbol}`, async () => {
+        const symbol = await guildToken.symbol();
+        expect(typeof symbol).to.eq("string");
+        expect(symbol).to.eq(guildSymbol);
+      });
+
+      it("grants the guildToken's DAO_ROLE to the dao", async () => {
+        expect(await guildToken.hasRole(DAO_ROLE, dao.address)).to.eq(true);
+      });
+
+      it("grants the guildTokens's DEVELOPER_ROLE to the developer", async () => {
+        expect(
+          await guildToken.hasRole(DEVELOPER_ROLE, developer.address)
+        ).to.eq(true);
+      });
+    });
+
+    describe("🗳 createCrowdSale()", () => {
+      let crowdSaleAddress: string;
+      let CrowdSaleFactory: CrowdSale__factory;
+      let crowdSale: CrowdSale;
+
+      before(async () => {
+        CrowdSaleFactory = await ethers.getContractFactory("CrowdSale");
+      });
+
+      beforeEach(async () => {
+        [crowdSaleAddress] = (await guildFactory.viewCrowdSales()).map(
+          stripZeros
+        );
+        crowdSale = CrowdSaleFactory.attach(crowdSaleAddress);
+      });
+
+      it.skip("is payable and can receive native token");
+
+      it("emits a CrowdSaleCreated event", async () => {
+        await expect(transaction).to.emit(guildFactory, "CrowdSaleCreated");
+        // await expect(transaction).to.emit(guildFactory, "GuildCreated").withArgs(
+        //   crowdSaleAddress, // TODO add explicit arg check (crowdSaleAddress is all lowercase and not matching)
+        //   guildName,
+        //   guildSymbol,
+        //   dao.address,
+        //   developer.address
+        // );
+      });
+
+      // TODO
+      it.skip(
+        "returns a hashed transaction resolving into the crowdSale's proxy address"
+      );
+
+      it("sets the crowdSale's address", async () => {
+        expect(typeof crowdSaleAddress).to.eq("string");
+        expect(ethers.utils.isAddress(crowdSaleAddress)).to.be.true;
+        expect(crowdSaleAddress.length).to.eq(42);
+        expect(crowdSale.address).to.eq(crowdSaleAddress);
+      });
+
+      it("sets the FXConstants address in the crowdsale", async () => {
+        const constantsAddress = await crowdSale.CONSTANTS();
+        expect(ethers.utils.isAddress(constantsAddress)).to.be.true;
+        expect(constantsAddress).to.eq(constants.address);
+      });
+
+      it("grants the crowdSale's DAO_ROLE to the dao", async () => {
+        expect(await crowdSale.hasRole(DAO_ROLE, dao.address)).to.eq(true);
+      });
+
+      it("grants the crowdSales's DEVELOPER_ROLE to the developer", async () => {
+        expect(
+          await crowdSale.hasRole(DEVELOPER_ROLE, developer.address)
+        ).to.eq(true);
+      });
+    });
+
+    describe("making multiple guilds and crowdSales", () => {
+      let secondCrowdSaleAddress: string;
+      let secondCrowdSale: CrowdSale;
+      let secondGuildTokenAddress: string;
+      let secondGuildToken: GuildToken;
+
+      let GuildTokenFactory: GuildToken__factory;
+      let CrowdSaleFactory: CrowdSale__factory;
+
+      let crowdSaleAddress: string;
+      let guildTokenAddress: string;
+
+      before(async () => {
+        GuildTokenFactory = await ethers.getContractFactory("GuildToken");
+        CrowdSaleFactory = await ethers.getContractFactory("CrowdSale");
+      });
+
+      beforeEach(async () => {
+        [crowdSaleAddress] = (await guildFactory.viewCrowdSales()).map(
+          stripZeros
+        );
+        [crowdSaleAddress] = (await guildFactory.viewCrowdSales()).map(
+          stripZeros
+        );
+        await guildFactory
+          .connect(dao)
+          .createGuildWithCrowdSale(
+            "GuildToken2",
+            "GUILD2",
+            dao.address,
+            developer.address,
+            treasury.address,
+            startingPriceInUSD
+          );
+        let _;
+        [_, secondGuildTokenAddress] = (
+          await guildFactory.viewGuildTokens()
+        ).map(stripZeros);
+        secondGuildToken = GuildTokenFactory.attach(secondGuildTokenAddress);
+        [_, secondCrowdSaleAddress] = (await guildFactory.viewCrowdSales()).map(
+          stripZeros
+        );
+        secondCrowdSale = CrowdSaleFactory.attach(secondCrowdSaleAddress);
+      });
+
+      it("creates a distinguished crowdsale address from the first", async () => {
+        const addresses = await guildFactory.viewCrowdSales();
+        expect(addresses.length).to.eq(
+          addresses.filter((v, i, a) => a.indexOf(v) === i).length
+        ); // distinct
+        expect(typeof secondCrowdSaleAddress).to.eq("string");
+        expect(ethers.utils.isAddress(secondCrowdSaleAddress)).to.be.true;
+        expect(secondCrowdSaleAddress).to.not.eq(crowdSaleAddress);
+      });
+
+      it("creates a distinguished token address from the first", async () => {
+        const addresses = await guildFactory.viewGuildTokens();
+        expect(addresses.length).to.eq(
+          addresses.filter((v, i, a) => a.indexOf(v) === i).length
+        ); // distinct
+        expect(typeof secondGuildTokenAddress).to.eq("string");
+        expect(ethers.utils.isAddress(secondGuildTokenAddress)).to.be.true;
+        expect(secondGuildTokenAddress).to.not.eq(guildTokenAddress);
+      });
+    });
   });
 });
