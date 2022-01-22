@@ -18,7 +18,6 @@ import { ethers, upgrades } from "hardhat";
 // @ts-ignore ts(7016) Seems like they don't have any type declarations at this time
 import { constants } from "@openzeppelin/test-helpers";
 import {
-  convertTokenToWei,
   DAO_ROLE,
   DEFAULT_ADMIN_ROLE,
   DEVELOPER_ROLE,
@@ -66,6 +65,10 @@ describe("📦 GUILD token", async () => {
 
   it("has 18 decimals", async () => {
     expect(await token.decimals()).to.be.equal(18);
+  });
+
+  it("has 0 total supply", async () => {
+    expect(await token.totalSupply()).eq("0");
   });
 
   it("grants the dao the DAO_ROLE", async () => {
@@ -409,8 +412,8 @@ describe("📦 GUILD token", async () => {
           .connect(whitelistedAddress)
           .mintRequest(treasury.address, 10);
         const balance = await token.balanceOf(treasury.address);
-        expect(balance).to.be.equal(convertTokenToWei(10));
-        expect(await token.currentSupply()).to.be.equal(convertTokenToWei(10));
+        expect(balance).to.be.equal(10);
+        expect(await token.currentSupply()).to.be.equal(10);
       });
 
       it("does not mint negative amount", async () => {
@@ -457,11 +460,11 @@ describe("📦 GUILD token", async () => {
         await token
           .connect(whitelistedAddress)
           .mintRequest(treasury.address, 10);
-        expect(await token.currentSupply()).to.be.equal(convertTokenToWei(10));
+        expect(await token.currentSupply()).to.be.equal(10);
         await token
           .connect(whitelistedAddress)
           .mintRequest(treasury.address, 100);
-        expect(await token.currentSupply()).to.be.equal(convertTokenToWei(110));
+        expect(await token.currentSupply()).to.be.equal(110);
       });
 
       it("emits an MintRequestFulfilled event", async () => {
@@ -469,6 +472,41 @@ describe("📦 GUILD token", async () => {
           .connect(whitelistedAddress)
           .mintRequest(treasury.address, 10);
         await expect(promise).to.emit(token, "MintRequestFulfilled");
+      });
+
+      it("can mint 2^224 - 1 tokens", async () => {
+        const amount = ethers.BigNumber.from("2")
+          .pow("224")
+          .sub("1")
+          .toString();
+        await token
+          .connect(whitelistedAddress)
+          .mintRequest(whitelistedAddress.address, amount.toString());
+
+        expect(await token.balanceOf(whitelistedAddress.address)).eq(amount);
+      });
+
+      it("reverts with 'ERC20Votes: total supply risks overflowing votes' error for 2^224 tokens", async () => {
+        const initialSupply = await token.currentSupply();
+        const amount = ethers.BigNumber.from("2").pow("224").toString();
+        const request = token
+          .connect(whitelistedAddress)
+          .mintRequest(whitelistedAddress.address, amount.toString());
+        await expect(request).to.be.revertedWith(
+          "ERC20Votes: total supply risks overflowing votes"
+        );
+        expect(initialSupply).eq(await token.currentSupply());
+      });
+
+      it("reverts value-out-of-bounds error when trying to mint negative value", async () => {
+        const amount = ethers.BigNumber.from("-2");
+        const request = token
+          .connect(whitelistedAddress)
+          .mintRequest(whitelistedAddress.address, amount.toString());
+        // await expect(request).to.be.revertedWith(
+        //   'Error: value out-of-bounds (argument="_amount", value="-2", code=INVALID_ARGUMENT, version=abi/5.5.0)'
+        // );
+        await expect(request).to.be.reverted;
       });
     });
   });

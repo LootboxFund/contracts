@@ -35,9 +35,5 @@ export const stripZeros = (address: string) => {
   return `0x${address.slice(address.length - desiredHexLength)}`;
 };
 
-export const convertTokenToWei = (tokens: number) =>
-  // ethers.BigNumber.from(`${tokens}000000000000000000`);
-  tokens; // Conversion not needed anymore
-
 export const generateMockAddress = (value: string) =>
   ethers.utils.keccak256(ethers.utils.toUtf8Bytes(value)).slice(0, 42);
