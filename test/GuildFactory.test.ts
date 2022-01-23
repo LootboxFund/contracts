@@ -19,6 +19,8 @@ import {
   GUILD_OWNER_ROLE,
   generatePermissionRevokeMessage,
   stripZeros,
+  GOVERNOR_ADMIN_ROLE,
+  DEFAULT_ADMIN_ROLE,
 } from "./helpers/test-helpers";
 
 describe("📦 GuildFactory", () => {
@@ -322,9 +324,16 @@ describe("📦 GuildFactory", () => {
     let initialNumberOfGovernors: number;
     let transaction: ContractTransaction;
 
+    let guildToken: GuildToken;
+    let GuildTokenFactory: GuildToken__factory;
+
     const guildName: string = "GuildFXTest";
     const guildSymbol: string = "GFXT";
     const guildDecimals: number = 18;
+
+    before(async () => {
+      GuildTokenFactory = await ethers.getContractFactory("GuildToken");
+    });
 
     beforeEach(async () => {
       initialNumberOfGuilds = (await guildFactory.viewGuildTokens()).length;
@@ -333,6 +342,11 @@ describe("📦 GuildFactory", () => {
       transaction = await guildFactory
         .connect(dao)
         .createGuild(guildName, guildSymbol, dao.address, developer.address);
+
+      const [guildTokenAddress] = (await guildFactory.viewGuildTokens()).map(
+        stripZeros
+      );
+      guildToken = GuildTokenFactory.attach(guildTokenAddress);
     });
 
     it("reverts if dao is zero", async () => {
@@ -422,24 +436,24 @@ describe("📦 GuildFactory", () => {
         .true;
     });
 
+    it("no user has the GOVERNOR_ADMIN_ROLE", async () => {
+      const users = [deployer, dao, treasury, developer, purchaser];
+      for (let user of users) {
+        expect(await guildToken.hasRole(DEFAULT_ADMIN_ROLE, user.address)).to.be
+          .false;
+      }
+    });
+
+    it("the GuildFactory contract itself does not have the GOVERNOR_ADMIN_ROLE", async () => {
+      // NOTE this is also well tested in the GuildToken.test.ts .grantRole() function
+      expect(
+        await guildToken.hasRole(GOVERNOR_ADMIN_ROLE, guildFactory.address)
+      ).to.be.false;
+    });
+
     it.skip("returns a hash resolving in the guild token and governor addresses", async () => {});
 
-    describe("🗳  _createGuild()", () => {
-      let guildTokenAddress: string;
-      let GuildTokenFactory: GuildToken__factory;
-      let guildToken: GuildToken;
-
-      before(async () => {
-        GuildTokenFactory = await ethers.getContractFactory("GuildToken");
-      });
-
-      beforeEach(async () => {
-        [guildTokenAddress] = (await guildFactory.viewGuildTokens()).map(
-          stripZeros
-        );
-        guildToken = GuildTokenFactory.attach(guildTokenAddress);
-      });
-
+    describe("⚙️  _createGuildToken()", () => {
       it.skip("is payable and can receive native token");
 
       it("emits a GuildCreated event", async () => {
@@ -459,10 +473,9 @@ describe("📦 GuildFactory", () => {
       );
 
       it("sets the guildToken's address in the GUILD_TOKEN_PROXIES set", async () => {
-        expect(typeof guildTokenAddress).to.eq("string");
+        const guildTokenAddress = guildToken.address;
         expect(ethers.utils.isAddress(guildTokenAddress)).to.be.true;
         expect(guildTokenAddress.length).to.eq(42);
-        expect(guildToken.address).to.eq(guildTokenAddress);
       });
 
       it(`sets guildToken's decimals to ${guildDecimals}`, async () => {
@@ -494,7 +507,7 @@ describe("📦 GuildFactory", () => {
       });
     });
 
-    describe("🗳  _createGovernor()", () => {
+    describe("⚙️  _createGovernor()", () => {
       let governorAddress: string;
       let Governor: Governor__factory;
       let governor: Governor;
@@ -536,70 +549,63 @@ describe("📦 GuildFactory", () => {
       });
     });
 
-    // describe("making multiple guilds and crowdSales", () => {
-    //   let secondCrowdSaleAddress: string;
-    //   let secondCrowdSale: CrowdSale;
-    //   let secondGuildTokenAddress: string;
-    //   let secondGuildToken: GuildToken;
+    describe("making multiple guildtokens and governors", () => {
+      let secondGovernorAddress: string;
+      let secondGovernor: Governor;
+      let secondGuildTokenAddress: string;
+      let secondGuildToken: GuildToken;
 
-    //   let GuildTokenFactory: GuildToken__factory;
-    //   let CrowdSaleFactory: CrowdSale__factory;
+      let GuildTokenFactory: GuildToken__factory;
+      let GovernorFactory: Governor__factory;
 
-    //   let crowdSaleAddress: string;
-    //   let guildTokenAddress: string;
+      let governorAddress: string;
+      let guildTokenAddress: string;
 
-    //   before(async () => {
-    //     GuildTokenFactory = await ethers.getContractFactory("GuildToken");
-    //     CrowdSaleFactory = await ethers.getContractFactory("CrowdSale");
-    //   });
+      before(async () => {
+        GuildTokenFactory = await ethers.getContractFactory("GuildToken");
+        GovernorFactory = await ethers.getContractFactory("Governor");
+      });
 
-    //   beforeEach(async () => {
-    //     [crowdSaleAddress] = (await guildFactory.viewCrowdSales()).map(
-    //       stripZeros
-    //     );
-    //     [crowdSaleAddress] = (await guildFactory.viewCrowdSales()).map(
-    //       stripZeros
-    //     );
-    //     await guildFactory
-    //       .connect(dao)
-    //       .createGuild(
-    //         "GuildToken2",
-    //         "GUILD2",
-    //         dao.address,
-    //         developer.address,
-    //         treasury.address,
-    //         startingPriceInUSD
-    //       );
-    //     let _;
-    //     [_, secondGuildTokenAddress] = (
-    //       await guildFactory.viewGuildTokens()
-    //     ).map(stripZeros);
-    //     secondGuildToken = GuildTokenFactory.attach(secondGuildTokenAddress);
-    //     [_, secondCrowdSaleAddress] = (await guildFactory.viewCrowdSales()).map(
-    //       stripZeros
-    //     );
-    //     secondCrowdSale = CrowdSaleFactory.attach(secondCrowdSaleAddress);
-    //   });
+      beforeEach(async () => {
+        [governorAddress] = (await guildFactory.viewGovernors()).map(
+          stripZeros
+        );
+        [governorAddress] = (await guildFactory.viewGovernors()).map(
+          stripZeros
+        );
+        await guildFactory
+          .connect(dao)
+          .createGuild("GuildToken2", "GUILD2", dao.address, developer.address);
+        let _;
+        [_, secondGuildTokenAddress] = (
+          await guildFactory.viewGuildTokens()
+        ).map(stripZeros);
+        secondGuildToken = GuildTokenFactory.attach(secondGuildTokenAddress);
+        [_, secondGovernorAddress] = (await guildFactory.viewGovernors()).map(
+          stripZeros
+        );
+        secondGovernor = GovernorFactory.attach(secondGovernorAddress);
+      });
 
-    //   it("creates a distinguished crowdsale address from the first", async () => {
-    //     const addresses = await guildFactory.viewCrowdSales();
-    //     expect(addresses.length).to.eq(
-    //       addresses.filter((v, i, a) => a.indexOf(v) === i).length
-    //     ); // distinct
-    //     expect(typeof secondCrowdSaleAddress).to.eq("string");
-    //     expect(ethers.utils.isAddress(secondCrowdSaleAddress)).to.be.true;
-    //     expect(secondCrowdSaleAddress).to.not.eq(crowdSaleAddress);
-    //   });
+      it("creates a distinguished governor address from the first", async () => {
+        const addresses = await guildFactory.viewGovernors();
+        expect(addresses.length).to.eq(
+          addresses.filter((v, i, a) => a.indexOf(v) === i).length
+        ); // distinct
+        expect(typeof secondGovernorAddress).to.eq("string");
+        expect(ethers.utils.isAddress(secondGovernorAddress)).to.be.true;
+        expect(secondGovernorAddress).to.not.eq(governorAddress);
+      });
 
-    //   it("creates a distinguished token address from the first", async () => {
-    //     const addresses = await guildFactory.viewGuildTokens();
-    //     expect(addresses.length).to.eq(
-    //       addresses.filter((v, i, a) => a.indexOf(v) === i).length
-    //     ); // distinct
-    //     expect(typeof secondGuildTokenAddress).to.eq("string");
-    //     expect(ethers.utils.isAddress(secondGuildTokenAddress)).to.be.true;
-    //     expect(secondGuildTokenAddress).to.not.eq(guildTokenAddress);
-    //   });
-    // });
+      it("creates a distinguished token address from the first", async () => {
+        const addresses = await guildFactory.viewGuildTokens();
+        expect(addresses.length).to.eq(
+          addresses.filter((v, i, a) => a.indexOf(v) === i).length
+        ); // distinct
+        expect(typeof secondGuildTokenAddress).to.eq("string");
+        expect(ethers.utils.isAddress(secondGuildTokenAddress)).to.be.true;
+        expect(secondGuildTokenAddress).to.not.eq(guildTokenAddress);
+      });
+    });
   });
 });

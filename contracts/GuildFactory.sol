@@ -11,12 +11,27 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./GuildToken.sol";
 import "./Governor.sol";
 
+interface IERC20GUILD {
+    function grantRole(bytes32 role, address account) external;
+
+    function revokeRole(bytes32 role, address account) external;
+
+    function mintRequest(address _recipient, uint256 _amount) external;
+
+    function transfer(address recipient, uint256 amount)
+        external
+        returns (bool);
+
+    function whitelistMint(address _mintAddress, bool _isActive) external;
+}
+
 contract GuildFactory is Pausable, AccessControl {
     address internal immutable tokenImplementation;
     address internal immutable governorImplementation;
 
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE"); // GuildFX DAO
     bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE"); // GuildFX devs
+    bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE"); // GuildFX devs
     bytes32 public constant GUILD_OWNER_ROLE = keccak256("GUILD_OWNER_ROLE"); // People who can create a guild
     bytes32 public constant GUILD_MANAGER_ROLE =
         keccak256("GUILD_MANAGER_ROLE"); // People who can whitelist guild owners
@@ -38,13 +53,19 @@ contract GuildFactory is Pausable, AccessControl {
         string token,
         address dao,
         address developer,
-        address creator
+        address creator,
+        address guildFactory
     );
-    event GovernorCreated(address governorAddress, address creator);
+    event GovernorCreated(
+        address governorAddress,
+        address creator,
+        address guildFactory
+    );
     event TokenGovernorPairCreated(
         address guildToken,
         address governor,
-        address creator
+        address creator,
+        address guildFactory
     );
     event GuildManagerWhitelist(address guildManager, bool isActive);
     event GuildOwnerWhitelist(address guildOwner, bool isActive);
@@ -83,7 +104,19 @@ contract GuildFactory is Pausable, AccessControl {
 
         address governor = _createGovernor(guildToken);
 
-        emit TokenGovernorPairCreated(guildToken, governor, msg.sender);
+        // The deployer (aka the GuildFactory was granted GOVERNOR_ADMIN_ROLE)
+        // Take advantage of it here to set up the governor in the guildToken
+        // Note This will revoke the GOVERNOR_ADMIN_ROLE from the GuildFactory
+        //      rendering it un-usable!
+        IERC20GUILD token = IERC20GUILD(guildToken);
+        token.grantRole(GOVERNOR_ROLE, governor); // This will revoke the GOVERNOR_ADMIN_ROLE
+
+        emit TokenGovernorPairCreated(
+            guildToken,
+            governor,
+            msg.sender,
+            address(this)
+        );
         return (address(guildToken), address(governor));
     }
 
@@ -116,7 +149,8 @@ contract GuildFactory is Pausable, AccessControl {
             guildSymbol,
             dao,
             developer,
-            msg.sender
+            msg.sender,
+            address(this)
         );
         return address(proxy);
     }
@@ -132,7 +166,7 @@ contract GuildFactory is Pausable, AccessControl {
             )
         );
         GOVERNOR_PROXIES.add(address(proxy));
-        emit GovernorCreated(address(proxy), msg.sender);
+        emit GovernorCreated(address(proxy), msg.sender, address(this));
         return address(proxy);
     }
 
