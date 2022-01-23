@@ -10,10 +10,11 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./GuildToken.sol";
 import "./CrowdSale.sol";
+import "./Governor.sol";
 
 contract GuildFactory is Pausable, AccessControl {
     address internal immutable tokenImplementation;
-    address internal immutable crowdsaleImplementation;
+    address internal immutable governorImplementation;
 
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE"); // GuildFX DAO
     bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE"); // GuildFX devs
@@ -29,8 +30,10 @@ contract GuildFactory is Pausable, AccessControl {
     EnumerableSet.AddressSet private GUILD_TOKEN_PROXIES;
 
     // Points to the crowdsale proxies
+    // using EnumerableSet for EnumerableSet.AddressSet;
+    // EnumerableSet.AddressSet private CROWD_SALE_PROXIES;
     using EnumerableSet for EnumerableSet.AddressSet;
-    EnumerableSet.AddressSet private CROWD_SALE_PROXIES;
+    EnumerableSet.AddressSet private GOVERNOR_PROXIES;
 
     event GuildCreated(
         address contractAddress,
@@ -40,21 +43,22 @@ contract GuildFactory is Pausable, AccessControl {
         address developer,
         address creator
     );
-    event CrowdSaleCreated(
-        address contractAddress,
-        address guildToken,
-        address dao,
-        address developer,
-        address fxConstants,
-        address treasury,
-        uint256 startingPriceInUSD,
-        address creator
-    );
-    event GuildCrowdsalePairCreated(
-        address guildToken,
-        address crowdsale,
-        address creator
-    );
+    event GovernorCreated(address governorAddress, address creator);
+    // event CrowdSaleCreated(
+    //     address contractAddress,
+    //     address guildToken,
+    //     address dao,
+    //     address developer,
+    //     address fxConstants,
+    //     address treasury,
+    //     uint256 startingPriceInUSD,
+    //     address creator
+    // );
+    // event GuildCrowdsalePairCreated(
+    //     address guildToken,
+    //     address crowdsale,
+    //     address creator
+    // );
     event GuildManagerWhitelist(address guildManager, bool isActive);
     event GuildOwnerWhitelist(address guildOwner, bool isActive);
 
@@ -65,7 +69,7 @@ contract GuildFactory is Pausable, AccessControl {
             "FXConstants address cannot be zero"
         );
         tokenImplementation = address(new GuildToken());
-        crowdsaleImplementation = address(new CrowdSale());
+        governorImplementation = address(new Governor());
         fxConstants = _fxConstants;
         _grantRole(DAO_ROLE, dao);
         _grantRole(GUILD_MANAGER_ROLE, dao);
@@ -106,80 +110,95 @@ contract GuildFactory is Pausable, AccessControl {
         return address(proxy);
     }
 
-    function createCrowdSale(
-        address guildToken,
-        address dao,
-        address developer,
-        address payable treasury,
-        uint256 startingPriceInUSD
-    ) internal returns (address) {
-        require(guildToken != address(0), "Guild token cannot be zero");
-        require(dao != address(0), "DAO address cannot be zero");
-        require(developer != address(0), "Developer address cannot be zero");
-        require(treasury != address(0), "Treasury address cannot be zero");
-        require(
-            startingPriceInUSD > 0,
-            "Starting price should be greater than zero"
-        );
-
+    function createGovernor(address token) internal returns (address) {
         // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
         ERC1967Proxy proxy = new ERC1967Proxy(
-            crowdsaleImplementation,
+            governorImplementation,
             abi.encodeWithSelector(
-                CrowdSale(address(0)).initialize.selector,
-                guildToken,
-                dao,
-                developer,
-                fxConstants,
-                treasury,
-                startingPriceInUSD
+                // TODO: investigate if payable here will affect anything
+                Governor(payable(address(0))).initialize.selector,
+                token
             )
         );
-        CROWD_SALE_PROXIES.add(address(proxy));
-        emit CrowdSaleCreated(
-            address(proxy),
-            guildToken,
-            dao,
-            developer,
-            fxConstants,
-            treasury,
-            startingPriceInUSD,
-            msg.sender
-        );
+        GOVERNOR_PROXIES.add(address(proxy));
+        emit GovernorCreated(address(proxy), msg.sender);
         return address(proxy);
     }
 
-    function createGuildWithCrowdSale(
-        string memory guildName,
-        string memory guildSymbol,
-        address dao,
-        address developer,
-        address payable treasury,
-        uint256 startingPriceInUSD
-    )
-        public
-        onlyRole(GUILD_OWNER_ROLE)
-        whenNotPaused
-        returns (address, address)
-    {
-        address guildToken = createGuild(
-            guildName,
-            guildSymbol,
-            dao,
-            developer
-        );
+    // function createCrowdSale(
+    //     address guildToken,
+    //     address dao,
+    //     address developer,
+    //     address payable treasury,
+    //     uint256 startingPriceInUSD
+    // ) internal returns (address) {
+    //     require(guildToken != address(0), "Guild token cannot be zero");
+    //     require(dao != address(0), "DAO address cannot be zero");
+    //     require(developer != address(0), "Developer address cannot be zero");
+    //     require(treasury != address(0), "Treasury address cannot be zero");
+    //     require(
+    //         startingPriceInUSD > 0,
+    //         "Starting price should be greater than zero"
+    //     );
 
-        address crowdSale = createCrowdSale(
-            guildToken,
-            dao,
-            developer,
-            treasury,
-            startingPriceInUSD
-        );
+    //     // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
+    //     ERC1967Proxy proxy = new ERC1967Proxy(
+    //         crowdsaleImplementation,
+    //         abi.encodeWithSelector(
+    //             CrowdSale(address(0)).initialize.selector,
+    //             guildToken,
+    //             dao,
+    //             developer,
+    //             fxConstants,
+    //             treasury,
+    //             startingPriceInUSD
+    //         )
+    //     );
+    //     CROWD_SALE_PROXIES.add(address(proxy));
+    //     emit CrowdSaleCreated(
+    //         address(proxy),
+    //         guildToken,
+    //         dao,
+    //         developer,
+    //         fxConstants,
+    //         treasury,
+    //         startingPriceInUSD,
+    //         msg.sender
+    //     );
+    //     return address(proxy);
+    // }
 
-        emit GuildCrowdsalePairCreated(guildToken, crowdSale, msg.sender);
-        return (address(guildToken), address(crowdSale));
-    }
+    // function createGuildWithCrowdSale(
+    //     string memory guildName,
+    //     string memory guildSymbol,
+    //     address dao,
+    //     address developer,
+    //     address payable treasury,
+    //     uint256 startingPriceInUSD
+    // )
+    //     public
+    //     onlyRole(GUILD_OWNER_ROLE)
+    //     whenNotPaused
+    //     returns (address, address)
+    // {
+    //     address guildToken = createGuild(
+    //         guildName,
+    //         guildSymbol,
+    //         dao,
+    //         developer
+    //     );
+
+    //     address crowdSale = createCrowdSale(
+    //         guildToken,
+    //         dao,
+    //         developer,
+    //         treasury,
+    //         startingPriceInUSD
+    //     );
+
+    //     emit GuildCrowdsalePairCreated(guildToken, crowdSale, msg.sender);
+    //     return (address(guildToken), address(crowdSale));
+    // }
 
     function whitelistGuildOwner(address guildOwner, bool isActive)
         public
@@ -212,9 +231,12 @@ contract GuildFactory is Pausable, AccessControl {
         return GUILD_TOKEN_PROXIES._inner._values;
     }
 
-    function viewCrowdSales() public view returns (bytes32[] memory) {
-        // TODO investigate memory usage if GUILD_TOKEN_PROXIES can be huge
-        return CROWD_SALE_PROXIES._inner._values;
+    // function viewCrowdSales() public view returns (bytes32[] memory) {
+    //     // TODO investigate memory usage if GUILD_TOKEN_PROXIES can be huge
+    //     return CROWD_SALE_PROXIES._inner._values;
+    // }
+    function viewGovernors() public view returns (bytes32[] memory) {
+        return GOVERNOR_PROXIES._inner._values;
     }
 
     // --------- Managing the Token ---------
