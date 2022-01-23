@@ -9,7 +9,6 @@
 
 import { ethers } from "hardhat";
 import { logToFile } from "./helpers/logger";
-import { stripZeros } from "../test/helpers/test-helpers";
 
 /**
  * @todo dynamically load these paramaters, or store in global config file somewhere
@@ -18,8 +17,8 @@ import { stripZeros } from "../test/helpers/test-helpers";
  *      1. GuildFX Constants Contract Address
  *      2. GuildFX Gamer Token Address
  */
-const GUILD_FX_CONSTANTS_ADDRESS = "0xDDda75Eb9afC7297444C6070B696C103d809C3F7";
-const GUILD_FX_TOKEN_ADDRESS = "0x6bb2f28972abf66cf4a007fddd8f354060b8663d";
+const GUILD_FX_CONSTANTS_ADDRESS = "0xAF761E630B936F4892c05C1aBcfD614559AdD35e";
+const GUILD_FX_TOKEN_ADDRESS = "0xe5faebe2dbc746a0fe99fe2924db1c6bf2ac3160";
 const GUILD_FX_GAMER_TOKEN_STARTING_PRICE = "7000000"; // 7 USD cents
 
 const LOG_FILE_PATH = `${__dirname}/logs/deployCrowdSaleFactory_log_${Date.now()}.dev.txt`;
