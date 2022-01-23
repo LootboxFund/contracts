@@ -17,8 +17,8 @@ import { stripZeros } from "../test/helpers/test-helpers";
  *      1. GuildFX Constants Contract Address
  *      2. GuildFX Gamer Token Address
  */
-const GUILD_FX_CONSTANTS_ADDRESS = "0x712599143592c66822Cb73ae04B17D1a7530C646";
-const GUILD_FX_TOKEN_ADDRESS = "0xa9e663ad5862cfa61077f99ca257ce323bf08204";
+const GUILD_FX_CONSTANTS_ADDRESS = "0xDDda75Eb9afC7297444C6070B696C103d809C3F7";
+const GUILD_FX_TOKEN_ADDRESS = "0x6bb2f28972abf66cf4a007fddd8f354060b8663d";
 const GUILD_FX_GAMER_TOKEN_STARTING_PRICE = "7000000"; // 7 USD cents
 
 const LOG_FILE_PATH = `${__dirname}/logs/deployCrowdSaleFactory_log_${Date.now()}.dev.txt`;
