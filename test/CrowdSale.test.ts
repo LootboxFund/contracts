@@ -170,21 +170,6 @@ describe("📦 CrowdSale of GUILD token", async function () {
     expect(await crowdSale.CONSTANTS()).to.eq(constants.address);
   });
 
-  it("allows DAO to change the currentPriceInUSD", async function () {
-    expect(await crowdSale.getCurrentUSDPrice()).to.eq(startingPriceInUSD);
-    await expect(
-      crowdSale.connect(purchaser).setCurrentUSDPrice("8000000")
-    ).to.be.revertedWith(
-      generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
-    );
-    await expect(
-      crowdSale.connect(dao).setCurrentUSDPrice("8000000")
-    ).to.not.be.revertedWith(
-      generatePermissionRevokeMessage(crowdSale.address, DAO_ROLE)
-    );
-    expect(await crowdSale.getCurrentUSDPrice()).to.eq("8000000");
-  });
-
   it("purchasing fails if CrowdSale is not a whitelisted mint", async () => {
     await usdc_stablecoin.mint(purchaser.address, 1);
     await usdc_stablecoin.connect(purchaser).approve(crowdSale.address, 1);

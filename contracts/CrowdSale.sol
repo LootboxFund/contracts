@@ -96,7 +96,7 @@ contract CrowdSale is
     bytes32 constant DAO_ROLE = keccak256("DAO_ROLE");
     bytes32 constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE");
 
-    uint256 currentPriceUSD; // 8 decimals
+    uint256 currentPriceUSD; // 8 decimals - THIS SHOULD NOT BE MODIFIED
 
     address payable public TREASURY;
     address public GUILD;
@@ -152,10 +152,6 @@ contract CrowdSale is
         priceFeedUSDT = AggregatorV3Interface(constants.USDT_PRICE_FEED());
         priceFeedUST = AggregatorV3Interface(constants.UST_PRICE_FEED());
         priceFeedDAI = AggregatorV3Interface(constants.DAI_PRICE_FEED());
-    }
-
-    function setCurrentUSDPrice(uint256 _price) public onlyRole(DAO_ROLE) {
-        currentPriceUSD = _price;
     }
 
     function getCurrentUSDPrice() external view returns (uint256) {
