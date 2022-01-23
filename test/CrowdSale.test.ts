@@ -3,6 +3,7 @@ import { ethers, upgrades } from "hardhat";
 import {
   DAO_ROLE,
   generatePermissionRevokeMessage,
+  GOVERNOR_ROLE,
   MINTER_ROLE,
 } from "./helpers/test-helpers";
 
@@ -36,6 +37,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
   let purchaser: SignerWithAddress;
   let dao: SignerWithAddress;
   let developer: SignerWithAddress;
+  let governor: SignerWithAddress;
 
   let Token: GuildToken__factory;
   let token: GuildToken;
@@ -73,7 +75,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
   const GUILD_TOKEN_NAME = "GuildTokenTest";
   const GUILD_TOKEN_SYMBOL = "GUILDT";
 
-  const startingPriceInUSD = '7000000';  // 7 usd cents
+  const startingPriceInUSD = "7000000"; // 7 usd cents
 
   before(async function () {
     [deployer, treasury, dao, developer, purchaser] = await ethers.getSigners();
@@ -135,6 +137,10 @@ describe("📦 CrowdSale of GUILD token", async function () {
     )) as GuildToken;
     await token.deployed();
 
+    // Copied from GuildFactory.sol
+    await token.grantRole(GOVERNOR_ROLE, deployer.address); // Will set GOVERNOR_ADMIN_ROLE to zero
+    governor = deployer;
+
     crowdSale = (await upgrades.deployProxy(
       CrowdSale,
       [
@@ -165,20 +171,18 @@ describe("📦 CrowdSale of GUILD token", async function () {
   });
 
   it("allows DAO to change the currentPriceInUSD", async function () {
-    expect(await crowdSale.getCurrentUSDPrice()).to.eq(
-      startingPriceInUSD
-    );
+    expect(await crowdSale.getCurrentUSDPrice()).to.eq(startingPriceInUSD);
     await expect(
-      crowdSale.connect(purchaser).setCurrentUSDPrice('8000000')
+      crowdSale.connect(purchaser).setCurrentUSDPrice("8000000")
     ).to.be.revertedWith(
       generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
     );
     await expect(
-      crowdSale.connect(dao).setCurrentUSDPrice('8000000')
+      crowdSale.connect(dao).setCurrentUSDPrice("8000000")
     ).to.not.be.revertedWith(
       generatePermissionRevokeMessage(crowdSale.address, DAO_ROLE)
     );
-    expect(await crowdSale.getCurrentUSDPrice()).to.eq('8000000');
+    expect(await crowdSale.getCurrentUSDPrice()).to.eq("8000000");
   });
 
   it("purchasing fails if CrowdSale is not a whitelisted mint", async () => {
@@ -189,11 +193,24 @@ describe("📦 CrowdSale of GUILD token", async function () {
     );
   });
 
-  it("allows DAO to whitelist the CrowdSale as a valid minter", async () => {
+  it("does not allow dao, developer, purchaser, treasury to whitelist the CrowdSale as a valid minter", async () => {
+    // Note: in general it won't allow the deployer either. Only in this setup we are re-using the deployer as the governor
+    // TODO: add a SHARED governor DEV metamask wallet and add to credential files to be used in tests
+    const users = [dao, treasury, developer, purchaser];
+    for (let user of users) {
+      await expect(
+        token.connect(user).whitelistMint(crowdSale.address, true)
+      ).to.be.revertedWith(
+        generatePermissionRevokeMessage(user.address, GOVERNOR_ROLE)
+      );
+    }
+  });
+
+  it("allows Governor (in this case the deployer) to whitelist the CrowdSale as a valid minter", async () => {
     await expect(
-      token.connect(dao).whitelistMint(crowdSale.address, true)
+      token.connect(governor).whitelistMint(crowdSale.address, true)
     ).to.not.be.revertedWith(
-      generatePermissionRevokeMessage(crowdSale.address, DAO_ROLE)
+      generatePermissionRevokeMessage(governor.address, GOVERNOR_ROLE)
     );
   });
 
@@ -300,8 +317,8 @@ describe("📦 CrowdSale of GUILD token", async function () {
       stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 USD
 
       archivedPrice = ethers.BigNumber.from("100005159");
-      startingPriceUSD = ethers.BigNumber.from("7000000");  // ~7 usd cents
-      gamerPurchasedAmount = ethers.BigNumber.from('142864512857142857142');  // ~142 tokens in 18 decimals
+      startingPriceUSD = ethers.BigNumber.from("7000000"); // ~7 usd cents
+      gamerPurchasedAmount = ethers.BigNumber.from("142864512857142857142"); // ~142 tokens in 18 decimals
 
       await usdc_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
       await usdc_stablecoin.mint(
@@ -311,7 +328,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
       await usdc_stablecoin
         .connect(purchaser)
         .approve(crowdSale.address, stablecoinAmount);
-      await token.connect(dao).whitelistMint(crowdSale.address, true);
+      await token.connect(governor).whitelistMint(crowdSale.address, true);
     });
 
     it("reverts with pausable error if contract is paused", async () => {
@@ -391,8 +408,8 @@ describe("📦 CrowdSale of GUILD token", async function () {
       stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 USD
 
       archivedPrice = ethers.BigNumber.from("100018962");
-      startingPriceUSD = ethers.BigNumber.from('7000000');
-      gamerPurchasedAmount = ethers.BigNumber.from('142884231428571428571')
+      startingPriceUSD = ethers.BigNumber.from("7000000");
+      gamerPurchasedAmount = ethers.BigNumber.from("142884231428571428571");
 
       await usdt_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
       await usdt_stablecoin.mint(
@@ -402,7 +419,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
       await usdt_stablecoin
         .connect(purchaser)
         .approve(crowdSale.address, stablecoinAmount);
-      await token.connect(dao).whitelistMint(crowdSale.address, true);
+      await token.connect(governor).whitelistMint(crowdSale.address, true);
     });
 
     it("reverts with pausable error if contract is paused", async () => {
@@ -482,15 +499,15 @@ describe("📦 CrowdSale of GUILD token", async function () {
       stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 USD
 
       archivedPrice = ethers.BigNumber.from("100058710");
-      startingPriceUSD = ethers.BigNumber.from('7000000');
-      gamerPurchasedAmount = ethers.BigNumber.from('142941014285714285714')
+      startingPriceUSD = ethers.BigNumber.from("7000000");
+      gamerPurchasedAmount = ethers.BigNumber.from("142941014285714285714");
 
       await ust_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
       await ust_stablecoin.mint(treasury.address, seedTreasuryStableCoinAmount);
       await ust_stablecoin
         .connect(purchaser)
         .approve(crowdSale.address, stablecoinAmount);
-      await token.connect(dao).whitelistMint(crowdSale.address, true);
+      await token.connect(governor).whitelistMint(crowdSale.address, true);
     });
 
     it("reverts with pausable error if contract is paused", async () => {
@@ -570,15 +587,15 @@ describe("📦 CrowdSale of GUILD token", async function () {
       stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // 10 ETH
 
       archivedPrice = ethers.BigNumber.from("365993550000");
-      startingPriceUSD = ethers.BigNumber.from('7000000');
-      gamerPurchasedAmount = ethers.BigNumber.from("522847928571428571428571")
+      startingPriceUSD = ethers.BigNumber.from("7000000");
+      gamerPurchasedAmount = ethers.BigNumber.from("522847928571428571428571");
 
       await eth_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
       await eth_stablecoin.mint(treasury.address, seedTreasuryStableCoinAmount);
       await eth_stablecoin
         .connect(purchaser)
         .approve(crowdSale.address, stablecoinAmount);
-      await token.connect(dao).whitelistMint(crowdSale.address, true);
+      await token.connect(governor).whitelistMint(crowdSale.address, true);
     });
 
     it("reverts with pausable error if contract is paused", async () => {
@@ -658,15 +675,15 @@ describe("📦 CrowdSale of GUILD token", async function () {
       stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 USD
 
       archivedPrice = ethers.BigNumber.from("100036216");
-      startingPriceUSD = ethers.BigNumber.from('7000000');
-      gamerPurchasedAmount = ethers.BigNumber.from('142908880000000000000')
+      startingPriceUSD = ethers.BigNumber.from("7000000");
+      gamerPurchasedAmount = ethers.BigNumber.from("142908880000000000000");
 
       await dai_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
       await dai_stablecoin.mint(treasury.address, seedTreasuryStableCoinAmount);
       await dai_stablecoin
         .connect(purchaser)
         .approve(crowdSale.address, stablecoinAmount);
-      await token.connect(dao).whitelistMint(crowdSale.address, true);
+      await token.connect(governor).whitelistMint(crowdSale.address, true);
     });
 
     it("reverts with pausable error if contract is paused", async () => {
@@ -746,10 +763,10 @@ describe("📦 CrowdSale of GUILD token", async function () {
       stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 BNB
 
       archivedPrice = ethers.BigNumber.from("51618873955");
-      startingPriceUSD = ethers.BigNumber.from('7000000');
-      gamerPurchasedAmount = ethers.BigNumber.from('73741248507142857142857')
+      startingPriceUSD = ethers.BigNumber.from("7000000");
+      gamerPurchasedAmount = ethers.BigNumber.from("73741248507142857142857");
 
-      await token.connect(dao).whitelistMint(crowdSale.address, true);
+      await token.connect(governor).whitelistMint(crowdSale.address, true);
     });
 
     it("reverts with pausable error if contract is paused", async () => {

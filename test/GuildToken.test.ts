@@ -18,16 +18,18 @@ import { ethers, upgrades } from "hardhat";
 // @ts-ignore ts(7016) Seems like they don't have any type declarations at this time
 import { constants } from "@openzeppelin/test-helpers";
 import {
-  convertTokenToWei,
   DAO_ROLE,
   DEFAULT_ADMIN_ROLE,
   DEVELOPER_ROLE,
+  GOVERNOR_ROLE,
+  GOVERNOR_ADMIN_ROLE,
   generatePermissionRevokeMessage,
   MINTER_ROLE,
   padAddressTo32Bytes,
 } from "./helpers/test-helpers";
 import { GuildToken, GuildToken__factory } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { deploy } from "@openzeppelin/hardhat-upgrades/dist/utils";
 
 describe("📦 GUILD token", async () => {
   let deployer: SignerWithAddress;
@@ -68,8 +70,29 @@ describe("📦 GUILD token", async () => {
     expect(await token.decimals()).to.be.equal(18);
   });
 
+  it("has 0 total supply", async () => {
+    expect(await token.totalSupply()).eq("0");
+  });
+
   it("grants the dao the DAO_ROLE", async () => {
     expect(await token.hasRole(DAO_ROLE, dao.address)).to.be.equal(true);
+  });
+
+  it("grants the sender the GOVERNOR_ADMIN_ROLE", async () => {
+    expect(
+      await token.hasRole(GOVERNOR_ADMIN_ROLE, deployer.address)
+    ).to.be.equal(true);
+  });
+
+  it("sets the GOVERNOR_ADMIN_ROLE as the admin role for the GOVERNOR_ROLE", async () => {
+    expect(await token.getRoleAdmin(GOVERNOR_ROLE)).to.eq(GOVERNOR_ADMIN_ROLE);
+    expect(await token.getRoleAdmin(GOVERNOR_ADMIN_ROLE)).to.eq(
+      DEFAULT_ADMIN_ROLE
+    );
+  });
+
+  it("does not grant the dao the GOVERNOR_ROLE", async () => {
+    expect(await token.hasRole(GOVERNOR_ROLE, dao.address)).to.be.equal(false);
   });
 
   it("grants the developer the DEVELOPER_ROLE", async () => {
@@ -93,7 +116,77 @@ describe("📦 GUILD token", async () => {
     ).to.be.equal(false);
   });
 
-  describe("🗳 pause()", () => {
+  describe("🗳  grantRole()", () => {
+    it("reverts for all users when assigning a role other than GOVERNOR_ROLE", async () => {
+      const users = [dao, developer, treasury, purchaser, deployer];
+      const roles = [
+        DEFAULT_ADMIN_ROLE,
+        GOVERNOR_ADMIN_ROLE,
+        MINTER_ROLE,
+        DAO_ROLE,
+        DEVELOPER_ROLE,
+      ];
+      // TODO: Find a way to break this down with a it.each()()
+      // No one can call this function
+      for (let user of users) {
+        // Check other generic roles
+        for (let role of roles) {
+          await expect(
+            token.connect(user).grantRole(role, purchaser.address)
+          ).to.be.revertedWith(
+            generatePermissionRevokeMessage(user.address, DEFAULT_ADMIN_ROLE)
+          );
+        }
+      }
+    });
+
+    it("reverts for all users except the deployer when assigning the GOVERNOR_ROLE", async () => {
+      const users = [dao, treasury, developer, purchaser];
+      for (let user of users) {
+        await expect(
+          token.connect(user).grantRole(GOVERNOR_ROLE, purchaser.address)
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(user.address, GOVERNOR_ADMIN_ROLE)
+        );
+      }
+      await expect(
+        token.connect(deployer).grantRole(GOVERNOR_ROLE, purchaser.address)
+      ).to.not.be.reverted;
+    });
+
+    describe("when the deployer grants the GOVERNOR_ROLE to an address", () => {
+      let governor: SignerWithAddress;
+
+      beforeEach(async () => {
+        governor = purchaser;
+        await token
+          .connect(deployer)
+          .grantRole(GOVERNOR_ROLE, governor.address);
+      });
+      it("grants the address the GOVERNOR_ROLE", async () => {
+        expect(await token.hasRole(GOVERNOR_ROLE, governor.address)).to.be.true;
+      });
+      it("revokes the GOVERNOR_ADMIN_ROLE from the deployer", async () => {
+        expect(await token.hasRole(GOVERNOR_ADMIN_ROLE, deployer.address)).to.be
+          .false;
+      });
+      it("revokes on subsequent calls with GOVERNOR_ADMIN_ROLE access control error", async () => {
+        await expect(
+          token.connect(deployer).grantRole(GOVERNOR_ROLE, treasury.address)
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(deployer.address, GOVERNOR_ADMIN_ROLE)
+        );
+        // Might as well make sure the whitelisted address can't call it either:
+        await expect(
+          token.connect(governor).grantRole(GOVERNOR_ROLE, treasury.address)
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(governor.address, GOVERNOR_ADMIN_ROLE)
+        );
+      });
+    });
+  });
+
+  describe("🗳  pause()", () => {
     describe("called by address with the DAO_ROLE", () => {
       let promise: Promise<unknown>;
 
@@ -126,7 +219,7 @@ describe("📦 GUILD token", async () => {
     });
   });
 
-  describe("🗳 unpause()", () => {
+  describe("🗳  unpause()", () => {
     describe("called by address with the DAO_ROLE", () => {
       let promise: Promise<unknown>;
 
@@ -161,180 +254,207 @@ describe("📦 GUILD token", async () => {
     });
   });
 
-  describe("🗳 whitelistMint()", () => {
-    it("reverts with access control error if not called by the DAO", async () => {
-      await expect(
-        token.connect(purchaser).whitelistMint(purchaser.address, true)
-      ).to.be.revertedWith(
-        generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
-      );
-    });
-
-    it("reverts with 'Pausable: paused' error when contract is paused", async () => {
-      await token.connect(dao).pause();
-
-      await expect(
-        token.connect(dao).whitelistMint(purchaser.address, true)
-      ).to.be.revertedWith("Pausable: paused");
-    });
-
-    describe("when adding an address to the whitelist", () => {
-      let promise: Promise<unknown>;
-
-      beforeEach(() => {
-        promise = token.connect(dao).whitelistMint(purchaser.address, true);
-      });
-
-      it("grants the address the MINTER_ROLE", async () => {
-        await promise;
-        expect(await token.hasRole(MINTER_ROLE, purchaser.address)).to.be.equal(
-          true
+  describe("🗳  whitelistMint()", () => {
+    it("reverts with access control error when called by: deployer, dao, treasury, developer, purchaser", async () => {
+      // No-one should have GOVERNOR_ROLE
+      const users = [deployer, dao, treasury, developer, purchaser];
+      for (let caller of users) {
+        await expect(
+          token.connect(caller).whitelistMint(purchaser.address, true)
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(caller.address, GOVERNOR_ROLE)
         );
-      });
-
-      it("adds the address to the ACTIVE_MINTS", async () => {
-        await promise;
-        const mintsWhitelist = await token.viewMintsWhitelist();
-        expect(mintsWhitelist).to.have.members([
-          padAddressTo32Bytes(purchaser.address),
-        ]);
-      });
-
-      it("emits a MintACLUpdated event", async () => {
-        await expect(promise).to.emit(token, "MintACLUpdated");
-      });
-
-      it("increments the cumulativeMintsWhitelisted variable", async () => {
-        const initlaCumulativeMintsWhitelisted =
-          await token.cumulativeMintsWhitelisted();
-        await promise;
-        expect(await token.cumulativeMintsWhitelisted()).to.be.equal(
-          initlaCumulativeMintsWhitelisted.add(1)
-        );
-      });
+      }
     });
 
-    describe("when removing an address from the whitelist", () => {
-      let promise: Promise<unknown>;
+    describe("given that the governor has GOVERNOR_ROLE", () => {
+      let governor: SignerWithAddress;
 
       beforeEach(async () => {
-        await token.connect(dao).whitelistMint(purchaser.address, true);
-        promise = token.connect(dao).whitelistMint(purchaser.address, false);
+        governor = purchaser;
+        await token
+          .connect(deployer)
+          .grantRole(GOVERNOR_ROLE, governor.address);
       });
 
-      it("revokes the MINTER_ROLE from the address", async () => {
-        await promise;
-        expect(await token.hasRole(MINTER_ROLE, purchaser.address)).to.be.equal(
-          false
-        );
+      it("reverts with 'Pausable: paused' error when contract is paused", async () => {
+        await token.connect(dao).pause();
+
+        await expect(
+          token.connect(governor).whitelistMint(purchaser.address, true)
+        ).to.be.revertedWith("Pausable: paused");
       });
 
-      it("removes the address from the ACTIVE_MINTS", async () => {
-        await promise;
-        const mintsWhitelist = await token.viewMintsWhitelist();
-        expect(mintsWhitelist).to.not.have.members([
-          padAddressTo32Bytes(purchaser.address),
-        ]);
-      });
+      describe("when adding an address to the whitelist", () => {
+        let promise: Promise<unknown>;
 
-      it("emits a MintACLUpdated event", async () => {
-        await expect(promise).to.emit(token, "MintACLUpdated");
-      });
-
-      it("does not change the cumulativeMintsWhitelisted variable", async () => {
-        const initlaCumulativeMintsWhitelisted =
-          await token.cumulativeMintsWhitelisted();
-        await promise;
-        expect(await token.cumulativeMintsWhitelisted()).to.be.equal(
-          initlaCumulativeMintsWhitelisted
-        );
-      });
-    });
-
-    describe("when adding an address twice", () => {
-      beforeEach(async () => {
-        await token.connect(dao).whitelistMint(purchaser.address, true);
-        await token.connect(dao).whitelistMint(purchaser.address, true);
-      });
-
-      it("only has one entry in the ACTIVE MINTS", async () => {
-        const mintsWhitelist = await token.viewMintsWhitelist();
-        const addresses = mintsWhitelist.filter(
-          (address: string) =>
-            address === padAddressTo32Bytes(purchaser.address)
-        );
-        expect(addresses).to.have.length(1);
-      });
-
-      it("address has the MINTER_ROLE", async () => {
-        expect(await token.hasRole(MINTER_ROLE, purchaser.address)).to.equal(
-          true
-        );
-      });
-
-      it("double counts the cumulativeMintsWhitelisted", async () => {
-        expect(await token.cumulativeMintsWhitelisted()).to.be.equal(2);
-      });
-    });
-
-    describe("when removing an address twice", () => {
-      beforeEach(async () => {
-        await token.connect(dao).whitelistMint(purchaser.address, false);
-        await token.connect(dao).whitelistMint(purchaser.address, false);
-      });
-
-      it("does not add the address to the ACTIVE_MINTS", async () => {
-        const mintsWhitelist = await token.viewMintsWhitelist();
-        expect(mintsWhitelist).to.not.have.members([
-          padAddressTo32Bytes(purchaser.address),
-        ]);
-      });
-
-      it("address does not have the MINTER_ROLE", async () => {
-        expect(await token.hasRole(MINTER_ROLE, purchaser.address)).to.equal(
-          false
-        );
-      });
-    });
-
-    describe("when adding an address", () => {
-      beforeEach(async () => {
-        await token.connect(dao).whitelistMint(purchaser.address, true);
-      });
-
-      it("first should have the address in the ACTIVE_MINTS", async () => {
-        const res = await token.viewMintsWhitelist();
-        expect(res).to.have.members([padAddressTo32Bytes(purchaser.address)]);
-      });
-
-      it("initially the address should have the MINT_ROLE", async () => {
-        expect(await token.hasRole(MINTER_ROLE, purchaser.address)).to.be.equal(
-          true
-        );
-      });
-
-      describe("and subsequently removing it", () => {
-        beforeEach(async () => {
-          await token.connect(dao).whitelistMint(purchaser.address, false);
+        beforeEach(() => {
+          promise = token
+            .connect(governor)
+            .whitelistMint(purchaser.address, true);
         });
 
-        it("removes address from MINTER_ROLE", async () => {
+        it("grants the address the MINTER_ROLE", async () => {
+          await promise;
+          expect(
+            await token.hasRole(MINTER_ROLE, purchaser.address)
+          ).to.be.equal(true);
+        });
+
+        it("adds the address to the ACTIVE_MINTS", async () => {
+          await promise;
+          const mintsWhitelist = await token.viewMintsWhitelist();
+          expect(mintsWhitelist).to.have.members([
+            padAddressTo32Bytes(purchaser.address),
+          ]);
+        });
+
+        it("emits a MintACLUpdated event", async () => {
+          await expect(promise).to.emit(token, "MintACLUpdated");
+        });
+
+        it("increments the cumulativeMintsWhitelisted variable", async () => {
+          const initlaCumulativeMintsWhitelisted =
+            await token.cumulativeMintsWhitelisted();
+          await promise;
+          expect(await token.cumulativeMintsWhitelisted()).to.be.equal(
+            initlaCumulativeMintsWhitelisted.add(1)
+          );
+        });
+      });
+
+      describe("when removing an address from the whitelist", () => {
+        let promise: Promise<unknown>;
+
+        beforeEach(async () => {
+          await token.connect(governor).whitelistMint(purchaser.address, true);
+          promise = token
+            .connect(governor)
+            .whitelistMint(purchaser.address, false);
+        });
+
+        it("revokes the MINTER_ROLE from the address", async () => {
+          await promise;
           expect(
             await token.hasRole(MINTER_ROLE, purchaser.address)
           ).to.be.equal(false);
         });
 
-        it("does not have the address in the ACTIVE_MINTS", async () => {
-          const res = await token.viewMintsWhitelist();
-          expect(res).to.not.have.members([
+        it("removes the address from the ACTIVE_MINTS", async () => {
+          await promise;
+          const mintsWhitelist = await token.viewMintsWhitelist();
+          expect(mintsWhitelist).to.not.have.members([
             padAddressTo32Bytes(purchaser.address),
           ]);
+        });
+
+        it("emits a MintACLUpdated event", async () => {
+          await expect(promise).to.emit(token, "MintACLUpdated");
+        });
+
+        it("does not change the cumulativeMintsWhitelisted variable", async () => {
+          const initlaCumulativeMintsWhitelisted =
+            await token.cumulativeMintsWhitelisted();
+          await promise;
+          expect(await token.cumulativeMintsWhitelisted()).to.be.equal(
+            initlaCumulativeMintsWhitelisted
+          );
+        });
+      });
+
+      describe("when adding an address twice", () => {
+        beforeEach(async () => {
+          await token.connect(governor).whitelistMint(purchaser.address, true);
+          await token.connect(governor).whitelistMint(purchaser.address, true);
+        });
+
+        it("only has one entry in the ACTIVE MINTS", async () => {
+          const mintsWhitelist = await token.viewMintsWhitelist();
+          const addresses = mintsWhitelist.filter(
+            (address: string) =>
+              address === padAddressTo32Bytes(purchaser.address)
+          );
+          expect(addresses).to.have.length(1);
+        });
+
+        it("address has the MINTER_ROLE", async () => {
+          expect(await token.hasRole(MINTER_ROLE, purchaser.address)).to.equal(
+            true
+          );
+        });
+
+        it("double counts the cumulativeMintsWhitelisted", async () => {
+          expect(await token.cumulativeMintsWhitelisted()).to.be.equal(2);
+        });
+      });
+
+      describe("when removing an address twice", () => {
+        beforeEach(async () => {
+          await token.connect(governor).whitelistMint(purchaser.address, false);
+          await token.connect(governor).whitelistMint(purchaser.address, false);
+        });
+
+        it("does not add the address to the ACTIVE_MINTS", async () => {
+          const mintsWhitelist = await token.viewMintsWhitelist();
+          expect(mintsWhitelist).to.not.have.members([
+            padAddressTo32Bytes(purchaser.address),
+          ]);
+        });
+
+        it("address does not have the MINTER_ROLE", async () => {
+          expect(await token.hasRole(MINTER_ROLE, purchaser.address)).to.equal(
+            false
+          );
+        });
+      });
+
+      describe("when adding an address", () => {
+        beforeEach(async () => {
+          await token.connect(governor).whitelistMint(purchaser.address, true);
+        });
+
+        it("first should have the address in the ACTIVE_MINTS", async () => {
+          const res = await token.viewMintsWhitelist();
+          expect(res).to.have.members([padAddressTo32Bytes(purchaser.address)]);
+        });
+
+        it("initially the address should have the MINT_ROLE", async () => {
+          expect(
+            await token.hasRole(MINTER_ROLE, purchaser.address)
+          ).to.be.equal(true);
+        });
+
+        describe("and subsequently removing it", () => {
+          beforeEach(async () => {
+            await token
+              .connect(governor)
+              .whitelistMint(purchaser.address, false);
+          });
+
+          it("removes address from MINTER_ROLE", async () => {
+            expect(
+              await token.hasRole(MINTER_ROLE, purchaser.address)
+            ).to.be.equal(false);
+          });
+
+          it("does not have the address in the ACTIVE_MINTS", async () => {
+            const res = await token.viewMintsWhitelist();
+            expect(res).to.not.have.members([
+              padAddressTo32Bytes(purchaser.address),
+            ]);
+          });
         });
       });
     });
   });
 
-  describe("🗳 viewMintsWhitelist()", () => {
+  describe("🗳  viewMintsWhitelist()", () => {
+    let governor: SignerWithAddress;
+    beforeEach(async () => {
+      governor = purchaser;
+      await token.connect(deployer).grantRole(GOVERNOR_ROLE, governor.address);
+    });
+
     it("returns an empty array when no mints have been whitelisted", async () => {
       expect(await token.viewMintsWhitelist()).to.deep.equal([]);
     });
@@ -343,7 +463,7 @@ describe("📦 GUILD token", async () => {
       const expectedResult = [];
       const wallets = [deployer, dao, developer, purchaser];
       for (const wallet of wallets) {
-        await token.connect(dao).whitelistMint(wallet.address, true);
+        await token.connect(governor).whitelistMint(wallet.address, true);
         expectedResult.push(padAddressTo32Bytes(wallet.address));
         const whitelistedAddresses = await token.viewMintsWhitelist();
         expect(whitelistedAddresses).to.be.deep.equal(expectedResult);
@@ -351,18 +471,18 @@ describe("📦 GUILD token", async () => {
     });
 
     it("shows address added and subsequently removed", async () => {
-      await token.connect(dao).whitelistMint(purchaser.address, true);
+      await token.connect(governor).whitelistMint(purchaser.address, true);
       expect(await token.viewMintsWhitelist()).to.have.members([
         padAddressTo32Bytes(purchaser.address),
       ]);
-      await token.connect(dao).whitelistMint(purchaser.address, false);
+      await token.connect(governor).whitelistMint(purchaser.address, false);
       expect(await token.viewMintsWhitelist()).to.not.have.members([
         padAddressTo32Bytes(purchaser.address),
       ]);
     });
   });
 
-  describe("🗳 mintRequest()", () => {
+  describe("🗳  mintRequest()", () => {
     it("reverts with permission error when not called with MINTER_ROLE", async () => {
       const promise = token
         .connect(purchaser)
@@ -372,13 +492,18 @@ describe("📦 GUILD token", async () => {
       );
     });
 
-    describe("when called by a whitelisted address", () => {
+    describe("when called by a whitelisted minter address", () => {
       let whitelistedAddress: SignerWithAddress;
 
       beforeEach(async () => {
-        whitelistedAddress = purchaser;
+        const governor = dao;
+        whitelistedAddress = deployer;
+
         await token
-          .connect(dao)
+          .connect(deployer)
+          .grantRole(GOVERNOR_ROLE, governor.address);
+        await token
+          .connect(governor)
           .whitelistMint(whitelistedAddress.address, true);
       });
 
@@ -409,8 +534,8 @@ describe("📦 GUILD token", async () => {
           .connect(whitelistedAddress)
           .mintRequest(treasury.address, 10);
         const balance = await token.balanceOf(treasury.address);
-        expect(balance).to.be.equal(convertTokenToWei(10));
-        expect(await token.currentSupply()).to.be.equal(convertTokenToWei(10));
+        expect(balance).to.be.equal(10);
+        expect(await token.currentSupply()).to.be.equal(10);
       });
 
       it("does not mint negative amount", async () => {
@@ -457,11 +582,11 @@ describe("📦 GUILD token", async () => {
         await token
           .connect(whitelistedAddress)
           .mintRequest(treasury.address, 10);
-        expect(await token.currentSupply()).to.be.equal(convertTokenToWei(10));
+        expect(await token.currentSupply()).to.be.equal(10);
         await token
           .connect(whitelistedAddress)
           .mintRequest(treasury.address, 100);
-        expect(await token.currentSupply()).to.be.equal(convertTokenToWei(110));
+        expect(await token.currentSupply()).to.be.equal(110);
       });
 
       it("emits an MintRequestFulfilled event", async () => {
@@ -470,10 +595,45 @@ describe("📦 GUILD token", async () => {
           .mintRequest(treasury.address, 10);
         await expect(promise).to.emit(token, "MintRequestFulfilled");
       });
+
+      it("can mint 2^224 - 1 tokens", async () => {
+        const amount = ethers.BigNumber.from("2")
+          .pow("224")
+          .sub("1")
+          .toString();
+        await token
+          .connect(whitelistedAddress)
+          .mintRequest(whitelistedAddress.address, amount.toString());
+
+        expect(await token.balanceOf(whitelistedAddress.address)).eq(amount);
+      });
+
+      it("reverts with 'ERC20Votes: total supply risks overflowing votes' error for 2^224 tokens", async () => {
+        const initialSupply = await token.currentSupply();
+        const amount = ethers.BigNumber.from("2").pow("224").toString();
+        const request = token
+          .connect(whitelistedAddress)
+          .mintRequest(whitelistedAddress.address, amount.toString());
+        await expect(request).to.be.revertedWith(
+          "ERC20Votes: total supply risks overflowing votes"
+        );
+        expect(initialSupply).eq(await token.currentSupply());
+      });
+
+      it("reverts value-out-of-bounds error when trying to mint negative value", async () => {
+        const amount = ethers.BigNumber.from("-2");
+        const request = token
+          .connect(whitelistedAddress)
+          .mintRequest(whitelistedAddress.address, amount.toString());
+        // await expect(request).to.be.revertedWith(
+        //   'Error: value out-of-bounds (argument="_amount", value="-2", code=INVALID_ARGUMENT, version=abi/5.5.0)'
+        // );
+        await expect(request).to.be.reverted;
+      });
     });
   });
 
-  describe("🗳 burn()", () => {
+  describe("🗳  burn()", () => {
     it("reverts with 'Pausable: paused' error if contract is paused", async () => {
       await token.connect(dao).pause();
       await expect(token.connect(dao).burn(1)).to.be.revertedWith(

@@ -22,6 +22,22 @@ export const MINTER_ROLE = ethers.utils.solidityKeccak256(
   ["string"],
   ["MINTER_ROLE"]
 );
+export const GUILD_MANAGER_ROLE = ethers.utils.solidityKeccak256(
+  ["string"],
+  ["GUILD_MANAGER_ROLE"]
+);
+export const GUILD_OWNER_ROLE = ethers.utils.solidityKeccak256(
+  ["string"],
+  ["GUILD_OWNER_ROLE"]
+);
+export const GOVERNOR_ADMIN_ROLE = ethers.utils.solidityKeccak256(
+  ["string"],
+  ["GOVERNOR_ADMIN_ROLE"]
+);
+export const GOVERNOR_ROLE = ethers.utils.solidityKeccak256(
+  ["string"],
+  ["GOVERNOR_ROLE"]
+);
 
 export const DEFAULT_ADMIN_ROLE =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
@@ -34,10 +50,6 @@ export const stripZeros = (address: string) => {
   const desiredHexLength = 40; // Not including "0x"
   return `0x${address.slice(address.length - desiredHexLength)}`;
 };
-
-export const convertTokenToWei = (tokens: number) =>
-  // ethers.BigNumber.from(`${tokens}000000000000000000`);
-  tokens; // Conversion not needed anymore
 
 export const generateMockAddress = (value: string) =>
   ethers.utils.keccak256(ethers.utils.toUtf8Bytes(value)).slice(0, 42);

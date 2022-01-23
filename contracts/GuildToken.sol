@@ -12,6 +12,8 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/draft-ERC20PermitUpgradeable.sol";
 
 contract GuildToken is
     Initializable,
@@ -19,13 +21,18 @@ contract GuildToken is
     ERC20BurnableUpgradeable,
     PausableUpgradeable,
     AccessControlUpgradeable,
-    UUPSUpgradeable
+    UUPSUpgradeable,
+    ERC20PermitUpgradeable,
+    ERC20VotesUpgradeable
 {
     // roles to trusted smart contracts & the DAO
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE"); // our mint smart contracts
     // only the DAO can control GuildToken
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
     bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE");
+    bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE");
+    bytes32 public constant GOVERNOR_ADMIN_ROLE =
+        keccak256("GOVERNOR_ADMIN_ROLE");
 
     // variables
     uint256 public currentSupply;
@@ -55,6 +62,7 @@ contract GuildToken is
         address _developer
     ) public initializer {
         __ERC20_init(_name, _symbol);
+        __ERC20Permit_init(_name);
         __ERC20Burnable_init();
         __Pausable_init();
         __AccessControl_init();
@@ -65,17 +73,20 @@ contract GuildToken is
 
         _grantRole(DAO_ROLE, _dao);
         _grantRole(DEVELOPER_ROLE, _developer);
+
+        _setRoleAdmin(GOVERNOR_ROLE, GOVERNOR_ADMIN_ROLE); // Changes the GOVERNOR_ROLE's admin role from DEFAULT_ADMIN_ROLE to GOVERNOR_ADMIN_ROLE
+        _grantRole(GOVERNOR_ADMIN_ROLE, msg.sender); // Temporary grant the caller (most likely the guildFactory) permission to assign a governor.
     }
 
     // --------- Managing the Mints --------- //
     function whitelistMint(address _mintAddress, bool _isActive)
         external
-        onlyRole(DAO_ROLE)
+        onlyRole(GOVERNOR_ROLE)
         whenNotPaused
     {
         /** The Mint is deployed in Javascript but useless without being whitelisted
             Only whitelisted Mints can request minting.
-            Only the DAO can whitelist Mints. This is a security measure to prevent abuse.
+            Only the GOVERNOR_ROLE can whitelist Mints. This is a security measure to prevent abuse.
          */
         if (_isActive) {
             ACTIVE_MINTS.add(_mintAddress);
@@ -107,6 +118,40 @@ contract GuildToken is
         return ACTIVE_MINTS._inner._values;
     }
 
+    function grantRole(bytes32 role, address account)
+        public
+        virtual
+        override
+        onlyRole(getRoleAdmin(role))
+    {
+        /**
+            WARNING: This function will revoke the GOVERNOR_ADMIN_ROLE role and render itself useless.
+            Only addresses with the DEFAULT_ADMIN_ROLE or the GOVERNOR_ADMIN_ROLE can call this.
+            In practice, only the GOVERNOR_ADMIN_ROLE will be able to call this because no-one has the DEFAULT_ADMIN_ROLE.
+            In this case, the GOVERNOR_ADMIN_ROLE is revoked after assigning a GOVERNOR_ROLE rendering the governor immutable.
+         */
+
+        _grantRole(role, account);
+        if (role == GOVERNOR_ROLE) {
+            // Revokes GOVERNOR_ADMIN_ROLE so that no one can grant or change the GOVERNOR_ROLE
+            _revokeRole(GOVERNOR_ADMIN_ROLE, msg.sender);
+        }
+    }
+
+    function _mint(address to, uint256 amount)
+        internal
+        override(ERC20Upgradeable, ERC20VotesUpgradeable)
+    {
+        super._mint(to, amount);
+    }
+
+    function _burn(address account, uint256 amount)
+        internal
+        override(ERC20Upgradeable, ERC20VotesUpgradeable)
+    {
+        super._burn(account, amount);
+    }
+
     // --------- Managing the Token ---------
     function pause() public onlyRole(DAO_ROLE) {
         _pause();
@@ -114,6 +159,14 @@ contract GuildToken is
 
     function unpause() public onlyRole(DAO_ROLE) {
         _unpause();
+    }
+
+    function _afterTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal override(ERC20Upgradeable, ERC20VotesUpgradeable) {
+        super._afterTokenTransfer(from, to, amount);
     }
 
     function _beforeTokenTransfer(
