@@ -1,0 +1,12 @@
+2022-01-23T19:44:45.258Z - 
+  
+---------- DEPLOY CROWDSALE FACTORY (development) ----------
+  
+---- Script starting
+
+  
+2022-01-23T19:44:45.259Z - ---- 0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A ---> Deployer Address 
+2022-01-23T19:44:45.260Z - ---- 0xe5faebe2dbc746a0fe99fe2924db1c6bf2ac3160 ---> GuildFX Gamer Token 
+2022-01-23T19:44:45.260Z - ---- 0xAF761E630B936F4892c05C1aBcfD614559AdD35e ---> GuildFX Constants 
+2022-01-23T19:44:45.260Z - ---- 7000000 ---> Crowdsale Starting Price 
+2022-01-23T19:44:52.091Z - ---- 0x5b91b93e15ECe970adAB22C3f071d0577f5D0dBc ---> Crowsale Factory Contract Address

@@ -10,9 +10,10 @@
 
 ### To set up a new test environment:
 
-1. `npm run deploy:testnet:guild-token-factory`
+1. `npm run deploy:testnet:guild-factory`
    - This will output a [log file](./scripts/logs) with name `"deployGuildTokenFactory_log_xxx.dev.txt"`
-2. **Manually add** the "Constants Token Address" and "Guild Token Address" (rom the log file from step 1 to the [crowdsale factory deploy script](./scrips/deployCrowdSaleFactory.dev.ts)
+2. **Manually add** the "Constants Token Address" and "Guild Token Address" to the [crowdsale factory deploy script](./scripts/deployCrowdSaleFactory.dev.ts).
+   - 💡 You can find the GuildFXConstants contract address and the GuildFX erc20votes token address from the log files from step 1.
    - 📆 TODO: Remove this manual step. Tracked [here](https://linear.app/guildfx/issue/GUI-75/generalize-dev-deployment-proceedure).
 3. `npm run deploy:testnet:crowdsale-factory`
 4. Propse and execute a `.whitelistMint()` on the crowdsale address via openzeppelin defender
@@ -22,11 +23,11 @@
 
 | Contract                     | Address                                    |
 | ---------------------------- | ------------------------------------------ |
-| GuildFX Constants            | 0xDDda75Eb9afC7297444C6070B696C103d809C3F7 |
-| GuildFX Gamer Token          | 0x6bb2f28972abf66cf4a007fddd8f354060b8663d |
-| GuildFX Gamer Token Governor | 0xee01a948e12e923afc65a82bfbdf535c31aa979e |
-| Crowdsale Factory            | 0x8d4086d9781172F1952461dA4F96Ae46D1fFaC09 |
-| Guild Factory                | 0x3a350126C00350D758c35ca1D107A8C6e22a40FD |
+| GuildFX Constants            | 0xAF761E630B936F4892c05C1aBcfD614559AdD35e |
+| GuildFX Gamer Token          | 0xe5faebe2dbc746a0fe99fe2924db1c6bf2ac3160 |
+| GuildFX Gamer Token Governor | 0xeafc5fca009cba5ff94eed111d0a71ba8140b065 |
+| Crowdsale Factory            | 0x5b91b93e15ECe970adAB22C3f071d0577f5D0dBc |
+| Guild Factory                | 0x89D0d12598D397534eC3CeCA4cDaC1723D273C67 |
 
 ## Guild Architecture Diagram
 

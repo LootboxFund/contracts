@@ -170,6 +170,11 @@
       "address": "0xDDda75Eb9afC7297444C6070B696C103d809C3F7",
       "txHash": "0xb8d655c8218bf2419f7533fe96a2c267622bcbcce36a58770e236e6509f7afb5",
       "kind": "uups"
+    },
+    {
+      "address": "0xAF761E630B936F4892c05C1aBcfD614559AdD35e",
+      "txHash": "0xecb2bb7d8f635c7e95125687b93c9ec31aae052e87a37bdd9eae0930ffb3d88b",
+      "kind": "uups"
     }
   ],
   "impls": {
@@ -2029,6 +2034,194 @@
           },
           "t_mapping(t_address,t_bool)": {
             "label": "mapping(address => bool)"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          }
+        }
+      }
+    },
+    "d6ef5061f314e534224d43c52f38d7fd78c1370768072ddeb6a46b55df6e924f": {
+      "address": "0x1153E2D841edee796566a27AFafa62AcD7d6F8E4",
+      "txHash": "0xc52e84894f7060e45330ae99ee5b016d44fb495e52ce6e5bc4d525f5f6dcc2d7",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:39"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:44"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "PausableUpgradeable",
+            "label": "_paused",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:29"
+          },
+          {
+            "contract": "PausableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:97"
+          },
+          {
+            "contract": "ERC165Upgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol:36"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "_roles",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)89_storage)",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:64"
+          },
+          {
+            "contract": "AccessControlUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:232"
+          },
+          {
+            "contract": "ERC1967UpgradeUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:215"
+          },
+          {
+            "contract": "UUPSUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:81"
+          },
+          {
+            "contract": "Constants",
+            "label": "TREASURY",
+            "type": "t_address_payable",
+            "src": "contracts/Constants.sol:23"
+          },
+          {
+            "contract": "Constants",
+            "label": "ETH_ADDRESS",
+            "type": "t_address",
+            "src": "contracts/Constants.sol:25"
+          },
+          {
+            "contract": "Constants",
+            "label": "USDC_ADDRESS",
+            "type": "t_address",
+            "src": "contracts/Constants.sol:26"
+          },
+          {
+            "contract": "Constants",
+            "label": "USDT_ADDRESS",
+            "type": "t_address",
+            "src": "contracts/Constants.sol:27"
+          },
+          {
+            "contract": "Constants",
+            "label": "UST_ADDRESS",
+            "type": "t_address",
+            "src": "contracts/Constants.sol:28"
+          },
+          {
+            "contract": "Constants",
+            "label": "DAI_ADDRESS",
+            "type": "t_address",
+            "src": "contracts/Constants.sol:29"
+          },
+          {
+            "contract": "Constants",
+            "label": "BNB_PRICE_FEED",
+            "type": "t_address",
+            "src": "contracts/Constants.sol:31"
+          },
+          {
+            "contract": "Constants",
+            "label": "ETH_PRICE_FEED",
+            "type": "t_address",
+            "src": "contracts/Constants.sol:32"
+          },
+          {
+            "contract": "Constants",
+            "label": "USDC_PRICE_FEED",
+            "type": "t_address",
+            "src": "contracts/Constants.sol:33"
+          },
+          {
+            "contract": "Constants",
+            "label": "USDT_PRICE_FEED",
+            "type": "t_address",
+            "src": "contracts/Constants.sol:34"
+          },
+          {
+            "contract": "Constants",
+            "label": "UST_PRICE_FEED",
+            "type": "t_address",
+            "src": "contracts/Constants.sol:35"
+          },
+          {
+            "contract": "Constants",
+            "label": "DAI_PRICE_FEED",
+            "type": "t_address",
+            "src": "contracts/Constants.sol:36"
+          },
+          {
+            "contract": "Constants",
+            "label": "GUILD_FX_MINTING_FEE",
+            "type": "t_uint256",
+            "src": "contracts/Constants.sol:40"
+          }
+        ],
+        "types": {
+          "t_address_payable": {
+            "label": "address payable"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)89_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_struct(RoleData)89_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "members",
+                "type": "t_mapping(t_address,t_bool)"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32"
+              }
+            ]
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)"
+          },
+          "t_bool": {
+            "label": "bool"
           },
           "t_array(t_uint256)49_storage": {
             "label": "uint256[49]"
