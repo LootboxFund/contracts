@@ -36,6 +36,7 @@ contract GuildToken is
 
     // variables
     uint256 public currentSupply;
+    address public fxConstants; // GuildFX constants smart contract
 
     using CountersUpgradeable for CountersUpgradeable.Counter;
     CountersUpgradeable.Counter public cumulativeMintsWhitelisted; // this may double count mints that get whitelisted twice
@@ -59,8 +60,14 @@ contract GuildToken is
         string memory _name,
         string memory _symbol,
         address _dao,
-        address _developer
+        address _developer,
+        address _fxConstants
     ) public initializer {
+        require(
+            _fxConstants != address(0),
+            "FXConstants address cannot be zero"
+        );
+
         __ERC20_init(_name, _symbol);
         __ERC20Permit_init(_name);
         __ERC20Burnable_init();
@@ -76,6 +83,8 @@ contract GuildToken is
 
         _setRoleAdmin(GOVERNOR_ROLE, GOVERNOR_ADMIN_ROLE); // Changes the GOVERNOR_ROLE's admin role from DEFAULT_ADMIN_ROLE to GOVERNOR_ADMIN_ROLE
         _grantRole(GOVERNOR_ADMIN_ROLE, msg.sender); // Temporary grant the caller (most likely the guildFactory) permission to assign a governor.
+
+        fxConstants = _fxConstants;
     }
 
     // --------- Managing the Mints --------- //

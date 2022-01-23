@@ -25,9 +25,13 @@ import {
   MINTER_ROLE,
   padAddressTo32Bytes,
 } from "./helpers/test-helpers";
-import { GuildToken, GuildToken__factory } from "../typechain";
+import {
+  GuildToken,
+  GuildToken__factory,
+  Constants,
+  Constants__factory,
+} from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { deploy } from "@openzeppelin/hardhat-upgrades/dist/utils";
 
 describe("📦 GUILD token", async () => {
   let deployer: SignerWithAddress;
@@ -38,23 +42,44 @@ describe("📦 GUILD token", async () => {
 
   let Token: GuildToken__factory;
   let token: GuildToken;
+  let Constants: Constants__factory;
+  let constants: Constants;
 
   const tokenName = "GuildTokenTest";
   const tokenSymbol = "GUILDT";
 
   before(async () => {
     Token = await ethers.getContractFactory("GuildToken");
+    Constants = await ethers.getContractFactory("Constants");
   });
 
   beforeEach(async () => {
     [deployer, treasury, dao, developer, purchaser] = await ethers.getSigners();
+
+    constants = (await upgrades.deployProxy(
+      Constants,
+      [dao.address, developer.address, treasury.address],
+      {
+        kind: "uups",
+      }
+    )) as Constants;
+    await constants.deployed();
+
     token = (await upgrades.deployProxy(
       Token,
-      [tokenName, tokenSymbol, dao.address, developer.address],
+      [
+        tokenName,
+        tokenSymbol,
+        dao.address,
+        developer.address,
+        constants.address,
+      ],
       { kind: "uups" }
     )) as GuildToken;
     await token.deployed();
   });
+
+  it.skip("reverts initialization if fxConstants is zero", () => {});
 
   it(`has "${tokenName}" name`, async () => {
     expect(await token.name()).to.equal(tokenName);
@@ -70,6 +95,11 @@ describe("📦 GUILD token", async () => {
 
   it("has 0 total supply", async () => {
     expect(await token.totalSupply()).eq("0");
+  });
+
+  it("has stored the GuildFXConstants contract in memory", async () => {
+    expect(ethers.utils.isAddress(constants.address)).to.be.true;
+    expect(await token.fxConstants()).to.eq(constants.address);
   });
 
   it("grants the dao the DAO_ROLE", async () => {
