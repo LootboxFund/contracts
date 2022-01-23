@@ -75,7 +75,7 @@ contract GuildToken is
         _grantRole(DEVELOPER_ROLE, _developer);
 
         _setRoleAdmin(GOVERNOR_ROLE, GOVERNOR_ADMIN_ROLE); // Changes the GOVERNOR_ROLE's admin role from DEFAULT_ADMIN_ROLE to GOVERNOR_ADMIN_ROLE
-        _grantRole(GOVERNOR_ADMIN_ROLE, _dao); // Temporary grant the dao permission to assign a governor. This gets removed in grantRole() when setting up the GOVERNOR_ROLE
+        _grantRole(GOVERNOR_ADMIN_ROLE, msg.sender); // Temporary grant the caller (most likely the guildFactory) permission to assign a governor.
     }
 
     // --------- Managing the Mints --------- //
@@ -124,9 +124,13 @@ contract GuildToken is
         override
         onlyRole(getRoleAdmin(role))
     {
-        // This function can only be called by addresses with the DEFAULT_ADMIN_ROLE or the GOVERNOR_ADMIN_ROLE
-        // No-one has been given the DEFAULT_ADMIN_ROLE permission, so in practice, the only callers will be the GOVERNOR_ADMIN_ROLE
-        // In this case, we remove the GOVERNOR_ADMIN_ROLE so that there can only be ONE IMUTABLE governor, and this function cannot be called again.
+        /**
+            WARNING: This function will revoke the GOVERNOR_ADMIN_ROLE role and render itself useless.
+            Only addresses with the DEFAULT_ADMIN_ROLE or the GOVERNOR_ADMIN_ROLE can call this.
+            In practice, only the GOVERNOR_ADMIN_ROLE will be able to call this because no-one has the DEFAULT_ADMIN_ROLE.
+            In this case, the GOVERNOR_ADMIN_ROLE is revoked after assigning a GOVERNOR_ROLE rendering the governor immutable.
+         */
+
         _grantRole(role, account);
         if (role == GOVERNOR_ROLE) {
             // Revokes GOVERNOR_ADMIN_ROLE so that no one can grant or change the GOVERNOR_ROLE
