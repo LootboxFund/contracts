@@ -30,6 +30,9 @@ contract GuildToken is
     // only the DAO can control GuildToken
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
     bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE");
+    bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE");
+    bytes32 public constant GOVERNOR_ADMIN_ROLE =
+        keccak256("GOVERNOR_ADMIN_ROLE");
 
     // variables
     uint256 public currentSupply;
@@ -70,6 +73,9 @@ contract GuildToken is
 
         _grantRole(DAO_ROLE, _dao);
         _grantRole(DEVELOPER_ROLE, _developer);
+
+        _setRoleAdmin(GOVERNOR_ROLE, GOVERNOR_ADMIN_ROLE); // Changes the GOVERNOR_ROLE's admin role from DEFAULT_ADMIN_ROLE to GOVERNOR_ADMIN_ROLE
+        _grantRole(GOVERNOR_ADMIN_ROLE, _dao); // Temporary grant the dao permission to assign a governor. This gets removed in grantRole() when setting up the GOVERNOR_ROLE
     }
 
     // --------- Managing the Mints --------- //
@@ -110,6 +116,22 @@ contract GuildToken is
 
     function viewMintsWhitelist() public view returns (bytes32[] memory) {
         return ACTIVE_MINTS._inner._values;
+    }
+
+    function grantRole(bytes32 role, address account)
+        public
+        virtual
+        override
+        onlyRole(getRoleAdmin(role))
+    {
+        // This function can only be called by addresses with the DEFAULT_ADMIN_ROLE or the GOVERNOR_ADMIN_ROLE
+        // No-one has been given the DEFAULT_ADMIN_ROLE permission, so in practice, the only callers will be the GOVERNOR_ADMIN_ROLE
+        // In this case, we remove the GOVERNOR_ADMIN_ROLE so that there can only be ONE IMUTABLE governor, and this function cannot be called again.
+        _grantRole(role, account);
+        if (role == GOVERNOR_ROLE) {
+            // Revokes GOVERNOR_ADMIN_ROLE so that no one can grant or change the GOVERNOR_ROLE
+            _revokeRole(GOVERNOR_ADMIN_ROLE, msg.sender);
+        }
     }
 
     function _mint(address to, uint256 amount)

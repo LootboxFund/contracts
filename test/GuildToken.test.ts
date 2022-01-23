@@ -21,6 +21,8 @@ import {
   DAO_ROLE,
   DEFAULT_ADMIN_ROLE,
   DEVELOPER_ROLE,
+  GOVERNOR_ROLE,
+  GOVERNOR_ADMIN_ROLE,
   generatePermissionRevokeMessage,
   MINTER_ROLE,
   padAddressTo32Bytes,
@@ -75,6 +77,23 @@ describe("📦 GUILD token", async () => {
     expect(await token.hasRole(DAO_ROLE, dao.address)).to.be.equal(true);
   });
 
+  it("grants the dao the GOVERNOR_ADMIN_ROLE", async () => {
+    expect(await token.hasRole(GOVERNOR_ADMIN_ROLE, dao.address)).to.be.equal(
+      true
+    );
+  });
+
+  it("sets the GOVERNOR_ADMIN_ROLE as the admin role for the GOVERNOR_ROLE", async () => {
+    expect(await token.getRoleAdmin(GOVERNOR_ROLE)).to.eq(GOVERNOR_ADMIN_ROLE);
+    expect(await token.getRoleAdmin(GOVERNOR_ADMIN_ROLE)).to.eq(
+      DEFAULT_ADMIN_ROLE
+    );
+  });
+
+  it("does not grant the dao the GOVERNOR_ROLE", async () => {
+    expect(await token.hasRole(GOVERNOR_ROLE, dao.address)).to.be.equal(false);
+  });
+
   it("grants the developer the DEVELOPER_ROLE", async () => {
     expect(await token.hasRole(DEVELOPER_ROLE, developer.address)).to.be.equal(
       true
@@ -97,9 +116,15 @@ describe("📦 GUILD token", async () => {
   });
 
   describe("🗳  grantRole()", () => {
-    it("reverts for all users and roles because no-one has the DEFAULT_ADMIN_ROLE", async () => {
+    it("reverts for all users and roles (except of GOVERNOR_ROLE) because no-one has the DEFAULT_ADMIN_ROLE", async () => {
       const users = [deployer, treasury, dao, developer, purchaser];
-      const roles = [MINTER_ROLE, DEFAULT_ADMIN_ROLE, DAO_ROLE, DEVELOPER_ROLE];
+      const roles = [
+        DEFAULT_ADMIN_ROLE,
+        GOVERNOR_ADMIN_ROLE,
+        MINTER_ROLE,
+        DAO_ROLE,
+        DEVELOPER_ROLE,
+      ];
       for (let user of users) {
         for (let role of roles) {
           await expect(
@@ -109,6 +134,36 @@ describe("📦 GUILD token", async () => {
           );
         }
       }
+    });
+    it("reverts for all users (except the dao) when granting GOVERNOR_ROLE because they do not have GOVERNOR_ADMIN_ROLE", async () => {
+      const users = [deployer, treasury, developer, purchaser];
+      for (let user of users) {
+        await expect(
+          token.connect(user).grantRole(GOVERNOR_ROLE, purchaser.address)
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(user.address, GOVERNOR_ADMIN_ROLE)
+        );
+      }
+    });
+    describe("when the dao grants the GOVERNOR_ROLE to an address", () => {
+      beforeEach(async () => {
+        await token.connect(dao).grantRole(GOVERNOR_ROLE, purchaser.address);
+      });
+      it("grants the address the GOVERNOR_ROLE", async () => {
+        expect(await token.hasRole(GOVERNOR_ROLE, purchaser.address)).to.be
+          .true;
+      });
+      it("revokes the GOVERNOR_ADMIN_ROLE from the dao", async () => {
+        expect(await token.hasRole(GOVERNOR_ADMIN_ROLE, dao.address)).to.be
+          .false;
+      });
+      it("revokes on subsequent calls with access control error because now no-one has GOVERNOR_ADMIN_ROLE", async () => {
+        await expect(
+          token.connect(dao).grantRole(GOVERNOR_ROLE, treasury.address)
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(dao.address, GOVERNOR_ADMIN_ROLE)
+        );
+      });
     });
   });
 
