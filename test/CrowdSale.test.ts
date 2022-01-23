@@ -132,7 +132,13 @@ describe("📦 CrowdSale of GUILD token", async function () {
 
     token = (await upgrades.deployProxy(
       Token,
-      [GUILD_TOKEN_NAME, GUILD_TOKEN_SYMBOL, dao.address, developer.address],
+      [
+        GUILD_TOKEN_NAME,
+        GUILD_TOKEN_SYMBOL,
+        dao.address,
+        developer.address,
+        constants.address,
+      ],
       { kind: "uups" }
     )) as GuildToken;
     await token.deployed();
@@ -288,6 +294,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     let archivedPrice: BigNumber;
     let startingPriceUSD: BigNumber;
     let gamerPurchasedAmount: BigNumber;
+    let mintFeeAmount: BigNumber;
 
     beforeEach(async () => {
       stableCoinDecimals = await usdc_stablecoin.decimals();
@@ -304,6 +311,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
       archivedPrice = ethers.BigNumber.from("100005159");
       startingPriceUSD = ethers.BigNumber.from("7000000"); // ~7 usd cents
       gamerPurchasedAmount = ethers.BigNumber.from("142864512857142857142"); // ~142 tokens in 18 decimals
+      mintFeeAmount = await token.calculateGuildFXMintFee(gamerPurchasedAmount);
 
       await usdc_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
       await usdc_stablecoin.mint(
@@ -365,7 +373,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
         gamerPurchasedAmount.toString()
       );
       expect(await token.totalSupply()).to.equal(
-        gamerPurchasedAmount.toString()
+        gamerPurchasedAmount.add(mintFeeAmount)
       );
     });
   });
@@ -379,6 +387,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     let archivedPrice: BigNumber;
     let startingPriceUSD: BigNumber;
     let gamerPurchasedAmount: BigNumber;
+    let mintFeeAmount: BigNumber;
 
     beforeEach(async () => {
       stableCoinDecimals = await usdc_stablecoin.decimals();
@@ -395,6 +404,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
       archivedPrice = ethers.BigNumber.from("100018962");
       startingPriceUSD = ethers.BigNumber.from("7000000");
       gamerPurchasedAmount = ethers.BigNumber.from("142884231428571428571");
+      mintFeeAmount = await token.calculateGuildFXMintFee(gamerPurchasedAmount);
 
       await usdt_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
       await usdt_stablecoin.mint(
@@ -456,7 +466,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
         gamerPurchasedAmount.toString()
       );
       expect(await token.totalSupply()).to.equal(
-        gamerPurchasedAmount.toString()
+        gamerPurchasedAmount.add(mintFeeAmount)
       );
     });
   });
@@ -470,6 +480,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     let archivedPrice: BigNumber;
     let startingPriceUSD: BigNumber;
     let gamerPurchasedAmount: BigNumber;
+    let mintFeeAmount: BigNumber;
 
     beforeEach(async () => {
       stableCoinDecimals = await usdc_stablecoin.decimals();
@@ -486,6 +497,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
       archivedPrice = ethers.BigNumber.from("100058710");
       startingPriceUSD = ethers.BigNumber.from("7000000");
       gamerPurchasedAmount = ethers.BigNumber.from("142941014285714285714");
+      mintFeeAmount = await token.calculateGuildFXMintFee(gamerPurchasedAmount);
 
       await ust_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
       await ust_stablecoin.mint(treasury.address, seedTreasuryStableCoinAmount);
@@ -544,7 +556,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
         gamerPurchasedAmount.toString()
       );
       expect(await token.totalSupply()).to.equal(
-        gamerPurchasedAmount.toString()
+        gamerPurchasedAmount.add(mintFeeAmount)
       );
     });
   });
@@ -558,6 +570,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     let archivedPrice: BigNumber;
     let startingPriceUSD: BigNumber;
     let gamerPurchasedAmount: BigNumber;
+    let mintFeeAmount: BigNumber;
 
     beforeEach(async () => {
       stableCoinDecimals = await usdc_stablecoin.decimals();
@@ -574,6 +587,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
       archivedPrice = ethers.BigNumber.from("365993550000");
       startingPriceUSD = ethers.BigNumber.from("7000000");
       gamerPurchasedAmount = ethers.BigNumber.from("522847928571428571428571");
+      mintFeeAmount = await token.calculateGuildFXMintFee(gamerPurchasedAmount);
 
       await eth_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
       await eth_stablecoin.mint(treasury.address, seedTreasuryStableCoinAmount);
@@ -632,7 +646,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
         gamerPurchasedAmount.toString()
       );
       expect(await token.totalSupply()).to.equal(
-        gamerPurchasedAmount.toString()
+        gamerPurchasedAmount.add(mintFeeAmount)
       );
     });
   });
@@ -646,6 +660,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     let archivedPrice: BigNumber;
     let startingPriceUSD: BigNumber;
     let gamerPurchasedAmount: BigNumber;
+    let mintFeeAmount: BigNumber;
 
     beforeEach(async () => {
       stableCoinDecimals = await usdc_stablecoin.decimals();
@@ -662,6 +677,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
       archivedPrice = ethers.BigNumber.from("100036216");
       startingPriceUSD = ethers.BigNumber.from("7000000");
       gamerPurchasedAmount = ethers.BigNumber.from("142908880000000000000");
+      mintFeeAmount = await token.calculateGuildFXMintFee(gamerPurchasedAmount);
 
       await dai_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
       await dai_stablecoin.mint(treasury.address, seedTreasuryStableCoinAmount);
@@ -720,7 +736,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
         gamerPurchasedAmount.toString()
       );
       expect(await token.totalSupply()).to.equal(
-        gamerPurchasedAmount.toString()
+        gamerPurchasedAmount.add(mintFeeAmount)
       );
     });
   });
@@ -734,6 +750,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     let archivedPrice: BigNumber;
     let startingPriceUSD: BigNumber;
     let gamerPurchasedAmount: BigNumber;
+    let mintFeeAmount: BigNumber;
 
     beforeEach(async () => {
       stableCoinDecimals = await usdc_stablecoin.decimals();
@@ -750,6 +767,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
       archivedPrice = ethers.BigNumber.from("51618873955");
       startingPriceUSD = ethers.BigNumber.from("7000000");
       gamerPurchasedAmount = ethers.BigNumber.from("73741248507142857142857");
+      mintFeeAmount = await token.calculateGuildFXMintFee(gamerPurchasedAmount);
 
       await token.connect(governor).whitelistMint(crowdSale.address, true);
     });
@@ -820,7 +838,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
         gamerPurchasedAmount.toString()
       );
       expect(await token.totalSupply()).to.equal(
-        gamerPurchasedAmount.toString()
+        gamerPurchasedAmount.add(mintFeeAmount)
       );
     });
   });

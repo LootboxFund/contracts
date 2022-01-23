@@ -16,6 +16,7 @@ _📆 TODO: Generalize this deployment processes. See the [backlog item](https:/
    - This will output a [log file](./scripts/logs) with name `"deployGuildTokenFactory_log_xxx.dev.txt"`
 2. Find your log file, and add the "Constants Token Address" and "Guild Token Address" to the [crowdsale factory deploy script](./scrips/deployCrowdSaleFactory.dev.ts)
 3. `npm run deploy:testnet:crowdsale-factory`
+4. Propse and execute a `.whitelistMint()` on the crowdsale address via openzeppelin defender
 
 ## Testnet Addresses
 

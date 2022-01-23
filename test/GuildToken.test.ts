@@ -32,6 +32,7 @@ import {
   Constants__factory,
 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { BigNumber } from "ethers";
 
 describe("📦 GUILD token", async () => {
   let deployer: SignerWithAddress;
@@ -510,6 +511,63 @@ describe("📦 GUILD token", async () => {
     });
   });
 
+  describe("🗳  burn()", () => {
+    it("reverts with 'Pausable: paused' error if contract is paused", async () => {
+      await token.connect(dao).pause();
+      await expect(token.connect(dao).burn(1)).to.be.revertedWith(
+        "Pausable: paused"
+      );
+    });
+  });
+
+  describe("🗳  calculateGuildFXMintFee()", () => {
+    it("calculates the mint fee of 2e6 for mint request of 100e6", async () => {
+      expect(
+        (
+          await token.calculateGuildFXMintFee(ethers.utils.parseUnits("100", 6))
+        ).toString()
+      ).to.eq(ethers.utils.parseUnits("2", 6).toString());
+    });
+
+    it("calculates the mint fee of 2e18 for mint request of 100e18", async () => {
+      expect(
+        (
+          await token.calculateGuildFXMintFee(
+            ethers.utils.parseUnits("100", 18)
+          )
+        ).toString()
+      ).to.eq(ethers.utils.parseUnits("2", 18).toString());
+    });
+
+    it("calculates the mint fee of 20e18 for mint request of 1000e18", async () => {
+      expect(
+        (
+          await token.calculateGuildFXMintFee(
+            ethers.utils.parseUnits("1000", 18)
+          )
+        ).toString()
+      ).to.eq(ethers.utils.parseUnits("20", 18).toString());
+    });
+
+    it("calculates the mint fee of 2000e18 for mint request of 100000e18", async () => {
+      expect(
+        (
+          await token.calculateGuildFXMintFee(
+            ethers.utils.parseUnits("100000", 18)
+          )
+        ).toString()
+      ).to.eq(ethers.utils.parseUnits("2000", 18).toString());
+    });
+
+    it("calculates the mint fee of 0e18 for mint request of 0e18", async () => {
+      expect(
+        (
+          await token.calculateGuildFXMintFee(ethers.utils.parseUnits("0", 18))
+        ).toString()
+      ).to.eq(ethers.utils.parseUnits("0", 18).toString());
+    });
+  });
+
   describe("🗳  mintRequest()", () => {
     it("reverts with permission error when not called with MINTER_ROLE", async () => {
       const promise = token
@@ -538,7 +596,7 @@ describe("📦 GUILD token", async () => {
       it("reverts with 'Pausable: paused' error if contract is paused", async () => {
         await token.connect(dao).pause();
         await expect(
-          token.connect(whitelistedAddress).mintRequest(treasury.address, 10)
+          token.connect(whitelistedAddress).mintRequest(purchaser.address, 10)
         ).to.be.revertedWith("Pausable: paused");
       });
 
@@ -548,7 +606,7 @@ describe("📦 GUILD token", async () => {
           .whitelistMint(whitelistedAddress.address, false);
         const promise = token
           .connect(whitelistedAddress)
-          .mintRequest(treasury.address, 10);
+          .mintRequest(purchaser.address, 10);
         await expect(promise).to.be.revertedWith(
           generatePermissionRevokeMessage(
             whitelistedAddress.address,
@@ -557,83 +615,23 @@ describe("📦 GUILD token", async () => {
         );
       });
 
-      it("sends the address the correct number of tokens", async () => {
-        await token
-          .connect(whitelistedAddress)
-          .mintRequest(treasury.address, 10);
-        const balance = await token.balanceOf(treasury.address);
-        expect(balance).to.be.equal(10);
-        expect(await token.currentSupply()).to.be.equal(10);
-      });
-
-      it("does not mint negative amount", async () => {
-        const initialSupply = await token.currentSupply();
-        const promise = token
-          .connect(whitelistedAddress)
-          .mintRequest(treasury.address, -1000);
-        // TODO: specify revert message
-        // await expect(promise).to.be.revertedWith(
-        //   generateInvalidArgumentErrorMessage(-1000)
-        // );
-        await expect(promise).to.be.reverted;
-        expect(await token.currentSupply()).to.be.equal(initialSupply);
-      });
-
-      it("does not mint fractions", async () => {
-        const initialSupply = await token.currentSupply();
-        const promise = token
-          .connect(whitelistedAddress)
-          .mintRequest(treasury.address, 0.1);
-        // TODO: specify revert message
-        // await expect(promise).to.be.revertedWith(
-        //   generateInvalidArgumentErrorMessage(-1000)
-        // );
-        await expect(promise).to.be.reverted;
-        expect(await token.currentSupply()).to.be.equal(initialSupply);
-      });
-
-      it("reverts on big number overflows", async () => {
-        const initialSupply = await token.currentSupply();
-        const promise = token
-          .connect(whitelistedAddress)
-          .mintRequest(treasury.address, `${ethers.constants.MaxUint256}0`);
-        // TODO: specify revert message
-        // await expect(promise).to.be.revertedWith(
-        //   generateInvalidArgumentErrorMessage(-1000)
-        // );
-        await expect(promise).to.be.reverted;
-        expect(await token.currentSupply()).to.be.equal(initialSupply);
-      });
-
-      it("updates the current supply counter", async () => {
-        expect(await token.currentSupply()).to.be.equal(0);
-        await token
-          .connect(whitelistedAddress)
-          .mintRequest(treasury.address, 10);
-        expect(await token.currentSupply()).to.be.equal(10);
-        await token
-          .connect(whitelistedAddress)
-          .mintRequest(treasury.address, 100);
-        expect(await token.currentSupply()).to.be.equal(110);
-      });
-
-      it("emits an MintRequestFulfilled event", async () => {
-        const promise = token
-          .connect(whitelistedAddress)
-          .mintRequest(treasury.address, 10);
-        await expect(promise).to.emit(token, "MintRequestFulfilled");
-      });
-
-      it("can mint 2^224 - 1 tokens", async () => {
-        const amount = ethers.BigNumber.from("2")
-          .pow("224")
-          .sub("1")
-          .toString();
-        await token
+      it("reverts value-out-of-bounds error when trying to mint negative value", async () => {
+        const amount = ethers.BigNumber.from("-1");
+        const request = token
           .connect(whitelistedAddress)
           .mintRequest(whitelistedAddress.address, amount.toString());
+        // await expect(request).to.be.revertedWith(
+        //   'Error: value out-of-bounds (argument="_amount", value="-2", code=INVALID_ARGUMENT, version=abi/5.5.0)'
+        // );
+        await expect(request).to.be.reverted;
+      });
 
-        expect(await token.balanceOf(whitelistedAddress.address)).eq(amount);
+      it("reverts with 'Cannot mint zero tokens' error when trying to mint zero", async () => {
+        const amount = ethers.BigNumber.from("0");
+        const request = token
+          .connect(whitelistedAddress)
+          .mintRequest(whitelistedAddress.address, amount.toString());
+        await expect(request).to.be.revertedWith("Cannot mint zero tokens");
       });
 
       it("reverts with 'ERC20Votes: total supply risks overflowing votes' error for 2^224 tokens", async () => {
@@ -648,25 +646,213 @@ describe("📦 GUILD token", async () => {
         expect(initialSupply).eq(await token.currentSupply());
       });
 
-      it("reverts value-out-of-bounds error when trying to mint negative value", async () => {
-        const amount = ethers.BigNumber.from("-2");
+      it("does not mint negative amount", async () => {
+        const initialSupply = await token.currentSupply();
+        const promise = token
+          .connect(whitelistedAddress)
+          .mintRequest(purchaser.address, -1000);
+        // TODO: specify revert message
+        // await expect(promise).to.be.revertedWith(
+        //   generateInvalidArgumentErrorMessage(-1000)
+        // );
+        await expect(promise).to.be.reverted;
+        expect(await token.currentSupply()).to.be.equal(initialSupply);
+      });
+
+      it("does not mint fractions", async () => {
+        const initialSupply = await token.currentSupply();
+        const promise = token
+          .connect(whitelistedAddress)
+          .mintRequest(purchaser.address, 0.1);
+        // TODO: specify revert message
+        // await expect(promise).to.be.revertedWith(
+        //   generateInvalidArgumentErrorMessage(-1000)
+        // );
+        await expect(promise).to.be.reverted;
+        expect(await token.currentSupply()).to.be.equal(initialSupply);
+      });
+
+      it("reverts on big number overflows", async () => {
+        const initialSupply = await token.currentSupply();
+        const promise = token
+          .connect(whitelistedAddress)
+          .mintRequest(purchaser.address, `${ethers.constants.MaxUint256}0`);
+        // TODO: specify revert message
+        // await expect(promise).to.be.revertedWith(
+        //   generateInvalidArgumentErrorMessage(-1000)
+        // );
+        await expect(promise).to.be.reverted;
+        expect(await token.currentSupply()).to.be.equal(initialSupply);
+      });
+
+      it("sends the address the correct number of tokens", async () => {
+        await token
+          .connect(whitelistedAddress)
+          .mintRequest(purchaser.address, 100);
+        const balance = await token.balanceOf(purchaser.address);
+        expect(balance).to.be.equal(100);
+        expect(await token.currentSupply()).to.be.equal(102);
+      });
+
+      it("sends the GuildFXTreasury the correct number of tokens for the 2% fee", async () => {
+        await token
+          .connect(whitelistedAddress)
+          .mintRequest(purchaser.address, 100);
+        expect(await token.balanceOf(await constants.TREASURY())).to.be.equal(
+          2
+        );
+        expect(await token.currentSupply()).to.be.equal(102);
+      });
+
+      it("updates the current supply counter by 1020 when minting 1000 tokens (includes the 2% the mint fees)", async () => {
+        const mintAmount = ethers.utils.parseUnits("1000", 18);
+        const calculatedMintFee = ethers.utils.parseUnits("20", 18); // 2% mint fee
+        expect(await token.currentSupply()).to.be.equal(0);
+        await token
+          .connect(whitelistedAddress)
+          .mintRequest(treasury.address, mintAmount);
+        expect(await token.currentSupply()).to.be.equal(
+          mintAmount.add(calculatedMintFee)
+        );
+      });
+
+      it("updates the current supply counter correctly for a bunch of other suquential values at 2% fee", async () => {
+        const seeds = [
+          {
+            amount: ethers.utils.parseUnits("1000", 26),
+            fee: ethers.utils.parseUnits("20", 26),
+          },
+          {
+            amount: ethers.utils.parseUnits("1000", 21),
+            fee: ethers.utils.parseUnits("20", 21),
+          },
+          {
+            amount: ethers.utils.parseUnits("1000", 18),
+            fee: ethers.utils.parseUnits("20", 18),
+          },
+          {
+            amount: ethers.utils.parseUnits("100", 18),
+            fee: ethers.utils.parseUnits("2", 18),
+          },
+          {
+            amount: ethers.utils.parseUnits("100", 17),
+            fee: ethers.utils.parseUnits("2", 17),
+          },
+          {
+            amount: ethers.utils.parseUnits("1000", 6),
+            fee: ethers.utils.parseUnits("20", 6),
+          },
+        ];
+        for (let { amount, fee } of seeds) {
+          const initialSupply = await token.currentSupply();
+          await token
+            .connect(whitelistedAddress)
+            .mintRequest(treasury.address, amount);
+          expect(await token.currentSupply()).to.be.equal(
+            initialSupply.add(amount).add(fee)
+          );
+        }
+      });
+
+      it("emits a MintRequestFulfilled event", async () => {
+        const constantsTreasuryAddress = await constants.TREASURY();
+        const addAmount = ethers.utils.parseUnits("100", 18);
+        const feeAmount = ethers.utils.parseUnits("2", 18);
+
+        const promise = token
+          .connect(whitelistedAddress)
+          .mintRequest(treasury.address, addAmount);
+
+        await expect(promise)
+          .to.emit(token, "MintRequestFulfilled")
+          .withArgs(
+            deployer.address,
+            treasury.address,
+            constantsTreasuryAddress,
+            addAmount.toString(),
+            feeAmount.toString()
+          );
+      });
+
+      it("can mint below 2^224 - 1 total supply threshold without reverting on overflow", async () => {
+        const maxSupply = ethers.BigNumber.from("2").pow("224").sub(1);
+        const mintFeeDecimals = ethers.BigNumber.from("3");
+        const mintingFee = ethers.utils.parseUnits("20", mintFeeDecimals);
+
+        // TODO: test boundary points
+        // I Could not get the calculations exact...
+        //
+        // let x be the _mintAmount (aka amount)
+        //
+        // 2^224 - 1 = 98/100 * x + 2/100 * feeAmount     ;     Since feeAmount(x) = x * _mintFee / 10e^mintDecimals
+        // ==>
+        // 2^224 - 1 = 98/100 * x + 2/100 * x * _mintFee / 10e^_mintDecimals
+        // ==>
+        // x :=: amount = (2^224 - 1) / (98/100 + 2/100 * _mintFee / 10e^_mintDecimals)
+
+        // const denominator = ethers.utils
+        //   .parseUnits("980", mintFeeDecimals)
+        //   .add(
+        //     ethers.utils
+        //       .parseUnits("20", mintFeeDecimals)
+        //       .mul(mintingFee)
+        //       .div(ethers.BigNumber.from("10").pow(mintFeeDecimals))
+        //   )
+        //   .div(ethers.BigNumber.from("10").pow(mintFeeDecimals));
+
+        // const amount = maxSupply.div(denominator);
+        // const calculatedFee = await token.calculateGuildFXMintFee(amount);
+
+        const amount = ethers.BigNumber.from(
+          maxSupply.toString().slice(0, maxSupply.toString().length - 1)
+        );
+        const calculatedFee = await token.calculateGuildFXMintFee(amount);
+
+        await token
+          .connect(whitelistedAddress)
+          .mintRequest(whitelistedAddress.address, amount);
+
+        expect(await token.balanceOf(whitelistedAddress.address)).eq(amount);
+        expect(await token.balanceOf(await constants.TREASURY())).eq(
+          calculatedFee
+        );
+      });
+
+      it("reverts with 'ERC20Votes: total supply risks overflowing votes' error if more that 2^224 -1 tokens are minted", async () => {
+        const maxSupply = ethers.BigNumber.from("2").pow("224").sub(1);
+        const mintFeeDecimals = ethers.BigNumber.from("3");
+        const mintingFee = ethers.utils.parseUnits("20", mintFeeDecimals);
+
+        // TODO: test boundary points
+        // I Could not get the calculations exact...
+        //
+        // let x be the _mintAmount (aka amount)
+        //
+        // 2^224 - 1 = 98/100 * x + 2/100 * feeAmount     ;     Since feeAmount(x) = x * _mintFee / 10e^mintDecimals
+        // ==>
+        // 2^224 - 1 = 98/100 * x + 2/100 * x * _mintFee / 10e^_mintDecimals
+        // ==>
+        // x :=: amount = (2^224 - 1) / (98/100 + 2/100 * _mintFee / 10e^_mintDecimals)
+
+        // const denominator = ethers.utils
+        //   .parseUnits("980", mintFeeDecimals)
+        //   .add(ethers.utils.parseUnits("20", mintFeeDecimals).mul(mintingFee));
+
+        // // #### cause overflow here: ####
+        // const amount = maxSupply.div(denominator).add("1");
+        // const estimatedFee = await token.calculateGuildFXMintFee(amount);
+        const amount = maxSupply;
+
         const request = token
           .connect(whitelistedAddress)
           .mintRequest(whitelistedAddress.address, amount.toString());
-        // await expect(request).to.be.revertedWith(
-        //   'Error: value out-of-bounds (argument="_amount", value="-2", code=INVALID_ARGUMENT, version=abi/5.5.0)'
-        // );
-        await expect(request).to.be.reverted;
-      });
-    });
-  });
 
-  describe("🗳  burn()", () => {
-    it("reverts with 'Pausable: paused' error if contract is paused", async () => {
-      await token.connect(dao).pause();
-      await expect(token.connect(dao).burn(1)).to.be.revertedWith(
-        "Pausable: paused"
-      );
+        // console.log("TOTAL SUPPLY", (await token.totalSupply()).toString());
+
+        await expect(request).to.be.revertedWith(
+          "ERC20Votes: total supply risks overflowing votes"
+        );
+      });
     });
   });
 });
