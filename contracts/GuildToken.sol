@@ -81,12 +81,12 @@ contract GuildToken is
     // --------- Managing the Mints --------- //
     function whitelistMint(address _mintAddress, bool _isActive)
         external
-        onlyRole(DAO_ROLE)
+        onlyRole(GOVERNOR_ROLE)
         whenNotPaused
     {
         /** The Mint is deployed in Javascript but useless without being whitelisted
             Only whitelisted Mints can request minting.
-            Only the DAO can whitelist Mints. This is a security measure to prevent abuse.
+            Only the GOVERNOR_ROLE can whitelist Mints. This is a security measure to prevent abuse.
          */
         if (_isActive) {
             ACTIVE_MINTS.add(_mintAddress);
