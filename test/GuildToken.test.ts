@@ -94,8 +94,20 @@ describe("📦 GUILD token", async () => {
     expect(await token.decimals()).to.be.equal(18);
   });
 
-  it("has 0 total supply", async () => {
-    expect(await token.totalSupply()).eq("0");
+  it("has 1000 tokens total supply", async () => {
+    expect(await token.totalSupply()).eq(ethers.utils.parseEther("1000"));
+  });
+
+  it("initialization: mints 1000 tokens to the DAO", async () => {
+    expect(await token.balanceOf(dao.address)).to.eq(
+      ethers.utils.parseEther("1000")
+    );
+  });
+
+  it.skip("initialization: mints 20 tokens (2%) to GuildFX treasury", async () => {
+    expect(await token.balanceOf(await constants.TREASURY())).to.eq(
+      ethers.utils.parseEther("20")
+    );
   });
 
   it("has stored the GuildFXConstants contract in memory", async () => {
