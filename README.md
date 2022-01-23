@@ -2,20 +2,22 @@
 
 ## Getting started
 
-1. `yarn install`
-2. `npx hardhat compile`
-3. `npm run test`
+1. `cp .env.example .env`
+2. fill `.env` with shared dev credentials (contact @0xnewton or 0xterran for access)
+3. `yarn install`
+4. `npx hardhat compile`
+5. `npm run test`
 
 ### To set up a new test environment:
 
-    📆 Todo: Generalize this deployment processes. See the [backlog item](https://linear.app/guildfx/issue/GUI-75/generalize-dev-deployment-proceedure) to track this.
+_📆 TODO: Generalize this deployment processes. See the [backlog item](https://linear.app/guildfx/issue/GUI-75/generalize-dev-deployment-proceedure) to track this._
 
 1. `npm run deploy:testnet:guild-token-factory`
    - This will output a [log file](./scripts/logs) with name `"deployGuildTokenFactory_log_xxx.dev.txt"`
 2. Find your log file, and add the "Constants Token Address" and "Guild Token Address" to the [crowdsale factory deploy script](./scrips/deployCrowdSaleFactory.dev.ts)
 3. `npm run deploy:testnet:crowdsale-factory`
 
-### Testnet Addresses (WIP - may not be accurate)
+## Testnet Addresses
 
 | Contract                     | Address                                    |
 | ---------------------------- | ------------------------------------------ |
