@@ -14,6 +14,7 @@ import { stripZeros } from "../test/helpers/test-helpers";
 /**
  * @todo dynamically load these paramaters, or store in global config file somewhere
  * currently, you need to manually find the following from ./logs/deployCrowdSaleFactory_log_xxxx
+ * https://linear.app/guildfx/issue/GUI-75/generalize-dev-deployment-proceedure
  *      1. GuildFX Constants Contract Address
  *      2. GuildFX Gamer Token Address
  */
