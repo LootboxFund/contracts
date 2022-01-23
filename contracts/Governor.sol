@@ -6,17 +6,17 @@ import "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorSettin
 import "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorCountingSimpleUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorVotesUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorVotesQuorumFractionUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorTimelockControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-contract GuildGovernor is
+// import "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorTimelockControlUpgradeable.sol";
+
+contract Governor is
     Initializable,
     GovernorUpgradeable,
     GovernorSettingsUpgradeable,
     GovernorCountingSimpleUpgradeable,
-    GovernorTimelockControlUpgradeable,
     GovernorVotesUpgradeable,
     GovernorVotesQuorumFractionUpgradeable,
     OwnableUpgradeable,
@@ -25,11 +25,8 @@ contract GuildGovernor is
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
 
-    function initialize(
-        ERC20VotesUpgradeable _token,
-        TimelockControllerUpgradeable _timelock
-    ) public initializer {
-        __Governor_init("GuildGovernor");
+    function initialize(ERC20VotesUpgradeable _token) public initializer {
+        __Governor_init("Governor");
         __GovernorSettings_init(
             6545, /* 1 day voting delay in number of blocks. Voting delay is the amount of time that passes before voting can start */
             45818, /* 1 week voting period in number of blocks */
@@ -38,7 +35,8 @@ contract GuildGovernor is
         __GovernorCountingSimple_init();
         __GovernorVotes_init(_token);
         __GovernorVotesQuorumFraction_init(4); /* Requires at least 4% of ciculating tokens to be voted with to reach quorum*/
-        __GovernorTimelockControl_init(_timelock);
+        // TODO Add timelock
+        // __GovernorTimelockControl_init(_timelock);
         __Ownable_init();
         __UUPSUpgradeable_init();
     }
@@ -90,7 +88,7 @@ contract GuildGovernor is
     function state(uint256 proposalId)
         public
         view
-        override(GovernorUpgradeable, GovernorTimelockControlUpgradeable)
+        override(GovernorUpgradeable)
         returns (ProposalState)
     {
         return super.state(proposalId);
@@ -101,11 +99,7 @@ contract GuildGovernor is
         uint256[] memory values,
         bytes[] memory calldatas,
         string memory description
-    )
-        public
-        override(GovernorUpgradeable, IGovernorUpgradeable)
-        returns (uint256)
-    {
+    ) public override(GovernorUpgradeable) returns (uint256) {
         return super.propose(targets, values, calldatas, description);
     }
 
@@ -124,10 +118,7 @@ contract GuildGovernor is
         uint256[] memory values,
         bytes[] memory calldatas,
         bytes32 descriptionHash
-    )
-        internal
-        override(GovernorUpgradeable, GovernorTimelockControlUpgradeable)
-    {
+    ) internal override(GovernorUpgradeable) {
         super._execute(proposalId, targets, values, calldatas, descriptionHash);
     }
 
@@ -136,18 +127,14 @@ contract GuildGovernor is
         uint256[] memory values,
         bytes[] memory calldatas,
         bytes32 descriptionHash
-    )
-        internal
-        override(GovernorUpgradeable, GovernorTimelockControlUpgradeable)
-        returns (uint256)
-    {
+    ) internal override(GovernorUpgradeable) returns (uint256) {
         return super._cancel(targets, values, calldatas, descriptionHash);
     }
 
     function _executor()
         internal
         view
-        override(GovernorUpgradeable, GovernorTimelockControlUpgradeable)
+        override(GovernorUpgradeable)
         returns (address)
     {
         return super._executor();
@@ -156,7 +143,7 @@ contract GuildGovernor is
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(GovernorUpgradeable, GovernorTimelockControlUpgradeable)
+        override(GovernorUpgradeable)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
