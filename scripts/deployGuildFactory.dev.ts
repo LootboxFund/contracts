@@ -268,7 +268,7 @@ async function main() {
   const [guildTokenAddress] = (await guildFactory.viewGuildTokens()).map(
     stripZeros
   );
-  const [governorAddress] = (await guildFactory.viewGuildTokens()).map(
+  const [governorAddress] = (await guildFactory.viewGovernors()).map(
     stripZeros
   );
   logToFile(
