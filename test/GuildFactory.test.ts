@@ -6,8 +6,8 @@ import {
   GuildToken__factory,
   Constants,
   Constants__factory,
-  CrowdSale,
-  CrowdSale__factory,
+  Governor__factory,
+  Governor,
 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
@@ -86,7 +86,7 @@ describe("📦 GuildFactory", () => {
       .true;
   });
 
-  describe("🗳 whitelistGuildManager()", () => {
+  describe("🗳  whitelistGuildManager()", () => {
     it("reverts with access control error when not called by DAO_ROLE", async () => {
       await expect(
         guildFactory
@@ -134,7 +134,7 @@ describe("📦 GuildFactory", () => {
     });
   });
 
-  describe("🗳 whitelistGuildOwner()", () => {
+  describe("🗳  whitelistGuildOwner()", () => {
     it("reverts with access control error when not called by GUILD_MANAGER_ROLE", async () => {
       await expect(
         guildFactory
@@ -182,7 +182,7 @@ describe("📦 GuildFactory", () => {
     });
   });
 
-  describe("🗳 pause()", () => {
+  describe("🗳  pause()", () => {
     it("reverts with access control error if not called by the DAO", async () => {
       await expect(guildFactory.connect(purchaser).pause()).to.be.revertedWith(
         generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
@@ -206,7 +206,7 @@ describe("📦 GuildFactory", () => {
     });
   });
 
-  describe("🗳 unpause()", () => {
+  describe("🗳  unpause()", () => {
     it("reverts with with access control error", async () => {
       await expect(
         guildFactory.connect(purchaser).unpause()
@@ -233,7 +233,7 @@ describe("📦 GuildFactory", () => {
     });
   });
 
-  describe("🗳 viewGuildTokens()", () => {
+  describe("🗳  viewGuildTokens()", () => {
     it("returns empty array when no guildTokens have been created yet", async () => {
       expect(await guildFactory.viewGuildTokens()).to.deep.eq([]);
     });
@@ -243,17 +243,14 @@ describe("📦 GuildFactory", () => {
       for (let n = 0; n < nTokensToMake; n++) {
         await guildFactory
           .connect(dao)
-          .createGuildWithCrowdSale(
+          .createGuild(
             "TestGuild" + n.toString(),
             "GUILDT" + n.toString(),
             dao.address,
-            developer.address,
-            treasury.address,
-            "7000000"
+            developer.address
           );
         const proxies = await guildFactory.viewGuildTokens();
         expect(proxies.length).to.eq(n + 1);
-        // expect(proxies.every((addr: string) => typeof addr === "string" && )).to.deep.eq()
       }
       const proxies = await guildFactory.viewGuildTokens();
       expect(proxies.length).to.eq(nTokensToMake);
@@ -264,13 +261,11 @@ describe("📦 GuildFactory", () => {
       for (let n = 0; n < nTokensToMake; n++) {
         await guildFactory
           .connect(dao)
-          .createGuildWithCrowdSale(
+          .createGuild(
             "TestGuild" + nTokensToMake.toString(),
             "GUILDT" + nTokensToMake.toString(),
             dao.address,
-            developer.address,
-            treasury.address,
-            "7000000"
+            developer.address
           );
       }
       const proxies = await guildFactory.viewGuildTokens();
@@ -280,29 +275,26 @@ describe("📦 GuildFactory", () => {
     });
   });
 
-  describe("🗳 viewCrowdSales()", () => {
-    it("returns empty array when no crowdSales have been created yet", async () => {
-      expect(await guildFactory.viewCrowdSales()).to.deep.eq([]);
+  describe("🗳  viewGovernors()", () => {
+    it("returns empty array when no governors have been created yet", async () => {
+      expect(await guildFactory.viewGovernors()).to.deep.eq([]);
     });
 
-    it("returns the correct array length and type of crowdSale proxy addresses", async () => {
+    it("returns the correct array length and type of governors proxy addresses", async () => {
       const nContractsToMake = 5;
       for (let n = 0; n < nContractsToMake; n++) {
         await guildFactory
           .connect(dao)
-          .createGuildWithCrowdSale(
+          .createGuild(
             "TestGuild" + n.toString(),
             "GUILDT" + n.toString(),
             dao.address,
-            developer.address,
-            treasury.address,
-            "7000000"
+            developer.address
           );
-        const proxies = await guildFactory.viewCrowdSales();
+        const proxies = await guildFactory.viewGovernors();
         expect(proxies.length).to.eq(n + 1);
-        // expect(proxies.every((addr: string) => typeof addr === "string" && )).to.deep.eq()
       }
-      const proxies = await guildFactory.viewCrowdSales();
+      const proxies = await guildFactory.viewGovernors();
       expect(proxies.length).to.eq(nContractsToMake);
     });
 
@@ -311,60 +303,47 @@ describe("📦 GuildFactory", () => {
       for (let n = 0; n < nContractsToMake; n++) {
         await guildFactory
           .connect(dao)
-          .createGuildWithCrowdSale(
+          .createGuild(
             "TestGuild" + n.toString(),
             "GUILDT" + n.toString(),
             dao.address,
-            developer.address,
-            treasury.address,
-            "7000000"
+            developer.address
           );
       }
-      const proxies = await guildFactory.viewCrowdSales();
+      const proxies = await guildFactory.viewGovernors();
       expect(proxies.filter((v, i, a) => a.indexOf(v) === i).length).to.eq(
         nContractsToMake
       );
     });
   });
 
-  describe("🗳 createGuildWithCrowdSale()", () => {
+  describe("🗳  createGuild()", () => {
     let initialNumberOfGuilds: number;
-    let initialNumberOfCrowdSales: number;
+    let initialNumberOfGovernors: number;
     let transaction: ContractTransaction;
 
     const guildName: string = "GuildFXTest";
     const guildSymbol: string = "GFXT";
     const guildDecimals: number = 18;
 
-    const startingPriceInUSD = ethers.BigNumber.from("7000000");
-
     beforeEach(async () => {
       initialNumberOfGuilds = (await guildFactory.viewGuildTokens()).length;
-      initialNumberOfCrowdSales = (await guildFactory.viewCrowdSales()).length;
+      initialNumberOfGovernors = (await guildFactory.viewGovernors()).length;
 
       transaction = await guildFactory
         .connect(dao)
-        .createGuildWithCrowdSale(
-          guildName,
-          guildSymbol,
-          dao.address,
-          developer.address,
-          treasury.address,
-          startingPriceInUSD
-        );
+        .createGuild(guildName, guildSymbol, dao.address, developer.address);
     });
 
     it("reverts if dao is zero", async () => {
       await expect(
         guildFactory
           .connect(dao)
-          .createGuildWithCrowdSale(
+          .createGuild(
             guildName,
             guildSymbol,
             ethers.constants.AddressZero,
-            developer.address,
-            treasury.address,
-            startingPriceInUSD
+            developer.address
           )
       ).to.be.revertedWith("DAO address cannot be zero");
     });
@@ -373,44 +352,20 @@ describe("📦 GuildFactory", () => {
       await expect(
         guildFactory
           .connect(dao)
-          .createGuildWithCrowdSale(
+          .createGuild(
             guildName,
             guildSymbol,
             dao.address,
-            ethers.constants.AddressZero,
-            treasury.address,
-            startingPriceInUSD
+            ethers.constants.AddressZero
           )
       ).to.be.revertedWith("Developer address cannot be zero");
-    });
-
-    it("reverts if treasury is zero", async () => {
-      await expect(
-        guildFactory
-          .connect(dao)
-          .createGuildWithCrowdSale(
-            guildName,
-            guildSymbol,
-            dao.address,
-            developer.address,
-            ethers.constants.AddressZero,
-            startingPriceInUSD
-          )
-      ).to.be.revertedWith("Treasury address cannot be zero");
     });
 
     it("reverts if guildName is empty string", async () => {
       await expect(
         guildFactory
           .connect(dao)
-          .createGuildWithCrowdSale(
-            "",
-            guildSymbol,
-            dao.address,
-            developer.address,
-            ethers.constants.AddressZero,
-            startingPriceInUSD
-          )
+          .createGuild("", guildSymbol, dao.address, developer.address)
       ).to.be.revertedWith("Guild name cannot be empty");
     });
 
@@ -418,45 +373,8 @@ describe("📦 GuildFactory", () => {
       await expect(
         guildFactory
           .connect(dao)
-          .createGuildWithCrowdSale(
-            guildName,
-            "",
-            dao.address,
-            developer.address,
-            ethers.constants.AddressZero,
-            startingPriceInUSD
-          )
+          .createGuild(guildName, "", dao.address, developer.address)
       ).to.be.revertedWith("Guild symbol cannot be empty");
-    });
-
-    it("reverts if startingPriceInUSD less than or equal to zero", async () => {
-      await expect(
-        guildFactory
-          .connect(dao)
-          .createGuildWithCrowdSale(
-            guildName,
-            guildSymbol,
-            dao.address,
-            developer.address,
-            treasury.address,
-            0
-          )
-      ).to.be.revertedWith("Starting price should be greater than zero");
-
-      await expect(
-        guildFactory
-          .connect(dao)
-          .createGuildWithCrowdSale(
-            guildName,
-            guildSymbol,
-            dao.address,
-            developer.address,
-            treasury.address,
-            -1
-          )
-        // ).to.be.revertedWith('Error: value out-of-bounds (argument="startingPriceInUSD", value=-1, code=INVALID_ARGUMENT, version=abi/5.5.0)');
-        // TODO: specify revert message
-      ).to.be.reverted;
     });
 
     it("reverts when contract paused", async () => {
@@ -464,34 +382,27 @@ describe("📦 GuildFactory", () => {
       await expect(
         guildFactory
           .connect(dao)
-          .createGuildWithCrowdSale(
-            guildName,
-            guildSymbol,
-            dao.address,
-            developer.address,
-            treasury.address,
-            startingPriceInUSD
-          )
+          .createGuild(guildName, guildSymbol, dao.address, developer.address)
       ).to.be.revertedWith("Pausable: paused");
     });
 
-    it("emits a GuildCrowdsalePairCreated event", async () => {
+    it("emits a TokenGovernorPairCreated event", async () => {
       const guildTokens = (await guildFactory.viewGuildTokens()).map(
         stripZeros
       );
-      const guildCrowdSales = (await guildFactory.viewCrowdSales()).map(
+      const guildGovernors = (await guildFactory.viewGovernors()).map(
         stripZeros
       );
       expect(guildTokens.length).gt(initialNumberOfGuilds);
-      expect(guildCrowdSales.length).gt(initialNumberOfCrowdSales);
+      expect(guildGovernors.length).gt(initialNumberOfGovernors);
       await expect(transaction).to.emit(
         guildFactory,
-        "GuildCrowdsalePairCreated"
+        "TokenGovernorPairCreated"
       );
       // TODO: enable args checking - address capitalization is retained in the EnumberableSet
       // .withArgs(
       //   guildTokens[guildTokens.length - 1],
-      //   guildCrowdSales[guildCrowdSales.length - 1]
+      //   guildGovernors[guildGovernors.length - 1]
       // );
     });
 
@@ -504,16 +415,16 @@ describe("📦 GuildFactory", () => {
         .true;
     });
 
-    it("adds an address in the CROWD_SALE_PROXIES set", async () => {
-      const crowdSales = (await guildFactory.viewCrowdSales()).map(stripZeros);
-      expect(crowdSales.length).eq(initialNumberOfCrowdSales + 1);
-      expect(ethers.utils.isAddress(crowdSales[crowdSales.length - 1])).to.be
+    it("adds an address in the GOVERNOR_PROXIES set", async () => {
+      const governors = (await guildFactory.viewGovernors()).map(stripZeros);
+      expect(governors.length).eq(initialNumberOfGovernors + 1);
+      expect(ethers.utils.isAddress(governors[governors.length - 1])).to.be
         .true;
     });
 
-    it.skip("returns a hash resolving in the guild token and crowdsale addresses", async () => {});
+    it.skip("returns a hash resolving in the guild token and governor addresses", async () => {});
 
-    describe("🗳 createGuild()", () => {
+    describe("🗳  _createGuild()", () => {
       let guildTokenAddress: string;
       let GuildTokenFactory: GuildToken__factory;
       let guildToken: GuildToken;
@@ -547,7 +458,7 @@ describe("📦 GuildFactory", () => {
         "returns a hashed transaction resolving into the guildToken's proxy address"
       );
 
-      it("sets the guildToken's address", async () => {
+      it("sets the guildToken's address in the GUILD_TOKEN_PROXIES set", async () => {
         expect(typeof guildTokenAddress).to.eq("string");
         expect(ethers.utils.isAddress(guildTokenAddress)).to.be.true;
         expect(guildTokenAddress.length).to.eq(42);
@@ -583,28 +494,28 @@ describe("📦 GuildFactory", () => {
       });
     });
 
-    describe("🗳 createCrowdSale()", () => {
-      let crowdSaleAddress: string;
-      let CrowdSaleFactory: CrowdSale__factory;
-      let crowdSale: CrowdSale;
+    describe("🗳  _createGovernor()", () => {
+      let governorAddress: string;
+      let Governor: Governor__factory;
+      let governor: Governor;
 
       before(async () => {
-        CrowdSaleFactory = await ethers.getContractFactory("CrowdSale");
+        Governor = await ethers.getContractFactory("Governor");
       });
 
       beforeEach(async () => {
-        [crowdSaleAddress] = (await guildFactory.viewCrowdSales()).map(
+        [governorAddress] = (await guildFactory.viewGovernors()).map(
           stripZeros
         );
-        crowdSale = CrowdSaleFactory.attach(crowdSaleAddress);
+        governor = Governor.attach(governorAddress);
       });
 
       it.skip("is payable and can receive native token");
 
-      it("emits a CrowdSaleCreated event", async () => {
-        await expect(transaction).to.emit(guildFactory, "CrowdSaleCreated");
+      it("emits a GovernorCreated event", async () => {
+        await expect(transaction).to.emit(guildFactory, "GovernorCreated");
         // await expect(transaction).to.emit(guildFactory, "GuildCreated").withArgs(
-        //   crowdSaleAddress, // TODO add explicit arg check (crowdSaleAddress is all lowercase and not matching)
+        //   governorAddress, // TODO add explicit arg check (governorAddress is all lowercase and not matching)
         //   guildName,
         //   guildSymbol,
         //   dao.address,
@@ -614,97 +525,81 @@ describe("📦 GuildFactory", () => {
 
       // TODO
       it.skip(
-        "returns a hashed transaction resolving into the crowdSale's proxy address"
+        "returns a hashed transaction resolving into the governor's proxy address"
       );
 
-      it("sets the crowdSale's address", async () => {
-        expect(typeof crowdSaleAddress).to.eq("string");
-        expect(ethers.utils.isAddress(crowdSaleAddress)).to.be.true;
-        expect(crowdSaleAddress.length).to.eq(42);
-        expect(crowdSale.address).to.eq(crowdSaleAddress);
-      });
-
-      it("sets the FXConstants address in the crowdsale", async () => {
-        const constantsAddress = await crowdSale.CONSTANTS();
-        expect(ethers.utils.isAddress(constantsAddress)).to.be.true;
-        expect(constantsAddress).to.eq(constants.address);
-      });
-
-      it("grants the crowdSale's DAO_ROLE to the dao", async () => {
-        expect(await crowdSale.hasRole(DAO_ROLE, dao.address)).to.eq(true);
-      });
-
-      it("grants the crowdSales's DEVELOPER_ROLE to the developer", async () => {
-        expect(
-          await crowdSale.hasRole(DEVELOPER_ROLE, developer.address)
-        ).to.eq(true);
+      it("sets the governor's address in the GOVERNOR_PROXIES set", async () => {
+        expect(typeof governorAddress).to.eq("string");
+        expect(ethers.utils.isAddress(governorAddress)).to.be.true;
+        expect(governorAddress.length).to.eq(42);
+        expect(governor.address).to.eq(governorAddress);
       });
     });
 
-    describe("making multiple guilds and crowdSales", () => {
-      let secondCrowdSaleAddress: string;
-      let secondCrowdSale: CrowdSale;
-      let secondGuildTokenAddress: string;
-      let secondGuildToken: GuildToken;
+    // describe("making multiple guilds and crowdSales", () => {
+    //   let secondCrowdSaleAddress: string;
+    //   let secondCrowdSale: CrowdSale;
+    //   let secondGuildTokenAddress: string;
+    //   let secondGuildToken: GuildToken;
 
-      let GuildTokenFactory: GuildToken__factory;
-      let CrowdSaleFactory: CrowdSale__factory;
+    //   let GuildTokenFactory: GuildToken__factory;
+    //   let CrowdSaleFactory: CrowdSale__factory;
 
-      let crowdSaleAddress: string;
-      let guildTokenAddress: string;
+    //   let crowdSaleAddress: string;
+    //   let guildTokenAddress: string;
 
-      before(async () => {
-        GuildTokenFactory = await ethers.getContractFactory("GuildToken");
-        CrowdSaleFactory = await ethers.getContractFactory("CrowdSale");
-      });
+    //   before(async () => {
+    //     GuildTokenFactory = await ethers.getContractFactory("GuildToken");
+    //     CrowdSaleFactory = await ethers.getContractFactory("CrowdSale");
+    //   });
 
-      beforeEach(async () => {
-        [crowdSaleAddress] = (await guildFactory.viewCrowdSales()).map(
-          stripZeros
-        );
-        [crowdSaleAddress] = (await guildFactory.viewCrowdSales()).map(
-          stripZeros
-        );
-        await guildFactory
-          .connect(dao)
-          .createGuildWithCrowdSale(
-            "GuildToken2",
-            "GUILD2",
-            dao.address,
-            developer.address,
-            treasury.address,
-            startingPriceInUSD
-          );
-        let _;
-        [_, secondGuildTokenAddress] = (
-          await guildFactory.viewGuildTokens()
-        ).map(stripZeros);
-        secondGuildToken = GuildTokenFactory.attach(secondGuildTokenAddress);
-        [_, secondCrowdSaleAddress] = (await guildFactory.viewCrowdSales()).map(
-          stripZeros
-        );
-        secondCrowdSale = CrowdSaleFactory.attach(secondCrowdSaleAddress);
-      });
+    //   beforeEach(async () => {
+    //     [crowdSaleAddress] = (await guildFactory.viewCrowdSales()).map(
+    //       stripZeros
+    //     );
+    //     [crowdSaleAddress] = (await guildFactory.viewCrowdSales()).map(
+    //       stripZeros
+    //     );
+    //     await guildFactory
+    //       .connect(dao)
+    //       .createGuild(
+    //         "GuildToken2",
+    //         "GUILD2",
+    //         dao.address,
+    //         developer.address,
+    //         treasury.address,
+    //         startingPriceInUSD
+    //       );
+    //     let _;
+    //     [_, secondGuildTokenAddress] = (
+    //       await guildFactory.viewGuildTokens()
+    //     ).map(stripZeros);
+    //     secondGuildToken = GuildTokenFactory.attach(secondGuildTokenAddress);
+    //     [_, secondCrowdSaleAddress] = (await guildFactory.viewCrowdSales()).map(
+    //       stripZeros
+    //     );
+    //     secondCrowdSale = CrowdSaleFactory.attach(secondCrowdSaleAddress);
+    //   });
 
-      it("creates a distinguished crowdsale address from the first", async () => {
-        const addresses = await guildFactory.viewCrowdSales();
-        expect(addresses.length).to.eq(
-          addresses.filter((v, i, a) => a.indexOf(v) === i).length
-        ); // distinct
-        expect(typeof secondCrowdSaleAddress).to.eq("string");
-        expect(ethers.utils.isAddress(secondCrowdSaleAddress)).to.be.true;
-        expect(secondCrowdSaleAddress).to.not.eq(crowdSaleAddress);
-      });
+    //   it("creates a distinguished crowdsale address from the first", async () => {
+    //     const addresses = await guildFactory.viewCrowdSales();
+    //     expect(addresses.length).to.eq(
+    //       addresses.filter((v, i, a) => a.indexOf(v) === i).length
+    //     ); // distinct
+    //     expect(typeof secondCrowdSaleAddress).to.eq("string");
+    //     expect(ethers.utils.isAddress(secondCrowdSaleAddress)).to.be.true;
+    //     expect(secondCrowdSaleAddress).to.not.eq(crowdSaleAddress);
+    //   });
 
-      it("creates a distinguished token address from the first", async () => {
-        const addresses = await guildFactory.viewGuildTokens();
-        expect(addresses.length).to.eq(
-          addresses.filter((v, i, a) => a.indexOf(v) === i).length
-        ); // distinct
-        expect(typeof secondGuildTokenAddress).to.eq("string");
-        expect(ethers.utils.isAddress(secondGuildTokenAddress)).to.be.true;
-        expect(secondGuildTokenAddress).to.not.eq(guildTokenAddress);
-      });
-    });
+    //   it("creates a distinguished token address from the first", async () => {
+    //     const addresses = await guildFactory.viewGuildTokens();
+    //     expect(addresses.length).to.eq(
+    //       addresses.filter((v, i, a) => a.indexOf(v) === i).length
+    //     ); // distinct
+    //     expect(typeof secondGuildTokenAddress).to.eq("string");
+    //     expect(ethers.utils.isAddress(secondGuildTokenAddress)).to.be.true;
+    //     expect(secondGuildTokenAddress).to.not.eq(guildTokenAddress);
+    //   });
+    // });
   });
 });
