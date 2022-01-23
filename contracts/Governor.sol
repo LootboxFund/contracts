@@ -11,14 +11,14 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-contract MyGovernor is
+contract GuildGovernor is
     Initializable,
     GovernorUpgradeable,
     GovernorSettingsUpgradeable,
     GovernorCountingSimpleUpgradeable,
+    GovernorTimelockControlUpgradeable,
     GovernorVotesUpgradeable,
     GovernorVotesQuorumFractionUpgradeable,
-    GovernorTimelockControlUpgradeable,
     OwnableUpgradeable,
     UUPSUpgradeable
 {
@@ -26,19 +26,18 @@ contract MyGovernor is
     constructor() initializer {}
 
     function initialize(
-        string memory governorName,
         ERC20VotesUpgradeable _token,
         TimelockControllerUpgradeable _timelock
     ) public initializer {
-        __Governor_init(governorName);
+        __Governor_init("GuildGovernor");
         __GovernorSettings_init(
-            6545, /* 1 day */
-            45818, /* 1 week */
-            0
+            6545, /* 1 day voting delay in number of blocks. Voting delay is the amount of time that passes before voting can start */
+            45818, /* 1 week voting period in number of blocks */
+            1000e18 /* 100 tokens in voting power (proposal threshold) required to submit a proposal (assumes guild token is base 18) */
         );
         __GovernorCountingSimple_init();
         __GovernorVotes_init(_token);
-        __GovernorVotesQuorumFraction_init(4);
+        __GovernorVotesQuorumFraction_init(4); /* Requires at least 4% of ciculating tokens to be voted with to reach quorum*/
         __GovernorTimelockControl_init(_timelock);
         __Ownable_init();
         __UUPSUpgradeable_init();
