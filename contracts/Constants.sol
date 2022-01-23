@@ -35,6 +35,11 @@ contract Constants is
     address public UST_PRICE_FEED;
     address public DAI_PRICE_FEED;
 
+    // Fee GuildFX charges on mintRequests as a fraction (base 3).
+    // Examples: 1000 = 100%, 500 = 50%, 20 = 2%, 1 = 0.1% fees
+    uint256 public GUILD_FX_MINTING_FEE;
+    uint8 public constant GUILD_FX_MINTING_FEE_DECIMALS = 3;
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
 
@@ -55,6 +60,8 @@ contract Constants is
         _grantRole(DAO_ROLE, dao);
         _grantRole(DEVELOPER_ROLE, developer);
         TREASURY = _treasury;
+
+        GUILD_FX_MINTING_FEE = 20; // in GUILD_FX_MINTING_FEE_DECIMALS (ex: 20 = 2% fee)
     }
 
     function setCrowdSaleStableCoins(

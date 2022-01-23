@@ -82,6 +82,13 @@ describe("📦 Constants", async function () {
     ).to.be.equal(true);
   });
 
+  it("sets a 2% guildFX minting fee", async () => {
+    expect((await constants.GUILD_FX_MINTING_FEE()).toString()).to.eq("20");
+    expect((await constants.GUILD_FX_MINTING_FEE_DECIMALS()).toString()).to.eq(
+      "3"
+    );
+  });
+
   describe("🗳 setCrowdSaleStableCoins()", () => {
     const eth = generateMockAddress("eth");
     const usdc = generateMockAddress("usdc");
