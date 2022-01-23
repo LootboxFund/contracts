@@ -15,8 +15,6 @@
 
 import { expect } from "chai";
 import { ethers, upgrades } from "hardhat";
-// @ts-ignore ts(7016) Seems like they don't have any type declarations at this time
-import { constants } from "@openzeppelin/test-helpers";
 import {
   DAO_ROLE,
   DEFAULT_ADMIN_ROLE,
@@ -568,7 +566,7 @@ describe("📦 GUILD token", async () => {
         const initialSupply = await token.currentSupply();
         const promise = token
           .connect(whitelistedAddress)
-          .mintRequest(treasury.address, `${constants.MAX_UINT256}0`);
+          .mintRequest(treasury.address, `${ethers.constants.MaxUint256}0`);
         // TODO: specify revert message
         // await expect(promise).to.be.revertedWith(
         //   generateInvalidArgumentErrorMessage(-1000)

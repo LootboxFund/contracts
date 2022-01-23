@@ -4,10 +4,9 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 import { ethers, upgrades } from "hardhat";
-import { DEVELOPER_ROLE } from "../test/helpers/test-helpers";
 
 // $0.07 = 7*10^6
-const STARTING_GUILD_PRICE_IN_USD = ethers.BigNumber.from('7000000');  // ~0.07 USD in 18 decimals 
+const STARTING_GUILD_PRICE_IN_USD = ethers.BigNumber.from("7000000"); // ~0.07 USD in 18 decimals
 
 const STABLECOINS = {
   production: {
