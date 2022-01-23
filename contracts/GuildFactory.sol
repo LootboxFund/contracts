@@ -30,7 +30,7 @@ contract GuildFactory is Pausable, AccessControl {
     address internal immutable governorImplementation;
 
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE"); // GuildFX DAO
-    bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE"); // GuildFX devs
+    // bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE"); // GuildFX devs
     bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE"); // GuildFX devs
     bytes32 public constant GUILD_OWNER_ROLE = keccak256("GUILD_OWNER_ROLE"); // People who can create a guild
     bytes32 public constant GUILD_MANAGER_ROLE =
