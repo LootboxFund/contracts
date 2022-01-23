@@ -1,0 +1,19 @@
+2022-01-23T10:52:31.715Z - 
+  
+---------- DEPLOY GUILD FACTORY (development) ----------
+  
+---- Script starting
+
+  
+2022-01-23T10:52:31.716Z - ---- 0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A ---> Deployer Address 
+2022-01-23T10:52:48.713Z - ---- 0xAc0EDddE5E113529cd0389f7b605f5E5bA54bAAA ---> ETH Stablecoin Address
+2022-01-23T10:53:00.914Z - ---- 0x8cC68489d1F444a1cE064d5d53b3323975eD77F3 ---> USDC Stablecoin Address
+2022-01-23T10:53:11.846Z - ---- 0x1f8C75758CF140b06B8b92aF8C22E04C33171762 ---> USDT Stablecoin Address
+2022-01-23T10:53:21.079Z - ---- 0x70Bf12e596703355Bd2e4E5d07977d9113a9500e ---> UST Stablecoin Address
+2022-01-23T10:53:32.311Z - ---- 0xDc7b8e627CB933B0F8B17656bdE3bB5BeBC84396 ---> DAI Stablecoin Address
+2022-01-23T10:53:41.952Z - ---- 0x712599143592c66822Cb73ae04B17D1a7530C646 ---> Constants Token Address
+2022-01-23T10:53:43.714Z - ---------------------------------------------------> Set Stablecoin Addresses
+2022-01-23T10:53:45.773Z - ---------------------------------------------------> Set Stablecoin Price Feed Addresses
+2022-01-23T10:53:52.371Z - ---- 0x11330B980FdbEe9Bb193385D3b9c660246cc1Bf5 ---> Guild Factory Contract Address
+2022-01-23T10:53:59.495Z - ---- 0xa9e663ad5862cfa61077f99ca257ce323bf08204 ---> Guild Token Address
+2022-01-23T10:53:59.496Z - ---- 0xa9e663ad5862cfa61077f99ca257ce323bf08204 ---> Governor Address

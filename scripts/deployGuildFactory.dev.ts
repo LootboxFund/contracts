@@ -20,7 +20,7 @@ const sleep = async (ms = 1000) => {
   });
 };
 
-const STARTING_GUILD_PRICE_IN_USD = ethers.BigNumber.from('7000000');
+const STARTING_GUILD_PRICE_IN_USD = ethers.BigNumber.from("7000000");
 const LOG_FILE_PATH = `${__dirname}/logs/deployGuildFactory_log_${Date.now()}.dev.txt`;
 
 const ENVIRONMENT = "development";
@@ -254,45 +254,31 @@ async function main() {
   );
   await sleep();
 
-  // --------- Create the GuildToken and Crowdsale --------- //
-  const tx = await guildFactory.createGuildWithCrowdSale(
-    GUILD_TOKEN_NAME,
-    GUILD_TOKEN_SYMBOL,
-    dao.address,
-    developer.address,
-    treasury.address,
-    STARTING_GUILD_PRICE_IN_USD
-  );
+  // --------- Create the GuildToken and Governor --------- //
+  const tx = await guildFactory
+    .connect(dao)
+    .createGuild(
+      GUILD_TOKEN_NAME,
+      GUILD_TOKEN_SYMBOL,
+      dao.address,
+      developer.address
+    );
 
   await tx.wait();
   const [guildTokenAddress] = (await guildFactory.viewGuildTokens()).map(
     stripZeros
   );
-  const [crowdsaleAddress] = (await guildFactory.viewGuildTokens()).map(
+  const [governorAddress] = (await guildFactory.viewGuildTokens()).map(
     stripZeros
   );
   logToFile(
     `---- ${guildTokenAddress} ---> Guild Token Address\n`,
     LOG_FILE_PATH
   );
-  logToFile(`---- ${crowdsaleAddress} ---> Crowdsale Address\n`, LOG_FILE_PATH);
+  logToFile(`---- ${governorAddress} ---> Governor Address\n`, LOG_FILE_PATH);
   await sleep();
 
-  // --------- Whitelist the CrowdSale with MINTER_ROLE --------- //
-  const guildToken = (await ethers.getContractFactory("GuildToken")).attach(
-    guildTokenAddress
-  );
-
-  (await guildToken.connect(dao).whitelistMint(crowdsaleAddress, true)).wait();
-
-  logToFile(
-    `
-    ---- Whitelist a mint!
-    Crowdsale = ${crowdsaleAddress}
-  \n`,
-    LOG_FILE_PATH
-  );
-  await sleep();
+  // TODO: Add crowdsale creation here
 }
 
 // We recommend this pattern to be able to use async/await everywhere
