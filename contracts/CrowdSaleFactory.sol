@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./CrowdSale.sol";
 
-contract CrowdsaleFactory is Pausable, AccessControl {
+contract CrowdSaleFactory is Pausable, AccessControl {
     address internal immutable crowdsaleImplementation;
 
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE"); // GuildFX DAO
@@ -27,7 +27,7 @@ contract CrowdsaleFactory is Pausable, AccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
     EnumerableSet.AddressSet private CROWDSALE_PROXIES;
 
-    event CrowdsaleCreated(
+    event CrowdSaleCreated(
         address crowdsaleAddress,
         address guildToken,
         address dao,
@@ -52,7 +52,7 @@ contract CrowdsaleFactory is Pausable, AccessControl {
         _grantRole(GUILD_OWNER_ROLE, dao);
     }
 
-    function createCrowdsale(
+    function createCrowdSale(
         address guildToken,
         address dao,
         address developer,
@@ -73,7 +73,7 @@ contract CrowdsaleFactory is Pausable, AccessControl {
             )
         );
         CROWDSALE_PROXIES.add(address(proxy));
-        emit CrowdsaleCreated(
+        emit CrowdSaleCreated(
             address(proxy),
             guildToken,
             dao,
@@ -112,7 +112,7 @@ contract CrowdsaleFactory is Pausable, AccessControl {
         emit GuildManagerWhitelist(guildManager, isActive);
     }
 
-    function viewCrowdsales() public view returns (bytes32[] memory) {
+    function viewCrowdSales() public view returns (bytes32[] memory) {
         // TODO investigate memory usage if GUILD_TOKEN_PROXIES can be huge
         return CROWDSALE_PROXIES._inner._values;
     }
