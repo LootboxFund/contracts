@@ -255,12 +255,14 @@ async function main() {
   await sleep();
 
   // --------- Create the GuildToken and Governor --------- //
-  const tx = await guildFactory.createGuild(
-    GUILD_TOKEN_NAME,
-    GUILD_TOKEN_SYMBOL,
-    dao.address,
-    developer.address
-  );
+  const tx = await guildFactory
+    .connect(dao)
+    .createGuild(
+      GUILD_TOKEN_NAME,
+      GUILD_TOKEN_SYMBOL,
+      dao.address,
+      developer.address
+    );
 
   await tx.wait();
   const [guildTokenAddress] = (await guildFactory.viewGuildTokens()).map(
