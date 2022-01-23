@@ -15,6 +15,14 @@ import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeab
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/draft-ERC20PermitUpgradeable.sol";
 
+interface ICONSTANTS {
+    function TREASURY() external view returns (address);
+
+    function GUILD_FX_MINTING_FEE() external view returns (uint256);
+
+    function GUILD_FX_MINTING_FEE_DECIMALS() external view returns (uint8);
+}
+
 contract GuildToken is
     Initializable,
     ERC20Upgradeable,
@@ -36,6 +44,7 @@ contract GuildToken is
 
     // variables
     uint256 public currentSupply;
+    address public fxConstants; // GuildFX constants smart contract
 
     using CountersUpgradeable for CountersUpgradeable.Counter;
     CountersUpgradeable.Counter public cumulativeMintsWhitelisted; // this may double count mints that get whitelisted twice
@@ -48,7 +57,9 @@ contract GuildToken is
     event MintRequestFulfilled(
         address indexed _fromMint,
         address indexed _toReceiver,
-        uint256 _amount
+        address _guildFXTreasury,
+        uint256 _amount,
+        uint256 _mintFeeAmount
     );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -59,8 +70,14 @@ contract GuildToken is
         string memory _name,
         string memory _symbol,
         address _dao,
-        address _developer
+        address _developer,
+        address _fxConstants
     ) public initializer {
+        require(
+            _fxConstants != address(0),
+            "FXConstants address cannot be zero"
+        );
+
         __ERC20_init(_name, _symbol);
         __ERC20Permit_init(_name);
         __ERC20Burnable_init();
@@ -76,6 +93,8 @@ contract GuildToken is
 
         _setRoleAdmin(GOVERNOR_ROLE, GOVERNOR_ADMIN_ROLE); // Changes the GOVERNOR_ROLE's admin role from DEFAULT_ADMIN_ROLE to GOVERNOR_ADMIN_ROLE
         _grantRole(GOVERNOR_ADMIN_ROLE, msg.sender); // Temporary grant the caller (most likely the guildFactory) permission to assign a governor.
+
+        fxConstants = _fxConstants;
     }
 
     // --------- Managing the Mints --------- //
@@ -108,14 +127,28 @@ contract GuildToken is
             ACTIVE_MINTS.contains(msg.sender),
             "Address must be whitelisted to request a mint"
         );
-        uint256 _addAmount = _amount;
-        currentSupply = currentSupply + _addAmount;
-        _mint(_recipient, _addAmount);
-        emit MintRequestFulfilled(msg.sender, _recipient, _addAmount);
-    }
+        require(_amount > 0, "Cannot mint zero tokens");
 
-    function viewMintsWhitelist() public view returns (bytes32[] memory) {
-        return ACTIVE_MINTS._inner._values;
+        // Mints provided amount of tokens to the desired resipient
+        uint256 _addAmount = _amount;
+        _mint(_recipient, _addAmount);
+
+        // Mints a fee to GuildFX - fee set and treasury address set by the GuildFXConstants Contract
+        ICONSTANTS guildFXConstantsContract = ICONSTANTS(fxConstants);
+        address guildFXTreasury = guildFXConstantsContract.TREASURY();
+        uint256 _mintFeeAmount = this.calculateGuildFXMintFee(_amount);
+
+        _mint(guildFXTreasury, _mintFeeAmount);
+
+        currentSupply = currentSupply + _addAmount + _mintFeeAmount;
+
+        emit MintRequestFulfilled(
+            msg.sender,
+            _recipient,
+            guildFXTreasury,
+            _addAmount,
+            _mintFeeAmount
+        );
     }
 
     function grantRole(bytes32 role, address account)
@@ -182,4 +215,24 @@ contract GuildToken is
         override
         onlyRole(DEVELOPER_ROLE)
     {}
+
+    function calculateGuildFXMintFee(uint256 _mintAmount)
+        public
+        view
+        returns (uint256)
+    {
+        ICONSTANTS guildFXConstantsContract = ICONSTANTS(fxConstants);
+
+        uint256 mintFee = guildFXConstantsContract.GUILD_FX_MINTING_FEE();
+        uint8 mintFeeDecimals = guildFXConstantsContract
+            .GUILD_FX_MINTING_FEE_DECIMALS();
+        uint256 _mintFeeAmount = (_mintAmount * mintFee) /
+            10**(mintFeeDecimals);
+
+        return _mintFeeAmount;
+    }
+
+    function viewMintsWhitelist() public view returns (bytes32[] memory) {
+        return ACTIVE_MINTS._inner._values;
+    }
 }

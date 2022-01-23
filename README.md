@@ -10,12 +10,13 @@
 
 ### To set up a new test environment:
 
-_📆 TODO: Generalize this deployment processes. See the [backlog item](https://linear.app/guildfx/issue/GUI-75/generalize-dev-deployment-proceedure) to track this._
-
 1. `npm run deploy:testnet:guild-token-factory`
    - This will output a [log file](./scripts/logs) with name `"deployGuildTokenFactory_log_xxx.dev.txt"`
-2. Find your log file, and add the "Constants Token Address" and "Guild Token Address" to the [crowdsale factory deploy script](./scrips/deployCrowdSaleFactory.dev.ts)
+2. **Manually add** the "Constants Token Address" and "Guild Token Address" (rom the log file from step 1 to the [crowdsale factory deploy script](./scrips/deployCrowdSaleFactory.dev.ts)
+   - 📆 TODO: Remove this manual step. Tracked [here](https://linear.app/guildfx/issue/GUI-75/generalize-dev-deployment-proceedure).
 3. `npm run deploy:testnet:crowdsale-factory`
+4. Propse and execute a `.whitelistMint()` on the crowdsale address via openzeppelin defender
+   - 📆 TODO: tracked [here](https://linear.app/guildfx/issue/GUI-77/successfully-propose-execute-and-document-a-whitelistmint-with-the)
 
 ## Testnet Addresses
 

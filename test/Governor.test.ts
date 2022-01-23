@@ -5,6 +5,8 @@ import {
   Governor,
   GuildToken__factory,
   GuildToken,
+  Constants__factory,
+  Constants,
 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
@@ -23,10 +25,14 @@ describe("📦 Guild Governor Smart Contract", async () => {
   let Token: GuildToken__factory;
   let token: GuildToken;
 
+  let Constants: Constants__factory;
+  let constants: Constants;
+
   const GUILD_TOKEN_NAME = "GuildTokenTest";
   const GUILD_TOKEN_SYMBOL = "GUILDT";
 
   before(async () => {
+    Constants = await ethers.getContractFactory("Constants");
     Governor = await ethers.getContractFactory("Governor");
     Token = await ethers.getContractFactory("GuildToken");
   });
@@ -34,9 +40,24 @@ describe("📦 Guild Governor Smart Contract", async () => {
   beforeEach(async () => {
     [deployer, treasury, dao, developer, purchaser] = await ethers.getSigners();
 
+    constants = (await upgrades.deployProxy(
+      Constants,
+      [dao.address, developer.address, treasury.address],
+      {
+        kind: "uups",
+      }
+    )) as Constants;
+    await constants.deployed();
+
     token = (await upgrades.deployProxy(
       Token,
-      [GUILD_TOKEN_NAME, GUILD_TOKEN_SYMBOL, dao.address, developer.address],
+      [
+        GUILD_TOKEN_NAME,
+        GUILD_TOKEN_SYMBOL,
+        dao.address,
+        developer.address,
+        constants.address,
+      ],
       { kind: "uups" }
     )) as GuildToken;
     await token.deployed();
