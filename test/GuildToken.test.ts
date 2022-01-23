@@ -58,63 +58,63 @@ describe("📦 GUILD token", async () => {
     await token.deployed();
   });
 
-  // it(`has "${tokenName}" name`, async () => {
-  //   expect(await token.name()).to.equal(tokenName);
-  // });
+  it(`has "${tokenName}" name`, async () => {
+    expect(await token.name()).to.equal(tokenName);
+  });
 
-  // it(`has "${tokenSymbol}" symbol`, async () => {
-  //   expect(await token.symbol()).to.equal(tokenSymbol);
-  // });
+  it(`has "${tokenSymbol}" symbol`, async () => {
+    expect(await token.symbol()).to.equal(tokenSymbol);
+  });
 
-  // it("has 18 decimals", async () => {
-  //   expect(await token.decimals()).to.be.equal(18);
-  // });
+  it("has 18 decimals", async () => {
+    expect(await token.decimals()).to.be.equal(18);
+  });
 
-  // it("has 0 total supply", async () => {
-  //   expect(await token.totalSupply()).eq("0");
-  // });
+  it("has 0 total supply", async () => {
+    expect(await token.totalSupply()).eq("0");
+  });
 
-  // it("grants the dao the DAO_ROLE", async () => {
-  //   expect(await token.hasRole(DAO_ROLE, dao.address)).to.be.equal(true);
-  // });
+  it("grants the dao the DAO_ROLE", async () => {
+    expect(await token.hasRole(DAO_ROLE, dao.address)).to.be.equal(true);
+  });
 
-  // it("grants the sender the GOVERNOR_ADMIN_ROLE", async () => {
-  //   expect(
-  //     await token.hasRole(GOVERNOR_ADMIN_ROLE, deployer.address)
-  //   ).to.be.equal(true);
-  // });
+  it("grants the sender the GOVERNOR_ADMIN_ROLE", async () => {
+    expect(
+      await token.hasRole(GOVERNOR_ADMIN_ROLE, deployer.address)
+    ).to.be.equal(true);
+  });
 
-  // it("sets the GOVERNOR_ADMIN_ROLE as the admin role for the GOVERNOR_ROLE", async () => {
-  //   expect(await token.getRoleAdmin(GOVERNOR_ROLE)).to.eq(GOVERNOR_ADMIN_ROLE);
-  //   expect(await token.getRoleAdmin(GOVERNOR_ADMIN_ROLE)).to.eq(
-  //     DEFAULT_ADMIN_ROLE
-  //   );
-  // });
+  it("sets the GOVERNOR_ADMIN_ROLE as the admin role for the GOVERNOR_ROLE", async () => {
+    expect(await token.getRoleAdmin(GOVERNOR_ROLE)).to.eq(GOVERNOR_ADMIN_ROLE);
+    expect(await token.getRoleAdmin(GOVERNOR_ADMIN_ROLE)).to.eq(
+      DEFAULT_ADMIN_ROLE
+    );
+  });
 
-  // it("does not grant the dao the GOVERNOR_ROLE", async () => {
-  //   expect(await token.hasRole(GOVERNOR_ROLE, dao.address)).to.be.equal(false);
-  // });
+  it("does not grant the dao the GOVERNOR_ROLE", async () => {
+    expect(await token.hasRole(GOVERNOR_ROLE, dao.address)).to.be.equal(false);
+  });
 
-  // it("grants the developer the DEVELOPER_ROLE", async () => {
-  //   expect(await token.hasRole(DEVELOPER_ROLE, developer.address)).to.be.equal(
-  //     true
-  //   );
-  // });
+  it("grants the developer the DEVELOPER_ROLE", async () => {
+    expect(await token.hasRole(DEVELOPER_ROLE, developer.address)).to.be.equal(
+      true
+    );
+  });
 
-  // it("does not grant the DEFAULT_ADMIN_ROLE", async () => {
-  //   expect(
-  //     await token.hasRole(DEFAULT_ADMIN_ROLE, deployer.address)
-  //   ).to.be.equal(false);
-  //   expect(await token.hasRole(DEFAULT_ADMIN_ROLE, dao.address)).to.be.equal(
-  //     false
-  //   );
-  //   expect(
-  //     await token.hasRole(DEFAULT_ADMIN_ROLE, developer.address)
-  //   ).to.be.equal(false);
-  //   expect(
-  //     await token.hasRole(DEFAULT_ADMIN_ROLE, purchaser.address)
-  //   ).to.be.equal(false);
-  // });
+  it("does not grant the DEFAULT_ADMIN_ROLE", async () => {
+    expect(
+      await token.hasRole(DEFAULT_ADMIN_ROLE, deployer.address)
+    ).to.be.equal(false);
+    expect(await token.hasRole(DEFAULT_ADMIN_ROLE, dao.address)).to.be.equal(
+      false
+    );
+    expect(
+      await token.hasRole(DEFAULT_ADMIN_ROLE, developer.address)
+    ).to.be.equal(false);
+    expect(
+      await token.hasRole(DEFAULT_ADMIN_ROLE, purchaser.address)
+    ).to.be.equal(false);
+  });
 
   describe("🗳  grantRole()", () => {
     it("reverts for all users when assigning a role other than GOVERNOR_ROLE", async () => {

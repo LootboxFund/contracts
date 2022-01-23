@@ -49,8 +49,6 @@ contract Governor is
         onlyOwner
     {}
 
-    // The following functions are overrides required by Solidity.
-
     function votingDelay()
         public
         view
