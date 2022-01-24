@@ -43,7 +43,6 @@ contract GuildToken is
         keccak256("GOVERNOR_ADMIN_ROLE");
 
     // variables
-    uint256 public currentSupply;
     address public fxConstants; // GuildFX constants smart contract
 
     using CountersUpgradeable for CountersUpgradeable.Counter;
@@ -92,14 +91,15 @@ contract GuildToken is
         _grantRole(GOVERNOR_ADMIN_ROLE, msg.sender); // Temporary grant the caller (most likely the guildFactory) permission to assign a governor.
 
         fxConstants = _fxConstants;
-        currentSupply = 0;
 
         uint256 initialMintToDao = 1000 * 10**decimals(); // Sends the Guild 1000 tokens
 
+        _mint(_dao, initialMintToDao);
+        // TODO enable guildFX minting fee here
         // ICONSTANTS guildFXConstantsContract = ICONSTANTS(fxConstants);
         // address guildFXTreasury = guildFXConstantsContract.TREASURY();
         // uint256 mintFeeAmount = this.calculateGuildFXMintFee(initialMintToDao);
-        _mint(_dao, initialMintToDao);
+        // _mint(guildFXTreasury, mintFeeAmount);
     }
 
     // --------- Managing the Mints --------- //
@@ -178,26 +178,11 @@ contract GuildToken is
         override(ERC20Upgradeable, ERC20VotesUpgradeable)
     {
         // Mints provided amount of tokens to the desired resipient
-        super._mint(to, amount);
-        currentSupply = currentSupply + amount;
+        ERC20VotesUpgradeable._mint(to, amount);
+    }
 
-        // // Mints a fee to GuildFX - fee set and treasury address set by the GuildFXConstants Contract
-        // ICONSTANTS guildFXConstantsContract = ICONSTANTS(fxConstants);
-        // address guildFXTreasury = guildFXConstantsContract.TREASURY();
-        // uint256 _mintFeeAmount = this.calculateGuildFXMintFee(amount);
-        // super._mint(guildFXTreasury, _mintFeeAmount);
-
-        //     function _mint(address account, uint256 amount) internal virtual {
-        //     require(account != address(0), "ERC20: mint to the zero address");
-
-        //     _beforeTokenTransfer(address(0), account, amount);
-
-        //     _totalSupply += amount;
-        //     _balances[account] += amount;
-        //     emit Transfer(address(0), account, amount);
-
-        //     _afterTokenTransfer(address(0), account, amount);
-        // }
+    function _maxSupply() internal view virtual override returns (uint224) {
+        return 2**224 - 1;
     }
 
     function _burn(address account, uint256 amount)
