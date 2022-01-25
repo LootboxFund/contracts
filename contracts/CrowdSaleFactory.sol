@@ -17,8 +17,7 @@ contract CrowdSaleFactory is Pausable, AccessControl {
     // bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE"); // GuildFX devs
     bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE"); // GuildFX devs
     bytes32 public constant GUILD_OWNER_ROLE = keccak256("GUILD_OWNER_ROLE"); // People who can create a guild
-    bytes32 public constant GUILD_MANAGER_ROLE =
-        keccak256("GUILD_MANAGER_ROLE"); // People who can whitelist guild owners
+    bytes32 public constant GUILD_MANAGER_ROLE = keccak256("GUILD_MANAGER_ROLE"); // People who can whitelist guild owners
 
     // GuildFX constants
     address public fxConstants;
