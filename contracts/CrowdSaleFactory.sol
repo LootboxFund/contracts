@@ -113,6 +113,8 @@ contract CrowdSaleFactory is Pausable, AccessControl {
 
     function viewCrowdSales() public view returns (bytes32[] memory) {
         // TODO investigate memory usage if GUILD_TOKEN_PROXIES can be huge
+        // > 0xterran: the limit for arrays is ~1,000 to 20,000
+        // https://hackernoon.com/how-much-can-i-do-in-a-block-163q3xp2
         return CROWDSALE_PROXIES._inner._values;
     }
 
