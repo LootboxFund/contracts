@@ -95,11 +95,6 @@ contract GuildToken is
         uint256 initialMintToDao = 1000 * 10**decimals(); // Sends the Guild 1000 tokens
 
         _mint(_dao, initialMintToDao);
-        // TODO enable guildFX minting fee here
-        // ICONSTANTS guildFXConstantsContract = ICONSTANTS(fxConstants);
-        // address guildFXTreasury = guildFXConstantsContract.TREASURY();
-        // uint256 mintFeeAmount = this.calculateGuildFXMintFee(initialMintToDao);
-        // _mint(guildFXTreasury, mintFeeAmount);
     }
 
     // --------- Managing the Mints --------- //
@@ -179,10 +174,6 @@ contract GuildToken is
     {
         // Mints provided amount of tokens to the desired resipient
         ERC20VotesUpgradeable._mint(to, amount);
-    }
-
-    function _maxSupply() internal view virtual override returns (uint224) {
-        return 2**224 - 1;
     }
 
     function _burn(address account, uint256 amount)
