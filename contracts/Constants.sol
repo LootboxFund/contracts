@@ -35,7 +35,7 @@ contract Constants is
     address public UST_PRICE_FEED;
     address public DAI_PRICE_FEED;
 
-    // Fee GuildFX charges on mintRequests as a fraction (base 3).
+    // Fee GuildFX charges on mintRequests as a fraction (3 decimals).
     // Examples: 1000 = 100%, 500 = 50%, 20 = 2%, 1 = 0.1% fees
     uint256 public GUILD_FX_MINTING_FEE;
     uint8 public constant GUILD_FX_MINTING_FEE_DECIMALS = 3;

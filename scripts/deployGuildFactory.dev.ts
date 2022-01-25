@@ -20,13 +20,12 @@ const sleep = async (ms = 1000) => {
   });
 };
 
-const STARTING_GUILD_PRICE_IN_USD = ethers.BigNumber.from("7000000");
 const LOG_FILE_PATH = `${__dirname}/logs/deployGuildFactory_log_${Date.now()}.dev.txt`;
 
 const ENVIRONMENT = "development";
 
-const GUILD_TOKEN_NAME = "GuildFX";
-const GUILD_TOKEN_SYMBOL = "GUILD";
+const GUILD_TOKEN_NAME = "Artemis Guild";
+const GUILD_TOKEN_SYMBOL = "ARTMS";
 
 // Chainlink addresses from https://docs.chain.link/docs/binance-smart-chain-addresses
 const STABLECOINS = {
@@ -93,11 +92,7 @@ async function main() {
   );
 
   // Needed to slow down transactions to avoid "replacement fee too low" errors...
-  await new Promise<void>((resolve) => {
-    setTimeout(() => {
-      resolve();
-    }, 1000);
-  });
+  await sleep();
 
   const Usdc = await ethers.getContractFactory("USDC");
   const usdcStablecoin = (await Usdc.deploy(0)) as USDC;
