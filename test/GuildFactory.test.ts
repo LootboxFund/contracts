@@ -349,6 +349,24 @@ describe("📦 GuildFactory", () => {
       guildToken = GuildTokenFactory.attach(guildTokenAddress);
     });
 
+    it("reverts with access control error if missing GUILD_OWNER_ROLE", async () => {
+      const users = [deployer, developer, purchaser];
+      for (let user of users) {
+        await expect(
+          guildFactory
+            .connect(user)
+            .createGuild(
+              "GuildTokenTest",
+              "GUILDTEST",
+              dao.address,
+              developer.address
+            )
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(user.address, GUILD_OWNER_ROLE)
+        );
+      }
+    });
+
     it("reverts if dao is zero", async () => {
       await expect(
         guildFactory

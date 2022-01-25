@@ -341,6 +341,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     });
 
     it("purchaser exchanges native BNB for GUILD at a price of $0.07/GUILD", async () => {
+      const initialSupply = await token.totalSupply();
       await expect(
         await crowdSale
           .connect(purchaser)
@@ -365,7 +366,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
         gamerPurchasedAmount
       );
       expect(await token.totalSupply()).to.equal(
-        gamerPurchasedAmount.add(mintFeeAmount)
+        initialSupply.add(gamerPurchasedAmount).add(mintFeeAmount)
       );
       // TODO Add check that it mints to the GuildFX treasury
       // expect(await treasury.getBalance()).eq(mintFeeAmount);
@@ -438,6 +439,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     });
 
     it("purchaser exchanges 10 USDC for ~142 GUILD at a price of $0.07/GUILD", async () => {
+      const initialSupply = await token.totalSupply();
       await expect(
         await crowdSale.connect(purchaser).buyInUSDC(stablecoinAmount)
       )
@@ -460,7 +462,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
         gamerPurchasedAmount.toString()
       );
       expect(await token.totalSupply()).to.equal(
-        gamerPurchasedAmount.add(mintFeeAmount)
+        initialSupply.add(gamerPurchasedAmount).add(mintFeeAmount)
       );
     });
 
@@ -533,6 +535,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     });
 
     it("purchaser exchanges 10 USDT for ~142 GUILD at a price of $0.07/GUILD", async () => {
+      const initialSupply = await token.totalSupply();
       await expect(
         await crowdSale.connect(purchaser).buyInUSDT(stablecoinAmount)
       )
@@ -555,7 +558,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
         gamerPurchasedAmount.toString()
       );
       expect(await token.totalSupply()).to.equal(
-        gamerPurchasedAmount.add(mintFeeAmount)
+        initialSupply.add(gamerPurchasedAmount).add(mintFeeAmount)
       );
     });
     it.skip("TODO: mints the token to the guildFX treasury", () => {});
@@ -624,6 +627,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     });
 
     it("purchaser exchanges 10 UST for ~142 GUILD at a price of $0.07/GUILD", async () => {
+      const initialSupply = await token.totalSupply();
       await expect(
         await crowdSale.connect(purchaser).buyInUST(stablecoinAmount)
       )
@@ -646,7 +650,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
         gamerPurchasedAmount.toString()
       );
       expect(await token.totalSupply()).to.equal(
-        gamerPurchasedAmount.add(mintFeeAmount)
+        initialSupply.add(gamerPurchasedAmount).add(mintFeeAmount)
       );
     });
     it.skip("TODO: mints the token to the guildFX treasury", () => {});
@@ -715,6 +719,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     });
 
     it("purchaser exchanges ETH for GUILD at a price of $0.07/GUILD", async () => {
+      const initialSupply = await token.totalSupply();
       await expect(
         await crowdSale.connect(purchaser).buyInETH(stablecoinAmount)
       )
@@ -737,7 +742,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
         gamerPurchasedAmount.toString()
       );
       expect(await token.totalSupply()).to.equal(
-        gamerPurchasedAmount.add(mintFeeAmount)
+        initialSupply.add(gamerPurchasedAmount).add(mintFeeAmount)
       );
     });
     it.skip("TODO: mints the token to the guildFX treasury", () => {});
@@ -806,6 +811,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     });
 
     it("purchaser exchanges 10 DAI for ~142 GUILD at a price of $0.07/GUILD", async () => {
+      const initialSupply = await token.totalSupply();
       await expect(
         await crowdSale.connect(purchaser).buyInDAI(stablecoinAmount)
       )
@@ -828,7 +834,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
         gamerPurchasedAmount.toString()
       );
       expect(await token.totalSupply()).to.equal(
-        gamerPurchasedAmount.add(mintFeeAmount)
+        initialSupply.add(gamerPurchasedAmount).add(mintFeeAmount)
       );
     });
     it.skip("TODO: mints the token to the guildFX treasury", () => {});

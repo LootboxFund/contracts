@@ -43,7 +43,6 @@ contract GuildToken is
         keccak256("GOVERNOR_ADMIN_ROLE");
 
     // variables
-    uint256 public currentSupply;
     address public fxConstants; // GuildFX constants smart contract
 
     using CountersUpgradeable for CountersUpgradeable.Counter;
@@ -85,9 +84,6 @@ contract GuildToken is
         __AccessControl_init();
         __UUPSUpgradeable_init();
 
-        // set current supply
-        currentSupply = 0;
-
         _grantRole(DAO_ROLE, _dao);
         _grantRole(DEVELOPER_ROLE, _developer);
 
@@ -95,6 +91,10 @@ contract GuildToken is
         _grantRole(GOVERNOR_ADMIN_ROLE, msg.sender); // Temporary grant the caller (most likely the guildFactory) permission to assign a governor.
 
         fxConstants = _fxConstants;
+
+        uint256 initialMintToDao = 1000 * 10**decimals(); // Sends the Guild 1000 tokens
+
+        _mint(_dao, initialMintToDao);
     }
 
     // --------- Managing the Mints --------- //
@@ -137,10 +137,7 @@ contract GuildToken is
         ICONSTANTS guildFXConstantsContract = ICONSTANTS(fxConstants);
         address guildFXTreasury = guildFXConstantsContract.TREASURY();
         uint256 _mintFeeAmount = this.calculateGuildFXMintFee(_amount);
-
         _mint(guildFXTreasury, _mintFeeAmount);
-
-        currentSupply = currentSupply + _addAmount + _mintFeeAmount;
 
         emit MintRequestFulfilled(
             msg.sender,
@@ -175,7 +172,8 @@ contract GuildToken is
         internal
         override(ERC20Upgradeable, ERC20VotesUpgradeable)
     {
-        super._mint(to, amount);
+        // Mints provided amount of tokens to the desired resipient
+        ERC20VotesUpgradeable._mint(to, amount);
     }
 
     function _burn(address account, uint256 amount)
