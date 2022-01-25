@@ -93,17 +93,17 @@ contract CrowdSale is
     AggregatorV3Interface internal priceFeedDAI;
 
     // only the DAO can control Treasury
-    bytes32 constant DAO_ROLE = keccak256("DAO_ROLE");
-    bytes32 constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE");
+    bytes32 constant private DAO_ROLE = keccak256("DAO_ROLE");
+    bytes32 constant private DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE");
 
-    uint256 currentPriceUSD; // 8 decimals - THIS SHOULD NOT BE MODIFIED
+    uint256 public currentPriceUSD; // 8 decimals - THIS SHOULD NOT BE MODIFIED
 
     address payable public TREASURY;
     address public GUILD;
     address public CONSTANTS;
 
-    uint256 deploymentStartTime;
-    uint256 deploymentEndTime;
+    uint256 public deploymentStartTime;
+    uint256 public deploymentEndTime;
 
     bool public isRetired;
 
@@ -131,6 +131,7 @@ contract CrowdSale is
         __AccessControl_init();
         __UUPSUpgradeable_init();
 
+        // solhint-disable-next-line not-rely-on-time
         deploymentStartTime = block.timestamp;
         currentPriceUSD = _startingPriceInUSD;
 
