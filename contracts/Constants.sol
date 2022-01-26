@@ -24,7 +24,7 @@ contract Constants is
     // Examples: 1000 = 100%, 500 = 50%, 20 = 2%, 1 = 0.1% fees
     uint256 public INITIAL_MINT_TO_GUILD;
     uint256 public GUILD_FX_MINTING_FEE;
-    uint8 public constant GUILD_FX_MINTING_FEE_DECIMALS = 3;
+    uint8 public constant GUILD_FX_MINTING_FEE_DECIMALS = 8;
     address payable public TREASURY;  // GuildFX treasury
 
     // Addresses for crowdsale stable coins
