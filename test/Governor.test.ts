@@ -71,18 +71,45 @@ describe("📦 Guild Governor Smart Contract", async () => {
   it('has the "Governor" name', async () => {
     expect(await governor.name()).to.eq("Governor");
   });
-  it("has 6545 blocks (~1 day) voting delay", async () => {
-    expect(await governor.votingDelay()).eq("6545");
+
+  describe("initial governance is set to zero - instant decisions with no delay, voting, or threshold", () => {
+    it("has 0 blocks (0 day) voting delay", async () => {
+      expect(await governor.votingDelay()).eq("0");
+    });
+    it("has 0 (0 week) voting period", async () => {
+      expect(await governor.votingPeriod()).eq("0");
+    });
+    it("has 0 token proposal threshold", async () => {
+      expect(await governor.proposalThreshold()).eq(
+        ethers.utils.parseEther("0")
+      );
+    });
   });
-  it("has 45818 (1 week) voting period", async () => {
-    expect(await governor.votingPeriod()).eq("45818");
-  });
-  it("has 1000 token proposal threshold", async () => {
-    expect(await governor.proposalThreshold()).eq(
-      ethers.utils.parseEther("1000")
-    );
-  });
-  it("has quorum of 4%", async () => {
-    expect(await governor.quorumNumerator()).eq(4);
+
+  //   setVotingDelay(newVotingDelay)
+
+  // setVotingPeriod(newVotingPeriod)
+
+  //   setProposalThreshold(newProposalThreshold)
+
+  describe("governance is set", () => {
+    it("has 6545 blocks (~1 day) voting delay", async () => {
+      await governor.setVotingDelay(6545);
+      expect(await governor.votingDelay()).eq("6545");
+    });
+    it("has 45818 (1 week) voting period", async () => {
+      await governor.setVotingPeriod(45818);
+      expect(await governor.votingPeriod()).eq("45818");
+    });
+    it("has 1000 token proposal threshold", async () => {
+      await governor.setProposalThreshold(1000);
+      expect(await governor.proposalThreshold()).eq(
+        ethers.utils.parseEther("1000")
+      );
+    });
+    it("has quorum of 4%", async () => {
+      await governor.setQuorumThreshold(4);
+      expect(await governor.quorumNumerator()).eq(4);
+    });
   });
 });

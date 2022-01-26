@@ -40,9 +40,14 @@ contract GuildToken is
     // only the DAO can control GuildToken
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
     bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE");
+
+    // GOVERNOR_ROLE is able to whitelist mints
     bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE");
+
+    // GOVERNOR_ADMIN_ROLE is able to set who is the governor (who gets to whitelist mints)
+    // at first this is the GuildFactory contract because the guild token must be deployed first, as the guild token is used by voting in governors
     bytes32 public constant GOVERNOR_ADMIN_ROLE =
-        keccak256("GOVERNOR_ADMIN_ROLE");
+        keccak256("GOVERNOR_ADMIN_ROLE");                      
 
     // variables
     address public fxConstants; // GuildFX constants smart contract

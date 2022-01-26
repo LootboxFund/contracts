@@ -31,10 +31,10 @@ contract GuildFactory is Pausable, AccessControl {
 
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE"); // GuildFX DAO
     // bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE"); // GuildFX devs
-    bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE"); // GuildFX devs
+    bytes32 public constant GUILD_TOKEN_GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE"); // GuildFX devs
     bytes32 public constant GUILD_OWNER_ROLE = keccak256("GUILD_OWNER_ROLE"); // People who can create a guild
-    bytes32 public constant GUILD_MANAGER_ROLE =
-        keccak256("GUILD_MANAGER_ROLE"); // People who can whitelist guild owners
+    bytes32 public constant GFX_STAFF_ROLE =
+        keccak256("GFX_STAFF_ROLE"); // GuildFX Staff members who can whitelist guild owners
 
     // GuildFX constants
     address public fxConstants;
@@ -58,12 +58,7 @@ contract GuildFactory is Pausable, AccessControl {
     );
     event GovernorCreated(
         address governorAddress,
-        address creator,
-        address guildFactory
-    );
-    event TokenGovernorPairCreated(
-        address guildToken,
-        address governor,
+        address votingToken,
         address creator,
         address guildFactory
     );
@@ -80,57 +75,50 @@ contract GuildFactory is Pausable, AccessControl {
         governorImplementation = address(new Governor());
         fxConstants = _fxConstants;
         _grantRole(DAO_ROLE, dao);
-        _grantRole(GUILD_MANAGER_ROLE, dao);
-        _grantRole(GUILD_OWNER_ROLE, dao);
+        _grantRole(GFX_STAFF_ROLE, dao);
     }
 
     function createGuild(
         string memory guildName,
         string memory guildSymbol,
-        address dao,
-        address developer
+        address guildDao,
+        address guildDev
     )
         public
         onlyRole(GUILD_OWNER_ROLE)
         whenNotPaused
-        returns (address, address)
+        returns (address _guildToken, address _guildGovernor)
     {
         address guildToken = _createGuildToken(
             guildName,
             guildSymbol,
-            dao,
-            developer
+            guildDao,
+            guildDev
         );
 
-        address governor = _createGovernor(guildToken);
+        address guildGovernor = _createGovernor(guildToken);
 
         // The deployer (aka the GuildFactory was granted GOVERNOR_ADMIN_ROLE)
         // Take advantage of it here to set up the governor in the guildToken
         // Note This will revoke the GOVERNOR_ADMIN_ROLE from the GuildFactory
         //      rendering it un-usable!
         IERC20GUILD token = IERC20GUILD(guildToken);
-        token.grantRole(GOVERNOR_ROLE, governor); // This will revoke the GOVERNOR_ADMIN_ROLE
-
-        emit TokenGovernorPairCreated(
-            guildToken,
-            governor,
-            msg.sender,
-            address(this)
-        );
-        return (address(guildToken), address(governor));
+        token.grantRole(GUILD_TOKEN_GOVERNOR_ROLE, guildGovernor); // This will also revoke this GuildFactory from having the GOVERNOR_ADMIN_ROLE
+        
+        return (address(guildToken), address(guildGovernor));
     }
 
     function _createGuildToken(
         string memory guildName,
         string memory guildSymbol,
-        address dao,
-        address developer
-    ) internal returns (address) {
+        address guildDao,
+        address guildDev
+    ) internal returns (address _guildToken) {
         require(bytes(guildName).length != 0, "Guild name cannot be empty");
         require(bytes(guildSymbol).length != 0, "Guild symbol cannot be empty");
-        require(dao != address(0), "DAO address cannot be zero");
-        require(developer != address(0), "Developer address cannot be zero");
-
+        require(guildDao != address(0), "DAO address cannot be zero");
+        require(guildDev != address(0), "Developer address cannot be zero");
+ 
         // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
         ERC1967Proxy proxy = new ERC1967Proxy(
             tokenImplementation,
@@ -138,8 +126,8 @@ contract GuildFactory is Pausable, AccessControl {
                 GuildToken(address(0)).initialize.selector,
                 guildName,
                 guildSymbol,
-                dao,
-                developer
+                guildDao,
+                guildDev
             )
         );
         GUILD_TOKEN_PROXIES.add(address(proxy));
@@ -147,8 +135,8 @@ contract GuildFactory is Pausable, AccessControl {
             address(proxy),
             guildName,
             guildSymbol,
-            dao,
-            developer,
+            guildDao,
+            guildDev,
             msg.sender,
             address(this)
         );
@@ -166,13 +154,13 @@ contract GuildFactory is Pausable, AccessControl {
             )
         );
         GOVERNOR_PROXIES.add(address(proxy));
-        emit GovernorCreated(address(proxy), msg.sender, address(this));
+        emit GovernorCreated(address(proxy), token, msg.sender, address(this));
         return address(proxy);
     }
 
     function whitelistGuildOwner(address guildOwner, bool isActive)
         public
-        onlyRole(GUILD_MANAGER_ROLE)
+        onlyRole(GFX_STAFF_ROLE)
         whenNotPaused
     {
         if (isActive) {
@@ -183,17 +171,17 @@ contract GuildFactory is Pausable, AccessControl {
         emit GuildOwnerWhitelist(guildOwner, isActive);
     }
 
-    function whitelistGuildManager(address guildManager, bool isActive)
+    function whitelistGFXStaff(address staffMember, bool isActive)
         public
         onlyRole(DAO_ROLE)
         whenNotPaused
     {
         if (isActive) {
-            _grantRole(GUILD_MANAGER_ROLE, guildManager);
+            _grantRole(GFX_STAFF_ROLE, staffMember);
         } else {
-            _revokeRole(GUILD_MANAGER_ROLE, guildManager);
+            _revokeRole(GFX_STAFF_ROLE, staffMember);
         }
-        emit GuildManagerWhitelist(guildManager, isActive);
+        emit GuildManagerWhitelist(staffMember, isActive);
     }
 
     function viewGuildTokens() public view returns (bytes32[] memory) {
