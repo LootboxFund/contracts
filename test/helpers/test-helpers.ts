@@ -22,9 +22,9 @@ export const MINTER_ROLE = ethers.utils.solidityKeccak256(
   ["string"],
   ["MINTER_ROLE"]
 );
-export const GUILD_MANAGER_ROLE = ethers.utils.solidityKeccak256(
+export const GFX_STAFF_ROLE = ethers.utils.solidityKeccak256(
   ["string"],
-  ["GUILD_MANAGER_ROLE"]
+  ["GFX_STAFF_ROLE"]
 );
 export const GUILD_OWNER_ROLE = ethers.utils.solidityKeccak256(
   ["string"],

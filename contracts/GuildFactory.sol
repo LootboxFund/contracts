@@ -62,7 +62,7 @@ contract GuildFactory is Pausable, AccessControl {
         address creator,
         address guildFactory
     );
-    event GuildManagerWhitelist(address guildManager, bool isActive);
+    event FactoryStaffWhitelist(address staffMember, bool isActive);
     event GuildOwnerWhitelist(address guildOwner, bool isActive);
 
     constructor(address dao, address _fxConstants) {
@@ -181,14 +181,14 @@ contract GuildFactory is Pausable, AccessControl {
         } else {
             _revokeRole(GFX_STAFF_ROLE, staffMember);
         }
-        emit GuildManagerWhitelist(staffMember, isActive);
+        emit FactoryStaffWhitelist(staffMember, isActive);
     }
 
     function viewGuildTokens() public view returns (bytes32[] memory) {
         // TODO investigate memory usage if GUILD_TOKEN_PROXIES can be huge
         return GUILD_TOKEN_PROXIES._inner._values;
     }
-
+ 
     function viewGovernors() public view returns (bytes32[] memory) {
         return GOVERNOR_PROXIES._inner._values;
     }
