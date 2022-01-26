@@ -45,6 +45,7 @@ describe("📦 GUILD token", async () => {
   let token: GuildToken;
   let Constants: Constants__factory;
   let constants: Constants;
+  const GUILD_FX_MINTING_FEE = 20;
 
   const tokenName = "GuildTokenTest";
   const tokenSymbol = "GUILDT";
@@ -533,50 +534,50 @@ describe("📦 GUILD token", async () => {
   });
 
   describe("🗳  calculateGuildFXMintFee()", () => {
-    it("calculates the mint fee of 2e6 for mint request of 100e6", async () => {
-      expect(
-        (
-          await token.calculateGuildFXMintFee(ethers.utils.parseUnits("100", 6))
-        ).toString()
-      ).to.eq(ethers.utils.parseUnits("2", 6).toString());
+    it("calculates the mint fee of 2e6 for mint request of 98e6", async () => {
+      const [mintFeeAmount] = await token.calculateGuildFXMintFee(
+        ethers.utils.parseUnits("98", 6)
+      );
+      console.log(mintFeeAmount);
+      expect(mintFeeAmount.toString()).to.eq(
+        ethers.utils.parseUnits("2", 6).toString()
+      );
     });
 
-    it("calculates the mint fee of 2e18 for mint request of 100e18", async () => {
-      expect(
-        (
-          await token.calculateGuildFXMintFee(
-            ethers.utils.parseUnits("100", 18)
-          )
-        ).toString()
-      ).to.eq(ethers.utils.parseUnits("2", 18).toString());
+    it("calculates the mint fee of 2e18 for mint request of 98e18", async () => {
+      const [mintFeeAmount] = await token.calculateGuildFXMintFee(
+        ethers.utils.parseUnits("98", 18)
+      );
+      expect(mintFeeAmount.toString()).to.eq(
+        ethers.utils.parseUnits("2", 18).toString()
+      );
     });
 
-    it("calculates the mint fee of 20e18 for mint request of 1000e18", async () => {
-      expect(
-        (
-          await token.calculateGuildFXMintFee(
-            ethers.utils.parseUnits("1000", 18)
-          )
-        ).toString()
-      ).to.eq(ethers.utils.parseUnits("20", 18).toString());
+    it("calculates the mint fee of 20e18 for mint request of 980e18", async () => {
+      const [mintFeeAmount] = await token.calculateGuildFXMintFee(
+        ethers.utils.parseUnits("980", 18)
+      );
+      expect(mintFeeAmount.toString()).to.eq(
+        ethers.utils.parseUnits("20", 18).toString()
+      );
     });
 
-    it("calculates the mint fee of 2000e18 for mint request of 100000e18", async () => {
-      expect(
-        (
-          await token.calculateGuildFXMintFee(
-            ethers.utils.parseUnits("100000", 18)
-          )
-        ).toString()
-      ).to.eq(ethers.utils.parseUnits("2000", 18).toString());
+    it("calculates the mint fee of 2000e18 for mint request of 98000e18", async () => {
+      const [mintFeeAmount] = await token.calculateGuildFXMintFee(
+        ethers.utils.parseUnits("98000", 18)
+      );
+      expect(mintFeeAmount.toString()).to.eq(
+        ethers.utils.parseUnits("2000", 18).toString()
+      );
     });
 
     it("calculates the mint fee of 0e18 for mint request of 0e18", async () => {
-      expect(
-        (
-          await token.calculateGuildFXMintFee(ethers.utils.parseUnits("0", 18))
-        ).toString()
-      ).to.eq(ethers.utils.parseUnits("0", 18).toString());
+      const [mintFeeAmount] = await token.calculateGuildFXMintFee(
+        ethers.utils.parseUnits("0", 18)
+      );
+      expect(mintFeeAmount.toString()).to.eq(
+        ethers.utils.parseUnits("0", 18).toString()
+      );
     });
   });
 
