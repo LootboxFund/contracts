@@ -25,12 +25,12 @@ contract Governor is
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
 
-    function initialize(ERC20VotesUpgradeable _token) public initializer {
+    function initialize(ERC20VotesUpgradeable _token, address guildDao) public initializer {
         __Governor_init("Governor");
          __GovernorSettings_init(
             0,  /* 6545 = 1 day voting delay in number of blocks. Voting delay is the amount of time that passes before voting can start */
-            270,  /* 45818 = 1 week voting period in number of blocks */
-            0   /* 1000e18 = 100 tokens in voting power (proposal threshold) required to submit a proposal (assumes guild token is base 18) */
+            270,  /* 270 = ~1 hour, 45818 = ~1 week voting period in number of blocks */
+            100e18   /* 100e18 = 100 tokens in voting power (proposal threshold) required to submit a proposal (assumes guild token is base 18) */
         );
         __GovernorCountingSimple_init();
         __GovernorVotes_init(_token);
@@ -39,6 +39,11 @@ contract Governor is
         // __GovernorTimelockControl_init(_timelock);
         __Ownable_init();
         __UUPSUpgradeable_init();
+
+        // initially the owner is likely a Factory contract, so we must transfer ownership to the guildDao, otherwise the quorum cannot be updated
+        // this is technically a backdoor. to close the backdoor, use the guildDao to call governor.transferOwnership(governor) note... we should test this
+        // note that means we are switching from inheriting permissions from Ownable to Governance (https://docs.openzeppelin.com/contracts/2.x/api/ownership#Ownable-transferOwnership-address- vs https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/fd165faaf00587377b5ab93be3cafb4ffdc96976/contracts/governance/GovernorUpgradeable.sol#L48-L51)
+        transferOwnership(guildDao);
     }
 
     // The following functions are overrides required by Solidity.
