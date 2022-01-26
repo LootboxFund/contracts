@@ -29,7 +29,7 @@ contract Governor is
         __Governor_init("Governor");
          __GovernorSettings_init(
             0,  /* 6545 = 1 day voting delay in number of blocks. Voting delay is the amount of time that passes before voting can start */
-            0,  /* 45818 = 1 week voting period in number of blocks */
+            270,  /* 45818 = 1 week voting period in number of blocks */
             0   /* 1000e18 = 100 tokens in voting power (proposal threshold) required to submit a proposal (assumes guild token is base 18) */
         );
         __GovernorCountingSimple_init();
@@ -100,4 +100,5 @@ contract Governor is
     {
         return super.proposalThreshold();
     }
+    
 }

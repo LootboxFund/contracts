@@ -3997,16 +3997,6 @@
       "kind": "uups"
     },
     {
-      "address": "0x85fe2Dcd9fBcb3311f04aF11a0CF59c1beAa46bB",
-      "txHash": "0x3519619870fc847061875353bb7e98322c49b982d1ef89706f7b4204e55b71f2",
-      "kind": "uups"
-    },
-    {
-      "address": "0xc9D18D86f1c101Dc87A09e683875004A02a67607",
-      "txHash": "0x955c85b70b5161f361dfd08f974098e1e07a95ea22338544b4e98b46ce427e89",
-      "kind": "uups"
-    },
-    {
       "address": "0x5A887c0A3450DcFD7bdA656894Aeba6272BA5bA7",
       "txHash": "0x3ede476674f0f0b7f1e9e6a5fd3c3556e37ff62c20b62d051d5cf7acddc32b0f",
       "kind": "uups"
@@ -4129,6 +4119,16 @@
     {
       "address": "0xFAFA921c8305da625109F7781Cc6Ac82AdB244C3",
       "txHash": "0x6c5e3d940a80bca203f2b1845e8736ac66137ce534d5e27ebd6e53f2e965e87a",
+      "kind": "uups"
+    },
+    {
+      "address": "0x85fe2Dcd9fBcb3311f04aF11a0CF59c1beAa46bB",
+      "txHash": "0x4e9e5fab3cb434fb78195f5d517d253fe15e4bde4f6160ae352a62ac163249bb",
+      "kind": "uups"
+    },
+    {
+      "address": "0xc9D18D86f1c101Dc87A09e683875004A02a67607",
+      "txHash": "0xd60f1d527730cf367cf89b92507fe67e4770792ddf44476ac601e69dba8d5daf",
       "kind": "uups"
     }
   ],
@@ -6137,7 +6137,7 @@
     },
     "63abde5fe1453d849cfddbf3b4e00f00ace40bac22fd1ee92b8f9f8d5e90f45f": {
       "address": "0x549286e5CdafFDAb91b78b0ee8A670Af12E35F23",
-      "txHash": "0x73985a422ca087eefeb33f96e5d35be1b95f47b72f26a7e9319964c920d6f2f3",
+      "txHash": "0xa949be5bd32729563310123903e07a3d2f460ac7aaed3a0b6a871948c57cbbc3",
       "layout": {
         "storage": [
           {
@@ -6306,19 +6306,19 @@
             "contract": "GuildToken",
             "label": "fxConstants",
             "type": "t_address",
-            "src": "contracts/GuildToken.sol:48"
+            "src": "contracts/GuildToken.sol:53"
           },
           {
             "contract": "GuildToken",
             "label": "cumulativeMintsWhitelisted",
             "type": "t_struct(Counter)6047_storage",
-            "src": "contracts/GuildToken.sol:51"
+            "src": "contracts/GuildToken.sol:56"
           },
           {
             "contract": "GuildToken",
             "label": "ACTIVE_MINTS",
             "type": "t_struct(AddressSet)7982_storage",
-            "src": "contracts/GuildToken.sol:54"
+            "src": "contracts/GuildToken.sol:59"
           }
         ],
         "types": {
@@ -6639,9 +6639,9 @@
         }
       }
     },
-    "ef1699cd54797f1a517d9f4a8361dffffb67745942304281dc214ad5c64267e6": {
+    "1de62febef1c5e0c282e68dfa9fb80339fe6ee41575417559cfb752de10f3de9": {
       "address": "0x9505E8B8546cC9015B2c015826d25821CC48C153",
-      "txHash": "0x5bcd162ebb11de7f778ecdbabc7967704e1f3c95e40ade011e725ef4741517de",
+      "txHash": "0x74a7b5cfdeeb79a6c695eb5550129194be23512925b084527aafa7ad90302db3",
       "layout": {
         "storage": [
           {

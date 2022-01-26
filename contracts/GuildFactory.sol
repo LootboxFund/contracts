@@ -25,6 +25,10 @@ interface IERC20GUILD {
     function whitelistMint(address _mintAddress, bool _isActive) external;
 }
 
+interface GUILD_GOVERNOR {
+  function transferOwnership(address newOwner) external;
+}
+
 contract GuildFactory is Pausable, AccessControl {
     address internal immutable tokenImplementation;
     address internal immutable governorImplementation;
@@ -155,6 +159,11 @@ contract GuildFactory is Pausable, AccessControl {
         );
         GOVERNOR_PROXIES.add(address(proxy));
         emit GovernorCreated(address(proxy), token, msg.sender, address(this));
+
+        // TODO: We have to transfer ownership of the governor to the guildDao, otherwise the governor will not be able to change the quorum threshold
+        // check the Governor.sol file for instances of `onlyOwner`. Right now the "owner" of the governors is this GuildFactory (but it should be the guildDao instead)
+        // proxy.transferOwnership(guildDao); // transferOwnership is part of the OZ Ownable contract (https://docs.openzeppelin.com/contracts/2.x/api/ownership#Ownable-transferOwnership-address-)
+
         return address(proxy);
     }
 
