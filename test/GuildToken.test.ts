@@ -56,15 +56,6 @@ describe("📦 GUILD token", async () => {
 
   beforeEach(async () => {
     [deployer, treasury, dao, developer, purchaser] = await ethers.getSigners();
-    console.log(`
-    
-    deployer = ${deployer.address}
-    treasury = ${treasury.address}
-    dao = ${dao.address}
-    developer = ${developer.address}
-    purchaser = ${purchaser.address}
-    
-    `);
 
     constants = (await upgrades.deployProxy(
       Constants,
