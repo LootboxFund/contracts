@@ -45,7 +45,6 @@ describe("📦 GUILD token", async () => {
   let token: GuildToken;
   let Constants: Constants__factory;
   let constants: Constants;
-  const GUILD_FX_MINTING_FEE = 20;
 
   const tokenName = "GuildTokenTest";
   const tokenSymbol = "GUILDT";
@@ -57,6 +56,15 @@ describe("📦 GUILD token", async () => {
 
   beforeEach(async () => {
     [deployer, treasury, dao, developer, purchaser] = await ethers.getSigners();
+    console.log(`
+    
+    deployer = ${deployer.address}
+    treasury = ${treasury.address}
+    dao = ${dao.address}
+    developer = ${developer.address}
+    purchaser = ${purchaser.address}
+    
+    `);
 
     constants = (await upgrades.deployProxy(
       Constants,
@@ -535,10 +543,8 @@ describe("📦 GUILD token", async () => {
 
   describe("🗳  calculateGuildFXMintFee()", () => {
     it("calculates the mint fee of 2e6 for mint request of 98e6", async () => {
-      const [mintFeeAmount] = await token.calculateGuildFXMintFee(
-        ethers.utils.parseUnits("98", 6)
-      );
-      console.log(mintFeeAmount);
+      const [mintFeeAmount, _mintFeeRate, _guildFXTreasury] =
+        await token.calculateGuildFXMintFee(ethers.utils.parseUnits("98", 6));
       expect(mintFeeAmount.toString()).to.eq(
         ethers.utils.parseUnits("2", 6).toString()
       );
@@ -698,9 +704,23 @@ describe("📦 GUILD token", async () => {
         expect(await token.totalSupply()).to.be.equal(initialSupply);
       });
 
+      it.only("testMintRequest sends the address the correct number of tokens", async () => {
+        console.log(`
+        
+        Sending tokens to ${purchaser.address}
+
+        `);
+        const mintAmount = ethers.utils.parseEther("100");
+        const originalAddress = await token
+          .connect(whitelistedAddress)
+          .testMintRequest(purchaser.address, mintAmount);
+        expect(originalAddress).to.equal(purchaser.address);
+        // const balance = await token.balanceOf(purchaser.address);
+        // expect(balance).to.be.equal(mintAmount);
+      });
+
       it("sends the address the correct number of tokens", async () => {
         const mintAmount = ethers.utils.parseEther("100");
-        const mintFees = await token.calculateGuildFXMintFee(mintAmount);
         await token
           .connect(whitelistedAddress)
           .mintRequest(purchaser.address, mintAmount);
@@ -719,8 +739,8 @@ describe("📦 GUILD token", async () => {
         );
       });
 
-      it("updates the total supply counter by 1020 when minting 1000 tokens (includes the 2% the mint fees)", async () => {
-        const mintAmount = ethers.utils.parseUnits("1000", 18);
+      it("updates the total supply counter by 1000 when minting 980 tokens (includes the 2% the mint fees)", async () => {
+        const mintAmount = ethers.utils.parseUnits("980", 18);
         const calculatedMintFee = ethers.utils.parseUnits("20", 18); // 2% mint fee
         const initialTotalSupply = await token.totalSupply();
         expect(initialTotalSupply).to.be.equal(ethers.utils.parseEther("1000"));

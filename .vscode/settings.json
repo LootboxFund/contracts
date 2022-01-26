@@ -1,4 +1,16 @@
 {
   "solidity.defaultCompiler": "remote",
-  "solidity.compileUsingRemoteVersion": "v0.8.4+commit.c7e474f2"
+  "solidity.compileUsingRemoteVersion": "v0.8.4+commit.c7e474f2",
+  "github.copilot.advanced": {},
+
+  // Enable or disable Copilot for specified [languages](https://code.visualstudio.com/docs/languages/identifiers)
+  "github.copilot.enable": {
+    "*": true,
+    "yaml": false,
+    "plaintext": false,
+    "markdown": false
+  },
+
+  // Show inline suggestions
+  "github.copilot.inlineSuggest.enable": true
 }
