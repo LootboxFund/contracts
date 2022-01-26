@@ -97,16 +97,16 @@ contract GuildToken is
 
         uint256 initialMintToDao = 980 * 10**decimals(); // Sends the Guild 1000 tokens
 
-        _mint(_dao, initialMintToDao);
-        (uint256 _mintFeeAmount, uint256 _mintFeeRate, address _guildFXTreasury) = mintGuildAllocation(initialMintToDao);
-        emit MintRequestFulfilled(
-            msg.sender,
-            _dao,
-            _guildFXTreasury,
-            initialMintToDao,
-            _mintFeeRate,
-            initialMintToDao + _mintFeeAmount
-        );
+        // _mint(_dao, initialMintToDao);
+        // (uint256 _mintFeeAmount, uint256 _mintFeeRate, address _guildFXTreasury) = mintGuildAllocation(initialMintToDao);
+        // emit MintRequestFulfilled(
+        //     msg.sender,
+        //     _dao,
+        //     _guildFXTreasury,
+        //     initialMintToDao,
+        //     _mintFeeRate,
+        //     initialMintToDao + _mintFeeAmount
+        // );
     }
 
     // --------- Managing the Mints --------- //
@@ -157,7 +157,7 @@ contract GuildToken is
         );
     }
 
-    function testMintRequest (address _recipient, uint256 _amount) external onlyRole(MINTER_ROLE) whenNotPaused returns (address originalRecipient) {
+    function testMintRequest (address _recipient, uint256 _amount) external onlyRole(MINTER_ROLE) whenNotPaused {
       require(
         ACTIVE_MINTS.contains(msg.sender),
         "Address must be whitelisted to request a mint"
@@ -166,8 +166,18 @@ contract GuildToken is
 
       // Mints provided amount of tokens to the desired resipient
       uint256 _addAmount = _amount;   // does this need to incur a new variable? (gas cost)
-      // _mint(_recipient, _addAmount);
-      return _recipient;
+      _mint(_recipient, _addAmount);
+
+      // Mints a fee to GuildFX - fee set and treasury address set by the GuildFXConstants Contract
+        (uint256 _mintFeeAmount, uint256 _mintFeeRate, address _guildFXTreasury) = mintGuildAllocation(_amount);
+        emit MintRequestFulfilled(
+            msg.sender,
+            _recipient,
+            _guildFXTreasury,
+            _addAmount,
+            _mintFeeRate,
+            _addAmount + _mintFeeAmount
+        );
     }
 
     function grantRole(bytes32 role, address account)

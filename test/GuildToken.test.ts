@@ -542,6 +542,13 @@ describe("📦 GUILD token", async () => {
   });
 
   describe("🗳  calculateGuildFXMintFee()", () => {
+    it.only("returns the right mintFeeAmount, mintFeeRate, treasuryAddress", async () => {
+      const [mintFeeAmount, _mintFeeRate, _guildFXTreasury] =
+        await token.calculateGuildFXMintFee(ethers.utils.parseUnits("98", 6));
+      expect(_guildFXTreasury).to.eq(treasury.address);
+      expect(ethers.utils.isAddress(_guildFXTreasury)).to.eq(true);
+    });
+
     it("calculates the mint fee of 2e6 for mint request of 98e6", async () => {
       const [mintFeeAmount, _mintFeeRate, _guildFXTreasury] =
         await token.calculateGuildFXMintFee(ethers.utils.parseUnits("98", 6));
@@ -711,12 +718,11 @@ describe("📦 GUILD token", async () => {
 
         `);
         const mintAmount = ethers.utils.parseEther("100");
-        const originalAddress = await token
+        await token
           .connect(whitelistedAddress)
           .testMintRequest(purchaser.address, mintAmount);
-        expect(originalAddress).to.equal(purchaser.address);
-        // const balance = await token.balanceOf(purchaser.address);
-        // expect(balance).to.be.equal(mintAmount);
+        const balance = await token.balanceOf(purchaser.address);
+        expect(balance).to.be.equal(mintAmount);
       });
 
       it("sends the address the correct number of tokens", async () => {
@@ -728,9 +734,15 @@ describe("📦 GUILD token", async () => {
         expect(balance).to.be.equal(mintAmount);
       });
 
-      it("sends the GuildFXTreasury the correct number of tokens for the 2% fee", async () => {
+      it.only("sends the GuildFXTreasury the correct number of tokens for the 2% fee", async () => {
         const mintAmount = ethers.utils.parseEther("100");
         const mintFees = await token.calculateGuildFXMintFee(mintAmount);
+        const taddr = await constants.TREASURY();
+        console.log(`
+        
+        await constants.TREASURY() = ${taddr}
+        
+        `);
         await token
           .connect(whitelistedAddress)
           .mintRequest(purchaser.address, mintAmount);
