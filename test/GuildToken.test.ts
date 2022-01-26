@@ -542,11 +542,17 @@ describe("📦 GUILD token", async () => {
   });
 
   describe("🗳  calculateGuildFXMintFee()", () => {
-    it.only("returns the right mintFeeAmount, mintFeeRate, treasuryAddress", async () => {
+    it("returns the right mintFeeAmount, mintFeeRate, treasuryAddress", async () => {
       const [mintFeeAmount, _mintFeeRate, _guildFXTreasury] =
         await token.calculateGuildFXMintFee(ethers.utils.parseUnits("98", 6));
       expect(_guildFXTreasury).to.eq(treasury.address);
       expect(ethers.utils.isAddress(_guildFXTreasury)).to.eq(true);
+
+      expect(mintFeeAmount.toString()).to.eq(
+        ethers.utils.parseUnits("2", 6).toString()
+      );
+
+      expect(_mintFeeRate.toString()).to.eq("20");
     });
 
     it("calculates the mint fee of 2e6 for mint request of 98e6", async () => {
@@ -711,7 +717,7 @@ describe("📦 GUILD token", async () => {
         expect(await token.totalSupply()).to.be.equal(initialSupply);
       });
 
-      it.only("testMintRequest sends the address the correct number of tokens", async () => {
+      it("testMintRequest sends the address the correct number of tokens", async () => {
         console.log(`
         
         Sending tokens to ${purchaser.address}
@@ -734,9 +740,10 @@ describe("📦 GUILD token", async () => {
         expect(balance).to.be.equal(mintAmount);
       });
 
-      it.only("sends the GuildFXTreasury the correct number of tokens for the 2% fee", async () => {
+      it("sends the GuildFXTreasury the correct number of tokens for the 2% fee", async () => {
         const mintAmount = ethers.utils.parseEther("100");
-        const mintFees = await token.calculateGuildFXMintFee(mintAmount);
+        const [mintFeeAmount, mintFeeRate, guildFXTreasury] =
+          await token.calculateGuildFXMintFee(mintAmount);
         const taddr = await constants.TREASURY();
         console.log(`
         
@@ -747,7 +754,7 @@ describe("📦 GUILD token", async () => {
           .connect(whitelistedAddress)
           .mintRequest(purchaser.address, mintAmount);
         expect(await token.balanceOf(await constants.TREASURY())).to.be.equal(
-          mintFees
+          mintFeeAmount
         );
       });
 

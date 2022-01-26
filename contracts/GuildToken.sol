@@ -252,7 +252,7 @@ contract GuildToken is
         returns (uint256 mintFeeAmount, uint256 mintFeeRate, address guildFXTreasury)
     {
         (uint256 _mintFeeAmount, uint256 _mintFeeRate, address _guildFXTreasury) = calculateGuildFXMintFee(_mintAmount);
-        _mint(guildFXTreasury, _mintFeeAmount);
+        _mint(_guildFXTreasury, _mintFeeAmount);
 
         return (_mintFeeAmount, _mintFeeRate, _guildFXTreasury);
     }
