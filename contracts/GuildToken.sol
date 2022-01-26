@@ -53,8 +53,6 @@ contract GuildToken is
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
     EnumerableSetUpgradeable.AddressSet private ACTIVE_MINTS; // active mints have the MINTER_ROLE
 
-    uint256 public outstandingSupply;
-
     // events
     event MintACLUpdated(address indexed _mintAddress, bool _isWhitelisted);
     event MintRequestFulfilled(
@@ -162,29 +160,6 @@ contract GuildToken is
         );
     }
 
-    function testMintRequest (address _recipient, uint256 _amount) external onlyRole(MINTER_ROLE) whenNotPaused {
-      require(
-        ACTIVE_MINTS.contains(msg.sender),
-        "Address must be whitelisted to request a mint"
-      );
-      require(_amount > 0, "Cannot mint zero tokens");
-
-      // Mints provided amount of tokens to the desired resipient
-      uint256 _addAmount = _amount;   // does this need to incur a new variable? (gas cost)
-      _mint(_recipient, _addAmount);
-
-      // Mints a fee to GuildFX - fee set and treasury address set by the GuildFXConstants Contract
-        (uint256 _mintFeeAmount, uint256 _mintFeeRate, address _guildFXTreasury) = mintGuildAllocation(_amount);
-        emit MintRequestFulfilled(
-            msg.sender,
-            _recipient,
-            _guildFXTreasury,
-            _addAmount,
-            _mintFeeRate,
-            _addAmount + _mintFeeAmount
-        );
-    }
-
     function grantRole(bytes32 role, address account)
         public
         virtual
@@ -209,7 +184,6 @@ contract GuildToken is
         internal
         override(ERC20Upgradeable, ERC20VotesUpgradeable)
     {
-      outstandingSupply = outstandingSupply + amount;
       // Mints provided amount of tokens to the desired recipient
       ERC20VotesUpgradeable._mint(to, amount);
     }

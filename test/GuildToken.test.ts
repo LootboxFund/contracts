@@ -717,20 +717,6 @@ describe("📦 GUILD token", async () => {
         expect(await token.totalSupply()).to.be.equal(initialSupply);
       });
 
-      it("testMintRequest sends the address the correct number of tokens", async () => {
-        console.log(`
-        
-        Sending tokens to ${purchaser.address}
-
-        `);
-        const mintAmount = ethers.utils.parseEther("100");
-        await token
-          .connect(whitelistedAddress)
-          .testMintRequest(purchaser.address, mintAmount);
-        const balance = await token.balanceOf(purchaser.address);
-        expect(balance).to.be.equal(mintAmount);
-      });
-
       it("sends the address the correct number of tokens", async () => {
         const mintAmount = ethers.utils.parseEther("100");
         await token
@@ -836,12 +822,13 @@ describe("📦 GUILD token", async () => {
         const initialMintToGuild = (
           await constants.INITIAL_MINT_TO_GUILD()
         ).toString();
+        const mintFeeDecimals = ethers.BigNumber.from(
+          (await constants.GUILD_FX_MINTING_FEE_DECIMALS()).toString()
+        );
         const [intialMintFeeAmount, initialMintFeeRate] =
           await token.calculateGuildFXMintFee(initialMintToGuild);
 
         const maxSupply = ethers.BigNumber.from("2").pow("224").sub(1);
-        const mintFeeDecimals = ethers.BigNumber.from("3");
-        const mintingFee = ethers.utils.parseUnits("20", mintFeeDecimals);
 
         // TODO: test boundary points
         // I Could not get the calculations exact...
@@ -890,8 +877,9 @@ describe("📦 GUILD token", async () => {
 
       it("reverts with 'ERC20Votes: total supply risks overflowing votes' error if more that 2^224 -1 tokens are minted", async () => {
         const maxSupply = ethers.BigNumber.from("2").pow("224").sub(1);
-        const mintFeeDecimals = ethers.BigNumber.from("3");
-        const mintingFee = ethers.utils.parseUnits("20", mintFeeDecimals);
+        const mintFeeDecimals = ethers.BigNumber.from(
+          (await constants.GUILD_FX_MINTING_FEE_DECIMALS()).toString()
+        );
 
         // TODO: test boundary points
         // I Could not get the calculations exact...
