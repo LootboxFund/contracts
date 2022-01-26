@@ -66,8 +66,8 @@ contract GuildFactory is Pausable, AccessControl {
         address creator,
         address guildFactory
     );
-    event FactoryStaffWhitelist(address staffMember, bool isActive);
-    event GuildOwnerWhitelist(address guildOwner, bool isActive);
+    event FactoryStaffWhitelist(address staffMember, address whitelistedBy, bool isActive);
+    event GuildOwnerWhitelist(address guildOwner, address whitelistedBy, bool isActive);
 
     constructor(address dao, address _fxConstants) {
         require(dao != address(0), "DAO address cannot be zero");
@@ -177,7 +177,7 @@ contract GuildFactory is Pausable, AccessControl {
         } else {
             _revokeRole(GUILD_OWNER_ROLE, guildOwner);
         }
-        emit GuildOwnerWhitelist(guildOwner, isActive);
+        emit GuildOwnerWhitelist(guildOwner, msg.sender, isActive);
     }
 
     function whitelistGFXStaff(address staffMember, bool isActive)
@@ -190,7 +190,7 @@ contract GuildFactory is Pausable, AccessControl {
         } else {
             _revokeRole(GFX_STAFF_ROLE, staffMember);
         }
-        emit FactoryStaffWhitelist(staffMember, isActive);
+        emit FactoryStaffWhitelist(staffMember, msg.sender, isActive);
     }
 
     function viewGuildTokens() public view returns (bytes32[] memory) {

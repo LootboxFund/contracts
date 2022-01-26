@@ -114,9 +114,7 @@ describe("📦 GuildFactory", () => {
   describe("🗳  whitelistGFXStaff()", () => {
     it("reverts with access control error when not called by DAO_ROLE", async () => {
       await expect(
-        guildFactory
-          .connect(deployer)
-          .whitelistGFXStaff(purchaser.address, true)
+        guildFactory.connect(deployer).whitelistGFXStaff(gfxStaff.address, true)
       ).to.be.revertedWith(
         generatePermissionRevokeMessage(deployer.address, DAO_ROLE)
       );
@@ -125,7 +123,7 @@ describe("📦 GuildFactory", () => {
     it("reverts with pausable error when contract is paused", async () => {
       await guildFactory.connect(dao).pause();
       await expect(
-        guildFactory.connect(dao).whitelistGFXStaff(purchaser.address, true)
+        guildFactory.connect(dao).whitelistGFXStaff(gfxStaff.address, true)
       ).to.be.revertedWith("Pausable: paused");
     });
 
@@ -146,14 +144,14 @@ describe("📦 GuildFactory", () => {
         .whitelistGFXStaff(gfxStaff.address, true);
       expect(request)
         .to.emit(guildFactory, "FactoryStaffWhitelist")
-        .withArgs(gfxStaff.address, true);
+        .withArgs(gfxStaff.address, dao.address, true);
 
       const requestRevoke = guildFactory
         .connect(dao)
         .whitelistGFXStaff(gfxStaff.address, false);
       expect(requestRevoke)
         .to.emit(guildFactory, "FactoryStaffWhitelist")
-        .withArgs(gfxStaff.address, false);
+        .withArgs(gfxStaff.address, dao.address, false);
     });
   });
 
@@ -191,18 +189,18 @@ describe("📦 GuildFactory", () => {
 
     it("emits a GuildOwnerWhitelist event", async () => {
       const request = guildFactory
-        .connect(dao)
+        .connect(gfxStaff)
         .whitelistGuildOwner(guildDao.address, true);
       expect(request)
         .to.emit(guildFactory, "GuildOwnerWhitelist")
-        .withArgs(guildDao.address, true);
+        .withArgs(guildDao.address, gfxStaff.address, true);
 
       const requestRevoke = guildFactory
-        .connect(dao)
+        .connect(gfxStaff)
         .whitelistGuildOwner(guildDao.address, false);
       expect(requestRevoke)
         .to.emit(guildFactory, "GuildOwnerWhitelist")
-        .withArgs(guildDao.address, false);
+        .withArgs(guildDao.address, gfxStaff.address, false);
     });
   });
 
