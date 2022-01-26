@@ -41,7 +41,17 @@ describe("📦 GuildFactory", () => {
   });
 
   beforeEach(async () => {
-    [deployer, treasury, dao, developer, purchaser] = await ethers.getSigners();
+    const [
+      deployer,
+      treasury,
+      dao,
+      developer,
+      purchaser,
+      gfxStaff,
+      guildDao,
+      guildDev,
+      guildTreasury,
+    ] = await ethers.getSigners();
 
     constants = (await upgrades.deployProxy(
       Constants,
@@ -88,12 +98,12 @@ describe("📦 GuildFactory", () => {
       .true;
   });
 
-  describe("🗳  whitelistGuildManager()", () => {
+  describe("🗳  whitelistGFXStaff()", () => {
     it("reverts with access control error when not called by DAO_ROLE", async () => {
       await expect(
         guildFactory
           .connect(deployer)
-          .whitelistGuildManager(purchaser.address, true)
+          .whitelistGFXStaff(purchaser.address, true)
       ).to.be.revertedWith(
         generatePermissionRevokeMessage(deployer.address, DAO_ROLE)
       );
@@ -102,19 +112,19 @@ describe("📦 GuildFactory", () => {
     it("reverts with pausable error when contract is paused", async () => {
       await guildFactory.connect(dao).pause();
       await expect(
-        guildFactory.connect(dao).whitelistGuildManager(purchaser.address, true)
+        guildFactory.connect(dao).whitelistGFXStaff(purchaser.address, true)
       ).to.be.revertedWith("Pausable: paused");
     });
 
     it("assigns and revokes the guild manager the GUILD_MANAGER_ROLE", async () => {
       await guildFactory
         .connect(dao)
-        .whitelistGuildManager(purchaser.address, true);
+        .whitelistGFXStaff(purchaser.address, true);
       expect(await guildFactory.hasRole(GUILD_MANAGER_ROLE, purchaser.address))
         .to.be.true;
       await guildFactory
         .connect(dao)
-        .whitelistGuildManager(purchaser.address, false);
+        .whitelistGFXStaff(purchaser.address, false);
       expect(await guildFactory.hasRole(GUILD_MANAGER_ROLE, purchaser.address))
         .to.be.false;
     });
@@ -122,14 +132,14 @@ describe("📦 GuildFactory", () => {
     it("emits a GuildManagerWhitelist event", async () => {
       const request = guildFactory
         .connect(dao)
-        .whitelistGuildManager(purchaser.address, true);
+        .whitelistGFXStaff(purchaser.address, true);
       expect(request)
         .to.emit(guildFactory, "GuildManagerWhitelist")
         .withArgs(purchaser.address, true);
 
       const requestRevoke = guildFactory
         .connect(dao)
-        .whitelistGuildManager(purchaser.address, false);
+        .whitelistGFXStaff(purchaser.address, false);
       expect(requestRevoke)
         .to.emit(guildFactory, "GuildManagerWhitelist")
         .withArgs(purchaser.address, false);
