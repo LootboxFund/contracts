@@ -33,8 +33,17 @@ const sleep = async (ms = 1000) => {
 };
 
 async function main() {
-  const [deployer, treasury, dao, developer, purchaser] =
-    await ethers.getSigners();
+  const [
+    deployer,
+    treasury,
+    dao,
+    developer,
+    purchaser,
+    gfxStaff,
+    guildDao,
+    guildDev,
+    guildTreasury,
+  ] = await ethers.getSigners();
   const DEPLOYER_ADDRESS = deployer.address;
   logToFile(
     `

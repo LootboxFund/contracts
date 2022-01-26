@@ -21,6 +21,10 @@ describe("📦 CrowdSaleFactory", () => {
   let dao: SignerWithAddress;
   let developer: SignerWithAddress;
   let purchaser: SignerWithAddress;
+  let gfxStaff: SignerWithAddress;
+  let guildDao: SignerWithAddress;
+  let guildDev: SignerWithAddress;
+  let guildTreasury: SignerWithAddress;
 
   let CrowdSaleFactory: CrowdSaleFactory__factory;
   let guildFactory: CrowdSaleFactory;
@@ -33,7 +37,27 @@ describe("📦 CrowdSaleFactory", () => {
   });
 
   beforeEach(async () => {
-    [deployer, treasury, dao, developer, purchaser] = await ethers.getSigners();
+    const [
+      _deployer,
+      _treasury,
+      _dao,
+      _developer,
+      _purchaser,
+      _gfxStaff,
+      _guildDao,
+      _guildDev,
+      _guildTreasury,
+    ] = await ethers.getSigners();
+
+    deployer = _deployer;
+    treasury = _treasury;
+    dao = _dao;
+    developer = _developer;
+    purchaser = _purchaser;
+    gfxStaff = _gfxStaff;
+    guildDao = _guildDao;
+    guildDev = _guildDev;
+    guildTreasury = _guildTreasury;
 
     constants = (await upgrades.deployProxy(
       Constants,
