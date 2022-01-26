@@ -21,6 +21,8 @@ interface ICONSTANTS {
     function GUILD_FX_MINTING_FEE() external view returns (uint256);
 
     function GUILD_FX_MINTING_FEE_DECIMALS() external view returns (uint8);
+
+    function INITIAL_MINT_TO_GUILD() external view returns (uint256);
 }
 
 contract GuildToken is
@@ -95,18 +97,21 @@ contract GuildToken is
 
         fxConstants = _fxConstants;
 
-        uint256 initialMintToDao = 980 * 10**decimals(); // Sends the Guild 1000 tokens
+        ICONSTANTS guildFXConstantsContract = ICONSTANTS(fxConstants);
+        uint256 initialMintToGuild = guildFXConstantsContract.INITIAL_MINT_TO_GUILD();
 
-        // _mint(_dao, initialMintToDao);
-        // (uint256 _mintFeeAmount, uint256 _mintFeeRate, address _guildFXTreasury) = mintGuildAllocation(initialMintToDao);
-        // emit MintRequestFulfilled(
-        //     msg.sender,
-        //     _dao,
-        //     _guildFXTreasury,
-        //     initialMintToDao,
-        //     _mintFeeRate,
-        //     initialMintToDao + _mintFeeAmount
-        // );
+        uint256 initialMintToDao = initialMintToGuild * 10**decimals(); // Sends the Guild 1000 tokens
+
+        _mint(_dao, initialMintToDao);
+        (uint256 _mintFeeAmount, uint256 _mintFeeRate, address _guildFXTreasury) = mintGuildAllocation(initialMintToDao);
+        emit MintRequestFulfilled(
+            msg.sender,
+            _dao,
+            _guildFXTreasury,
+            initialMintToDao,
+            _mintFeeRate,
+            initialMintToDao + _mintFeeAmount
+        );
     }
 
     // --------- Managing the Mints --------- //
