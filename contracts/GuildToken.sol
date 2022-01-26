@@ -21,6 +21,8 @@ interface ICONSTANTS {
     function GUILD_FX_MINTING_FEE() external view returns (uint256);
 
     function GUILD_FX_MINTING_FEE_DECIMALS() external view returns (uint8);
+
+    function INITIAL_MINT_TO_GUILD() external view returns (uint256);
 }
 
 contract GuildToken is
@@ -57,8 +59,9 @@ contract GuildToken is
         address indexed _fromMint,
         address indexed _toReceiver,
         address _guildFXTreasury,
-        uint256 _amount,
-        uint256 _mintFeeAmount
+        uint256 _receiverAmount,
+        uint256 _mintFeeRate,
+        uint256 _totalAmount
     );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -92,9 +95,21 @@ contract GuildToken is
 
         fxConstants = _fxConstants;
 
-        uint256 initialMintToDao = 1000 * 10**decimals(); // Sends the Guild 1000 tokens
+        ICONSTANTS guildFXConstantsContract = ICONSTANTS(fxConstants);
+        uint256 initialMintToGuild = guildFXConstantsContract.INITIAL_MINT_TO_GUILD();
+
+        uint256 initialMintToDao = initialMintToGuild * 10**decimals(); // Sends the Guild 1000 tokens
 
         _mint(_dao, initialMintToDao);
+        (uint256 _mintFeeAmount, uint256 _mintFeeRate, address _guildFXTreasury) = mintGuildAllocation(initialMintToDao);
+        emit MintRequestFulfilled(
+            msg.sender,
+            _dao,
+            _guildFXTreasury,
+            initialMintToDao,
+            _mintFeeRate,
+            initialMintToDao + _mintFeeAmount
+        );
     }
 
     // --------- Managing the Mints --------- //
@@ -130,21 +145,18 @@ contract GuildToken is
         require(_amount > 0, "Cannot mint zero tokens");
 
         // Mints provided amount of tokens to the desired resipient
-        uint256 _addAmount = _amount;
+        uint256 _addAmount = _amount;   // does this need to incur a new variable? (gas cost)
         _mint(_recipient, _addAmount);
 
         // Mints a fee to GuildFX - fee set and treasury address set by the GuildFXConstants Contract
-        ICONSTANTS guildFXConstantsContract = ICONSTANTS(fxConstants);
-        address guildFXTreasury = guildFXConstantsContract.TREASURY();
-        uint256 _mintFeeAmount = this.calculateGuildFXMintFee(_amount);
-        _mint(guildFXTreasury, _mintFeeAmount);
-
+        (uint256 _mintFeeAmount, uint256 _mintFeeRate, address _guildFXTreasury) = mintGuildAllocation(_amount);
         emit MintRequestFulfilled(
             msg.sender,
             _recipient,
-            guildFXTreasury,
+            _guildFXTreasury,
             _addAmount,
-            _mintFeeAmount
+            _mintFeeRate,
+            _addAmount + _mintFeeAmount
         );
     }
 
@@ -152,7 +164,7 @@ contract GuildToken is
         public
         virtual
         override
-        onlyRole(getRoleAdmin(role))
+        onlyRole(getRoleAdmin(role)) /** where does getRoleAdmin() come from? */
     {
         /**
             WARNING: This function will revoke the GOVERNOR_ADMIN_ROLE role and render itself useless.
@@ -172,8 +184,8 @@ contract GuildToken is
         internal
         override(ERC20Upgradeable, ERC20VotesUpgradeable)
     {
-        // Mints provided amount of tokens to the desired resipient
-        ERC20VotesUpgradeable._mint(to, amount);
+      // Mints provided amount of tokens to the desired recipient
+      ERC20VotesUpgradeable._mint(to, amount);
     }
 
     function _burn(address account, uint256 amount)
@@ -214,20 +226,25 @@ contract GuildToken is
         onlyRole(DEVELOPER_ROLE)
     {}
 
-    function calculateGuildFXMintFee(uint256 _mintAmount)
-        public
-        view
-        returns (uint256)
+    function mintGuildAllocation(uint256 _mintAmount)
+        internal
+        returns (uint256 mintFeeAmount, uint256 mintFeeRate, address guildFXTreasury)
     {
+        (uint256 _mintFeeAmount, uint256 _mintFeeRate, address _guildFXTreasury) = calculateGuildFXMintFee(_mintAmount);
+        _mint(_guildFXTreasury, _mintFeeAmount);
+
+        return (_mintFeeAmount, _mintFeeRate, _guildFXTreasury);
+    }
+
+    function calculateGuildFXMintFee(uint256 _mintAmount) public view returns (uint256 mintFeeAmount, uint256 mintFeeRate, address guildFXTreasury) {
         ICONSTANTS guildFXConstantsContract = ICONSTANTS(fxConstants);
+        address _guildFXTreasury = guildFXConstantsContract.TREASURY();
 
-        uint256 mintFee = guildFXConstantsContract.GUILD_FX_MINTING_FEE();
-        uint8 mintFeeDecimals = guildFXConstantsContract
+        uint256 _mintFeeRate = guildFXConstantsContract.GUILD_FX_MINTING_FEE();
+        uint8 _mintFeeDecimals = guildFXConstantsContract
             .GUILD_FX_MINTING_FEE_DECIMALS();
-        uint256 _mintFeeAmount = (_mintAmount * mintFee) /
-            10**(mintFeeDecimals);
-
-        return _mintFeeAmount;
+        uint256 _mintFeeAmount = (_mintAmount / ((10**_mintFeeDecimals) - _mintFeeRate) * (10**_mintFeeDecimals)) - _mintAmount;
+        return (_mintFeeAmount, _mintFeeRate, _guildFXTreasury);
     }
 
     function viewMintsWhitelist() public view returns (bytes32[] memory) {

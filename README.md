@@ -6,7 +6,7 @@
 2. fill `.env` with shared dev credentials (contact @0xnewton or 0xterran for access)
 3. `yarn install`
 4. `npx hardhat compile`
-5. `npm run test`
+5. `npm run test` or `npm run test test/your-test-file.js`
 
 ### To set up a new test environment:
 

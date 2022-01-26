@@ -15,12 +15,18 @@ contract Constants is
     AccessControlUpgradeable,
     UUPSUpgradeable
 {
+
     // only the DAO (GuildFX) can control token
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
     bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE");
 
-    // GuildFX treasury
-    address payable public TREASURY;
+    // Fee GuildFX charges on mintRequests as a fraction (3 decimals).
+    // Examples: 1000 = 100%, 500 = 50%, 20 = 2%, 1 = 0.1% fees
+    uint256 public INITIAL_MINT_TO_GUILD;
+    uint256 public GUILD_FX_MINTING_FEE;
+    uint8 public constant GUILD_FX_MINTING_FEE_DECIMALS = 3;
+    address payable public TREASURY;  // GuildFX treasury
+
     // Addresses for crowdsale stable coins
     address public ETH_ADDRESS;
     address public USDC_ADDRESS;
@@ -35,10 +41,17 @@ contract Constants is
     address public UST_PRICE_FEED;
     address public DAI_PRICE_FEED;
 
-    // Fee GuildFX charges on mintRequests as a fraction (base 3).
-    // Examples: 1000 = 100%, 500 = 50%, 20 = 2%, 1 = 0.1% fees
-    uint256 public GUILD_FX_MINTING_FEE;
-    uint8 public constant GUILD_FX_MINTING_FEE_DECIMALS = 3;
+    // ------------------------------------------------------------------
+    // Insert any new state variables below here when upgrading
+    // If you change any lines above when upgrading, you will fuck up shit
+    // https://docs.openzeppelin.com/learn/upgrading-smart-contracts
+    // ------------------------------------------------------------------
+
+
+
+
+
+    // ------------------------------------------------------------------
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
@@ -62,6 +75,7 @@ contract Constants is
         TREASURY = _treasury;
 
         GUILD_FX_MINTING_FEE = 20; // in GUILD_FX_MINTING_FEE_DECIMALS (ex: 20 = 2% fee)
+        INITIAL_MINT_TO_GUILD = 980;
     }
 
     function setCrowdSaleStableCoins(
