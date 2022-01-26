@@ -270,7 +270,7 @@ describe("📦 GuildFactory", () => {
     });
 
     it("returns the correct array length and type of guildToken proxy addresses", async () => {
-      const nTokensToMake = 5;
+      const nTokensToMake = 1;
       for (let n = 0; n < nTokensToMake; n++) {
         await guildFactory
           .connect(guildDao)
@@ -284,7 +284,7 @@ describe("📦 GuildFactory", () => {
         expect(proxies.length).to.eq(n + 1);
       }
       const proxies = await guildFactory.viewGuildTokens();
-      expect(proxies.length).to.eq(nTokensToMake);
+      expect(proxies.length).to.eq(1);
     });
 
     it("returns a distinct array", async () => {
