@@ -109,9 +109,7 @@ describe("📦 CrowdSaleFactory", () => {
   describe("🗳  whitelistGFXStaff()", () => {
     it("reverts with access control error when not called by DAO_ROLE", async () => {
       await expect(
-        guildFactory
-          .connect(deployer)
-          .whitelistGFXStaff(purchaser.address, true)
+        guildFactory.connect(deployer).whitelistGFXStaff(gfxStaff.address, true)
       ).to.be.revertedWith(
         generatePermissionRevokeMessage(deployer.address, DAO_ROLE)
       );
@@ -120,37 +118,35 @@ describe("📦 CrowdSaleFactory", () => {
     it("reverts with pausable error when contract is paused", async () => {
       await guildFactory.connect(dao).pause();
       await expect(
-        guildFactory.connect(dao).whitelistGFXStaff(purchaser.address, true)
+        guildFactory.connect(dao).whitelistGFXStaff(gfxStaff.address, true)
       ).to.be.revertedWith("Pausable: paused");
     });
 
-    it("assigns and revokes the guild manager the GFX_STAFF_ROLE", async () => {
+    it("assigns and revokes the GFX_STAFF_ROLE to our staff", async () => {
+      await guildFactory.connect(dao).whitelistGFXStaff(gfxStaff.address, true);
+      expect(await guildFactory.hasRole(GFX_STAFF_ROLE, gfxStaff.address)).to.be
+        .true;
       await guildFactory
         .connect(dao)
-        .whitelistGFXStaff(purchaser.address, true);
-      expect(await guildFactory.hasRole(GFX_STAFF_ROLE, purchaser.address)).to
-        .be.true;
-      await guildFactory
-        .connect(dao)
-        .whitelistGFXStaff(purchaser.address, false);
-      expect(await guildFactory.hasRole(GFX_STAFF_ROLE, purchaser.address)).to
-        .be.false;
+        .whitelistGFXStaff(gfxStaff.address, false);
+      expect(await guildFactory.hasRole(GFX_STAFF_ROLE, gfxStaff.address)).to.be
+        .false;
     });
 
     it("emits a FactoryStaffWhitelist event", async () => {
       const request = guildFactory
         .connect(dao)
-        .whitelistGFXStaff(purchaser.address, true);
+        .whitelistGFXStaff(gfxStaff.address, true);
       expect(request)
         .to.emit(guildFactory, "FactoryStaffWhitelist")
-        .withArgs(purchaser.address, dao.address, true);
+        .withArgs(gfxStaff.address, dao.address, true);
 
       const requestRevoke = guildFactory
         .connect(dao)
-        .whitelistGFXStaff(purchaser.address, false);
+        .whitelistGFXStaff(gfxStaff.address, false);
       expect(requestRevoke)
         .to.emit(guildFactory, "FactoryStaffWhitelist")
-        .withArgs(purchaser.address, dao.address, false);
+        .withArgs(gfxStaff.address, dao.address, false);
     });
   });
 
@@ -159,7 +155,7 @@ describe("📦 CrowdSaleFactory", () => {
       await expect(
         guildFactory
           .connect(deployer)
-          .whitelistGuildOwner(purchaser.address, true)
+          .whitelistGuildOwner(guildDao.address, true)
       ).to.be.revertedWith(
         generatePermissionRevokeMessage(deployer.address, GFX_STAFF_ROLE)
       );
@@ -168,37 +164,37 @@ describe("📦 CrowdSaleFactory", () => {
     it("reverts with pausable error when contract is paused", async () => {
       await guildFactory.connect(dao).pause();
       await expect(
-        guildFactory.connect(dao).whitelistGuildOwner(purchaser.address, true)
+        guildFactory.connect(dao).whitelistGuildOwner(guildDao.address, true)
       ).to.be.revertedWith("Pausable: paused");
     });
 
     it("assigns and revokes the guild manager the GUILD_OWNER_ROLE", async () => {
       await guildFactory
-        .connect(dao)
-        .whitelistGuildOwner(purchaser.address, true);
-      expect(await guildFactory.hasRole(GUILD_OWNER_ROLE, purchaser.address)).to
+        .connect(gfxStaff)
+        .whitelistGuildOwner(guildDao.address, true);
+      expect(await guildFactory.hasRole(GUILD_OWNER_ROLE, guildDao.address)).to
         .be.true;
       await guildFactory
-        .connect(dao)
-        .whitelistGuildOwner(purchaser.address, false);
-      expect(await guildFactory.hasRole(GUILD_OWNER_ROLE, purchaser.address)).to
+        .connect(gfxStaff)
+        .whitelistGuildOwner(guildDao.address, false);
+      expect(await guildFactory.hasRole(GUILD_OWNER_ROLE, guildDao.address)).to
         .be.false;
     });
 
     it("emits a FactoryStaffWhitelist event", async () => {
       const request = guildFactory
-        .connect(dao)
-        .whitelistGuildOwner(purchaser.address, true);
+        .connect(gfxStaff)
+        .whitelistGuildOwner(guildDao.address, true);
       expect(request)
         .to.emit(guildFactory, "GuildOwnerWhitelist")
-        .withArgs(purchaser.address, dao.address, true);
+        .withArgs(guildDao.address, gfxStaff.address, true);
 
       const requestRevoke = guildFactory
-        .connect(dao)
-        .whitelistGuildOwner(purchaser.address, false);
+        .connect(gfxStaff)
+        .whitelistGuildOwner(guildDao.address, false);
       expect(requestRevoke)
         .to.emit(guildFactory, "GuildOwnerWhitelist")
-        .withArgs(purchaser.address, dao.address, false);
+        .withArgs(guildDao.address, gfxStaff.address, false);
     });
   });
 
@@ -253,7 +249,12 @@ describe("📦 CrowdSaleFactory", () => {
     });
   });
 
-  describe.skip("createCrowdSale()", () => {
-    it.skip("TODO implement these tests");
+  describe.only("createCrowdSale()", () => {
+    it.only("Rejects non-whitelist guild owners from deploying a crowdsale", async () => {});
+    it.only("Allows whitelist guild owners to deploy a crowdsale", async () => {});
+    describe("CrowdSale details", async () => {
+      it.only("Crowdsale emits the correct event", async () => {});
+      it.only("Counts the correct number of crowdsales", async () => {});
+    });
   });
 });
