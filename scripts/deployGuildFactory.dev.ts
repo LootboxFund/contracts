@@ -62,7 +62,7 @@ async function main() {
   
 ---- Script starting
 
----- Network = ${network.name} (${network.config.chainId})
+---- Network = ${network.name} (Decimal ID = ${network.config.chainId})
 
   \n`,
     LOG_FILE_PATH
