@@ -155,11 +155,6 @@ contract CrowdSale is
         priceFeedDAI = AggregatorV3Interface(constants.DAI_PRICE_FEED());
     }
 
-    // this might not be necessary if we have `public currentPriceUSD`
-    function getCurrentUSDPrice() external view returns (uint256) {
-        return currentPriceUSD;
-    }
-
     // converts stablecoin amount to guild token amount
     function getGuildTokenPurchaseAmount(
         uint256 amountOfStableCoin,

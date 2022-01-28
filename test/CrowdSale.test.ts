@@ -201,6 +201,10 @@ describe("📦 CrowdSale of GUILD token", async function () {
     expect(await crowdSale.CONSTANTS()).to.eq(constants.address);
   });
 
+  it("has a current USD price", async () => {
+    expect(await crowdSale.currentPriceUSD()).to.eq(startingPriceInUSD);
+  });
+
   it("purchasing fails if CrowdSale is not a whitelisted mint", async () => {
     await usdc_stablecoin.mint(purchaser.address, 1);
     await usdc_stablecoin.connect(purchaser).approve(crowdSale.address, 1);
