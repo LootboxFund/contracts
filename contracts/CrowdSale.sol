@@ -155,15 +155,17 @@ contract CrowdSale is
         priceFeedDAI = AggregatorV3Interface(constants.DAI_PRICE_FEED());
     }
 
+    // this might not be necessary if we have `public currentPriceUSD`
     function getCurrentUSDPrice() external view returns (uint256) {
         return currentPriceUSD;
     }
 
+    // converts stablecoin amount to guild token amount
     function getGuildTokenPurchaseAmount(
         uint256 amountOfStableCoin,
         uint256 stablecoinDecimals,
         uint256 stableCoinPrice
-    ) internal view returns (uint256) {
+    ) internal view returns (uint256 guildTokenAmount) {
         // Assumes currentPriceUSD & stableCoinPrice is 8 decimals
         uint256 guildTokenDecimals = 18;
         return
@@ -255,13 +257,7 @@ contract CrowdSale is
 
     function buyInUSDC(uint256 _amount) public payable whenNotPaused {
         // get USD price from oracle
-        (
-            uint80 roundID,
-            int256 price,
-            uint256 startedAt,
-            uint256 timeStamp,
-            uint80 answeredInRound
-        ) = priceFeedUSDC.latestRoundData();
+        int256 price = getUSDCPrice();
         ICONSTANTS constants = ICONSTANTS(CONSTANTS);
         address USDC = constants.USDC_ADDRESS();
         IERC20 tokenUSDC = IERC20(USDC);
@@ -289,13 +285,7 @@ contract CrowdSale is
 
     function buyInUSDT(uint256 _amount) public payable whenNotPaused {
         // get USDT price from oracle
-        (
-            uint80 roundID,
-            int256 price,
-            uint256 startedAt,
-            uint256 timeStamp,
-            uint80 answeredInRound
-        ) = priceFeedUSDT.latestRoundData();
+        int256 price = getUSDTPrice();
         ICONSTANTS constants = ICONSTANTS(CONSTANTS);
         address USDT = constants.USDT_ADDRESS();
         IERC20 tokenUSDT = IERC20(USDT);
@@ -322,13 +312,7 @@ contract CrowdSale is
 
     function buyInUST(uint256 _amount) public payable whenNotPaused {
         // get UST price from oracle
-        (
-            uint80 roundID,
-            int256 price,
-            uint256 startedAt,
-            uint256 timeStamp,
-            uint80 answeredInRound
-        ) = priceFeedUST.latestRoundData();
+        int256 price = getUSTPrice();
         ICONSTANTS constants = ICONSTANTS(CONSTANTS);
         address UST = constants.UST_ADDRESS();
         IERC20 tokenUST = IERC20(UST);
@@ -355,13 +339,7 @@ contract CrowdSale is
 
     function buyInETH(uint256 _amount) public payable whenNotPaused {
         // get ETH price from oracle
-        (
-            uint80 roundID,
-            int256 price,
-            uint256 startedAt,
-            uint256 timeStamp,
-            uint80 answeredInRound
-        ) = priceFeedETH.latestRoundData();
+        int256 price = getETHPrice();
         ICONSTANTS constants = ICONSTANTS(CONSTANTS);
         address ETH = constants.ETH_ADDRESS();
         IERC20 tokenETH = IERC20(ETH);
@@ -388,15 +366,7 @@ contract CrowdSale is
 
     function buyInDAI(uint256 _amount) public payable whenNotPaused {
         // get DAI price from oracle
-        (
-            uint80 roundID,
-            int256 price,
-            uint256 startedAt,
-            uint256 timeStamp,
-            uint80 answeredInRound
-        ) = priceFeedDAI.latestRoundData();
-        uint256 guildTokenDecimals = 18;
-        uint256 oracleDecimals = 8;
+        int256 price = getDAIPrice();
         ICONSTANTS constants = ICONSTANTS(CONSTANTS);
         address DAI = constants.DAI_ADDRESS();
         IERC20 tokenDAI = IERC20(DAI);
@@ -427,13 +397,7 @@ contract CrowdSale is
         whenNotPaused
     {
         // get BNB price from oracle
-        (
-            uint80 roundID,
-            int256 price,
-            uint256 startedAt,
-            uint256 timeStamp,
-            uint80 answeredInRound
-        ) = priceFeedBNB.latestRoundData();
+        int256 price = getBNBPrice();
         uint256 bnbDecimals = 18;
         // calculate the received GUILD at the current prices of BNB & GUILD
         uint256 guildPurchasedAmount = getGuildTokenPurchaseAmount(

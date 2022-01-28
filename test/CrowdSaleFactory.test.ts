@@ -214,9 +214,9 @@ describe("📦 CrowdSaleFactory", () => {
   });
 
   describe("🗳  pause()", () => {
-    it.only("reverts with access control error if not called by the DAO", async () => {
+    it("reverts with access control error if not called by the DAO", async () => {
       await expect(
-        await crowdsaleFactory.connect(purchaser).pause()
+        crowdsaleFactory.connect(purchaser).pause()
       ).to.be.revertedWith(
         generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
       );
