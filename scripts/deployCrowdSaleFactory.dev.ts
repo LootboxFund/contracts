@@ -76,9 +76,15 @@ async function main() {
   );
   await sleep();
 
+  // --------- Authorize Staff & Guild Owner --------- //
+  await crowdSaleFactory.connect(dao).whitelistGFXStaff(gfxStaff.address, true);
+  await crowdSaleFactory
+    .connect(gfxStaff)
+    .whitelistGuildOwner(guildDao.address, true);
+
   // --------- Create the CrowdSale --------- //
   const tx = await crowdSaleFactory
-    .connect(dao)
+    .connect(guildDao)
     .createCrowdSale(
       GUILD_TOKEN_ADDRESS,
       guildDao.address,

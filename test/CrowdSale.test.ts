@@ -38,6 +38,10 @@ describe("📦 CrowdSale of GUILD token", async function () {
   let dao: SignerWithAddress;
   let developer: SignerWithAddress;
   let governor: SignerWithAddress;
+  let gfxStaff: SignerWithAddress;
+  let guildDao: SignerWithAddress;
+  let guildDev: SignerWithAddress;
+  let guildTreasury: SignerWithAddress;
 
   let Token: GuildToken__factory;
   let token: GuildToken;
@@ -78,7 +82,28 @@ describe("📦 CrowdSale of GUILD token", async function () {
   const startingPriceInUSD = "7000000"; // 7 usd cents
 
   before(async function () {
-    [deployer, treasury, dao, developer, purchaser] = await ethers.getSigners();
+    const [
+      _deployer,
+      _treasury,
+      _dao,
+      _developer,
+      _purchaser,
+      _gfxStaff,
+      _guildDao,
+      _guildDev,
+      _guildTreasury,
+    ] = await ethers.getSigners();
+
+    deployer = _deployer;
+    treasury = _treasury;
+    dao = _dao;
+    developer = _developer;
+    purchaser = _purchaser;
+    gfxStaff = _gfxStaff;
+    guildDao = _guildDao;
+    guildDev = _guildDev;
+    guildTreasury = _guildTreasury;
+
     Token = await ethers.getContractFactory("GuildToken");
     CrowdSale = await ethers.getContractFactory("CrowdSale");
     Constants = await ethers.getContractFactory("Constants");

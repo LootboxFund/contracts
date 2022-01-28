@@ -15,7 +15,7 @@ import { ContractTransaction } from "ethers";
 import {
   DAO_ROLE,
   DEVELOPER_ROLE,
-  GUILD_MANAGER_ROLE,
+  GFX_STAFF_ROLE,
   GUILD_OWNER_ROLE,
   generatePermissionRevokeMessage,
   stripZeros,
@@ -78,9 +78,8 @@ describe("📦 GuildFactory", () => {
     expect(await guildFactory.hasRole(DAO_ROLE, dao.address)).to.be.true;
   });
 
-  it("assignes the dao the GUILD_MANAGER_ROLE", async () => {
-    expect(await guildFactory.hasRole(GUILD_MANAGER_ROLE, dao.address)).to.be
-      .true;
+  it("assignes the dao the GFX_STAFF_ROLE", async () => {
+    expect(await guildFactory.hasRole(GFX_STAFF_ROLE, dao.address)).to.be.true;
   });
 
   it("assignes the dao the GUILD_OWNER_ROLE", async () => {
@@ -106,17 +105,17 @@ describe("📦 GuildFactory", () => {
       ).to.be.revertedWith("Pausable: paused");
     });
 
-    it("assigns and revokes the guild manager the GUILD_MANAGER_ROLE", async () => {
+    it("assigns and revokes the guild manager the GFX_STAFF_ROLE", async () => {
       await guildFactory
         .connect(dao)
         .whitelistGuildManager(purchaser.address, true);
-      expect(await guildFactory.hasRole(GUILD_MANAGER_ROLE, purchaser.address))
-        .to.be.true;
+      expect(await guildFactory.hasRole(GFX_STAFF_ROLE, purchaser.address)).to
+        .be.true;
       await guildFactory
         .connect(dao)
         .whitelistGuildManager(purchaser.address, false);
-      expect(await guildFactory.hasRole(GUILD_MANAGER_ROLE, purchaser.address))
-        .to.be.false;
+      expect(await guildFactory.hasRole(GFX_STAFF_ROLE, purchaser.address)).to
+        .be.false;
     });
 
     it("emits a GuildManagerWhitelist event", async () => {
@@ -137,13 +136,13 @@ describe("📦 GuildFactory", () => {
   });
 
   describe("🗳  whitelistGuildOwner()", () => {
-    it("reverts with access control error when not called by GUILD_MANAGER_ROLE", async () => {
+    it("reverts with access control error when not called by GFX_STAFF_ROLE", async () => {
       await expect(
         guildFactory
           .connect(deployer)
           .whitelistGuildOwner(purchaser.address, true)
       ).to.be.revertedWith(
-        generatePermissionRevokeMessage(deployer.address, GUILD_MANAGER_ROLE)
+        generatePermissionRevokeMessage(deployer.address, GFX_STAFF_ROLE)
       );
     });
 
