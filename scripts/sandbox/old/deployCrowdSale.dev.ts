@@ -7,7 +7,7 @@ import { ethers, upgrades } from "hardhat";
 import { DAI, ETH, USDC, USDT, UST, Constants } from "../../../typechain";
 import { logToFile } from "../../helpers/logger";
 
-const Oxnewton = "0xaC15B26acF4334a62961237a0DCEC90eDFE1B251";
+const Oxnewton = "0x2C83b49EdB3f00A38331028e2D8bFA3Cd93B8288";
 const Oxterran = "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F";
 
 // Needed to slow down transactions to avoid "replacement fee too low" errors...
