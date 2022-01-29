@@ -159,6 +159,61 @@ describe("📦 GUILD token", async () => {
     ).to.be.equal(false);
   });
 
+  describe("🗳  transferGovernorAdminPrivileges()", () => {
+    it("reverts for all users other than the guildDao", async () => {
+      const users = [developer, treasury, purchaser, deployer];
+      // TODO: Find a way to break this down with a it.each()()
+      // No one can call this function
+      for (let user of users) {
+        // Check other generic roles
+        await expect(
+          token.connect(user).transferGovernorAdminPrivileges(purchaser.address)
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(user.address, GOVERNOR_ROLE)
+        );
+      }
+    });
+
+    it("does not revert when called by guild dao", async () => {
+      // Make sure dao has the role
+      await expect(
+        token.connect(dao).transferGovernorAdminPrivileges(purchaser.address)
+      ).to.not.be.reverted;
+    });
+
+    describe("when the dao grants the GOVERNOR_ROLE to an address", () => {
+      let governor: SignerWithAddress;
+
+      beforeEach(async () => {
+        governor = purchaser;
+        await token
+          .connect(dao)
+          .transferGovernorAdminPrivileges(governor.address);
+      });
+      it("grants the address the GOVERNOR_ROLE", async () => {
+        expect(await token.hasRole(GOVERNOR_ROLE, governor.address)).to.be.true;
+      });
+      it("revokes the GOVERNOR_ROLE from the dao", async () => {
+        expect(await token.hasRole(GOVERNOR_ROLE, dao.address)).to.be.false;
+      });
+      it("revokes on subsequent calls with GOVERNOR_ROLE access control error when called by the dao", async () => {
+        await expect(
+          token.connect(dao).transferGovernorAdminPrivileges(treasury.address)
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(dao.address, GOVERNOR_ROLE)
+        );
+      });
+      it("does not revoke when called by the new governor", async () => {
+        // Might as well make sure the whitelisted address can't call it either:
+        await expect(
+          token
+            .connect(governor)
+            .transferGovernorAdminPrivileges(treasury.address)
+        ).to.not.be.reverted;
+      });
+    });
+  });
+
   describe("🗳  grantRole()", () => {
     it("reverts for all users when assigning a role other than GOVERNOR_ROLE", async () => {
       const users = [dao, developer, treasury, purchaser, deployer];
