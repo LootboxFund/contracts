@@ -1,0 +1,26 @@
+2022-01-29T21:20:04.697Z -  
+  
+---------- DEPLOY CROWDSALE FACTORY (development) ----------
+  
+---- Script starting
+
+---- Network = binance_testnet (Decimal ID = undefined)
+
+---- Params:
+
+     Guild Token Address         undefined
+
+     GuildFX Constants:          undefined
+
+     Guild Token Starting Price: undefined
+
+  
+2022-01-29T21:20:04.698Z - ----
+2022-01-29T21:20:04.699Z - ---- 0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A ---> Deployer Address 
+2022-01-29T21:20:04.699Z - ---- 0x63693bd1ba571035dde710ae2862e7f970fbe9dd ---> GuildFX Gamer Token 
+2022-01-29T21:20:04.699Z - ---- 0x56ae9253E0311FfdEf27Aa53c8F8318D71b43699 ---> GuildFX Constants 
+2022-01-29T21:20:04.699Z - ---- 7000000 ---> Crowdsale Starting Price $USD (8 decimals) 
+2022-01-29T21:20:13.771Z - ---- 0x5E44410793AAEA932DD208CBf0277d2AA4c6Ae3D ---> Crowsale Factory Contract Address
+2022-01-29T21:20:23.793Z - ---- 0xbB42076e2DA6b4a782396a038F2b0d21eA5D2e51 ---> Whitelisted GuildFX staff 
+2022-01-29T21:20:32.716Z - ---- 0x3b4348A0a993e371fB65593c7eeD145821f4a2bF ---> Whitelisted guild's DAO 
+2022-01-29T21:20:42.092Z - ---- 0x8577ac56492b9fa85278b70b761db3dafa9c8c01 ---> Crowsale Contract Address

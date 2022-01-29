@@ -1,0 +1,24 @@
+2022-01-29T21:14:13.430Z - 
+  
+---------- DEPLOY GUILD FACTORY (development) ----------
+  
+Script starting
+
+---- Network = binance_testnet (Decimal ID = undefined)
+
+  
+2022-01-29T21:14:13.432Z - Deployer Address =         0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A 
+2022-01-29T21:14:28.192Z - Uploading ETH to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/guildfx-exchange.appspot.com/o/tokens/undefined/v/0.0.1-sandbox/0x77288b4687FD34c8aEBa02301bF15751c66bdEC4.json?alt=media 
+2022-01-29T21:14:29.156Z - ETH Stablecoin Address =             0x77288b4687FD34c8aEBa02301bF15751c66bdEC4 
+2022-01-29T21:14:45.021Z - Uploading USDC to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/guildfx-exchange.appspot.com/o/tokens/undefined/v/0.0.1-sandbox/0xEBB82dBefCF9bEe2D5F74d5271163bACD9917057.json?alt=media 
+2022-01-29T21:14:45.908Z - USDC Stablecoin Address =            0xEBB82dBefCF9bEe2D5F74d5271163bACD9917057 
+2022-01-29T21:14:56.259Z - Uploading USDT to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/guildfx-exchange.appspot.com/o/tokens/undefined/v/0.0.1-sandbox/0x16EBFb949eaeC7a0A135809dA1b7FD1bd014e126.json?alt=media 
+2022-01-29T21:14:57.040Z - USDT Stablecoin Address =            0x16EBFb949eaeC7a0A135809dA1b7FD1bd014e126 
+2022-01-29T21:14:58.006Z - Uploading index to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/guildfx-exchange.appspot.com/o/tokens/undefined/v/0.0.1-sandbox/index.json?alt=media 
+2022-01-29T21:15:09.230Z - Constants Token Address =            0x56ae9253E0311FfdEf27Aa53c8F8318D71b43699 
+2022-01-29T21:15:10.810Z - ---------- Set Stablecoin Addresses ---------- 
+2022-01-29T21:15:12.523Z - ---------- Set Price Feed Addresses ---------- 
+2022-01-29T21:15:22.709Z - Guild Factory Contract Address =    0x22BF1dE40Ea175Ce7436ADA0eD8f89a85C0278cf 
+2022-01-29T21:15:32.815Z - ---- 0xbB42076e2DA6b4a782396a038F2b0d21eA5D2e51 ---> Whitelisted GuildFX staff 
+2022-01-29T21:15:41.835Z - ---- 0x3b4348A0a993e371fB65593c7eeD145821f4a2bF ---> Whitelisted guild's DAO 
+2022-01-29T21:15:50.978Z - Guild Token Address =      0x63693bd1ba571035dde710ae2862e7f970fbe9dd 

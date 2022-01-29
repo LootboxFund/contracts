@@ -3,15 +3,22 @@
 ## Getting started
 
 1. `cp .env.example .env`
-2. fill `.env` with shared dev credentials (contact @0xnewton or 0xterran for access)
-3. `yarn install`
-4. `npx hardhat compile`
-5. `npm run test` or `npx hardhat test test/file.test.js`
+   - fill `.env` with shared dev credentials (contact @0xnewton or 0xterran for access)
+     - need google application credentials for gcp
+     - testing wallet private keys
+2. `yarn install`
+3. `npx hardhat compile`
+4. `npm run test` or `npx hardhat test test/file.test.js`
+
+### Environment set up
+
+1. Create a directory `env`
+2.
 
 ### To set up a new test environment:
 
 1. `npm run deploy:testnet:guild-factory`
-   - This will output a [log file](./scripts/logs) with name `"deployGuildTokenFactory_log_xxx.dev.txt"`
+   - This will output a [log file](.scripts/logs/deployGuildFactory_log_1643490853248.dev.txt) with name `"deployGuildTokenFactory_log_xxx.dev.txt"`
 2. **Manually add** the "Constants Token Address" and "Guild Token Address" to the [crowdsale factory deploy script](./scripts/deployCrowdSaleFactory.dev.ts).
    - 💡 You can find the GuildFXConstants contract address and the GuildFX erc20votes token address from the log files from step 1.
    - 📆 TODO: Remove this manual step. Tracked [here](https://linear.app/guildfx/issue/GUI-75/generalize-dev-deployment-proceedure).
@@ -21,13 +28,14 @@
 
 ## Testnet Addresses
 
-| Contract                     | Address                                    |
-| ---------------------------- | ------------------------------------------ |
-| GuildFX Constants            | 0xAF761E630B936F4892c05C1aBcfD614559AdD35e |
-| GuildFX Gamer Token          | 0xe5faebe2dbc746a0fe99fe2924db1c6bf2ac3160 |
-| GuildFX Gamer Token Governor | 0xeafc5fca009cba5ff94eed111d0a71ba8140b065 |
-| Crowdsale Factory            | 0x5b91b93e15ECe970adAB22C3f071d0577f5D0dBc |
-| Guild Factory                | 0x89D0d12598D397534eC3CeCA4cDaC1723D273C67 |
+| Contract                                   | Address                                    |
+| ------------------------------------------ | ------------------------------------------ |
+| GuildFX Constants                          | 0x56ae9253E0311FfdEf27Aa53c8F8318D71b43699 |
+| GuildFX Gamer Token                        | 0x63693bd1ba571035dde710ae2862e7f970fbe9dd |
+| Crowdsale for Gamer Token                  |
+| 0x8577ac56492b9fa85278b70b761db3dafa9c8c01 |
+| Crowdsale Factory                          | 0x5E44410793AAEA932DD208CBf0277d2AA4c6Ae3D |
+| Guild Factory                              | 0x22BF1dE40Ea175Ce7436ADA0eD8f89a85C0278cf |
 
 ## Guild Architecture Diagram
 
