@@ -28,6 +28,8 @@
 
 ## Testnet Addresses
 
+### BSC Testnet
+
 | Contract                                   | Address                                    |
 | ------------------------------------------ | ------------------------------------------ |
 | GuildFX Constants                          | 0x56ae9253E0311FfdEf27Aa53c8F8318D71b43699 |
@@ -36,6 +38,17 @@
 | 0x8577ac56492b9fa85278b70b761db3dafa9c8c01 |
 | Crowdsale Factory                          | 0x5E44410793AAEA932DD208CBf0277d2AA4c6Ae3D |
 | Guild Factory                              | 0x22BF1dE40Ea175Ce7436ADA0eD8f89a85C0278cf |
+
+### Rinkeby
+
+| Contract                                   | Address                                    |
+| ------------------------------------------ | ------------------------------------------ |
+| GuildFX Constants                          | 0x4fEcF2CA1ec7d20D5a76298C8F7813DaAD54800e |
+| GuildFX Gamer Token                        | 0x2b3985dc816085efc9ae3976cf83f9028b963c22 |
+| Crowdsale for Gamer Token                  |
+| 0x8577ac56492b9fa85278b70b761db3dafa9c8c01 |
+| Crowdsale Factory                          | 0x5E44410793AAEA932DD208CBf0277d2AA4c6Ae3D |
+| Guild Factory                              | 0xd907b3b186B8692803F21907557411E5023F9B4F |
 
 ## Guild Architecture Diagram
 
