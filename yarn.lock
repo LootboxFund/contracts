@@ -646,6 +646,11 @@
     stream-events "^1.0.4"
     xdg-basedir "^4.0.0"
 
+"@guildfx/helpers@^0.0.3":
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/@guildfx/helpers/-/helpers-0.0.3.tgz#9c760fe3378277a8defa4d9673bf99f9b78f8e56"
+  integrity sha512-k8hMl4fj6930pjQZLRCRw2vR2YtXLe1ommiORkhfw/mDdwP45Rx0cF1tSSxTAXanFXIdwmX9S52Is4dxj2xI/g==
+
 "@humanwhocodes/config-array@^0.5.0":
   version "0.5.0"
   resolved "https://registry.yarnpkg.com/@humanwhocodes/config-array/-/config-array-0.5.0.tgz#1407967d4c6eecd7388f83acf1eaf4d0c6e58ef9"

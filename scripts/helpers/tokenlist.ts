@@ -1,19 +1,7 @@
 import { logToFile } from "./logger";
 import { filterMap, removeUndefined } from "./tsUtil";
 const { Storage } = require("@google-cloud/storage");
-
-export const buildTokenMoldCDNRoute = ({
-  chainIdHex,
-  semvar,
-  address,
-}: {
-  chainIdHex: ChainIDHex;
-  semvar: SemanticVersion;
-  address: Address;
-}) => {
-  const cdnTokenPath = `tokens/${chainIdHex}/v/${semvar}/${address}.json`;
-  return cdnTokenPath;
-};
+import { ChainIDHex, buildTokenMoldCDNRoute } from "@guildfx/helpers";
 
 const BUCKET_NAME =
   process.env.NODE_ENV === "production"
@@ -22,7 +10,6 @@ const BUCKET_NAME =
 
 const storage = new Storage();
 
-export type ChainIDHex = string;
 export type Address = string;
 export type SemanticVersion = string;
 export interface TokenData {
