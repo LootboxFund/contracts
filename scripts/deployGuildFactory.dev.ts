@@ -245,10 +245,28 @@ Script starting
   await sleep();
 
   // --------- Authorize GFX Staff --------- //
-  await guildFactory.connect(dao).whitelistGFXStaff(gfxStaff.address, true);
+  const txWhitelistGFXStaff = await guildFactory
+    .connect(dao)
+    .whitelistGFXStaff(gfxStaff.address, true);
+
+  await txWhitelistGFXStaff.wait();
+
+  logToFile(
+    `---- ${gfxStaff.address} ---> Whitelisted GuildFX staff \n`,
+    LOG_FILE_PATH
+  );
 
   // --------- Authorize a Guild Owner --------- //
-  await guildFactory.connect(dao).whitelistGuildOwner(guildDao.address, true);
+  const txWhitelistGuildOwner = await guildFactory
+    .connect(gfxStaff)
+    .whitelistGuildOwner(guildDao.address, true);
+
+  await txWhitelistGuildOwner.wait();
+
+  logToFile(
+    `---- ${guildDao.address} ---> Whitelisted guild's DAO \n`,
+    LOG_FILE_PATH
+  );
 
   // --------- Create the GuildToken --------- //
   const tx = await guildFactory
