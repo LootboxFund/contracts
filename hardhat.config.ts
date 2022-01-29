@@ -21,6 +21,25 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
+// Export as hardhat task so it can be called with args in the CLI
+task(
+  "deployCrowdsaleFactory",
+  "Deploys a crowdsale factory + crowdsale contract for a given token",
+  async (args) => {
+    // @ts-ignore
+    deployCrowdsaleFactory(args);
+  }
+)
+  .addParam(
+    "guildTokenAddress",
+    "Address of the guild token to link to first crowdsale"
+  )
+  .addParam("gfxConstants", "Address of GuildFX Constants contract")
+  .addParam(
+    "guildTokenStartingPrice",
+    "Starting price of guild token in usd (8 decimals). I.e. 7000000 = 7cents"
+  );
+
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 

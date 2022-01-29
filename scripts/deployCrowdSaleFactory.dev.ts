@@ -6,24 +6,33 @@
 //
 // THIS SCRIPT ASSUMES YOU HAVE RAN ./deployCrowdSaleFactory.dev.ts which would have
 // created a constants file which we hardcode for now
+//
+// Run this script as:
+// npm run deploy:testnet:crowdsale-factory [GUILD_TOKEN_ADDRESS] [GFX_CONSTANTS_ADDRESS] [GUILD_TOKEN_STARTING_PRICE]
+// where:
+//    GUILD_TOKEN_ADDRESS - Address of the token you want to start a crowdsale for
+//    GFX_CONSTANTS_ADDRESS - Address of internal GuildFX constants contract
+//    GUILD_TOKEN_STARTING_PRICE - Starting price in USD (8 decimals)
 
 import { ethers, network } from "hardhat";
 import { stripZeros } from "../test/helpers/test-helpers";
 import { sleep } from "./helpers/helpers";
 import { logToFile } from "./helpers/logger";
 
-/**
- * @todo dynamically load these paramaters, or store in global config file somewhere
- * currently, you need to manually find the following from ./logs/deployCrowdSaleFactory_log_xxxx
- * https://linear.app/guildfx/issue/GUI-75/generalize-dev-deployment-proceedure
- *      1. GuildFX Constants Contract Address
- *      2. GuildFX Gamer Token Address
- */
-const CONSTANTS_ADDRESS = "0xAF761E630B936F4892c05C1aBcfD614559AdD35e";
-const GUILD_TOKEN_ADDRESS = "0xe5faebe2dbc746a0fe99fe2924db1c6bf2ac3160";
+const DEFAULT_GFX_CONSTANTS_ADDRESS =
+  "0x1Beb201015aDa838243500b4a630d73C9665E3BF";
+const DEFAULT_GUILD_TOKEN_ADDRESS =
+  "0x39c2cf6ce66310359e1e103afa2668b34bfc2394";
 const DEFAULT_GUILD_TOKEN_STARTING_PRICE = "7000000"; // 7 USD cents
 
 const LOG_FILE_PATH = `${__dirname}/logs/deployCrowdSaleFactory_log_${Date.now()}.dev.txt`;
+
+let gfxConstants: string,
+  guildTokenAddress: string,
+  guildTokenStartingPrice: string;
+
+[guildTokenAddress, gfxConstants, guildTokenStartingPrice] =
+  process.argv.slice(2);
 
 async function main() {
   const [
@@ -47,20 +56,39 @@ async function main() {
 
 ---- Network = ${network.name} (Decimal ID = ${network.config.chainId})
 
+---- Params:
+
+     Guild Token Address         ${guildTokenAddress}
+
+     GuildFX Constants:          ${gfxConstants}
+
+     Guild Token Starting Price: ${guildTokenStartingPrice}
+
   \n`,
     LOG_FILE_PATH
   );
+
+  if (!guildTokenAddress) {
+    guildTokenAddress = DEFAULT_GUILD_TOKEN_ADDRESS;
+  }
+
+  if (!gfxConstants) {
+    gfxConstants = DEFAULT_GFX_CONSTANTS_ADDRESS;
+  }
+  if (!guildTokenStartingPrice) {
+    guildTokenStartingPrice = DEFAULT_GUILD_TOKEN_STARTING_PRICE;
+  }
+
+  logToFile("----\n", LOG_FILE_PATH);
+
   logToFile(`---- ${DEPLOYER_ADDRESS} ---> Deployer Address \n`, LOG_FILE_PATH);
   logToFile(
-    `---- ${GUILD_TOKEN_ADDRESS} ---> GuildFX Gamer Token \n`,
+    `---- ${guildTokenAddress} ---> GuildFX Gamer Token \n`,
     LOG_FILE_PATH
   );
+  logToFile(`---- ${gfxConstants} ---> GuildFX Constants \n`, LOG_FILE_PATH);
   logToFile(
-    `---- ${CONSTANTS_ADDRESS} ---> GuildFX Constants \n`,
-    LOG_FILE_PATH
-  );
-  logToFile(
-    `---- ${DEFAULT_GUILD_TOKEN_STARTING_PRICE} ---> Crowdsale Default Starting Price $USD (8 decimals) \n`,
+    `---- ${guildTokenStartingPrice} ---> Crowdsale Starting Price $USD (8 decimals) \n`,
     LOG_FILE_PATH
   );
 
@@ -68,7 +96,7 @@ async function main() {
   const CrowdSaleFactory = await ethers.getContractFactory("CrowdSaleFactory");
   const crowdSaleFactory = await CrowdSaleFactory.deploy(
     dao.address,
-    CONSTANTS_ADDRESS
+    gfxConstants
   );
   await crowdSaleFactory.deployed();
   logToFile(
@@ -77,21 +105,39 @@ async function main() {
   );
   await sleep();
 
-  // --------- Authorize Staff & Guild Owner --------- //
-  await crowdSaleFactory.connect(dao).whitelistGFXStaff(gfxStaff.address, true);
-  await crowdSaleFactory
+  // --------- Authorize GFX Staff --------- //
+  const txWhitelistGFXStaff = await crowdSaleFactory
+    .connect(dao)
+    .whitelistGFXStaff(gfxStaff.address, true);
+
+  await txWhitelistGFXStaff.wait();
+
+  logToFile(
+    `---- ${gfxStaff.address} ---> Whitelisted GuildFX staff \n`,
+    LOG_FILE_PATH
+  );
+
+  // --------- Authorize a Guild Owner --------- //
+  const txWhitelistGuildOwner = await crowdSaleFactory
     .connect(gfxStaff)
     .whitelistGuildOwner(guildDao.address, true);
+
+  await txWhitelistGuildOwner.wait();
+
+  logToFile(
+    `---- ${guildDao.address} ---> Whitelisted guild's DAO \n`,
+    LOG_FILE_PATH
+  );
 
   // --------- Create the CrowdSale --------- //
   const tx = await crowdSaleFactory
     .connect(guildDao)
     .createCrowdSale(
-      GUILD_TOKEN_ADDRESS,
+      guildTokenAddress,
       guildDao.address,
       guildDev.address,
       guildTreasury.address,
-      DEFAULT_GUILD_TOKEN_STARTING_PRICE
+      guildTokenStartingPrice
     );
 
   await tx.wait();
