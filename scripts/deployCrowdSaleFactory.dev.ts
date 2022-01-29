@@ -37,8 +37,8 @@ const addresses: IAddresses = {
   // 56: {},
   // BSC TESTNET
   97: {
-    guildTokenAddress: "0x63693bd1ba571035dde710ae2862e7f970fbe9dd",
-    gfxConstants: "0x56ae9253E0311FfdEf27Aa53c8F8318D71b43699",
+    guildTokenAddress: "0xa55f1d536a943c623b238dd452904060ba63f173",
+    gfxConstants: "0x9849721Cc9C02AE0A0D8914A8A246dAEF436e0A0",
   },
   // Rinkeby
   4: {
