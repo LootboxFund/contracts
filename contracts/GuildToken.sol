@@ -21,8 +21,6 @@ interface ICONSTANTS {
     function GUILD_FX_MINTING_FEE() external view returns (uint256);
 
     function GUILD_FX_MINTING_FEE_DECIMALS() external view returns (uint8);
-
-    function INITIAL_MINT_TO_GUILD() external view returns (uint256);
 }
 
 contract GuildToken is
@@ -99,22 +97,6 @@ contract GuildToken is
         _grantRole(GOVERNOR_ADMIN_ROLE, msg.sender); // Temporary grant the caller (most likely the guildFactory) permission to assign a governor.
 
         fxConstants = _fxConstants;
-
-        ICONSTANTS guildFXConstantsContract = ICONSTANTS(fxConstants);
-        uint256 initialMintToGuild = guildFXConstantsContract.INITIAL_MINT_TO_GUILD();
-
-        uint256 initialMintToDao = initialMintToGuild * 10**decimals(); // Sends the Guild 1000 tokens
-
-        _mint(_dao, initialMintToDao);
-        (uint256 _mintFeeAmount, uint256 _mintFeeRate, address _guildFXTreasury) = mintGuildAllocation(initialMintToDao);
-        emit MintRequestFulfilled(
-            msg.sender,
-            _dao,
-            _guildFXTreasury,
-            initialMintToDao,
-            _mintFeeRate,
-            initialMintToDao + _mintFeeAmount
-        );
     }
 
     // --------- Managing the Mints --------- //
