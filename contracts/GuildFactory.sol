@@ -9,7 +9,6 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./GuildToken.sol";
-import "./Governor.sol";
 
 interface IERC20GUILD {
     function grantRole(bytes32 role, address account) external;
@@ -31,7 +30,6 @@ interface GUILD_GOVERNOR {
 
 contract GuildFactory is Pausable, AccessControl {
     address internal immutable tokenImplementation;
-    address internal immutable governorImplementation;
 
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE"); // GuildFX DAO
     // bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE"); // GuildFX devs
@@ -47,22 +45,12 @@ contract GuildFactory is Pausable, AccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
     EnumerableSet.AddressSet private GUILD_TOKEN_PROXIES;
 
-    // Points to the governor proxies
-    using EnumerableSet for EnumerableSet.AddressSet;
-    EnumerableSet.AddressSet private GOVERNOR_PROXIES;
-
     event GuildCreated(
         address contractAddress,
         string name,
         string token,
         address dao,
         address developer,
-        address creator,
-        address guildFactory
-    );
-    event GovernorCreated(
-        address governorAddress,
-        address votingToken,
         address creator,
         address guildFactory
     );
@@ -76,7 +64,6 @@ contract GuildFactory is Pausable, AccessControl {
             "FXConstants address cannot be zero"
         );
         tokenImplementation = address(new GuildToken());
-        governorImplementation = address(new Governor());
         fxConstants = _fxConstants;
         _grantRole(DAO_ROLE, dao);
         _grantRole(GFX_STAFF_ROLE, dao);
@@ -91,7 +78,7 @@ contract GuildFactory is Pausable, AccessControl {
         public
         onlyRole(GUILD_OWNER_ROLE)
         whenNotPaused
-        returns (address _guildToken, address _guildGovernor)
+        returns (address _guildToken)
     {
         address guildToken = _createGuildToken(
             guildName,
@@ -99,17 +86,8 @@ contract GuildFactory is Pausable, AccessControl {
             guildDao,
             guildDev
         );
-
-        address guildGovernor = _createGovernor(guildToken);
-
-        // The deployer (aka the GuildFactory was granted GOVERNOR_ADMIN_ROLE)
-        // Take advantage of it here to set up the governor in the guildToken
-        // Note This will revoke the GOVERNOR_ADMIN_ROLE from the GuildFactory
-        //      rendering it un-usable!
-        IERC20GUILD token = IERC20GUILD(guildToken);
-        token.grantRole(GUILD_TOKEN_GOVERNOR_ROLE, guildGovernor); // This will also revoke this GuildFactory from having the GOVERNOR_ADMIN_ROLE
         
-        return (address(guildToken), address(guildGovernor));
+        return (address(guildToken));
     }
 
     function _createGuildToken(
@@ -147,26 +125,6 @@ contract GuildFactory is Pausable, AccessControl {
         return address(proxy);
     }
 
-    function _createGovernor(address token) internal returns (address) {
-        // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
-        ERC1967Proxy proxy = new ERC1967Proxy(
-            governorImplementation,
-            abi.encodeWithSelector(
-                // TODO: investigate if payable here will affect anything
-                Governor(payable(address(0))).initialize.selector,
-                token
-            )
-        );
-        GOVERNOR_PROXIES.add(address(proxy));
-        emit GovernorCreated(address(proxy), token, msg.sender, address(this));
-
-        // TODO: We have to transfer ownership of the governor to the guildDao, otherwise the governor will not be able to change the quorum threshold
-        // check the Governor.sol file for instances of `onlyOwner`. Right now the "owner" of the governors is this GuildFactory (but it should be the guildDao instead)
-        // proxy.transferOwnership(guildDao); // transferOwnership is part of the OZ Ownable contract (https://docs.openzeppelin.com/contracts/2.x/api/ownership#Ownable-transferOwnership-address-)
-
-        return address(proxy);
-    }
-
     function whitelistGuildOwner(address guildOwner, bool isActive)
         public
         onlyRole(GFX_STAFF_ROLE)
@@ -196,10 +154,6 @@ contract GuildFactory is Pausable, AccessControl {
     function viewGuildTokens() public view returns (bytes32[] memory) {
         // TODO investigate memory usage if GUILD_TOKEN_PROXIES can be huge
         return GUILD_TOKEN_PROXIES._inner._values;
-    }
- 
-    function viewGovernors() public view returns (bytes32[] memory) {
-        return GOVERNOR_PROXIES._inner._values;
     }
 
     // --------- Managing the Token ---------
