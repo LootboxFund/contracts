@@ -92,9 +92,9 @@ contract GuildToken is
 
         _grantRole(DAO_ROLE, _dao);
         _grantRole(DEVELOPER_ROLE, _developer);
-
+        
+        _grantRole(GOVERNOR_ADMIN_ROLE, _dao); // The Guild's DAO_ROLE will be able to manage a governor. For example, they can create a crowdsale for their token.
         _setRoleAdmin(GOVERNOR_ROLE, GOVERNOR_ADMIN_ROLE); // Changes the GOVERNOR_ROLE's admin role from DEFAULT_ADMIN_ROLE to GOVERNOR_ADMIN_ROLE
-        _grantRole(GOVERNOR_ADMIN_ROLE, msg.sender); // Temporary grant the caller (most likely the guildFactory) permission to assign a governor.
 
         fxConstants = _fxConstants;
     }
