@@ -32,7 +32,6 @@ import {
   Constants__factory,
 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { BigNumber } from "ethers";
 
 describe("📦 GUILD token", async () => {
   let deployer: SignerWithAddress;
@@ -123,9 +122,9 @@ describe("📦 GUILD token", async () => {
     expect(await token.hasRole(DAO_ROLE, dao.address)).to.be.equal(true);
   });
 
-  it("grants the sender the GOVERNOR_ADMIN_ROLE", async () => {
+  it("grants the dao the GOVERNOR_ADMIN_ROLE", async () => {
     expect(
-      await token.hasRole(GOVERNOR_ADMIN_ROLE, deployer.address)
+      await token.hasRole(GOVERNOR_ADMIN_ROLE, dao.address)
     ).to.be.equal(true);
   });
 
@@ -136,8 +135,19 @@ describe("📦 GUILD token", async () => {
     );
   });
 
-  it("does not grant the dao the GOVERNOR_ROLE", async () => {
-    expect(await token.hasRole(GOVERNOR_ROLE, dao.address)).to.be.equal(false);
+  it("does not grant the dao the GOVERNOR_ROLE to the dao", async () => {
+    expect(
+      await token.hasRole(GOVERNOR_ROLE, deployer.address)
+    ).to.be.equal(false);
+    expect(await token.hasRole(GOVERNOR_ROLE, dao.address)).to.be.equal(
+      false
+    );
+    expect(
+      await token.hasRole(GOVERNOR_ROLE, developer.address)
+    ).to.be.equal(false);
+    expect(
+      await token.hasRole(GOVERNOR_ROLE, purchaser.address)
+    ).to.be.equal(false);
   });
 
   it("grants the developer the DEVELOPER_ROLE", async () => {
@@ -185,8 +195,8 @@ describe("📦 GUILD token", async () => {
       }
     });
 
-    it("reverts for all users except the deployer when assigning the GOVERNOR_ROLE", async () => {
-      const users = [dao, treasury, developer, purchaser];
+    it("reverts for all users except the dao when assigning the GOVERNOR_ROLE", async () => {
+      const users = [deployer, treasury, developer, purchaser];
       for (let user of users) {
         await expect(
           token.connect(user).grantRole(GOVERNOR_ROLE, purchaser.address)
@@ -194,18 +204,19 @@ describe("📦 GUILD token", async () => {
           generatePermissionRevokeMessage(user.address, GOVERNOR_ADMIN_ROLE)
         );
       }
+      // Make sure dao has the role
       await expect(
-        token.connect(deployer).grantRole(GOVERNOR_ROLE, purchaser.address)
+        token.connect(dao).grantRole(GOVERNOR_ROLE, purchaser.address)
       ).to.not.be.reverted;
     });
 
-    describe("when the deployer grants the GOVERNOR_ROLE to an address", () => {
+    describe("when the dao grants the GOVERNOR_ROLE to an address", () => {
       let governor: SignerWithAddress;
 
       beforeEach(async () => {
         governor = purchaser;
         await token
-          .connect(deployer)
+          .connect(dao)
           .grantRole(GOVERNOR_ROLE, governor.address);
       });
       it("grants the address the GOVERNOR_ROLE", async () => {
@@ -318,7 +329,7 @@ describe("📦 GUILD token", async () => {
       beforeEach(async () => {
         governor = purchaser;
         await token
-          .connect(deployer)
+          .connect(dao)
           .grantRole(GOVERNOR_ROLE, governor.address);
       });
 
@@ -497,7 +508,7 @@ describe("📦 GUILD token", async () => {
     let governor: SignerWithAddress;
     beforeEach(async () => {
       governor = purchaser;
-      await token.connect(deployer).grantRole(GOVERNOR_ROLE, governor.address);
+      await token.connect(dao).grantRole(GOVERNOR_ROLE, governor.address);
     });
 
     it("returns an empty array when no mints have been whitelisted", async () => {
@@ -607,13 +618,14 @@ describe("📦 GUILD token", async () => {
 
     describe("when called by a whitelisted minter address", () => {
       let whitelistedAddress: SignerWithAddress;
+      let governor: SignerWithAddress;
 
       beforeEach(async () => {
-        const governor = dao;
-        whitelistedAddress = deployer;
+        governor = purchaser;
+        whitelistedAddress = treasury;
 
         await token
-          .connect(deployer)
+          .connect(dao)
           .grantRole(GOVERNOR_ROLE, governor.address);
         await token
           .connect(governor)
@@ -629,7 +641,7 @@ describe("📦 GUILD token", async () => {
 
       it("reverts with permission error if the address was delisted", async () => {
         await token
-          .connect(dao)
+          .connect(governor)
           .whitelistMint(whitelistedAddress.address, false);
         const promise = token
           .connect(whitelistedAddress)
@@ -737,7 +749,6 @@ describe("📦 GUILD token", async () => {
         const mintAmount = ethers.utils.parseUnits("980", 18);
         const calculatedMintFee = ethers.utils.parseUnits("20", 18); // 2% mint fee
         const initialTotalSupply = await token.totalSupply();
-        expect(initialTotalSupply).to.be.equal(ethers.utils.parseEther("1000"));
         await token
           .connect(whitelistedAddress)
           .mintRequest(treasury.address, mintAmount);
@@ -797,7 +808,7 @@ describe("📦 GUILD token", async () => {
         await expect(promise)
           .to.emit(token, "MintRequestFulfilled")
           .withArgs(
-            deployer.address,
+            whitelistedAddress.address,
             treasury.address,
             constantsTreasuryAddress,
             addAmount,
@@ -819,9 +830,9 @@ describe("📦 GUILD token", async () => {
 
         await token
           .connect(whitelistedAddress)
-          .mintRequest(whitelistedAddress.address, amount);
+          .mintRequest(purchaser.address, amount);
 
-        expect(await token.balanceOf(whitelistedAddress.address)).eq(amount);
+        expect(await token.balanceOf(purchaser.address)).eq(amount);
         const treasuryBalance = await token.balanceOf(
           await constants.TREASURY()
         );
