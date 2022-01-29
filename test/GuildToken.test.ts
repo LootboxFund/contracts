@@ -20,7 +20,6 @@ import {
   DEFAULT_ADMIN_ROLE,
   DEVELOPER_ROLE,
   GOVERNOR_ROLE,
-  GOVERNOR_ADMIN_ROLE,
   generatePermissionRevokeMessage,
   MINTER_ROLE,
   padAddressTo32Bytes,
@@ -122,32 +121,21 @@ describe("📦 GUILD token", async () => {
     expect(await token.hasRole(DAO_ROLE, dao.address)).to.be.equal(true);
   });
 
-  it("grants the dao the GOVERNOR_ADMIN_ROLE", async () => {
-    expect(
-      await token.hasRole(GOVERNOR_ADMIN_ROLE, dao.address)
-    ).to.be.equal(true);
+  it("sets the GOVERNOR_ROLE as the admin role for the GOVERNOR_ROLE", async () => {
+    expect(await token.getRoleAdmin(GOVERNOR_ROLE)).to.eq(GOVERNOR_ROLE);
   });
 
-  it("sets the GOVERNOR_ADMIN_ROLE as the admin role for the GOVERNOR_ROLE", async () => {
-    expect(await token.getRoleAdmin(GOVERNOR_ROLE)).to.eq(GOVERNOR_ADMIN_ROLE);
-    expect(await token.getRoleAdmin(GOVERNOR_ADMIN_ROLE)).to.eq(
-      DEFAULT_ADMIN_ROLE
-    );
-  });
-
-  it("does not grant the dao the GOVERNOR_ROLE to the dao", async () => {
-    expect(
-      await token.hasRole(GOVERNOR_ROLE, deployer.address)
-    ).to.be.equal(false);
-    expect(await token.hasRole(GOVERNOR_ROLE, dao.address)).to.be.equal(
+  it("grants the dao the GOVERNOR_ROLE", async () => {
+    expect(await token.hasRole(GOVERNOR_ROLE, deployer.address)).to.be.equal(
       false
     );
-    expect(
-      await token.hasRole(GOVERNOR_ROLE, developer.address)
-    ).to.be.equal(false);
-    expect(
-      await token.hasRole(GOVERNOR_ROLE, purchaser.address)
-    ).to.be.equal(false);
+    expect(await token.hasRole(GOVERNOR_ROLE, dao.address)).to.be.equal(true);
+    expect(await token.hasRole(GOVERNOR_ROLE, developer.address)).to.be.equal(
+      false
+    );
+    expect(await token.hasRole(GOVERNOR_ROLE, purchaser.address)).to.be.equal(
+      false
+    );
   });
 
   it("grants the developer the DEVELOPER_ROLE", async () => {
@@ -174,13 +162,7 @@ describe("📦 GUILD token", async () => {
   describe("🗳  grantRole()", () => {
     it("reverts for all users when assigning a role other than GOVERNOR_ROLE", async () => {
       const users = [dao, developer, treasury, purchaser, deployer];
-      const roles = [
-        DEFAULT_ADMIN_ROLE,
-        GOVERNOR_ADMIN_ROLE,
-        MINTER_ROLE,
-        DAO_ROLE,
-        DEVELOPER_ROLE,
-      ];
+      const roles = [DEFAULT_ADMIN_ROLE, MINTER_ROLE, DAO_ROLE, DEVELOPER_ROLE];
       // TODO: Find a way to break this down with a it.each()()
       // No one can call this function
       for (let user of users) {
@@ -201,7 +183,7 @@ describe("📦 GUILD token", async () => {
         await expect(
           token.connect(user).grantRole(GOVERNOR_ROLE, purchaser.address)
         ).to.be.revertedWith(
-          generatePermissionRevokeMessage(user.address, GOVERNOR_ADMIN_ROLE)
+          generatePermissionRevokeMessage(user.address, GOVERNOR_ROLE)
         );
       }
       // Make sure dao has the role
@@ -215,29 +197,26 @@ describe("📦 GUILD token", async () => {
 
       beforeEach(async () => {
         governor = purchaser;
-        await token
-          .connect(dao)
-          .grantRole(GOVERNOR_ROLE, governor.address);
+        await token.connect(dao).grantRole(GOVERNOR_ROLE, governor.address);
       });
       it("grants the address the GOVERNOR_ROLE", async () => {
         expect(await token.hasRole(GOVERNOR_ROLE, governor.address)).to.be.true;
       });
-      it("revokes the GOVERNOR_ADMIN_ROLE from the deployer", async () => {
-        expect(await token.hasRole(GOVERNOR_ADMIN_ROLE, deployer.address)).to.be
-          .false;
+      it("revokes the GOVERNOR_ROLE from the dao", async () => {
+        expect(await token.hasRole(GOVERNOR_ROLE, dao.address)).to.be.false;
       });
-      it("revokes on subsequent calls with GOVERNOR_ADMIN_ROLE access control error", async () => {
+      it("revokes on subsequent calls with GOVERNOR_ROLE access control error when called by the dao", async () => {
         await expect(
-          token.connect(deployer).grantRole(GOVERNOR_ROLE, treasury.address)
+          token.connect(dao).grantRole(GOVERNOR_ROLE, treasury.address)
         ).to.be.revertedWith(
-          generatePermissionRevokeMessage(deployer.address, GOVERNOR_ADMIN_ROLE)
+          generatePermissionRevokeMessage(dao.address, GOVERNOR_ROLE)
         );
+      });
+      it("does not revoke when called by the new governor", async () => {
         // Might as well make sure the whitelisted address can't call it either:
         await expect(
           token.connect(governor).grantRole(GOVERNOR_ROLE, treasury.address)
-        ).to.be.revertedWith(
-          generatePermissionRevokeMessage(governor.address, GOVERNOR_ADMIN_ROLE)
-        );
+        ).to.not.be.reverted;
       });
     });
   });
@@ -311,9 +290,9 @@ describe("📦 GUILD token", async () => {
   });
 
   describe("🗳  whitelistMint()", () => {
-    it("reverts with access control error when called by: deployer, dao, treasury, developer, purchaser", async () => {
+    it("reverts with access control error when called by: deployer, treasury, developer, purchaser", async () => {
       // No-one should have GOVERNOR_ROLE
-      const users = [deployer, dao, treasury, developer, purchaser];
+      const users = [deployer, treasury, developer, purchaser];
       for (let caller of users) {
         await expect(
           token.connect(caller).whitelistMint(purchaser.address, true)
@@ -323,14 +302,18 @@ describe("📦 GUILD token", async () => {
       }
     });
 
+    it("should not revert when called by the dao", async () => {
+      // No-one should have GOVERNOR_ROLE
+      await expect(token.connect(dao).whitelistMint(purchaser.address, true)).to
+        .not.be.reverted;
+    });
+
     describe("given that the governor has GOVERNOR_ROLE", () => {
       let governor: SignerWithAddress;
 
       beforeEach(async () => {
         governor = purchaser;
-        await token
-          .connect(dao)
-          .grantRole(GOVERNOR_ROLE, governor.address);
+        await token.connect(dao).grantRole(GOVERNOR_ROLE, governor.address);
       });
 
       it("reverts with 'Pausable: paused' error when contract is paused", async () => {
@@ -624,9 +607,7 @@ describe("📦 GUILD token", async () => {
         governor = purchaser;
         whitelistedAddress = treasury;
 
-        await token
-          .connect(dao)
-          .grantRole(GOVERNOR_ROLE, governor.address);
+        await token.connect(dao).grantRole(GOVERNOR_ROLE, governor.address);
         await token
           .connect(governor)
           .whitelistMint(whitelistedAddress.address, true);
@@ -735,8 +716,7 @@ describe("📦 GUILD token", async () => {
 
       it("sends the GuildFXTreasury the correct number of tokens for the 2% fee", async () => {
         const mintAmount = ethers.utils.parseEther("98");
-        const [mintFeeAmount] =
-          await token.calculateGuildFXMintFee(mintAmount);
+        const [mintFeeAmount] = await token.calculateGuildFXMintFee(mintAmount);
         await token
           .connect(whitelistedAddress)
           .mintRequest(purchaser.address, mintAmount);
@@ -836,9 +816,7 @@ describe("📦 GUILD token", async () => {
         const treasuryBalance = await token.balanceOf(
           await constants.TREASURY()
         );
-        expect(treasuryBalance.toString()).eq(
-          mintFeeAmount
-        );
+        expect(treasuryBalance.toString()).eq(mintFeeAmount);
       });
 
       it("reverts with 'ERC20Votes: total supply risks overflowing votes' error if more that 2^224 -1 tokens are minted", async () => {
