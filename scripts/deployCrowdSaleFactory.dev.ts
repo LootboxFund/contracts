@@ -8,6 +8,7 @@
 // created a constants file which we hardcode for now
 
 import { ethers, network } from "hardhat";
+import { stripZeros } from "../test/helpers/test-helpers";
 import { sleep } from "./helpers/helpers";
 import { logToFile } from "./helpers/logger";
 
@@ -94,7 +95,16 @@ async function main() {
     );
 
   await tx.wait();
-  // TODO Manually you will need to .whitelistMint() via the defender UI Voting Mechanism
+  // TODO Manually you will need to .whitelistMint() via the defender UI + multisig
+
+  const [crowdsaleAddress] = (await crowdSaleFactory.viewCrowdSales()).map(
+    stripZeros
+  );
+
+  logToFile(
+    `---- ${crowdsaleAddress} ---> Crowsale Contract Address\n`,
+    LOG_FILE_PATH
+  );
 }
 
 // We recommend this pattern to be able to use async/await everywhere
