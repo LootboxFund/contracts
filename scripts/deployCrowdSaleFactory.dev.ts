@@ -28,7 +28,9 @@ const DEFAULT_GUILD_TOKEN_ADDRESS =
   "0x63693bd1ba571035dde710ae2862e7f970fbe9dd";
 const DEFAULT_GUILD_TOKEN_STARTING_PRICE = "7000000"; // 7 USD cents
 
-const LOG_FILE_PATH = `${__dirname}/logs/deployCrowdSaleFactory_log_${Date.now()}.dev.txt`;
+const LOG_FILE_PATH = `${__dirname}/logs/${network.name}_${
+  network.config.chainId
+}-deployCrowdSaleFactory_log_${Date.now()}.dev.txt`;
 
 async function main() {
   let gfxConstants: string,

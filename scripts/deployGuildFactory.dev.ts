@@ -28,7 +28,9 @@ const sleep = async (ms = 1000) => {
   });
 };
 
-const LOG_FILE_PATH = `${__dirname}/logs/deployGuildFactory_log_${Date.now()}.dev.txt`;
+const LOG_FILE_PATH = `${__dirname}/logs/${network.name}_${
+  network.config.chainId
+}-deployGuildFactory_log_${Date.now()}.dev.txt`;
 
 const ENVIRONMENT = "development";
 
