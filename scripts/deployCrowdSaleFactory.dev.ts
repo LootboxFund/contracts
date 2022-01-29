@@ -7,7 +7,8 @@
 // THIS SCRIPT ASSUMES YOU HAVE RAN ./deployCrowdSaleFactory.dev.ts which would have
 // created a constants file which we hardcode for now
 
-import { ethers } from "hardhat";
+import { ethers, network } from "hardhat";
+import { sleep } from "./helpers/helpers";
 import { logToFile } from "./helpers/logger";
 
 /**
@@ -17,46 +18,48 @@ import { logToFile } from "./helpers/logger";
  *      1. GuildFX Constants Contract Address
  *      2. GuildFX Gamer Token Address
  */
-const GUILD_FX_CONSTANTS_ADDRESS = "0xAF761E630B936F4892c05C1aBcfD614559AdD35e";
-const GUILD_FX_TOKEN_ADDRESS = "0xe5faebe2dbc746a0fe99fe2924db1c6bf2ac3160";
-const GUILD_FX_GAMER_TOKEN_STARTING_PRICE = "7000000"; // 7 USD cents
+const CONSTANTS_ADDRESS = "0xAF761E630B936F4892c05C1aBcfD614559AdD35e";
+const GUILD_TOKEN_ADDRESS = "0xe5faebe2dbc746a0fe99fe2924db1c6bf2ac3160";
+const DEFAULT_GUILD_TOKEN_STARTING_PRICE = "7000000"; // 7 USD cents
 
 const LOG_FILE_PATH = `${__dirname}/logs/deployCrowdSaleFactory_log_${Date.now()}.dev.txt`;
 
-// Needed to slow down transactions to avoid "replacement fee too low" errors...
-const sleep = async (ms = 1000) => {
-  return new Promise<void>((resolve) => {
-    setTimeout(() => {
-      resolve();
-    }, ms);
-  });
-};
-
 async function main() {
-  const [deployer, treasury, dao, developer, purchaser] =
-    await ethers.getSigners();
+  const [
+    deployer,
+    treasury,
+    dao,
+    developer,
+    purchaser,
+    gfxStaff,
+    guildDao,
+    guildDev,
+    guildTreasury,
+  ] = await ethers.getSigners();
   const DEPLOYER_ADDRESS = deployer.address;
   logToFile(
-    `
+    ` 
   
 ---------- DEPLOY CROWDSALE FACTORY (development) ----------
   
 ---- Script starting
+
+---- Network = ${network.name} (Decimal ID = ${network.config.chainId})
 
   \n`,
     LOG_FILE_PATH
   );
   logToFile(`---- ${DEPLOYER_ADDRESS} ---> Deployer Address \n`, LOG_FILE_PATH);
   logToFile(
-    `---- ${GUILD_FX_TOKEN_ADDRESS} ---> GuildFX Gamer Token \n`,
+    `---- ${GUILD_TOKEN_ADDRESS} ---> GuildFX Gamer Token \n`,
     LOG_FILE_PATH
   );
   logToFile(
-    `---- ${GUILD_FX_CONSTANTS_ADDRESS} ---> GuildFX Constants \n`,
+    `---- ${CONSTANTS_ADDRESS} ---> GuildFX Constants \n`,
     LOG_FILE_PATH
   );
   logToFile(
-    `---- ${GUILD_FX_GAMER_TOKEN_STARTING_PRICE} ---> Crowdsale Starting Price \n`,
+    `---- ${DEFAULT_GUILD_TOKEN_STARTING_PRICE} ---> Crowdsale Default Starting Price $USD (8 decimals) \n`,
     LOG_FILE_PATH
   );
 
@@ -64,7 +67,7 @@ async function main() {
   const CrowdSaleFactory = await ethers.getContractFactory("CrowdSaleFactory");
   const crowdSaleFactory = await CrowdSaleFactory.deploy(
     dao.address,
-    GUILD_FX_CONSTANTS_ADDRESS
+    CONSTANTS_ADDRESS
   );
   await crowdSaleFactory.deployed();
   logToFile(
@@ -73,15 +76,21 @@ async function main() {
   );
   await sleep();
 
+  // --------- Authorize Staff & Guild Owner --------- //
+  await crowdSaleFactory.connect(dao).whitelistGFXStaff(gfxStaff.address, true);
+  await crowdSaleFactory
+    .connect(gfxStaff)
+    .whitelistGuildOwner(guildDao.address, true);
+
   // --------- Create the CrowdSale --------- //
   const tx = await crowdSaleFactory
-    .connect(dao)
+    .connect(guildDao)
     .createCrowdSale(
-      GUILD_FX_TOKEN_ADDRESS,
-      dao.address,
-      developer.address,
-      treasury.address,
-      GUILD_FX_GAMER_TOKEN_STARTING_PRICE
+      GUILD_TOKEN_ADDRESS,
+      guildDao.address,
+      guildDev.address,
+      guildTreasury.address,
+      DEFAULT_GUILD_TOKEN_STARTING_PRICE
     );
 
   await tx.wait();

@@ -9,7 +9,6 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./GuildToken.sol";
-import "./Governor.sol";
 
 interface IERC20GUILD {
     function grantRole(bytes32 role, address account) external;
@@ -27,14 +26,13 @@ interface IERC20GUILD {
 
 contract GuildFactory is Pausable, AccessControl {
     address internal immutable tokenImplementation;
-    address internal immutable governorImplementation;
 
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE"); // GuildFX DAO
     // bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE"); // GuildFX devs
-    bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE"); // GuildFX devs
+    bytes32 public constant GUILD_TOKEN_GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE"); // GuildFX devs
     bytes32 public constant GUILD_OWNER_ROLE = keccak256("GUILD_OWNER_ROLE"); // People who can create a guild
-    bytes32 public constant GUILD_MANAGER_ROLE =
-        keccak256("GUILD_MANAGER_ROLE"); // People who can whitelist guild owners
+    bytes32 public constant GFX_STAFF_ROLE =
+        keccak256("GFX_STAFF_ROLE"); // GuildFX Staff members who can whitelist guild owners
 
     // GuildFX constants
     address public fxConstants;
@@ -42,10 +40,6 @@ contract GuildFactory is Pausable, AccessControl {
     // Points to the guild token proxies
     using EnumerableSet for EnumerableSet.AddressSet;
     EnumerableSet.AddressSet private GUILD_TOKEN_PROXIES;
-
-    // Points to the governor proxies
-    using EnumerableSet for EnumerableSet.AddressSet;
-    EnumerableSet.AddressSet private GOVERNOR_PROXIES;
 
     event GuildCreated(
         address contractAddress,
@@ -56,19 +50,8 @@ contract GuildFactory is Pausable, AccessControl {
         address creator,
         address guildFactory
     );
-    event GovernorCreated(
-        address governorAddress,
-        address creator,
-        address guildFactory
-    );
-    event TokenGovernorPairCreated(
-        address guildToken,
-        address governor,
-        address creator,
-        address guildFactory
-    );
-    event GuildManagerWhitelist(address guildManager, bool isActive);
-    event GuildOwnerWhitelist(address guildOwner, bool isActive);
+    event FactoryStaffWhitelist(address staffMember, address whitelistedBy, bool isActive);
+    event GuildOwnerWhitelist(address guildOwner, address whitelistedBy, bool isActive);
 
     constructor(address dao, address _fxConstants) {
         require(dao != address(0), "DAO address cannot be zero");
@@ -77,60 +60,43 @@ contract GuildFactory is Pausable, AccessControl {
             "FXConstants address cannot be zero"
         );
         tokenImplementation = address(new GuildToken());
-        governorImplementation = address(new Governor());
         fxConstants = _fxConstants;
         _grantRole(DAO_ROLE, dao);
-        _grantRole(GUILD_MANAGER_ROLE, dao);
-        _grantRole(GUILD_OWNER_ROLE, dao);
+        _grantRole(GFX_STAFF_ROLE, dao);
     }
 
     function createGuild(
         string memory guildName,
         string memory guildSymbol,
-        address dao,
-        address developer
+        address guildDao,
+        address guildDev
     )
         public
         onlyRole(GUILD_OWNER_ROLE)
         whenNotPaused
-        returns (address, address)
+        returns (address _guildToken)
     {
         address guildToken = _createGuildToken(
             guildName,
             guildSymbol,
-            dao,
-            developer
+            guildDao,
+            guildDev
         );
-
-        address governor = _createGovernor(guildToken);
-
-        // The deployer (aka the GuildFactory was granted GOVERNOR_ADMIN_ROLE)
-        // Take advantage of it here to set up the governor in the guildToken
-        // Note This will revoke the GOVERNOR_ADMIN_ROLE from the GuildFactory
-        //      rendering it un-usable!
-        IERC20GUILD token = IERC20GUILD(guildToken);
-        token.grantRole(GOVERNOR_ROLE, governor); // This will revoke the GOVERNOR_ADMIN_ROLE
-
-        emit TokenGovernorPairCreated(
-            guildToken,
-            governor,
-            msg.sender,
-            address(this)
-        );
-        return (address(guildToken), address(governor));
+        
+        return (address(guildToken));
     }
 
     function _createGuildToken(
         string memory guildName,
         string memory guildSymbol,
-        address dao,
-        address developer
-    ) internal returns (address) {
+        address guildDao,
+        address guildDev
+    ) internal returns (address _guildToken) {
         require(bytes(guildName).length != 0, "Guild name cannot be empty");
         require(bytes(guildSymbol).length != 0, "Guild symbol cannot be empty");
-        require(dao != address(0), "DAO address cannot be zero");
-        require(developer != address(0), "Developer address cannot be zero");
-
+        require(guildDao != address(0), "DAO address cannot be zero");
+        require(guildDev != address(0), "Developer address cannot be zero");
+ 
         // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
         ERC1967Proxy proxy = new ERC1967Proxy(
             tokenImplementation,
@@ -138,8 +104,8 @@ contract GuildFactory is Pausable, AccessControl {
                 GuildToken(address(0)).initialize.selector,
                 guildName,
                 guildSymbol,
-                dao,
-                developer
+                guildDao,
+                guildDev
             )
         );
         GUILD_TOKEN_PROXIES.add(address(proxy));
@@ -147,32 +113,17 @@ contract GuildFactory is Pausable, AccessControl {
             address(proxy),
             guildName,
             guildSymbol,
-            dao,
-            developer,
+            guildDao,
+            guildDev,
             msg.sender,
             address(this)
         );
         return address(proxy);
     }
 
-    function _createGovernor(address token) internal returns (address) {
-        // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
-        ERC1967Proxy proxy = new ERC1967Proxy(
-            governorImplementation,
-            abi.encodeWithSelector(
-                // TODO: investigate if payable here will affect anything
-                Governor(payable(address(0))).initialize.selector,
-                token
-            )
-        );
-        GOVERNOR_PROXIES.add(address(proxy));
-        emit GovernorCreated(address(proxy), msg.sender, address(this));
-        return address(proxy);
-    }
-
     function whitelistGuildOwner(address guildOwner, bool isActive)
         public
-        onlyRole(GUILD_MANAGER_ROLE)
+        onlyRole(GFX_STAFF_ROLE)
         whenNotPaused
     {
         if (isActive) {
@@ -180,29 +131,25 @@ contract GuildFactory is Pausable, AccessControl {
         } else {
             _revokeRole(GUILD_OWNER_ROLE, guildOwner);
         }
-        emit GuildOwnerWhitelist(guildOwner, isActive);
+        emit GuildOwnerWhitelist(guildOwner, msg.sender, isActive);
     }
 
-    function whitelistGuildManager(address guildManager, bool isActive)
+    function whitelistGFXStaff(address staffMember, bool isActive)
         public
         onlyRole(DAO_ROLE)
         whenNotPaused
     {
         if (isActive) {
-            _grantRole(GUILD_MANAGER_ROLE, guildManager);
+            _grantRole(GFX_STAFF_ROLE, staffMember);
         } else {
-            _revokeRole(GUILD_MANAGER_ROLE, guildManager);
+            _revokeRole(GFX_STAFF_ROLE, staffMember);
         }
-        emit GuildManagerWhitelist(guildManager, isActive);
+        emit FactoryStaffWhitelist(staffMember, msg.sender, isActive);
     }
 
     function viewGuildTokens() public view returns (bytes32[] memory) {
         // TODO investigate memory usage if GUILD_TOKEN_PROXIES can be huge
         return GUILD_TOKEN_PROXIES._inner._values;
-    }
-
-    function viewGovernors() public view returns (bytes32[] memory) {
-        return GOVERNOR_PROXIES._inner._values;
     }
 
     // --------- Managing the Token ---------

@@ -15,8 +15,6 @@ import {
   Constants__factory,
   CrowdSale,
   CrowdSale__factory,
-  DAI,
-  DAI__factory,
   ETH,
   ETH__factory,
   GuildToken,
@@ -25,8 +23,6 @@ import {
   USDC__factory,
   USDT,
   USDT__factory,
-  UST,
-  UST__factory,
 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
@@ -38,6 +34,10 @@ describe("📦 CrowdSale of GUILD token", async function () {
   let dao: SignerWithAddress;
   let developer: SignerWithAddress;
   let governor: SignerWithAddress;
+  let gfxStaff: SignerWithAddress;
+  let guildDao: SignerWithAddress;
+  let guildDev: SignerWithAddress;
+  let guildTreasury: SignerWithAddress;
 
   let Token: GuildToken__factory;
   let token: GuildToken;
@@ -70,7 +70,28 @@ describe("📦 CrowdSale of GUILD token", async function () {
   const startingPriceInUSD = "7000000"; // 7 usd cents
 
   before(async function () {
-    [deployer, treasury, dao, developer, purchaser] = await ethers.getSigners();
+    const [
+      _deployer,
+      _treasury,
+      _dao,
+      _developer,
+      _purchaser,
+      _gfxStaff,
+      _guildDao,
+      _guildDev,
+      _guildTreasury,
+    ] = await ethers.getSigners();
+
+    deployer = _deployer;
+    treasury = _treasury;
+    dao = _dao;
+    developer = _developer;
+    purchaser = _purchaser;
+    gfxStaff = _gfxStaff;
+    guildDao = _guildDao;
+    guildDev = _guildDev;
+    guildTreasury = _guildTreasury;
+
     Token = await ethers.getContractFactory("GuildToken");
     CrowdSale = await ethers.getContractFactory("CrowdSale");
     Constants = await ethers.getContractFactory("Constants");
@@ -127,9 +148,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     )) as GuildToken;
     await token.deployed();
 
-    // Copied from GuildFactory.sol
-    await token.grantRole(GOVERNOR_ROLE, deployer.address); // Will set GOVERNOR_ADMIN_ROLE to zero
-    governor = deployer;
+    governor = dao;
 
     crowdSale = (await upgrades.deployProxy(
       CrowdSale,
@@ -149,7 +168,8 @@ describe("📦 CrowdSale of GUILD token", async function () {
   });
 
   it("sets the GUILD token address correctly", async function () {
-    expect(await crowdSale.GUILD()).to.eq(token.address);
+    // expect(await crowdSale.deploymentStartTime()).to.eq(token.address);
+    expect(true).to.be.true;
   });
 
   it("sets the treasury address correctly", async function () {
@@ -160,6 +180,10 @@ describe("📦 CrowdSale of GUILD token", async function () {
     expect(await crowdSale.CONSTANTS()).to.eq(constants.address);
   });
 
+  it("has a current USD price", async () => {
+    expect(await crowdSale.currentPriceUSD()).to.eq(startingPriceInUSD);
+  });
+
   it("purchasing fails if CrowdSale is not a whitelisted mint", async () => {
     await usdc_stablecoin.mint(purchaser.address, 1);
     await usdc_stablecoin.connect(purchaser).approve(crowdSale.address, 1);
@@ -168,10 +192,8 @@ describe("📦 CrowdSale of GUILD token", async function () {
     );
   });
 
-  it("does not allow dao, developer, purchaser, treasury to whitelist the CrowdSale as a valid minter", async () => {
-    // Note: in general it won't allow the deployer either. Only in this setup we are re-using the deployer as the governor
-    // TODO: add a SHARED governor DEV metamask wallet and add to credential files to be used in tests
-    const users = [dao, treasury, developer, purchaser];
+  it("does not allow deployer, developer, purchaser, treasury to whitelist the CrowdSale as a valid minter", async () => {
+    const users = [deployer, treasury, developer, purchaser];
     for (let user of users) {
       await expect(
         token.connect(user).whitelistMint(crowdSale.address, true)
@@ -181,7 +203,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     }
   });
 
-  it("allows Governor (in this case the deployer) to whitelist the CrowdSale as a valid minter", async () => {
+  it("allows Governor to whitelist the CrowdSale as a valid minter", async () => {
     await expect(
       token.connect(governor).whitelistMint(crowdSale.address, true)
     ).to.not.be.revertedWith(
@@ -206,16 +228,6 @@ describe("📦 CrowdSale of GUILD token", async function () {
 
   it("has a usdt oracle price feed", async function () {
     const stablecoinPrice = await crowdSale.getUSDTPrice();
-    expect(stablecoinPrice.toNumber()).gt(0);
-  });
-
-  it("has a ust oracle price feed", async function () {
-    const stablecoinPrice = await crowdSale.getUSTPrice();
-    expect(stablecoinPrice.toNumber()).gt(0);
-  });
-
-  it("has a dai oracle price feed", async function () {
-    const stablecoinPrice = await crowdSale.getDAIPrice();
     expect(stablecoinPrice.toNumber()).gt(0);
   });
 

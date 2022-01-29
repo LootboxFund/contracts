@@ -1,6 +1,6 @@
 import { logToFile } from "./logger";
 import { filterMap, removeUndefined } from "./tsUtil";
-const { Storage } = require("@google-cloud/storage");
+import { Storage } from "@google-cloud/storage";
 import {
   ChainIDHex,
   buildTokenMoldCDNRoute,
@@ -10,10 +10,7 @@ import {
   SemanticVersion,
 } from "@guildfx/helpers";
 
-const BUCKET_NAME =
-  process.env.NODE_ENV === "production"
-    ? undefined
-    : "guildfx-exchange.appspot.com";
+const BUCKET_NAME = "guildfx-exchange.appspot.com";
 
 const storage = new Storage();
 

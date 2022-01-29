@@ -6,8 +6,6 @@ import {
   GuildToken__factory,
   Constants,
   Constants__factory,
-  Governor__factory,
-  Governor,
 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
@@ -15,12 +13,11 @@ import { ContractTransaction } from "ethers";
 import {
   DAO_ROLE,
   DEVELOPER_ROLE,
-  GUILD_MANAGER_ROLE,
+  GFX_STAFF_ROLE,
   GUILD_OWNER_ROLE,
   generatePermissionRevokeMessage,
   stripZeros,
-  GOVERNOR_ADMIN_ROLE,
-  DEFAULT_ADMIN_ROLE,
+  GOVERNOR_ROLE,
 } from "./helpers/test-helpers";
 
 describe("📦 GuildFactory", () => {
@@ -29,6 +26,10 @@ describe("📦 GuildFactory", () => {
   let dao: SignerWithAddress;
   let developer: SignerWithAddress;
   let purchaser: SignerWithAddress;
+  let gfxStaff: SignerWithAddress;
+  let guildDao: SignerWithAddress;
+  let guildDev: SignerWithAddress;
+  let guildTreasury: SignerWithAddress;
 
   let GuildFactory: GuildFactory__factory;
   let guildFactory: GuildFactory;
@@ -41,7 +42,27 @@ describe("📦 GuildFactory", () => {
   });
 
   beforeEach(async () => {
-    [deployer, treasury, dao, developer, purchaser] = await ethers.getSigners();
+    const [
+      _deployer,
+      _treasury,
+      _dao,
+      _developer,
+      _purchaser,
+      _gfxStaff,
+      _guildDao,
+      _guildDev,
+      _guildTreasury,
+    ] = await ethers.getSigners();
+
+    deployer = _deployer;
+    treasury = _treasury;
+    dao = _dao;
+    developer = _developer;
+    purchaser = _purchaser;
+    gfxStaff = _gfxStaff;
+    guildDao = _guildDao;
+    guildDev = _guildDev;
+    guildTreasury = _guildTreasury;
 
     constants = (await upgrades.deployProxy(
       Constants,
@@ -78,22 +99,19 @@ describe("📦 GuildFactory", () => {
     expect(await guildFactory.hasRole(DAO_ROLE, dao.address)).to.be.true;
   });
 
-  it("assignes the dao the GUILD_MANAGER_ROLE", async () => {
-    expect(await guildFactory.hasRole(GUILD_MANAGER_ROLE, dao.address)).to.be
-      .true;
+  it("assignes the dao the GFX_STAFF_ROLE", async () => {
+    expect(await guildFactory.hasRole(GFX_STAFF_ROLE, dao.address)).to.be.true;
   });
 
-  it("assignes the dao the GUILD_OWNER_ROLE", async () => {
+  it("no one has the GUILD_OWNER_ROLE upon factory init", async () => {
     expect(await guildFactory.hasRole(GUILD_OWNER_ROLE, dao.address)).to.be
-      .true;
+      .false;
   });
 
-  describe("🗳  whitelistGuildManager()", () => {
+  describe("🗳  whitelistGFXStaff()", () => {
     it("reverts with access control error when not called by DAO_ROLE", async () => {
       await expect(
-        guildFactory
-          .connect(deployer)
-          .whitelistGuildManager(purchaser.address, true)
+        guildFactory.connect(deployer).whitelistGFXStaff(gfxStaff.address, true)
       ).to.be.revertedWith(
         generatePermissionRevokeMessage(deployer.address, DAO_ROLE)
       );
@@ -102,85 +120,85 @@ describe("📦 GuildFactory", () => {
     it("reverts with pausable error when contract is paused", async () => {
       await guildFactory.connect(dao).pause();
       await expect(
-        guildFactory.connect(dao).whitelistGuildManager(purchaser.address, true)
+        guildFactory.connect(dao).whitelistGFXStaff(gfxStaff.address, true)
       ).to.be.revertedWith("Pausable: paused");
     });
 
-    it("assigns and revokes the guild manager the GUILD_MANAGER_ROLE", async () => {
+    it("assigns and revokes gfxStaff the GFX_STAFF_ROLE", async () => {
+      await guildFactory.connect(dao).whitelistGFXStaff(gfxStaff.address, true);
+      expect(await guildFactory.hasRole(GFX_STAFF_ROLE, gfxStaff.address)).to.be
+        .true;
       await guildFactory
         .connect(dao)
-        .whitelistGuildManager(purchaser.address, true);
-      expect(await guildFactory.hasRole(GUILD_MANAGER_ROLE, purchaser.address))
-        .to.be.true;
-      await guildFactory
-        .connect(dao)
-        .whitelistGuildManager(purchaser.address, false);
-      expect(await guildFactory.hasRole(GUILD_MANAGER_ROLE, purchaser.address))
-        .to.be.false;
+        .whitelistGFXStaff(gfxStaff.address, false);
+      expect(await guildFactory.hasRole(GFX_STAFF_ROLE, gfxStaff.address)).to.be
+        .false;
     });
 
-    it("emits a GuildManagerWhitelist event", async () => {
+    it("emits a FactoryStaffWhitelist event", async () => {
       const request = guildFactory
         .connect(dao)
-        .whitelistGuildManager(purchaser.address, true);
+        .whitelistGFXStaff(gfxStaff.address, true);
       expect(request)
-        .to.emit(guildFactory, "GuildManagerWhitelist")
-        .withArgs(purchaser.address, true);
+        .to.emit(guildFactory, "FactoryStaffWhitelist")
+        .withArgs(gfxStaff.address, dao.address, true);
 
       const requestRevoke = guildFactory
         .connect(dao)
-        .whitelistGuildManager(purchaser.address, false);
+        .whitelistGFXStaff(gfxStaff.address, false);
       expect(requestRevoke)
-        .to.emit(guildFactory, "GuildManagerWhitelist")
-        .withArgs(purchaser.address, false);
+        .to.emit(guildFactory, "FactoryStaffWhitelist")
+        .withArgs(gfxStaff.address, dao.address, false);
     });
   });
 
   describe("🗳  whitelistGuildOwner()", () => {
-    it("reverts with access control error when not called by GUILD_MANAGER_ROLE", async () => {
+    it("reverts with access control error when not called by GFX_STAFF_ROLE", async () => {
       await expect(
         guildFactory
           .connect(deployer)
-          .whitelistGuildOwner(purchaser.address, true)
+          .whitelistGuildOwner(guildDao.address, true)
       ).to.be.revertedWith(
-        generatePermissionRevokeMessage(deployer.address, GUILD_MANAGER_ROLE)
+        generatePermissionRevokeMessage(deployer.address, GFX_STAFF_ROLE)
       );
     });
 
     it("reverts with pausable error when contract is paused", async () => {
       await guildFactory.connect(dao).pause();
       await expect(
-        guildFactory.connect(dao).whitelistGuildOwner(purchaser.address, true)
+        guildFactory.connect(dao).whitelistGuildOwner(guildDao.address, true)
       ).to.be.revertedWith("Pausable: paused");
     });
 
-    it("assigns and revokes the guild manager the GUILD_OWNER_ROLE", async () => {
+    it("assigns and revokes the guildDao the GUILD_OWNER_ROLE", async () => {
+      await guildFactory.connect(dao).whitelistGFXStaff(gfxStaff.address, true);
       await guildFactory
-        .connect(dao)
-        .whitelistGuildOwner(purchaser.address, true);
-      expect(await guildFactory.hasRole(GUILD_OWNER_ROLE, purchaser.address)).to
+        .connect(gfxStaff)
+        .whitelistGuildOwner(guildDao.address, true);
+      expect(await guildFactory.hasRole(GUILD_OWNER_ROLE, guildDao.address)).to
         .be.true;
       await guildFactory
-        .connect(dao)
-        .whitelistGuildOwner(purchaser.address, false);
-      expect(await guildFactory.hasRole(GUILD_OWNER_ROLE, purchaser.address)).to
+        .connect(gfxStaff)
+        .whitelistGuildOwner(guildDao.address, false);
+      expect(await guildFactory.hasRole(GUILD_OWNER_ROLE, guildDao.address)).to
         .be.false;
     });
 
-    it("emits a GuildManagerWhitelist event", async () => {
+    it("emits a GuildOwnerWhitelist event", async () => {
+      await guildFactory.connect(dao).whitelistGFXStaff(gfxStaff.address, true);
       const request = guildFactory
-        .connect(dao)
-        .whitelistGuildOwner(purchaser.address, true);
+        .connect(gfxStaff)
+        .whitelistGuildOwner(guildDao.address, true);
       expect(request)
         .to.emit(guildFactory, "GuildOwnerWhitelist")
-        .withArgs(purchaser.address, true);
+        .withArgs(guildDao.address, gfxStaff.address, true);
 
       const requestRevoke = guildFactory
-        .connect(dao)
-        .whitelistGuildOwner(purchaser.address, false);
+        .connect(gfxStaff)
+        .whitelistGuildOwner(guildDao.address, false);
       expect(requestRevoke)
         .to.emit(guildFactory, "GuildOwnerWhitelist")
-        .withArgs(purchaser.address, false);
+        .withArgs(guildDao.address, gfxStaff.address, false);
     });
   });
 
@@ -236,38 +254,45 @@ describe("📦 GuildFactory", () => {
   });
 
   describe("🗳  viewGuildTokens()", () => {
+    beforeEach(async () => {
+      await guildFactory.connect(dao).whitelistGFXStaff(gfxStaff.address, true);
+      await guildFactory
+        .connect(gfxStaff)
+        .whitelistGuildOwner(guildDao.address, true);
+    });
+
     it("returns empty array when no guildTokens have been created yet", async () => {
       expect(await guildFactory.viewGuildTokens()).to.deep.eq([]);
     });
 
     it("returns the correct array length and type of guildToken proxy addresses", async () => {
-      const nTokensToMake = 5;
+      const nTokensToMake = 1;
       for (let n = 0; n < nTokensToMake; n++) {
         await guildFactory
-          .connect(dao)
+          .connect(guildDao)
           .createGuild(
             "TestGuild" + n.toString(),
             "GUILDT" + n.toString(),
-            dao.address,
-            developer.address
+            guildDao.address,
+            guildDev.address
           );
         const proxies = await guildFactory.viewGuildTokens();
         expect(proxies.length).to.eq(n + 1);
       }
       const proxies = await guildFactory.viewGuildTokens();
-      expect(proxies.length).to.eq(nTokensToMake);
+      expect(proxies.length).to.eq(1);
     });
 
     it("returns a distinct array", async () => {
       const nTokensToMake = 5;
       for (let n = 0; n < nTokensToMake; n++) {
         await guildFactory
-          .connect(dao)
+          .connect(guildDao)
           .createGuild(
             "TestGuild" + nTokensToMake.toString(),
             "GUILDT" + nTokensToMake.toString(),
-            dao.address,
-            developer.address
+            guildDao.address,
+            guildDev.address
           );
       }
       const proxies = await guildFactory.viewGuildTokens();
@@ -277,51 +302,8 @@ describe("📦 GuildFactory", () => {
     });
   });
 
-  describe("🗳  viewGovernors()", () => {
-    it("returns empty array when no governors have been created yet", async () => {
-      expect(await guildFactory.viewGovernors()).to.deep.eq([]);
-    });
-
-    it("returns the correct array length and type of governors proxy addresses", async () => {
-      const nContractsToMake = 5;
-      for (let n = 0; n < nContractsToMake; n++) {
-        await guildFactory
-          .connect(dao)
-          .createGuild(
-            "TestGuild" + n.toString(),
-            "GUILDT" + n.toString(),
-            dao.address,
-            developer.address
-          );
-        const proxies = await guildFactory.viewGovernors();
-        expect(proxies.length).to.eq(n + 1);
-      }
-      const proxies = await guildFactory.viewGovernors();
-      expect(proxies.length).to.eq(nContractsToMake);
-    });
-
-    it("returns a distinct array", async () => {
-      const nContractsToMake = 5;
-      for (let n = 0; n < nContractsToMake; n++) {
-        await guildFactory
-          .connect(dao)
-          .createGuild(
-            "TestGuild" + n.toString(),
-            "GUILDT" + n.toString(),
-            dao.address,
-            developer.address
-          );
-      }
-      const proxies = await guildFactory.viewGovernors();
-      expect(proxies.filter((v, i, a) => a.indexOf(v) === i).length).to.eq(
-        nContractsToMake
-      );
-    });
-  });
-
   describe("🗳  createGuild()", () => {
     let initialNumberOfGuilds: number;
-    let initialNumberOfGovernors: number;
     let transaction: ContractTransaction;
 
     let guildToken: GuildToken;
@@ -337,11 +319,20 @@ describe("📦 GuildFactory", () => {
 
     beforeEach(async () => {
       initialNumberOfGuilds = (await guildFactory.viewGuildTokens()).length;
-      initialNumberOfGovernors = (await guildFactory.viewGovernors()).length;
+
+      await guildFactory.connect(dao).whitelistGFXStaff(gfxStaff.address, true);
+      await guildFactory
+        .connect(gfxStaff)
+        .whitelistGuildOwner(guildDao.address, true);
 
       transaction = await guildFactory
-        .connect(dao)
-        .createGuild(guildName, guildSymbol, dao.address, developer.address);
+        .connect(guildDao)
+        .createGuild(
+          guildName,
+          guildSymbol,
+          guildDao.address,
+          guildDev.address
+        );
 
       const [guildTokenAddress] = (await guildFactory.viewGuildTokens()).map(
         stripZeros
@@ -349,8 +340,20 @@ describe("📦 GuildFactory", () => {
       guildToken = GuildTokenFactory.attach(guildTokenAddress);
     });
 
+    it("does not revert when called with GUILD_OWNER_ROLE", async () => {
+      const request = guildFactory
+        .connect(guildDao)
+        .createGuild(
+          "GuildTokenTest",
+          "GUILDTEST",
+          guildDao.address,
+          guildDev.address
+        );
+      await expect(request).to.not.be.reverted;
+    });
+
     it("reverts with access control error if missing GUILD_OWNER_ROLE", async () => {
-      const users = [deployer, developer, purchaser];
+      const users = [dao, deployer, developer, purchaser];
       for (let user of users) {
         await expect(
           guildFactory
@@ -358,8 +361,8 @@ describe("📦 GuildFactory", () => {
             .createGuild(
               "GuildTokenTest",
               "GUILDTEST",
-              dao.address,
-              developer.address
+              guildDao.address,
+              guildDev.address
             )
         ).to.be.revertedWith(
           generatePermissionRevokeMessage(user.address, GUILD_OWNER_ROLE)
@@ -370,12 +373,12 @@ describe("📦 GuildFactory", () => {
     it("reverts if dao is zero", async () => {
       await expect(
         guildFactory
-          .connect(dao)
+          .connect(guildDao)
           .createGuild(
             guildName,
             guildSymbol,
             ethers.constants.AddressZero,
-            developer.address
+            guildDev.address
           )
       ).to.be.revertedWith("DAO address cannot be zero");
     });
@@ -383,11 +386,11 @@ describe("📦 GuildFactory", () => {
     it("reverts if developer is zero", async () => {
       await expect(
         guildFactory
-          .connect(dao)
+          .connect(guildDao)
           .createGuild(
             guildName,
             guildSymbol,
-            dao.address,
+            guildDao.address,
             ethers.constants.AddressZero
           )
       ).to.be.revertedWith("Developer address cannot be zero");
@@ -396,16 +399,16 @@ describe("📦 GuildFactory", () => {
     it("reverts if guildName is empty string", async () => {
       await expect(
         guildFactory
-          .connect(dao)
-          .createGuild("", guildSymbol, dao.address, developer.address)
+          .connect(guildDao)
+          .createGuild("", guildSymbol, guildDao.address, guildDev.address)
       ).to.be.revertedWith("Guild name cannot be empty");
     });
 
     it("reverts if guildSymbol is empty string", async () => {
       await expect(
         guildFactory
-          .connect(dao)
-          .createGuild(guildName, "", dao.address, developer.address)
+          .connect(guildDao)
+          .createGuild(guildName, "", guildDao.address, guildDev.address)
       ).to.be.revertedWith("Guild symbol cannot be empty");
     });
 
@@ -413,29 +416,14 @@ describe("📦 GuildFactory", () => {
       await guildFactory.connect(dao).pause();
       await expect(
         guildFactory
-          .connect(dao)
-          .createGuild(guildName, guildSymbol, dao.address, developer.address)
+          .connect(guildDao)
+          .createGuild(
+            guildName,
+            guildSymbol,
+            guildDao.address,
+            guildDev.address
+          )
       ).to.be.revertedWith("Pausable: paused");
-    });
-
-    it("emits a TokenGovernorPairCreated event", async () => {
-      const guildTokens = (await guildFactory.viewGuildTokens()).map(
-        stripZeros
-      );
-      const guildGovernors = (await guildFactory.viewGovernors()).map(
-        stripZeros
-      );
-      expect(guildTokens.length).gt(initialNumberOfGuilds);
-      expect(guildGovernors.length).gt(initialNumberOfGovernors);
-      await expect(transaction).to.emit(
-        guildFactory,
-        "TokenGovernorPairCreated"
-      );
-      // TODO: enable args checking - address capitalization is retained in the EnumberableSet
-      // .withArgs(
-      //   guildTokens[guildTokens.length - 1],
-      //   guildGovernors[guildGovernors.length - 1]
-      // );
     });
 
     it("adds an address in the GUILD_TOKEN_PROXIES set", async () => {
@@ -447,26 +435,23 @@ describe("📦 GuildFactory", () => {
         .true;
     });
 
-    it("adds an address in the GOVERNOR_PROXIES set", async () => {
-      const governors = (await guildFactory.viewGovernors()).map(stripZeros);
-      expect(governors.length).eq(initialNumberOfGovernors + 1);
-      expect(ethers.utils.isAddress(governors[governors.length - 1])).to.be
-        .true;
-    });
-
-    it("no user has the GOVERNOR_ADMIN_ROLE", async () => {
-      const users = [deployer, dao, treasury, developer, purchaser];
+    it("the deployer, treasury, developer and purchaser do not have GOVERNOR_ROLE", async () => {
+      const users = [deployer, treasury, developer, purchaser];
       for (let user of users) {
-        expect(await guildToken.hasRole(DEFAULT_ADMIN_ROLE, user.address)).to.be
+        expect(await guildToken.hasRole(GOVERNOR_ROLE, user.address)).to.be
           .false;
       }
     });
 
-    it("the GuildFactory contract itself does not have the GOVERNOR_ADMIN_ROLE", async () => {
+    it("the GuildFactory contract itself does not have the GOVERNOR_ROLE", async () => {
       // NOTE this is also well tested in the GuildToken.test.ts .grantRole() function
-      expect(
-        await guildToken.hasRole(GOVERNOR_ADMIN_ROLE, guildFactory.address)
-      ).to.be.false;
+      expect(await guildToken.hasRole(GOVERNOR_ROLE, guildFactory.address)).to
+        .be.false;
+    });
+
+    it("only the guildDao has the GOVERNOR_ROLE", async () => {
+      expect(await guildToken.hasRole(GOVERNOR_ROLE, guildDao.address)).to.be
+        .true;
     });
 
     it.skip("returns a hash resolving in the guild token and governor addresses", async () => {});
@@ -480,8 +465,8 @@ describe("📦 GuildFactory", () => {
         //   guildTokenAddress, // TODO add explicit arg check (guildTokenAddress is all lowercase and not matching)
         //   guildName,
         //   guildSymbol,
-        //   dao.address,
-        //   developer.address
+        //   guildDao.address,
+        //   guildDev.address
         // );
       });
 
@@ -514,105 +499,45 @@ describe("📦 GuildFactory", () => {
         expect(symbol).to.eq(guildSymbol);
       });
 
-      it("grants the guildToken's DAO_ROLE to the dao", async () => {
-        expect(await guildToken.hasRole(DAO_ROLE, dao.address)).to.eq(true);
+      it("grants the guildToken's DAO_ROLE to the guildDao", async () => {
+        expect(await guildToken.hasRole(DAO_ROLE, guildDao.address)).to.eq(
+          true
+        );
       });
 
       it("grants the guildTokens's DEVELOPER_ROLE to the developer", async () => {
         expect(
-          await guildToken.hasRole(DEVELOPER_ROLE, developer.address)
+          await guildToken.hasRole(DEVELOPER_ROLE, guildDev.address)
         ).to.eq(true);
       });
     });
 
-    describe("⚙️  _createGovernor()", () => {
-      let governorAddress: string;
-      let Governor: Governor__factory;
-      let governor: Governor;
-
-      before(async () => {
-        Governor = await ethers.getContractFactory("Governor");
-      });
-
-      beforeEach(async () => {
-        [governorAddress] = (await guildFactory.viewGovernors()).map(
-          stripZeros
-        );
-        governor = Governor.attach(governorAddress);
-      });
-
-      it.skip("is payable and can receive native token");
-
-      it("emits a GovernorCreated event", async () => {
-        await expect(transaction).to.emit(guildFactory, "GovernorCreated");
-        // await expect(transaction).to.emit(guildFactory, "GuildCreated").withArgs(
-        //   governorAddress, // TODO add explicit arg check (governorAddress is all lowercase and not matching)
-        //   guildName,
-        //   guildSymbol,
-        //   dao.address,
-        //   developer.address
-        // );
-      });
-
-      // TODO
-      it.skip(
-        "returns a hashed transaction resolving into the governor's proxy address"
-      );
-
-      it("sets the governor's address in the GOVERNOR_PROXIES set", async () => {
-        expect(typeof governorAddress).to.eq("string");
-        expect(ethers.utils.isAddress(governorAddress)).to.be.true;
-        expect(governorAddress.length).to.eq(42);
-        expect(governor.address).to.eq(governorAddress);
-      });
-    });
-
-    describe("making multiple guildtokens and governors", () => {
-      let secondGovernorAddress: string;
-      let secondGovernor: Governor;
+    describe("making multiple guildtokens", () => {
       let secondGuildTokenAddress: string;
       let secondGuildToken: GuildToken;
 
       let GuildTokenFactory: GuildToken__factory;
-      let GovernorFactory: Governor__factory;
 
-      let governorAddress: string;
       let guildTokenAddress: string;
 
       before(async () => {
         GuildTokenFactory = await ethers.getContractFactory("GuildToken");
-        GovernorFactory = await ethers.getContractFactory("Governor");
       });
 
       beforeEach(async () => {
-        [governorAddress] = (await guildFactory.viewGovernors()).map(
-          stripZeros
-        );
-        [governorAddress] = (await guildFactory.viewGovernors()).map(
-          stripZeros
-        );
         await guildFactory
-          .connect(dao)
-          .createGuild("GuildToken2", "GUILD2", dao.address, developer.address);
+          .connect(guildDao)
+          .createGuild(
+            "GuildToken2",
+            "GUILD2",
+            guildDao.address,
+            guildDev.address
+          );
         let _;
         [_, secondGuildTokenAddress] = (
           await guildFactory.viewGuildTokens()
         ).map(stripZeros);
         secondGuildToken = GuildTokenFactory.attach(secondGuildTokenAddress);
-        [_, secondGovernorAddress] = (await guildFactory.viewGovernors()).map(
-          stripZeros
-        );
-        secondGovernor = GovernorFactory.attach(secondGovernorAddress);
-      });
-
-      it("creates a distinguished governor address from the first", async () => {
-        const addresses = await guildFactory.viewGovernors();
-        expect(addresses.length).to.eq(
-          addresses.filter((v, i, a) => a.indexOf(v) === i).length
-        ); // distinct
-        expect(typeof secondGovernorAddress).to.eq("string");
-        expect(ethers.utils.isAddress(secondGovernorAddress)).to.be.true;
-        expect(secondGovernorAddress).to.not.eq(governorAddress);
       });
 
       it("creates a distinguished token address from the first", async () => {
