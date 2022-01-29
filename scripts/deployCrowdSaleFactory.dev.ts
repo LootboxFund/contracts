@@ -71,7 +71,7 @@ async function main() {
     );
   }
 
-  if (!(chainId in Object.keys(addresses))) {
+  if (Object.keys(addresses).indexOf(`${chainId}`) === -1) {
     throw new Error(`Please update config for chain ID ${chainId}`);
   }
 
@@ -98,12 +98,13 @@ async function main() {
 
 ---- Params:
 
-     Guild Token Address         ${guildTokenAddress}
+     Guild Token Address:        ${guildTokenAddress}
 
      GuildFX Constants:          ${gfxConstants}
 
      Guild Token Starting Price: ${guildTokenStartingPrice}
 
+----
   \n`,
     LOG_FILE_PATH
   );
@@ -118,8 +119,6 @@ async function main() {
   if (!guildTokenStartingPrice) {
     guildTokenStartingPrice = DEFAULT_GUILD_TOKEN_STARTING_PRICE;
   }
-
-  logToFile("----\n", LOG_FILE_PATH);
 
   logToFile(`---- ${DEPLOYER_ADDRESS} ---> Deployer Address \n`, LOG_FILE_PATH);
   logToFile(
