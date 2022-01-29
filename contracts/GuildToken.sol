@@ -132,8 +132,7 @@ contract GuildToken is
         require(_amount > 0, "Cannot mint zero tokens");
 
         // Mints provided amount of tokens to the desired resipient
-        uint256 _addAmount = _amount;   // does this need to incur a new variable? (gas cost)
-        _mint(_recipient, _addAmount);
+        _mint(_recipient, _amount);
 
         // Mints a fee to GuildFX - fee set and treasury address set by the GuildFXConstants Contract
         (uint256 _mintFeeAmount, uint256 _mintFeeRate, address _guildFXTreasury) = mintGuildAllocation(_amount);
@@ -141,9 +140,9 @@ contract GuildToken is
             msg.sender,
             _recipient,
             _guildFXTreasury,
-            _addAmount,
+            _amount,
             _mintFeeRate,
-            _addAmount + _mintFeeAmount
+            _amount + _mintFeeAmount
         );
     }
 
