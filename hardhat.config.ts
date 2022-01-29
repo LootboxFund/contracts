@@ -33,6 +33,7 @@ const config: HardhatUserConfig = {
   },
   networks: {
     binance_testnet: {
+      chainId: 97,
       url: `https://speedy-nodes-nyc.moralis.io/f111521389b4b4a5701c6b0b/bsc/testnet`,
       accounts: [
         `${process.env.DEV_DEPLOYER_PRIVATE_KEY}`,
@@ -46,7 +47,23 @@ const config: HardhatUserConfig = {
         `${process.env.DEV_GUILD_TREASURY_PRIVATE_KEY}`,
       ],
     },
+    rinkeby: {
+      chainId: 4,
+      url: `https://speedy-nodes-nyc.moralis.io/f111521389b4b4a5701c6b0b/eth/rinkeby`,
+      accounts: [
+        `${process.env.DEV_DEPLOYER_PRIVATE_KEY}`,
+        `${process.env.DEV_TREASURY_PRIVATE_KEY}`,
+        `${process.env.DEV_DAO_PRIVATE_KEY}`,
+        `${process.env.DEV_DEVELOPER_PRIVATE_KEY}`,
+        `${process.env.DEV_PURCHASER_PRIVATE_KEY}`,
+        `${process.env.DEV_GFX_STAFF_PRIVATE_KEY}`,
+        `${process.env.DEV_GUILD_DAO_PRIVATE_KEY}`,
+        `${process.env.DEV_GUILD_DEV_PRIVATE_KEY}`,
+        `${process.env.DEV_GUILD_TREASURY_PRIVATE_KEY}`,
+      ],
+    },
     binance_mainnet: {
+      chainId: 56,
       url: `https://bsc-dataseed.binance.org`,
       accounts: [],
     },
