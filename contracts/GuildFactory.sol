@@ -24,10 +24,6 @@ interface IERC20GUILD {
     function whitelistMint(address _mintAddress, bool _isActive) external;
 }
 
-interface GUILD_GOVERNOR {
-  function transferOwnership(address newOwner) external;
-}
-
 contract GuildFactory is Pausable, AccessControl {
     address internal immutable tokenImplementation;
 
