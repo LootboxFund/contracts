@@ -10,3 +10,4 @@ artifacts
 
 .openzeppelin
 env
+yarn-error.log
