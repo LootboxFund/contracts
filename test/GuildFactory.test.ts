@@ -17,8 +17,7 @@ import {
   GUILD_OWNER_ROLE,
   generatePermissionRevokeMessage,
   stripZeros,
-  GOVERNOR_ADMIN_ROLE,
-  DEFAULT_ADMIN_ROLE,
+  GOVERNOR_ROLE,
 } from "./helpers/test-helpers";
 
 describe("📦 GuildFactory", () => {
@@ -436,19 +435,23 @@ describe("📦 GuildFactory", () => {
         .true;
     });
 
-    it("no user has the GOVERNOR_ADMIN_ROLE", async () => {
-      const users = [deployer, dao, treasury, developer, purchaser];
+    it("the deployer, treasury, developer and purchaser do not have GOVERNOR_ROLE", async () => {
+      const users = [deployer, treasury, developer, purchaser];
       for (let user of users) {
-        expect(await guildToken.hasRole(DEFAULT_ADMIN_ROLE, user.address)).to.be
+        expect(await guildToken.hasRole(GOVERNOR_ROLE, user.address)).to.be
           .false;
       }
     });
 
-    it("the GuildFactory contract itself does not have the GOVERNOR_ADMIN_ROLE", async () => {
+    it("the GuildFactory contract itself does not have the GOVERNOR_ROLE", async () => {
       // NOTE this is also well tested in the GuildToken.test.ts .grantRole() function
-      expect(
-        await guildToken.hasRole(GOVERNOR_ADMIN_ROLE, guildFactory.address)
-      ).to.be.false;
+      expect(await guildToken.hasRole(GOVERNOR_ROLE, guildFactory.address)).to
+        .be.false;
+    });
+
+    it("only the guildDao has the GOVERNOR_ROLE", async () => {
+      expect(await guildToken.hasRole(GOVERNOR_ROLE, guildDao.address)).to.be
+        .true;
     });
 
     it.skip("returns a hash resolving in the guild token and governor addresses", async () => {});
