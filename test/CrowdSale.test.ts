@@ -64,14 +64,6 @@ describe("📦 CrowdSale of GUILD token", async function () {
   let usdt_stablecoin: USDT;
   let usdt_pricefeed = "0xB97Ad0E74fa7d920791E90258A6E2085088b4320";
 
-  let Ust: UST__factory;
-  let ust_stablecoin: UST;
-  let ust_pricefeed = "0xcbf8518F8727B8582B22837403cDabc53463D462";
-
-  let Dai: DAI__factory;
-  let dai_stablecoin: DAI;
-  let dai_pricefeed = "0x132d3C0B1D2cEa0BC552588063bdBb210FDeecfA";
-
   const GUILD_TOKEN_NAME = "GuildTokenTest";
   const GUILD_TOKEN_SYMBOL = "GUILDT";
 
@@ -86,8 +78,6 @@ describe("📦 CrowdSale of GUILD token", async function () {
     Bnb = await ethers.getContractFactory("BNB");
     Usdc = await ethers.getContractFactory("USDC");
     Usdt = await ethers.getContractFactory("USDT");
-    Ust = await ethers.getContractFactory("UST");
-    Dai = await ethers.getContractFactory("DAI");
   });
 
   beforeEach(async function () {
@@ -104,8 +94,6 @@ describe("📦 CrowdSale of GUILD token", async function () {
     bnb_stablecoin = (await Bnb.deploy(0)) as BNB;
     usdc_stablecoin = (await Usdc.deploy(0)) as USDC;
     usdt_stablecoin = (await Usdt.deploy(0)) as USDT;
-    ust_stablecoin = (await Ust.deploy(0)) as UST;
-    dai_stablecoin = (await Dai.deploy(0)) as DAI;
 
     // set the stablecoins in the constants contract
     await constants
@@ -113,9 +101,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
       .setCrowdSaleStableCoins(
         eth_stablecoin.address,
         usdc_stablecoin.address,
-        usdt_stablecoin.address,
-        ust_stablecoin.address,
-        dai_stablecoin.address
+        usdt_stablecoin.address
       );
 
     // set the price feeds in constants
@@ -125,9 +111,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
         bnb_pricefeed,
         eth_pricefeed,
         usdc_pricefeed,
-        usdt_pricefeed,
-        ust_pricefeed,
-        dai_pricefeed
+        usdt_pricefeed
       );
 
     token = (await upgrades.deployProxy(
@@ -570,100 +554,6 @@ describe("📦 CrowdSale of GUILD token", async function () {
     it.skip("TODO: mints the token to the guildFX treasury", () => {});
   });
 
-  describe("buyer can purchase GUILD tokens using UST", async () => {
-    let stableCoinDecimals: number;
-    let seedUserStableCoinAmount: BigNumber;
-    let seedTreasuryStableCoinAmount: BigNumber;
-    let stablecoinAmount: BigNumber;
-
-    let archivedPrice: BigNumber;
-    let startingPriceUSD: BigNumber;
-    let gamerPurchasedAmount: BigNumber;
-    let mintFeeAmount: BigNumber;
-
-    beforeEach(async () => {
-      stableCoinDecimals = await usdc_stablecoin.decimals();
-      seedUserStableCoinAmount = ethers.utils.parseUnits(
-        "100",
-        stableCoinDecimals
-      ); // $100 USD
-      seedTreasuryStableCoinAmount = ethers.utils.parseUnits(
-        "200",
-        stableCoinDecimals
-      ); // $200 USD
-      stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 USD
-
-      archivedPrice = ethers.BigNumber.from("100058710");
-      startingPriceUSD = ethers.BigNumber.from("7000000");
-      gamerPurchasedAmount = ethers.BigNumber.from("142941014285714285714");
-      [mintFeeAmount] = await token.calculateGuildFXMintFee(
-        gamerPurchasedAmount
-      );
-
-      await ust_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
-      await ust_stablecoin.mint(treasury.address, seedTreasuryStableCoinAmount);
-      await ust_stablecoin
-        .connect(purchaser)
-        .approve(crowdSale.address, stablecoinAmount);
-      await token.connect(governor).whitelistMint(crowdSale.address, true);
-    });
-
-    it("reverts with pausable error if contract is paused", async () => {
-      await crowdSale.connect(dao).pause();
-      await expect(
-        crowdSale
-          .connect(purchaser)
-          .buyInUST(purchaser.address, { value: stablecoinAmount.toString() })
-      ).to.be.revertedWith("Pausable: paused");
-    });
-
-    it("purchaser has 100 ust_stablecoin in wallet", async function () {
-      expect(await ust_stablecoin.balanceOf(purchaser.address)).to.equal(
-        seedUserStableCoinAmount
-      );
-    });
-
-    it("has an oracle price feed", async function () {
-      const stablecoinPrice = await crowdSale.getUSTPrice();
-      expect(stablecoinPrice.toNumber()).to.be.equal(archivedPrice);
-    });
-
-    it("purchaser approves transfer for 10 UST", async () => {
-      expect(
-        await ust_stablecoin.allowance(purchaser.address, crowdSale.address)
-      ).to.equal(stablecoinAmount);
-    });
-
-    it("purchaser exchanges 10 UST for ~142 GUILD at a price of $0.07/GUILD", async () => {
-      const initialSupply = await token.totalSupply();
-      await expect(
-        await crowdSale.connect(purchaser).buyInUST(stablecoinAmount)
-      )
-        .to.emit(crowdSale, "Purchase")
-        .withArgs(
-          purchaser.address,
-          ust_stablecoin.address,
-          stablecoinAmount,
-          gamerPurchasedAmount.toString(),
-          startingPriceUSD.toString()
-        );
-      expect(await crowdSale.GUILD()).to.equal(token.address);
-      expect(await ust_stablecoin.balanceOf(purchaser.address)).to.equal(
-        ethers.utils.parseUnits("90", stableCoinDecimals)
-      );
-      expect(await ust_stablecoin.balanceOf(treasury.address)).to.equal(
-        ethers.utils.parseUnits("210", stableCoinDecimals)
-      );
-      expect(await token.balanceOf(purchaser.address)).to.equal(
-        gamerPurchasedAmount.toString()
-      );
-      expect(await token.totalSupply()).to.equal(
-        initialSupply.add(gamerPurchasedAmount).add(mintFeeAmount)
-      );
-    });
-    it.skip("TODO: mints the token to the guildFX treasury", () => {});
-  });
-
   describe("buyer can purchase GUILD tokens using ETH", async () => {
     let stableCoinDecimals: number;
     let seedUserStableCoinAmount: BigNumber;
@@ -746,100 +636,6 @@ describe("📦 CrowdSale of GUILD token", async function () {
         ethers.utils.parseUnits("90", stableCoinDecimals)
       );
       expect(await eth_stablecoin.balanceOf(treasury.address)).to.equal(
-        ethers.utils.parseUnits("210", stableCoinDecimals)
-      );
-      expect(await token.balanceOf(purchaser.address)).to.equal(
-        gamerPurchasedAmount.toString()
-      );
-      expect(await token.totalSupply()).to.equal(
-        initialSupply.add(gamerPurchasedAmount).add(mintFeeAmount)
-      );
-    });
-    it.skip("TODO: mints the token to the guildFX treasury", () => {});
-  });
-
-  describe("buyer can purchase GUILD tokens using DAI", async () => {
-    let stableCoinDecimals: number;
-    let seedUserStableCoinAmount: BigNumber;
-    let seedTreasuryStableCoinAmount: BigNumber;
-    let stablecoinAmount: BigNumber;
-
-    let archivedPrice: BigNumber;
-    let startingPriceUSD: BigNumber;
-    let gamerPurchasedAmount: BigNumber;
-    let mintFeeAmount: BigNumber;
-
-    beforeEach(async () => {
-      stableCoinDecimals = await usdc_stablecoin.decimals();
-      seedUserStableCoinAmount = ethers.utils.parseUnits(
-        "100",
-        stableCoinDecimals
-      ); // 100 USD
-      seedTreasuryStableCoinAmount = ethers.utils.parseUnits(
-        "200",
-        stableCoinDecimals
-      ); // 200 USD
-      stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 USD
-
-      archivedPrice = ethers.BigNumber.from("100036216");
-      startingPriceUSD = ethers.BigNumber.from("7000000");
-      gamerPurchasedAmount = ethers.BigNumber.from("142908880000000000000");
-      [mintFeeAmount] = await token.calculateGuildFXMintFee(
-        gamerPurchasedAmount
-      );
-
-      await dai_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
-      await dai_stablecoin.mint(treasury.address, seedTreasuryStableCoinAmount);
-      await dai_stablecoin
-        .connect(purchaser)
-        .approve(crowdSale.address, stablecoinAmount);
-      await token.connect(governor).whitelistMint(crowdSale.address, true);
-    });
-
-    it("reverts with pausable error if contract is paused", async () => {
-      await crowdSale.connect(dao).pause();
-      await expect(
-        crowdSale
-          .connect(purchaser)
-          .buyInDAI(purchaser.address, { value: stablecoinAmount.toString() })
-      ).to.be.revertedWith("Pausable: paused");
-    });
-
-    it("purchaser has 100 dai_stablecoin in wallet", async function () {
-      expect(await dai_stablecoin.balanceOf(purchaser.address)).to.equal(
-        seedUserStableCoinAmount
-      );
-    });
-
-    it("has an oracle price feed", async function () {
-      const stablecoinPrice = await crowdSale.getDAIPrice();
-      expect(stablecoinPrice.toNumber()).to.be.equal(archivedPrice);
-    });
-
-    it("purchaser approves transfer for 10 DAI", async () => {
-      expect(
-        await dai_stablecoin.allowance(purchaser.address, crowdSale.address)
-      ).to.equal(stablecoinAmount);
-    });
-
-    it("purchaser exchanges 10 DAI for ~142 GUILD at a price of $0.07/GUILD", async () => {
-      const initialSupply = await token.totalSupply();
-      await expect(
-        await crowdSale.connect(purchaser).buyInDAI(stablecoinAmount)
-      )
-        .to.emit(crowdSale, "Purchase")
-        .withArgs(
-          purchaser.address,
-          dai_stablecoin.address,
-          stablecoinAmount,
-          gamerPurchasedAmount.toString(),
-          startingPriceUSD.toString()
-        );
-      expect(await crowdSale.GUILD()).to.equal(token.address);
-      expect(await dai_stablecoin.balanceOf(purchaser.address)).to.equal(
-        ethers.utils.parseUnits("90", stableCoinDecimals)
-      );
-      expect(await dai_stablecoin.balanceOf(treasury.address)).to.equal(
         ethers.utils.parseUnits("210", stableCoinDecimals)
       );
       expect(await token.balanceOf(purchaser.address)).to.equal(
