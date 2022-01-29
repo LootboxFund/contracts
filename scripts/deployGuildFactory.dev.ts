@@ -250,7 +250,7 @@ Script starting
   // --------- Authorize a Guild Owner --------- //
   await guildFactory.connect(dao).whitelistGuildOwner(guildDao.address, true);
 
-  // --------- Create the GuildToken and Governor --------- //
+  // --------- Create the GuildToken --------- //
   const tx = await guildFactory
     .connect(guildDao)
     .createGuild(
