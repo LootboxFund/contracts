@@ -39,6 +39,11 @@ export const GOVERNOR_ROLE = ethers.utils.solidityKeccak256(
   ["GOVERNOR_ROLE"]
 );
 
+export const GUILD_MANAGER_ROLE = ethers.utils.solidityKeccak256(
+  ["string"],
+  ["GUILD_MANAGER_ROLE"]
+);
+
 export const DEFAULT_ADMIN_ROLE =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
 

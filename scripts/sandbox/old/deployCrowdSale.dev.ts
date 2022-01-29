@@ -4,8 +4,8 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 import { ethers, upgrades } from "hardhat";
-import { DAI, ETH, USDC, USDT, UST, Constants } from "../typechain";
-import { logToFile } from "./helpers/logger";
+import { DAI, ETH, USDC, USDT, UST, Constants } from "../../../typechain";
+import { logToFile } from "../../helpers/logger";
 
 const Oxnewton = "0xaC15B26acF4334a62961237a0DCEC90eDFE1B251";
 const Oxterran = "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F";
@@ -19,7 +19,7 @@ const sleep = async (ms = 1000) => {
   });
 };
 
-const STARTING_GUILD_PRICE_IN_USD = ethers.BigNumber.from('7000000');  // ~0.07 USD in 8 decimals
+const STARTING_GUILD_PRICE_IN_USD = ethers.BigNumber.from("7000000"); // ~0.07 USD in 8 decimals
 const LOG_FILE_PATH = `${__dirname}/logs/deployCrowdSale_log_${Date.now()}.txt`;
 
 // Chainlink addresses from https://docs.chain.link/docs/binance-smart-chain-addresses

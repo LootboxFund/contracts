@@ -168,9 +168,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     )) as GuildToken;
     await token.deployed();
 
-    // Copied from GuildFactory.sol
-    await token.grantRole(GOVERNOR_ROLE, deployer.address); // Will set GOVERNOR_ADMIN_ROLE to zero
-    governor = deployer;
+    governor = dao;
 
     crowdSale = (await upgrades.deployProxy(
       CrowdSale,
@@ -213,10 +211,8 @@ describe("📦 CrowdSale of GUILD token", async function () {
     );
   });
 
-  it("does not allow dao, developer, purchaser, treasury to whitelist the CrowdSale as a valid minter", async () => {
-    // Note: in general it won't allow the deployer either. Only in this setup we are re-using the deployer as the governor
-    // TODO: add a SHARED governor DEV metamask wallet and add to credential files to be used in tests
-    const users = [dao, treasury, developer, purchaser];
+  it("does not allow deployer, developer, purchaser, treasury to whitelist the CrowdSale as a valid minter", async () => {
+    const users = [deployer, treasury, developer, purchaser];
     for (let user of users) {
       await expect(
         token.connect(user).whitelistMint(crowdSale.address, true)
@@ -226,7 +222,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     }
   });
 
-  it("allows Governor (in this case the deployer) to whitelist the CrowdSale as a valid minter", async () => {
+  it("allows Governor to whitelist the CrowdSale as a valid minter", async () => {
     await expect(
       token.connect(governor).whitelistMint(crowdSale.address, true)
     ).to.not.be.revertedWith(

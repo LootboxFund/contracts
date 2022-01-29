@@ -22,7 +22,6 @@ contract Constants is
 
     // Fee GuildFX charges on mintRequests as a fraction (3 decimals).
     // Examples: 1000 = 100%, 500 = 50%, 20 = 2%, 1 = 0.1% fees
-    uint256 public INITIAL_MINT_TO_GUILD;
     uint256 public GUILD_FX_MINTING_FEE;
     uint8 public constant GUILD_FX_MINTING_FEE_DECIMALS = 3;
     address payable public TREASURY;  // GuildFX treasury
@@ -75,7 +74,6 @@ contract Constants is
         TREASURY = _treasury;
 
         GUILD_FX_MINTING_FEE = 20; // in GUILD_FX_MINTING_FEE_DECIMALS (ex: 20 = 2% fee)
-        INITIAL_MINT_TO_GUILD = 980;
     }
 
     function setCrowdSaleStableCoins(

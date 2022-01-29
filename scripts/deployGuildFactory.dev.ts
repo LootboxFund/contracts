@@ -52,8 +52,17 @@ const STABLECOINS = {
 };
 
 async function main() {
-  const [deployer, treasury, dao, developer, purchaser] =
-    await ethers.getSigners();
+  const [
+    deployer,
+    treasury,
+    dao,
+    developer,
+    purchaser,
+    gfxStaff,
+    guildDao,
+    guildDev,
+    guildTreasury,
+  ] = await ethers.getSigners();
   const DEPLOYER_ADDRESS = deployer.address;
   logToFile(
     `
@@ -251,14 +260,20 @@ async function main() {
   );
   await sleep();
 
+  // --------- Authorize GFX Staff --------- //
+  await guildFactory.connect(dao).whitelistGFXStaff(gfxStaff.address, true);
+
+  // --------- Authorize a Guild Owner --------- //
+  await guildFactory.connect(dao).whitelistGuildOwner(guildDao.address, true);
+
   // --------- Create the GuildToken and Governor --------- //
   const tx = await guildFactory
-    .connect(dao)
+    .connect(guildDao)
     .createGuild(
       GUILD_TOKEN_NAME,
       GUILD_TOKEN_SYMBOL,
-      dao.address,
-      developer.address
+      guildDao.address,
+      guildDev.address
     );
 
   await tx.wait();
@@ -275,11 +290,11 @@ async function main() {
   logToFile(`---- ${governorAddress} ---> Governor Address\n`, LOG_FILE_PATH);
   await sleep();
 
-  // TODO: Add crowdsale creation here
+  // crowdsales are deployed later, in a separate script
+  // because in real life, the guild will need time to think over their crowdsale parameters
+  // such as crowdsale price, start and end dates, etc.
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main().catch((error) => {
   logToFile(error.message, LOG_FILE_PATH);
   console.error(error);
