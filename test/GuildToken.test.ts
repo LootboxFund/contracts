@@ -55,7 +55,23 @@ describe("📦 GUILD token", async () => {
   });
 
   beforeEach(async () => {
-    [deployer, treasury, dao, developer, purchaser] = await ethers.getSigners();
+    const [
+      _deployer,
+      _treasury,
+      _dao,
+      _developer,
+      _purchaser,
+      _gfxStaff,
+      _guildDao,
+      _guildDev,
+      _guildTreasury,
+    ] = await ethers.getSigners();
+
+    deployer = _deployer;
+    treasury = _treasury;
+    dao = _dao;
+    developer = _developer;
+    purchaser = _purchaser;
 
     constants = (await upgrades.deployProxy(
       Constants,
@@ -94,20 +110,8 @@ describe("📦 GUILD token", async () => {
     expect(await token.decimals()).to.be.equal(18);
   });
 
-  it("has 1000 tokens total supply", async () => {
-    expect(await token.totalSupply()).eq(ethers.utils.parseEther("1000"));
-  });
-
-  it("initialization: mints 980 tokens to the DAO", async () => {
-    expect(await token.balanceOf(dao.address)).to.eq(
-      ethers.utils.parseEther("980")
-    );
-  });
-
-  it.skip("initialization: mints 20 tokens (2%) to GuildFX treasury", async () => {
-    expect(await token.balanceOf(await constants.TREASURY())).to.eq(
-      ethers.utils.parseEther("20")
-    );
+  it("has 0 token total supply", async () => {
+    expect(await token.totalSupply()).eq(ethers.utils.parseEther("0"));
   });
 
   it("has stored the GuildFXConstants contract in memory", async () => {
