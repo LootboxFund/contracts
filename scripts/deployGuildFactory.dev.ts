@@ -3,7 +3,7 @@
 //
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
-import { ethers, upgrades } from "hardhat";
+import { ethers, upgrades, network } from "hardhat";
 import { Constants, DAI, ETH, USDC, USDT, UST } from "../typechain";
 import { logToFile } from "./helpers/logger";
 import { stripZeros } from "../test/helpers/test-helpers";
@@ -70,6 +70,8 @@ async function main() {
 ---------- DEPLOY GUILD FACTORY (development) ----------
   
 ---- Script starting
+
+---- Network = ${network.name} (Decimal ID = ${network.config.chainId})
 
   \n`,
     LOG_FILE_PATH

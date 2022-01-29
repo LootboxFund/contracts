@@ -17,7 +17,7 @@ contract CrowdSaleFactory is Pausable, AccessControl {
     // bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE"); // GuildFX devs
     bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE"); // GuildFX devs
     bytes32 public constant GUILD_OWNER_ROLE = keccak256("GUILD_OWNER_ROLE"); // People who can create a guild
-    bytes32 public constant GUILD_MANAGER_ROLE = keccak256("GUILD_MANAGER_ROLE"); // People who can whitelist guild owners
+    bytes32 public constant GFX_STAFF_ROLE = keccak256("GFX_STAFF_ROLE"); // People who can whitelist guild owners
 
     // GuildFX constants
     address public fxConstants;
@@ -35,8 +35,8 @@ contract CrowdSaleFactory is Pausable, AccessControl {
         uint256 startingPrice,
         address deployer
     );
-    event GuildManagerWhitelist(address guildManager, bool isActive);
-    event GuildOwnerWhitelist(address guildOwner, bool isActive);
+    event FactoryStaffWhitelist(address staffMember, address whitelistedBy, bool isActive);
+    event GuildOwnerWhitelist(address guildOwner, address whitelistedBy, bool isActive);
 
     constructor(address dao, address _fxConstants) {
         require(dao != address(0), "DAO address cannot be zero");
@@ -47,15 +47,14 @@ contract CrowdSaleFactory is Pausable, AccessControl {
         crowdsaleImplementation = address(new CrowdSale());
         fxConstants = _fxConstants;
         _grantRole(DAO_ROLE, dao);
-        _grantRole(GUILD_MANAGER_ROLE, dao);
-        _grantRole(GUILD_OWNER_ROLE, dao);
+        _grantRole(GFX_STAFF_ROLE, dao);
     }
 
     function createCrowdSale(
         address guildToken,
-        address dao,
-        address developer,
-        address treasury,
+        address guildDao,
+        address guildDev,
+        address guildTreasury,
         uint256 startingPrice // Should be in 8 decimals: For example price of 1 USD = 100,000,000 startingPrice
     ) public onlyRole(GUILD_OWNER_ROLE) whenNotPaused returns (address) {
         // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
@@ -64,10 +63,10 @@ contract CrowdSaleFactory is Pausable, AccessControl {
             abi.encodeWithSelector(
                 CrowdSale(address(0)).initialize.selector,
                 guildToken,
-                dao,
-                developer,
+                guildDao,
+                guildDev,
                 fxConstants,
-                treasury,
+                guildTreasury,
                 startingPrice
             )
         );
@@ -75,9 +74,9 @@ contract CrowdSaleFactory is Pausable, AccessControl {
         emit CrowdSaleCreated(
             address(proxy),
             guildToken,
-            dao,
-            developer,
-            treasury,
+            guildDao,
+            guildDev,
+            guildTreasury,
             startingPrice,
             msg.sender
         );
@@ -87,7 +86,7 @@ contract CrowdSaleFactory is Pausable, AccessControl {
 
     function whitelistGuildOwner(address guildOwner, bool isActive)
         public
-        onlyRole(GUILD_MANAGER_ROLE)
+        onlyRole(GFX_STAFF_ROLE)
         whenNotPaused
     {
         if (isActive) {
@@ -95,20 +94,20 @@ contract CrowdSaleFactory is Pausable, AccessControl {
         } else {
             _revokeRole(GUILD_OWNER_ROLE, guildOwner);
         }
-        emit GuildOwnerWhitelist(guildOwner, isActive);
+        emit GuildOwnerWhitelist(guildOwner, msg.sender, isActive);
     }
 
-    function whitelistGuildManager(address guildManager, bool isActive)
+    function whitelistGFXStaff(address staffMember, bool isActive)
         public
         onlyRole(DAO_ROLE)
         whenNotPaused
     {
         if (isActive) {
-            _grantRole(GUILD_MANAGER_ROLE, guildManager);
+            _grantRole(GFX_STAFF_ROLE, staffMember);
         } else {
-            _revokeRole(GUILD_MANAGER_ROLE, guildManager);
+            _revokeRole(GFX_STAFF_ROLE, staffMember);
         }
-        emit GuildManagerWhitelist(guildManager, isActive);
+        emit FactoryStaffWhitelist(staffMember, msg.sender, isActive);
     }
 
     function viewCrowdSales() public view returns (bytes32[] memory) {
