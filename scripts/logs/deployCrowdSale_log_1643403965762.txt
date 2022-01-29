@@ -1,8 +1,0 @@
-2022-01-28T21:06:05.897Z - 
-  
----------- DEPLOY CROWDSALE (development) ----------
-  
----- Script starting
-
-  
-2022-01-28T21:06:05.898Z - ---- 0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A ---> Deployer Address 
