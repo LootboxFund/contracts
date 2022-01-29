@@ -646,10 +646,12 @@
     stream-events "^1.0.4"
     xdg-basedir "^4.0.0"
 
-"@guildfx/helpers@^0.0.3":
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/@guildfx/helpers/-/helpers-0.0.3.tgz#9c760fe3378277a8defa4d9673bf99f9b78f8e56"
-  integrity sha512-k8hMl4fj6930pjQZLRCRw2vR2YtXLe1ommiORkhfw/mDdwP45Rx0cF1tSSxTAXanFXIdwmX9S52Is4dxj2xI/g==
+"@guildfx/helpers@^0.0.7":
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/@guildfx/helpers/-/helpers-0.0.7.tgz#2ba8a09288f68fccccd07d6323d4b6e41eeaf347"
+  integrity sha512-TWF3smR7gqyxmQ7cavO2ntWtkfyBi9L30klvVVWfbCakJuhPAeCOC9fZvGVDw5IwmgYhTSyw8nktwJtCOjY43A==
+  dependencies:
+    axios "^0.25.0"
 
 "@humanwhocodes/config-array@^0.5.0":
   version "0.5.0"
@@ -1671,6 +1673,13 @@ axios@0.24.0:
   integrity sha512-Q6cWsys88HoPgAaFAVUb0WpPk0O8iTeisR9IMqy9G8AbO4NlpVknrnQS03zzF9PGAWgO3cgletO3VjV/P7VztA==
   dependencies:
     follow-redirects "^1.14.4"
+
+axios@^0.25.0:
+  version "0.25.0"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-0.25.0.tgz#349cfbb31331a9b4453190791760a8d35b093e0a"
+  integrity sha512-cD8FOb0tRH3uuEe6+evtAbgJtfxr7ly3fQjYcMcuPlgkwVS9xboaVIpcDV+cYQe+yGykgwZCs1pzjntcGa6l5g==
+  dependencies:
+    follow-redirects "^1.14.7"
 
 babel-code-frame@^6.26.0:
   version "6.26.0"
@@ -4726,7 +4735,7 @@ flow-stoplight@^1.0.0:
   resolved "https://registry.yarnpkg.com/flow-stoplight/-/flow-stoplight-1.0.0.tgz#4a292c5bcff8b39fa6cc0cb1a853d86f27eeff7b"
   integrity sha1-SiksW8/4s5+mzAyxqFPYbyfu/3s=
 
-follow-redirects@^1.12.1, follow-redirects@^1.14.4:
+follow-redirects@^1.12.1, follow-redirects@^1.14.4, follow-redirects@^1.14.7:
   version "1.14.7"
   resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.14.7.tgz#2004c02eb9436eee9a21446a6477debf17e81685"
   integrity sha512-+hbxoLbFMbRKDwohX8GkTataGqO6Jb7jGwpAlwgy2bIz25XtRm7KEzJM76R1WiNT5SwZkX4Y75SwBolkpmE7iQ==

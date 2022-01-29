@@ -11,7 +11,9 @@ import {
   TokenFragment,
   TokenFragsWithCDN,
   uploadTokenDataToCDN,
+  uploadTokenIndexToCDN,
 } from "./helpers/tokenlist";
+import { Address, ChainIDHex } from "@guildfx/helpers";
 
 const semvar = "0.0.1-sandbox";
 const Oxnewton = "0xaC15B26acF4334a62961237a0DCEC90eDFE1B251";
@@ -73,6 +75,8 @@ Script starting
   );
   logToFile(`Deployer Address =         ${DEPLOYER_ADDRESS} \n`, LOG_FILE_PATH);
 
+  const tokenAddresses: Address[] = [];
+
   // --------- Deploy the Stablecoins --------- //
   const Eth = await ethers.getContractFactory("ETH");
   const ethStablecoin = (await Eth.deploy(0)) as ETH;
@@ -98,6 +102,7 @@ Script starting
     semvar,
     loggerPath: LOG_FILE_PATH,
   });
+  tokenAddresses.push(ethStablecoin.address);
   logToFile(
     `ETH Stablecoin Address =             ${ethStablecoin.address} \n`,
     LOG_FILE_PATH
@@ -130,6 +135,7 @@ Script starting
     semvar,
     loggerPath: LOG_FILE_PATH,
   });
+  tokenAddresses.push(usdcStablecoin.address);
   logToFile(
     `USDC Stablecoin Address =            ${usdcStablecoin.address} \n`,
     LOG_FILE_PATH
@@ -159,10 +165,20 @@ Script starting
     semvar,
     loggerPath: LOG_FILE_PATH,
   });
+  tokenAddresses.push(usdtStablecoin.address);
   logToFile(
     `USDT Stablecoin Address =            ${usdtStablecoin.address} \n`,
     LOG_FILE_PATH
   );
+
+  // --------- Index the Stablecoins --------- //
+  await uploadTokenIndexToCDN({
+    addresses: tokenAddresses,
+    chainIdHex: (network.config.chainId?.toString(16) ||
+      "undefined") as ChainIDHex,
+    semvar,
+    loggerPath: LOG_FILE_PATH,
+  });
 
   // --------- Deploy Constants Contract --------- //
   const Constants = await ethers.getContractFactory("Constants");

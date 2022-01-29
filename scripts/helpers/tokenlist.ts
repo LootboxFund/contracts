@@ -1,7 +1,14 @@
 import { logToFile } from "./logger";
 import { filterMap, removeUndefined } from "./tsUtil";
 const { Storage } = require("@google-cloud/storage");
-import { ChainIDHex, buildTokenMoldCDNRoute } from "@guildfx/helpers";
+import {
+  ChainIDHex,
+  buildTokenMoldCDNRoute,
+  TokenData,
+  buildTokenIndexCDNRoutes,
+  Address,
+  SemanticVersion,
+} from "@guildfx/helpers";
 
 const BUCKET_NAME =
   process.env.NODE_ENV === "production"
@@ -10,18 +17,6 @@ const BUCKET_NAME =
 
 const storage = new Storage();
 
-export type Address = string;
-export type SemanticVersion = string;
-export interface TokenData {
-  address: Address;
-  decimals: number;
-  name: string;
-  symbol: string;
-  chainIdHex: string;
-  chainIdDecimal: string;
-  logoURI: string;
-  priceOracle: Address;
-}
 export type TokenFragment = {
   symbol: string;
   address: Address;
@@ -113,4 +108,32 @@ export const uploadTokenDataToCDN = async ({
       )
     );
   await storage.bucket(BUCKET_NAME).file(tokenData.cdnFilePath).makePublic();
+};
+
+export const uploadTokenIndexToCDN = async ({
+  semvar,
+  chainIdHex,
+  addresses,
+  loggerPath,
+}: {
+  semvar: SemanticVersion;
+  chainIdHex: ChainIDHex;
+  addresses: Address[];
+  loggerPath: string;
+}) => {
+  const filePath = buildTokenIndexCDNRoutes({
+    semvar,
+    chainIdHex,
+  });
+  await storage
+    .bucket(BUCKET_NAME)
+    .file(filePath)
+    .save(JSON.stringify(addresses));
+  await storage.bucket(BUCKET_NAME).file(filePath).makePublic();
+  logToFile(
+    `
+  Saving index to cloud bucket ${BUCKET_NAME} ${filePath} \n
+  `,
+    loggerPath
+  );
 };
