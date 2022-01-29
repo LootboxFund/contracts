@@ -7,9 +7,10 @@
 // THIS SCRIPT ASSUMES YOU HAVE RAN ./deployCrowdSaleFactory.dev.ts which would have
 // created a constants file which we hardcode for now
 //
-//
 // Run this script as:
 // npm run deploy:testnet:crowdsale-factory
+// OR
+// npm run deploy:rinkeby:guild-factory
 //
 // TODO:
 // Currently you can't call this script with args because of how it is called with hardhat.

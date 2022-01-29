@@ -3,6 +3,12 @@
 //
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
+//
+// Run this script as:
+// npm run deploy:testnet:guild-factory
+// OR
+// npm run deploy:rinkeby:guild-factory
+
 import { ethers, upgrades, network } from "hardhat";
 import { Constants, DAI, ETH, USDC, USDT, UST } from "../typechain";
 import { logToFile } from "./helpers/logger";
