@@ -1,0 +1,24 @@
+2022-01-29T21:48:51.017Z - 
+  
+---------- DEPLOY GUILD FACTORY (development) ----------
+  
+Script starting
+
+---- Network = rinkeby (Decimal ID = 4)
+
+  
+2022-01-29T21:48:51.018Z - Deployer Address =         0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A 
+2022-01-29T21:49:13.996Z - Uploading ETH to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/guildfx-exchange.appspot.com/o/tokens/4/v/0.0.1-sandbox/0x57E4c482dBd81209e55E81A771F5b28cEDA78fCd.json?alt=media 
+2022-01-29T21:49:15.165Z - ETH Stablecoin Address =             0x57E4c482dBd81209e55E81A771F5b28cEDA78fCd 
+2022-01-29T21:49:26.592Z - Uploading USDC to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/guildfx-exchange.appspot.com/o/tokens/4/v/0.0.1-sandbox/0xC438fD9e2f45e60b31F6F5f224B7eE2a3BdB56E1.json?alt=media 
+2022-01-29T21:49:27.367Z - USDC Stablecoin Address =            0xC438fD9e2f45e60b31F6F5f224B7eE2a3BdB56E1 
+2022-01-29T21:49:43.174Z - Uploading USDT to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/guildfx-exchange.appspot.com/o/tokens/4/v/0.0.1-sandbox/0x54559cE0c3d46e94f80c6254aa5cEA8D64E93994.json?alt=media 
+2022-01-29T21:49:43.931Z - USDT Stablecoin Address =            0x54559cE0c3d46e94f80c6254aa5cEA8D64E93994 
+2022-01-29T21:49:44.725Z - Uploading index to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/guildfx-exchange.appspot.com/o/tokens/4/v/0.0.1-sandbox/index.json?alt=media 
+2022-01-29T21:49:54.187Z - Constants Token Address =            0x01e4f496C2eBA3E868785E5cF87A0037D9a765Dc 
+2022-01-29T21:49:56.200Z - ---------- Set Stablecoin Addresses ---------- 
+2022-01-29T21:49:57.946Z - ---------- Set Price Feed Addresses ---------- 
+2022-01-29T21:50:08.305Z - Guild Factory Contract Address =    0xaca6924f42Dc2596EAfF4e5BFaEeAa90d04C7278 
+2022-01-29T21:50:22.253Z - ---- 0xbB42076e2DA6b4a782396a038F2b0d21eA5D2e51 ---> Whitelisted GuildFX staff 
+2022-01-29T21:50:35.624Z - ---- 0x3b4348A0a993e371fB65593c7eeD145821f4a2bF ---> Whitelisted guild's DAO 
+2022-01-29T21:50:52.740Z - Guild Token Address =      0xf9d82fad77e65651c12606d12d749e1cbe2cf4d1 

@@ -32,6 +32,11 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
+    binance_mainnet: {
+      chainId: 56,
+      url: `https://bsc-dataseed.binance.org`,
+      accounts: [],
+    },
     binance_testnet: {
       chainId: 97,
       url: `https://speedy-nodes-nyc.moralis.io/f111521389b4b4a5701c6b0b/bsc/testnet`,
@@ -61,11 +66,6 @@ const config: HardhatUserConfig = {
         `${process.env.DEV_GUILD_DEV_PRIVATE_KEY}`,
         `${process.env.DEV_GUILD_TREASURY_PRIVATE_KEY}`,
       ],
-    },
-    binance_mainnet: {
-      chainId: 56,
-      url: `https://bsc-dataseed.binance.org`,
-      accounts: [],
     },
     hardhat: {
       forking: {

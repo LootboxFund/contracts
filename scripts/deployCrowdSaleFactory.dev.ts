@@ -22,10 +22,30 @@ import { stripZeros } from "../test/helpers/test-helpers";
 import { sleep } from "./helpers/helpers";
 import { logToFile } from "./helpers/logger";
 
-const DEFAULT_GFX_CONSTANTS_ADDRESS =
-  "0x56ae9253E0311FfdEf27Aa53c8F8318D71b43699";
-const DEFAULT_GUILD_TOKEN_ADDRESS =
-  "0x63693bd1ba571035dde710ae2862e7f970fbe9dd";
+interface IAddressesByChain {
+  guildTokenAddress: string;
+  gfxConstants: string;
+}
+
+interface IAddresses {
+  [key: number]: IAddressesByChain;
+}
+
+const addresses: IAddresses = {
+  // BSC MAINNET
+  // 56: {},
+  // BSC TESTNET
+  97: {
+    guildTokenAddress: "0x63693bd1ba571035dde710ae2862e7f970fbe9dd",
+    gfxConstants: "0x56ae9253E0311FfdEf27Aa53c8F8318D71b43699",
+  },
+  // Rinkeby
+  4: {
+    guildTokenAddress: "0xf9d82fad77e65651c12606d12d749e1cbe2cf4d1",
+    gfxConstants: "0x01e4f496C2eBA3E868785E5cF87A0037D9a765Dc",
+  },
+};
+
 const DEFAULT_GUILD_TOKEN_STARTING_PRICE = "7000000"; // 7 USD cents
 
 const LOG_FILE_PATH = `${__dirname}/logs/${network.name}_${
@@ -42,6 +62,18 @@ async function main() {
    */
   [guildTokenAddress, gfxConstants, guildTokenStartingPrice] =
     process?.argv.slice(2) || [];
+
+  const chainId = network.config.chainId;
+
+  if (!chainId) {
+    throw new Error(
+      "Chain ID cannot be undefined! Please specify the chain ID in hardhat.config.json"
+    );
+  }
+
+  if (!(chainId in Object.keys(addresses))) {
+    throw new Error(`Please update config for chain ID ${chainId}`);
+  }
 
   const [
     deployer,
@@ -62,7 +94,7 @@ async function main() {
   
 ---- Script starting
 
----- Network = ${network.name} (Decimal ID = ${network.config.chainId})
+---- Network = ${network.name} (Decimal ID = ${chainId})
 
 ---- Params:
 
@@ -77,11 +109,11 @@ async function main() {
   );
 
   if (!guildTokenAddress) {
-    guildTokenAddress = DEFAULT_GUILD_TOKEN_ADDRESS;
+    guildTokenAddress = addresses[chainId]?.guildTokenAddress;
   }
 
   if (!gfxConstants) {
-    gfxConstants = DEFAULT_GFX_CONSTANTS_ADDRESS;
+    gfxConstants = addresses[chainId]?.gfxConstants;
   }
   if (!guildTokenStartingPrice) {
     guildTokenStartingPrice = DEFAULT_GUILD_TOKEN_STARTING_PRICE;

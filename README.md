@@ -33,22 +33,22 @@
 | Contract                                   | Address                                    |
 | ------------------------------------------ | ------------------------------------------ |
 | GuildFX Constants                          | 0x56ae9253E0311FfdEf27Aa53c8F8318D71b43699 |
+| Guild Factory                              | 0x22BF1dE40Ea175Ce7436ADA0eD8f89a85C0278cf |
+| Crowdsale Factory                          | 0x5E44410793AAEA932DD208CBf0277d2AA4c6Ae3D |
 | GuildFX Gamer Token                        | 0x63693bd1ba571035dde710ae2862e7f970fbe9dd |
 | Crowdsale for Gamer Token                  |
 | 0x8577ac56492b9fa85278b70b761db3dafa9c8c01 |
-| Crowdsale Factory                          | 0x5E44410793AAEA932DD208CBf0277d2AA4c6Ae3D |
-| Guild Factory                              | 0x22BF1dE40Ea175Ce7436ADA0eD8f89a85C0278cf |
 
 ### Rinkeby
 
 | Contract                                   | Address                                    |
 | ------------------------------------------ | ------------------------------------------ |
-| GuildFX Constants                          | 0x4fEcF2CA1ec7d20D5a76298C8F7813DaAD54800e |
-| GuildFX Gamer Token                        | 0x2b3985dc816085efc9ae3976cf83f9028b963c22 |
+| GuildFX Constants                          | 0x01e4f496C2eBA3E868785E5cF87A0037D9a765Dc |
+| Guild Factory                              | 0xaca6924f42Dc2596EAfF4e5BFaEeAa90d04C7278 |
+| Crowdsale Factory                          | 0x5E44410793AAEA932DD208CBf0277d2AA4c6Ae3D |
+| GuildFX Gamer Token                        | 0xf9d82fad77e65651c12606d12d749e1cbe2cf4d1 |
 | Crowdsale for Gamer Token                  |
 | 0x8577ac56492b9fa85278b70b761db3dafa9c8c01 |
-| Crowdsale Factory                          | 0x5E44410793AAEA932DD208CBf0277d2AA4c6Ae3D |
-| Guild Factory                              | 0xd907b3b186B8692803F21907557411E5023F9B4F |
 
 ## Guild Architecture Diagram
 

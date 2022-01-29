@@ -74,7 +74,6 @@ async function main() {
     guildTreasury,
   ] = await ethers.getSigners();
   const DEPLOYER_ADDRESS = deployer.address;
-  console.log(network.config);
   logToFile(
     `
   
