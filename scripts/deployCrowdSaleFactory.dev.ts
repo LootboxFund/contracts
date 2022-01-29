@@ -7,12 +7,15 @@
 // THIS SCRIPT ASSUMES YOU HAVE RAN ./deployCrowdSaleFactory.dev.ts which would have
 // created a constants file which we hardcode for now
 //
+//
 // Run this script as:
-// npm run deploy:testnet:crowdsale-factory [GUILD_TOKEN_ADDRESS] [GFX_CONSTANTS_ADDRESS] [GUILD_TOKEN_STARTING_PRICE]
-// where:
-//    GUILD_TOKEN_ADDRESS - Address of the token you want to start a crowdsale for
-//    GFX_CONSTANTS_ADDRESS - Address of internal GuildFX constants contract
-//    GUILD_TOKEN_STARTING_PRICE - Starting price in USD (8 decimals)
+// npm run deploy:testnet:crowdsale-factory
+//
+// TODO:
+// Currently you can't call this script with args because of how it is called with hardhat.
+// Ideally, we would like to call this script as such:
+// EXAMPLE: npm run deploy:testnet:crowdsale-factory --arg1 [GUILD_TOKEN_ADDRESS] --arg2 [GFX_CONSTANTS_ADDRESS] --arg3 [GUILD_TOKEN_STARTING_PRICE]
+// It would be nice to change the call signature to this.
 
 import { ethers, network } from "hardhat";
 import { stripZeros } from "../test/helpers/test-helpers";
@@ -27,14 +30,17 @@ const DEFAULT_GUILD_TOKEN_STARTING_PRICE = "7000000"; // 7 USD cents
 
 const LOG_FILE_PATH = `${__dirname}/logs/deployCrowdSaleFactory_log_${Date.now()}.dev.txt`;
 
-let gfxConstants: string,
-  guildTokenAddress: string,
-  guildTokenStartingPrice: string;
-
-[guildTokenAddress, gfxConstants, guildTokenStartingPrice] =
-  process.argv.slice(2);
-
 async function main() {
+  let gfxConstants: string,
+    guildTokenAddress: string,
+    guildTokenStartingPrice: string;
+
+  /**
+   * TODO: currently argv does not work with how the script is called via hardhat. Please update this.
+   */
+  [guildTokenAddress, gfxConstants, guildTokenStartingPrice] =
+    process?.argv.slice(2) || [];
+
   const [
     deployer,
     treasury,
