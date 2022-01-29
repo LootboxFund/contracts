@@ -97,16 +97,12 @@ describe("📦 Constants", async function () {
     const dai = generateMockAddress("dai");
 
     beforeEach(async () => {
-      await constants
-        .connect(dao)
-        .setCrowdSaleStableCoins(eth, usdc, usdt, ust, dai);
+      await constants.connect(dao).setCrowdSaleStableCoins(eth, usdc, usdt);
     });
 
     it("reverts with access control error if not called by the DAO", async () => {
       await expect(
-        constants
-          .connect(purchaser)
-          .setCrowdSaleStableCoins(eth, usdc, usdt, ust, dai)
+        constants.connect(purchaser).setCrowdSaleStableCoins(eth, usdc, usdt)
       ).to.be.revertedWith(
         generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
       );
@@ -115,9 +111,7 @@ describe("📦 Constants", async function () {
     it("reverts with pausable error when contract is paused", async () => {
       await constants.connect(dao).pause();
       await expect(
-        constants
-          .connect(dao)
-          .setCrowdSaleStableCoins(eth, usdc, usdt, ust, dai)
+        constants.connect(dao).setCrowdSaleStableCoins(eth, usdc, usdt)
       ).to.be.revertedWith("Pausable: paused");
     });
 
@@ -125,13 +119,7 @@ describe("📦 Constants", async function () {
       await expect(
         constants
           .connect(dao)
-          .setCrowdSaleStableCoins(
-            ethers.constants.AddressZero,
-            usdc,
-            usdt,
-            ust,
-            dai
-          )
+          .setCrowdSaleStableCoins(ethers.constants.AddressZero, usdc, usdt)
       ).to.be.revertedWith("ETH cannot be zero");
     });
 
@@ -139,13 +127,7 @@ describe("📦 Constants", async function () {
       await expect(
         constants
           .connect(dao)
-          .setCrowdSaleStableCoins(
-            eth,
-            ethers.constants.AddressZero,
-            usdt,
-            ust,
-            dai
-          )
+          .setCrowdSaleStableCoins(eth, ethers.constants.AddressZero, usdt)
       ).to.be.revertedWith("USDC cannot be zero");
     });
 
@@ -153,42 +135,8 @@ describe("📦 Constants", async function () {
       await expect(
         constants
           .connect(dao)
-          .setCrowdSaleStableCoins(
-            eth,
-            usdc,
-            ethers.constants.AddressZero,
-            ust,
-            dai
-          )
+          .setCrowdSaleStableCoins(eth, usdc, ethers.constants.AddressZero)
       ).to.be.revertedWith("USDT cannot be zero");
-    });
-
-    it("reverts when ust is zero", async () => {
-      await expect(
-        constants
-          .connect(dao)
-          .setCrowdSaleStableCoins(
-            eth,
-            usdc,
-            usdt,
-            ethers.constants.AddressZero,
-            dai
-          )
-      ).to.be.revertedWith("UST cannot be zero");
-    });
-
-    it("reverts when dai is zero", async () => {
-      await expect(
-        constants
-          .connect(dao)
-          .setCrowdSaleStableCoins(
-            eth,
-            usdc,
-            usdt,
-            ust,
-            ethers.constants.AddressZero
-          )
-      ).to.be.revertedWith("DAI cannot be zero");
     });
 
     it("sets eth address", async () => {
@@ -206,16 +154,6 @@ describe("📦 Constants", async function () {
         usdt.toLowerCase()
       );
     });
-    it("sets ust address", async () => {
-      expect((await constants.UST_ADDRESS()).toLowerCase()).to.eq(
-        ust.toLowerCase()
-      );
-    });
-    it("sets dai address", async () => {
-      expect((await constants.DAI_ADDRESS()).toLowerCase()).to.eq(
-        dai.toLowerCase()
-      );
-    });
   });
 
   describe("🗳 setOraclePriceFeeds()", () => {
@@ -227,16 +165,12 @@ describe("📦 Constants", async function () {
     const dai = generateMockAddress("dai");
 
     beforeEach(async () => {
-      await constants
-        .connect(dao)
-        .setOraclePriceFeeds(bnb, eth, usdc, usdt, ust, dai);
+      await constants.connect(dao).setOraclePriceFeeds(bnb, eth, usdc, usdt);
     });
 
     it("reverts with access control error if not called by the DAO", async () => {
       await expect(
-        constants
-          .connect(purchaser)
-          .setOraclePriceFeeds(bnb, eth, usdc, usdt, ust, dai)
+        constants.connect(purchaser).setOraclePriceFeeds(bnb, eth, usdc, usdt)
       ).to.be.revertedWith(
         generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
       );
@@ -245,9 +179,7 @@ describe("📦 Constants", async function () {
     it("reverts with pausable error when contract is paused", async () => {
       await constants.connect(dao).pause();
       await expect(
-        constants
-          .connect(dao)
-          .setOraclePriceFeeds(bnb, eth, usdc, usdt, ust, dai)
+        constants.connect(dao).setOraclePriceFeeds(bnb, eth, usdc, usdt)
       ).to.be.revertedWith("Pausable: paused");
     });
 
@@ -255,14 +187,7 @@ describe("📦 Constants", async function () {
       await expect(
         constants
           .connect(dao)
-          .setOraclePriceFeeds(
-            ethers.constants.AddressZero,
-            eth,
-            usdc,
-            usdt,
-            ust,
-            dai
-          )
+          .setOraclePriceFeeds(ethers.constants.AddressZero, eth, usdc, usdt)
       ).to.be.revertedWith("BNB price feed cannot be zero");
     });
 
@@ -270,14 +195,7 @@ describe("📦 Constants", async function () {
       await expect(
         constants
           .connect(dao)
-          .setOraclePriceFeeds(
-            bnb,
-            ethers.constants.AddressZero,
-            usdc,
-            usdt,
-            ust,
-            dai
-          )
+          .setOraclePriceFeeds(bnb, ethers.constants.AddressZero, usdc, usdt)
       ).to.be.revertedWith("ETH price feed cannot be zero");
     });
 
@@ -285,14 +203,7 @@ describe("📦 Constants", async function () {
       await expect(
         constants
           .connect(dao)
-          .setOraclePriceFeeds(
-            bnb,
-            eth,
-            ethers.constants.AddressZero,
-            usdt,
-            ust,
-            dai
-          )
+          .setOraclePriceFeeds(bnb, eth, ethers.constants.AddressZero, usdt)
       ).to.be.revertedWith("USDC price feed cannot be zero");
     });
 
@@ -300,46 +211,10 @@ describe("📦 Constants", async function () {
       await expect(
         constants
           .connect(dao)
-          .setOraclePriceFeeds(
-            bnb,
-            eth,
-            usdc,
-            ethers.constants.AddressZero,
-            ust,
-            dai
-          )
+          .setOraclePriceFeeds(bnb, eth, usdc, ethers.constants.AddressZero)
       ).to.be.revertedWith("USDT price feed cannot be zero");
     });
 
-    it("reverts when ust is zero", async () => {
-      await expect(
-        constants
-          .connect(dao)
-          .setOraclePriceFeeds(
-            bnb,
-            eth,
-            usdc,
-            usdt,
-            ethers.constants.AddressZero,
-            dai
-          )
-      ).to.be.revertedWith("UST price feed cannot be zero");
-    });
-
-    it("reverts when dai is zero", async () => {
-      await expect(
-        constants
-          .connect(dao)
-          .setOraclePriceFeeds(
-            bnb,
-            eth,
-            usdc,
-            usdt,
-            ust,
-            ethers.constants.AddressZero
-          )
-      ).to.be.revertedWith("DAI price feed cannot be zero");
-    });
     it("sets bnb price feed", async () => {
       expect((await constants.BNB_PRICE_FEED()).toLowerCase()).to.eq(
         bnb.toLowerCase()
@@ -359,16 +234,6 @@ describe("📦 Constants", async function () {
     it("sets usdt price feed", async () => {
       expect((await constants.USDT_PRICE_FEED()).toLowerCase()).to.eq(
         usdt.toLowerCase()
-      );
-    });
-    it("sets ust price feed", async () => {
-      expect((await constants.UST_PRICE_FEED()).toLowerCase()).to.eq(
-        ust.toLowerCase()
-      );
-    });
-    it("sets dai price feed", async () => {
-      expect((await constants.DAI_PRICE_FEED()).toLowerCase()).to.eq(
-        dai.toLowerCase()
       );
     });
   });

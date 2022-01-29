@@ -62,10 +62,6 @@ interface ICONSTANTS {
 
     function USDT_ADDRESS() external view returns (address);
 
-    function UST_ADDRESS() external view returns (address);
-
-    function DAI_ADDRESS() external view returns (address);
-
     function BNB_PRICE_FEED() external view returns (address);
 
     function ETH_PRICE_FEED() external view returns (address);
@@ -74,9 +70,6 @@ interface ICONSTANTS {
 
     function USDT_PRICE_FEED() external view returns (address);
 
-    function UST_PRICE_FEED() external view returns (address);
-
-    function DAI_PRICE_FEED() external view returns (address);
 }
 
 contract CrowdSale is
@@ -89,8 +82,6 @@ contract CrowdSale is
     AggregatorV3Interface internal priceFeedETH;
     AggregatorV3Interface internal priceFeedUSDC;
     AggregatorV3Interface internal priceFeedUSDT;
-    AggregatorV3Interface internal priceFeedUST;
-    AggregatorV3Interface internal priceFeedDAI;
 
     // only the DAO can control Treasury
     bytes32 constant private DAO_ROLE = keccak256("DAO_ROLE");
@@ -151,8 +142,6 @@ contract CrowdSale is
         priceFeedETH = AggregatorV3Interface(constants.ETH_PRICE_FEED());
         priceFeedUSDC = AggregatorV3Interface(constants.USDC_PRICE_FEED());
         priceFeedUSDT = AggregatorV3Interface(constants.USDT_PRICE_FEED());
-        priceFeedUST = AggregatorV3Interface(constants.UST_PRICE_FEED());
-        priceFeedDAI = AggregatorV3Interface(constants.DAI_PRICE_FEED());
     }
 
     // converts stablecoin amount to guild token amount
@@ -198,19 +187,6 @@ contract CrowdSale is
         return price;
     }
 
-    function getUSTPrice() public view returns (int256) {
-        (
-            uint80 roundID,
-            int256 price,
-            uint256 startedAt,
-            uint256 timeStamp,
-            uint80 answeredInRound
-        ) = priceFeedUST.latestRoundData();
-        // If the round is not complete yet, timestamp is 0
-        require(timeStamp > 0, "Round not complete");
-        return price;
-    }
-
     function getBNBPrice() public view returns (int256) {
         (
             uint80 roundID,
@@ -232,19 +208,6 @@ contract CrowdSale is
             uint256 timeStamp,
             uint80 answeredInRound
         ) = priceFeedETH.latestRoundData();
-        // If the round is not complete yet, timestamp is 0
-        require(timeStamp > 0, "Round not complete");
-        return price;
-    }
-
-    function getDAIPrice() public view returns (int256) {
-        (
-            uint80 roundID,
-            int256 price,
-            uint256 startedAt,
-            uint256 timeStamp,
-            uint80 answeredInRound
-        ) = priceFeedDAI.latestRoundData();
         // If the round is not complete yet, timestamp is 0
         require(timeStamp > 0, "Round not complete");
         return price;
@@ -305,33 +268,6 @@ contract CrowdSale is
         );
     }
 
-    function buyInUST(uint256 _amount) public payable whenNotPaused {
-        // get UST price from oracle
-        int256 price = getUSTPrice();
-        ICONSTANTS constants = ICONSTANTS(CONSTANTS);
-        address UST = constants.UST_ADDRESS();
-        IERC20 tokenUST = IERC20(UST);
-        // calculate the received GUILD at the current prices of USDT & GUILD
-        uint256 guildPurchasedAmount = getGuildTokenPurchaseAmount(
-            _amount,
-            tokenUST.decimals(),
-            uint256(price)
-        );
-        // transfer stablecoin from buyer wallet to treasury
-        tokenUST.transferFrom(msg.sender, TREASURY, _amount);
-        // transfer GUILD from newly minted, to buyer wallet
-        IERC20GUILD tokenGUILD = IERC20GUILD(GUILD);
-        tokenGUILD.mintRequest(msg.sender, guildPurchasedAmount);
-        // emit purchase event
-        emit Purchase(
-            msg.sender,
-            UST,
-            _amount,
-            guildPurchasedAmount,
-            currentPriceUSD
-        );
-    }
-
     function buyInETH(uint256 _amount) public payable whenNotPaused {
         // get ETH price from oracle
         int256 price = getETHPrice();
@@ -353,33 +289,6 @@ contract CrowdSale is
         emit Purchase(
             msg.sender,
             ETH,
-            _amount,
-            guildPurchasedAmount,
-            currentPriceUSD
-        );
-    }
-
-    function buyInDAI(uint256 _amount) public payable whenNotPaused {
-        // get DAI price from oracle
-        int256 price = getDAIPrice();
-        ICONSTANTS constants = ICONSTANTS(CONSTANTS);
-        address DAI = constants.DAI_ADDRESS();
-        IERC20 tokenDAI = IERC20(DAI);
-        // calculate the received GUILD at the current prices of ETH & GUILD
-        uint256 guildPurchasedAmount = getGuildTokenPurchaseAmount(
-            _amount,
-            tokenDAI.decimals(),
-            uint256(price)
-        );
-        // transfer stablecoin from buyer wallet to treasury
-        tokenDAI.transferFrom(msg.sender, TREASURY, _amount);
-        // transfer GUILD from newly minted, to buyer wallet
-        IERC20GUILD tokenGUILD = IERC20GUILD(GUILD);
-        tokenGUILD.mintRequest(msg.sender, guildPurchasedAmount);
-        // emit purchase event
-        emit Purchase(
-            msg.sender,
-            DAI,
             _amount,
             guildPurchasedAmount,
             currentPriceUSD

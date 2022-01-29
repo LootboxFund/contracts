@@ -292,7 +292,7 @@ describe("📦 CrowdSaleFactory", () => {
       );
     });
     it("Allows whitelist guild owners to deploy a crowdsale, emit with right details", async () => {
-      await expect(
+      expect(
         await crowdsaleFactory
           .connect(guildDao)
           .createCrowdSale(

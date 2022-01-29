@@ -30,7 +30,7 @@ contract CrowdSaleFactory is Pausable, AccessControl {
         address crowdsaleAddress,
         address guildToken,
         address dao,
-        address developer,
+        address developer, 
         address treasury,
         uint256 startingPrice,
         address deployer
