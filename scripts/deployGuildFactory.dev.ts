@@ -3,11 +3,17 @@
 //
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
-import { ethers, upgrades } from "hardhat";
+import { ethers, upgrades, network } from "hardhat";
 import { Constants, DAI, ETH, USDC, USDT, UST } from "../typechain";
 import { logToFile } from "./helpers/logger";
 import { stripZeros } from "../test/helpers/test-helpers";
+import {
+  TokenFragment,
+  TokenFragsWithCDN,
+  uploadTokenDataToCDN,
+} from "./helpers/tokenlist";
 
+const semvar = "0.0.1-sandbox";
 const Oxnewton = "0xaC15B26acF4334a62961237a0DCEC90eDFE1B251";
 const Oxterran = "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F";
 
@@ -60,12 +66,12 @@ async function main() {
   
 ---------- DEPLOY GUILD FACTORY (development) ----------
   
----- Script starting
+Script starting
 
   \n`,
     LOG_FILE_PATH
   );
-  logToFile(`---- ${DEPLOYER_ADDRESS} ---> Deployer Address \n`, LOG_FILE_PATH);
+  logToFile(`Deployer Address =         ${DEPLOYER_ADDRESS} \n`, LOG_FILE_PATH);
 
   // --------- Deploy the Stablecoins --------- //
   const Eth = await ethers.getContractFactory("ETH");
@@ -86,8 +92,14 @@ async function main() {
     ethers.BigNumber.from("100000000000000000000")
   );
   await sleep();
+  await uploadTokenDataToCDN({
+    tokenFrag: { symbol: "ETH", address: ethStablecoin.address },
+    chainIdHex: network.config.chainId?.toString(16) || "undefined",
+    semvar,
+    loggerPath: LOG_FILE_PATH,
+  });
   logToFile(
-    `---- ${ethStablecoin.address} ---> ETH Stablecoin Address\n`,
+    `ETH Stablecoin Address =             ${ethStablecoin.address} \n`,
     LOG_FILE_PATH
   );
 
@@ -112,8 +124,14 @@ async function main() {
     ethers.BigNumber.from("100000000000000000000")
   );
   await sleep();
+  await uploadTokenDataToCDN({
+    tokenFrag: { symbol: "USDC", address: usdcStablecoin.address },
+    chainIdHex: network.config.chainId?.toString(16) || "undefined",
+    semvar,
+    loggerPath: LOG_FILE_PATH,
+  });
   logToFile(
-    `---- ${usdcStablecoin.address} ---> USDC Stablecoin Address\n`,
+    `USDC Stablecoin Address =            ${usdcStablecoin.address} \n`,
     LOG_FILE_PATH
   );
 
@@ -135,54 +153,14 @@ async function main() {
     ethers.BigNumber.from("100000000000000000000")
   );
   await sleep();
+  await uploadTokenDataToCDN({
+    tokenFrag: { symbol: "USDT", address: usdtStablecoin.address },
+    chainIdHex: network.config.chainId?.toString(16) || "undefined",
+    semvar,
+    loggerPath: LOG_FILE_PATH,
+  });
   logToFile(
-    `---- ${usdtStablecoin.address} ---> USDT Stablecoin Address\n`,
-    LOG_FILE_PATH
-  );
-
-  const Ust = await ethers.getContractFactory("UST");
-  const ustStablecoin = (await Ust.deploy(0)) as UST;
-  await sleep();
-  await ustStablecoin.mint(
-    purchaser.address,
-    ethers.BigNumber.from("100000000000000000000")
-  );
-  await sleep();
-  await ustStablecoin.mint(
-    Oxnewton,
-    ethers.BigNumber.from("100000000000000000000")
-  );
-  await sleep();
-  await ustStablecoin.mint(
-    Oxterran,
-    ethers.BigNumber.from("100000000000000000000")
-  );
-  await sleep();
-  logToFile(
-    `---- ${ustStablecoin.address} ---> UST Stablecoin Address\n`,
-    LOG_FILE_PATH
-  );
-
-  const Dai = await ethers.getContractFactory("DAI");
-  const daiStablecoin = (await Dai.deploy(0)) as DAI;
-  await sleep();
-  await daiStablecoin.mint(
-    purchaser.address,
-    ethers.BigNumber.from("100000000000000000000")
-  );
-  await sleep();
-  await daiStablecoin.mint(
-    Oxnewton,
-    ethers.BigNumber.from("100000000000000000000")
-  );
-  await sleep();
-  await daiStablecoin.mint(
-    Oxterran,
-    ethers.BigNumber.from("100000000000000000000")
-  );
-  await sleep();
-  logToFile(
-    `---- ${daiStablecoin.address} ---> DAI Stablecoin Address\n`,
+    `USDT Stablecoin Address =            ${usdtStablecoin.address} \n`,
     LOG_FILE_PATH
   );
 
@@ -198,7 +176,7 @@ async function main() {
   await constants.deployed();
   const CONSTANTS_ADDRESS = constants.address;
   logToFile(
-    `---- ${CONSTANTS_ADDRESS} ---> Constants Token Address\n`,
+    `Constants Token Address =            ${CONSTANTS_ADDRESS} \n`,
     LOG_FILE_PATH
   );
   await sleep();
@@ -209,14 +187,9 @@ async function main() {
     .setCrowdSaleStableCoins(
       ethStablecoin.address,
       usdcStablecoin.address,
-      usdtStablecoin.address,
-      ustStablecoin.address,
-      daiStablecoin.address
+      usdtStablecoin.address
     );
-  logToFile(
-    `---------------------------------------------------> Set Stablecoin Addresses\n`,
-    LOG_FILE_PATH
-  );
+  logToFile(`---------- Set Stablecoin Addresses ---------- \n`, LOG_FILE_PATH);
   await sleep();
 
   // --------- Set Stable Coin Price Feed Addresses --------- //
@@ -226,14 +199,9 @@ async function main() {
       STABLECOINS[ENVIRONMENT].BNB.priceFeed,
       STABLECOINS[ENVIRONMENT].ETH.priceFeed,
       STABLECOINS[ENVIRONMENT].USDC.priceFeed,
-      STABLECOINS[ENVIRONMENT].USDT.priceFeed,
-      STABLECOINS[ENVIRONMENT].UST.priceFeed,
-      STABLECOINS[ENVIRONMENT].UST.priceFeed
+      STABLECOINS[ENVIRONMENT].USDT.priceFeed
     );
-  logToFile(
-    `---------------------------------------------------> Set Stablecoin Price Feed Addresses\n`,
-    LOG_FILE_PATH
-  );
+  logToFile(`---------- Set Price Feed Addresses ---------- \n`, LOG_FILE_PATH);
   await sleep();
 
   // --------- Deploy Guild Factory --------- //
@@ -244,7 +212,7 @@ async function main() {
   );
   await guildFactory.deployed();
   logToFile(
-    `---- ${guildFactory.address} ---> Guild Factory Contract Address\n`,
+    `Guild Factory Contract Address =    ${guildFactory.address} \n`,
     LOG_FILE_PATH
   );
   await sleep();
@@ -267,10 +235,10 @@ async function main() {
     stripZeros
   );
   logToFile(
-    `---- ${guildTokenAddress} ---> Guild Token Address\n`,
+    `Guild Token Address =      ${guildTokenAddress} \n`,
     LOG_FILE_PATH
   );
-  logToFile(`---- ${governorAddress} ---> Governor Address\n`, LOG_FILE_PATH);
+  logToFile(`Governor Address =         ${governorAddress} \n`, LOG_FILE_PATH);
   await sleep();
 
   // TODO: Add crowdsale creation here

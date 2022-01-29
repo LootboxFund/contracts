@@ -39,18 +39,16 @@ const config: HardhatUserConfig = {
         `${process.env.DEV_TREASURY_PRIVATE_KEY}`,
         `${process.env.DEV_DAO_PRIVATE_KEY}`,
         `${process.env.DEV_DEVELOPER_PRIVATE_KEY}`,
-        `${process.env.DEV_ADDR_1_PRIVATE_KEY}`,
+        `${process.env.DEV_PURCHASER_PRIVATE_KEY}`,
+        `${process.env.DEV_GFX_STAFF_PRIVATE_KEY}`,
+        `${process.env.DEV_GUILD_DAO_PRIVATE_KEY}`,
+        `${process.env.DEV_GUILD_DEV_PRIVATE_KEY}`,
+        `${process.env.DEV_GUILD_TREASURY_PRIVATE_KEY}`,
       ],
     },
     binance_mainnet: {
       url: `https://bsc-dataseed.binance.org`,
-      accounts: [
-        `${process.env.DEV_DEPLOYER_PRIVATE_KEY}`,
-        `${process.env.DEV_TREASURY_PRIVATE_KEY}`,
-        `${process.env.DEV_DAO_PRIVATE_KEY}`,
-        `${process.env.DEV_DEVELOPER_PRIVATE_KEY}`,
-        `${process.env.DEV_ADDR_1_PRIVATE_KEY}`,
-      ],
+      accounts: [],
     },
     hardhat: {
       forking: {

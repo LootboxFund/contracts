@@ -7,7 +7,6 @@
     "test": "npx hardhat test",
     "geth-local": "npx hardhat node",
     "deploy-local": "npx hardhat compile && npx hardhat run scripts/deploy.ts --network localhost",
-    "deploy:testnet:crowdsale": "npx hardhat compile && npx hardhat run scripts/deployCrowdSale.dev.ts --network binance_testnet",
     "deploy:testnet:crowdsale-factory": "npx hardhat compile && npx hardhat run scripts/deployCrowdSaleFactory.dev.ts --network binance_testnet",
     "deploy:testnet:guild-factory": "npx hardhat compile && npx hardhat run scripts/deployGuildFactory.dev.ts --network binance_testnet"
   },
@@ -23,6 +22,7 @@
     "@typechain/ethers-v5": "^7.2.0",
     "@typechain/hardhat": "^2.3.1",
     "@types/chai": "^4.2.22",
+    "@types/lodash": "^4.14.178",
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.11.11",
     "@typescript-eslint/eslint-plugin": "^4.33.0",
@@ -52,9 +52,12 @@
   },
   "dependencies": {
     "@chainlink/contracts": "^0.2.2",
+    "@google-cloud/storage": "^5.18.1",
     "@openzeppelin/contracts": "^4.4.2",
     "@openzeppelin/contracts-upgradeable": "^4.4.0",
     "@openzeppelin/hardhat-upgrades": "^1.12.0",
-    "hardhat-contract-sizer": "^2.1.1"
+    "hardhat-contract-sizer": "^2.1.1",
+    "lodash": "^4.17.21",
+    "moralis": "^1.2.1"
   }
 }
