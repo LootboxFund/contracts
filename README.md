@@ -10,21 +10,13 @@
 3. `npx hardhat compile`
 4. `npm run test` or `npx hardhat test test/file.test.js`
 
-### Environment set up
-
-1. Create a directory `env`
-2.
-
 ### To set up a new test environment:
 
 1. `npm run deploy:testnet:guild-factory`
-   - This will output a [log file](.scripts/logs/deployGuildFactory_log_1643490853248.dev.txt) with name `"deployGuildTokenFactory_log_xxx.dev.txt"`
+   - This will output a [log file](.scripts/logs/deployGuildFactory_log_1643490853248.dev.txt) with name `"testnet-99_deployGuildTokenFactory_log_xxx.dev.txt"`
 2. **Manually add** the "Constants Token Address" and "Guild Token Address" to the [crowdsale factory deploy script](./scripts/deployCrowdSaleFactory.dev.ts).
-   - 💡 You can find the GuildFXConstants contract address and the GuildFX erc20votes token address from the log files from step 1.
-   - 📆 TODO: Remove this manual step. Tracked [here](https://linear.app/guildfx/issue/GUI-75/generalize-dev-deployment-proceedure).
+   - 💡 You can find the GuildFXConstants contract address and the GuildFX erc20votes token address from the log files from step 1. You need to **manually hardcode them in the script for now.**
 3. `npm run deploy:testnet:crowdsale-factory`
-4. Propse and execute a `.whitelistMint()` on the crowdsale address via openzeppelin defender
-   - 📆 TODO: tracked [here](https://linear.app/guildfx/issue/GUI-77/successfully-propose-execute-and-document-a-whitelistmint-with-the)
 
 ## Testnet Addresses
 
@@ -45,10 +37,10 @@
 | ------------------------------------------ | ------------------------------------------ |
 | GuildFX Constants                          | 0x01e4f496C2eBA3E868785E5cF87A0037D9a765Dc |
 | Guild Factory                              | 0xaca6924f42Dc2596EAfF4e5BFaEeAa90d04C7278 |
-| Crowdsale Factory                          | 0x5E44410793AAEA932DD208CBf0277d2AA4c6Ae3D |
+| Crowdsale Factory                          | 0xb6C2650e26446bb3f3319e8D009C2A6dFC28B693 |
 | GuildFX Gamer Token                        | 0xf9d82fad77e65651c12606d12d749e1cbe2cf4d1 |
 | Crowdsale for Gamer Token                  |
-| 0x8577ac56492b9fa85278b70b761db3dafa9c8c01 |
+| 0x51fa3a64c99b1e55639f07985d00b73236d871e2 |
 
 ## Guild Architecture Diagram
 
