@@ -62,14 +62,20 @@ export type TokenFragsWithCDN = {
   semvar: SemanticVersion;
   loggerPath: string;
 };
+
 export const uploadTokenDataToCDN = async ({
   tokenFrag,
   chainIdHex,
   semvar,
   loggerPath,
 }: TokenFragsWithCDN) => {
+  const filePath = buildTokenMoldCDNRoute({
+    chainIdHex: chainIdHex,
+    semvar,
+    address: tokenFrag.address,
+  });
   logToFile(
-    `Uploading ${tokenFrag.symbol} to Cloud Storage Bucket ${BUCKET_NAME} as ${tokenFrag.address}.json \n`,
+    `Uploading ${tokenFrag.symbol} to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/${BUCKET_NAME}/o/${filePath}?alt=media \n`,
     loggerPath
   );
   const tokenMold = tokenMolds.find(
@@ -87,11 +93,7 @@ export const uploadTokenDataToCDN = async ({
     name: tokenMold.name,
     priceOracle: tokenMold.priceOracle,
     symbol: tokenMold.symbol,
-    cdnFilePath: buildTokenMoldCDNRoute({
-      chainIdHex: chainIdHex,
-      semvar,
-      address: tokenFrag.address,
-    }),
+    cdnFilePath: filePath,
   };
   await storage
     .bucket(BUCKET_NAME)
@@ -128,9 +130,7 @@ export const uploadTokenIndexToCDN = async ({
     .save(JSON.stringify(addresses));
   await storage.bucket(BUCKET_NAME).file(filePath).makePublic();
   logToFile(
-    `
-  Saving index to cloud bucket ${BUCKET_NAME} ${filePath} \n
-  `,
+    `Uploading index to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/${BUCKET_NAME}/o/${filePath}?alt=media \n`,
     loggerPath
   );
 };
