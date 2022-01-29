@@ -303,7 +303,7 @@ describe("📦 GuildFactory", () => {
     });
   });
 
-  describe.only("🗳  createGuild()", () => {
+  describe("🗳  createGuild()", () => {
     let initialNumberOfGuilds: number;
     let transaction: ContractTransaction;
 
