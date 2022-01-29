@@ -722,21 +722,14 @@ describe("📦 GUILD token", async () => {
       });
 
       it("sends the GuildFXTreasury the correct number of tokens for the 2% fee", async () => {
-        const initialMintToGuild = (
-          await constants.INITIAL_MINT_TO_GUILD()
-        ).toString();
-        const [intialMintFeeAmount, initialMintFeeRate] =
-          await token.calculateGuildFXMintFee(initialMintToGuild);
         const mintAmount = ethers.utils.parseEther("98");
-        const [mintFeeAmount, mintFeeRate, guildFXTreasury] =
+        const [mintFeeAmount] =
           await token.calculateGuildFXMintFee(mintAmount);
         await token
           .connect(whitelistedAddress)
           .mintRequest(purchaser.address, mintAmount);
         expect(await token.balanceOf(await constants.TREASURY())).to.be.equal(
-          mintFeeAmount.add(
-            ethers.utils.parseEther(intialMintFeeAmount.toString())
-          )
+          mintFeeAmount
         );
       });
 
@@ -814,40 +807,9 @@ describe("📦 GUILD token", async () => {
       });
 
       it("can mint below 2^224 - 1 total supply threshold without reverting on overflow", async () => {
-        const initialMintToGuild = (
-          await constants.INITIAL_MINT_TO_GUILD()
-        ).toString();
-        const mintFeeDecimals = ethers.BigNumber.from(
-          (await constants.GUILD_FX_MINTING_FEE_DECIMALS()).toString()
-        );
-        const [intialMintFeeAmount, initialMintFeeRate] =
-          await token.calculateGuildFXMintFee(initialMintToGuild);
+        // TODO: test boundary points
 
         const maxSupply = ethers.BigNumber.from("2").pow("224").sub(1);
-
-        // TODO: test boundary points
-        // I Could not get the calculations exact...
-        //
-        // let x be the _mintAmount (aka amount)
-        //
-        // 2^224 - 1 = 98/100 * x + 2/100 * feeAmount     ;     Since feeAmount(x) = x * _mintFee / 10e^mintDecimals
-        // ==>
-        // 2^224 - 1 = 98/100 * x + 2/100 * x * _mintFee / 10e^_mintDecimals
-        // ==>
-        // x :=: amount = (2^224 - 1) / (98/100 + 2/100 * _mintFee / 10e^_mintDecimals)
-
-        // const denominator = ethers.utils
-        //   .parseUnits("980", mintFeeDecimals)
-        //   .add(
-        //     ethers.utils
-        //       .parseUnits("20", mintFeeDecimals)
-        //       .mul(mintingFee)
-        //       .div(ethers.BigNumber.from("10").pow(mintFeeDecimals))
-        //   )
-        //   .div(ethers.BigNumber.from("10").pow(mintFeeDecimals));
-
-        // const amount = maxSupply.div(denominator);
-        // const calculatedFee = await token.calculateGuildFXMintFee(amount);
 
         const amount = ethers.BigNumber.from(
           maxSupply.toString().slice(0, maxSupply.toString().length - 1)
@@ -864,36 +826,17 @@ describe("📦 GUILD token", async () => {
           await constants.TREASURY()
         );
         expect(treasuryBalance.toString()).eq(
-          mintFeeAmount.add(
-            ethers.utils.parseEther(intialMintFeeAmount.toString())
-          )
+          mintFeeAmount
         );
       });
 
       it("reverts with 'ERC20Votes: total supply risks overflowing votes' error if more that 2^224 -1 tokens are minted", async () => {
+        // TODO: test boundary points
+
         const maxSupply = ethers.BigNumber.from("2").pow("224").sub(1);
         const mintFeeDecimals = ethers.BigNumber.from(
           (await constants.GUILD_FX_MINTING_FEE_DECIMALS()).toString()
         );
-
-        // TODO: test boundary points
-        // I Could not get the calculations exact...
-        //
-        // let x be the _mintAmount (aka amount)
-        //
-        // 2^224 - 1 = 98/100 * x + 2/100 * feeAmount     ;     Since feeAmount(x) = x * _mintFee / 10e^mintDecimals
-        // ==>
-        // 2^224 - 1 = 98/100 * x + 2/100 * x * _mintFee / 10e^_mintDecimals
-        // ==>
-        // x :=: amount = (2^224 - 1) / (98/100 + 2/100 * _mintFee / 10e^_mintDecimals)
-
-        // const denominator = ethers.utils
-        //   .parseUnits("980", mintFeeDecimals)
-        //   .add(ethers.utils.parseUnits("20", mintFeeDecimals).mul(mintingFee));
-
-        // // #### cause overflow here: ####
-        // const amount = maxSupply.div(denominator).add("1");
-        // const estimatedFee = await token.calculateGuildFXMintFee(amount);
         const amount = maxSupply;
 
         const request = token
