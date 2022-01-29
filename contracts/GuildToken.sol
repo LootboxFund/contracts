@@ -151,7 +151,7 @@ contract GuildToken is
         public
         virtual
         override
-        onlyRole(getRoleAdmin(role)) /** where does getRoleAdmin() come from? */
+        onlyRole(getRoleAdmin(role)) /** onlyRole() and getRoleAdmin() are inherited from AccessControlUpgradeable */
     {
         /**
             WARNING: This function will revoke the GOVERNOR_ADMIN_ROLE role and render itself useless.
