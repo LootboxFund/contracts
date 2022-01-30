@@ -141,6 +141,10 @@ contract GuildToken is
         );
     }
 
+    /**
+     * WARNING: This function will revoke the GOVERNOR_ROLE from the caller if granting the GOVERNOR_ROLE.
+     *          Please see overide in .grantRole() for more details
+     */
     function transferGovernorAdminPrivileges(address account) public onlyRole(GOVERNOR_ROLE) {
         grantRole(GOVERNOR_ROLE, account);
     }
@@ -157,6 +161,7 @@ contract GuildToken is
         override
         onlyRole(getRoleAdmin(role)) /** onlyRole() and getRoleAdmin() are inherited from AccessControlUpgradeable */
     {
+        require(!hasRole(GOVERNOR_ROLE, account), "Account already has GOVERNOR_ROLE"); // To safeguard against locking access out
 
         super.grantRole(role, account);
         if (role == GOVERNOR_ROLE) {
