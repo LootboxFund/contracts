@@ -19,6 +19,9 @@ export type TokenFragment = {
   address: Address;
 };
 
+export const encodeURISafe = (stringFragment: string) =>
+  encodeURIComponent(stringFragment).replace(/'/g, "%27").replace(/"/g, "%22");
+
 export const tokenMolds: Omit<
   TokenData,
   "address" | "chainIdHex" | "chainIdDecimal"
@@ -75,7 +78,11 @@ export const uploadTokenDataToCDN = async ({
     address: tokenFrag.address,
   });
   logToFile(
-    `Uploading ${tokenFrag.symbol} to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/${BUCKET_NAME}/o/${filePath}?alt=media \n`,
+    `Uploading ${
+      tokenFrag.symbol
+    } to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/${BUCKET_NAME}/o/${encodeURISafe(
+      filePath
+    )}?alt=media \n`,
     loggerPath
   );
   const tokenMold = tokenMolds.find(
@@ -130,7 +137,9 @@ export const uploadTokenIndexToCDN = async ({
     .save(JSON.stringify(addresses));
   await storage.bucket(BUCKET_NAME).file(filePath).makePublic();
   logToFile(
-    `Uploading index to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/${BUCKET_NAME}/o/${filePath}?alt=media \n`,
+    `Uploading index to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/${BUCKET_NAME}/o/${encodeURISafe(
+      filePath
+    )}?alt=media \n`,
     loggerPath
   );
 };

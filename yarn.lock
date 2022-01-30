@@ -646,10 +646,10 @@
     stream-events "^1.0.4"
     xdg-basedir "^4.0.0"
 
-"@guildfx/helpers@^0.0.29":
-  version "0.0.29"
-  resolved "https://registry.yarnpkg.com/@guildfx/helpers/-/helpers-0.0.29.tgz#8f962603d19458a01cc835a63cd7a8fcc854ef89"
-  integrity sha512-9P6ouTyFnecXWxEnTltv/QaRGyTiNsmjsRXwgUCu/5FhFVPmj8OfvFJ0hT9il7swzodKNoVUmyWrPPDihSOMnQ==
+"@guildfx/helpers@^0.0.32":
+  version "0.0.32"
+  resolved "https://registry.yarnpkg.com/@guildfx/helpers/-/helpers-0.0.32.tgz#d6c278749bf2b374304d2c7e54c77fc3fb11429e"
+  integrity sha512-qK4cjmR9kuNzt33fknCj/3c5D+2eaepQoKobcGTQ2sHubiCXmvA05YTtH02FHKLFyb/FIT3eVrewP0puaB/srg==
   dependencies:
     axios "^0.25.0"
     lodash "^4.17.21"
