@@ -6,14 +6,16 @@
  * OR
  * npm run deploy:rinkeby:guild-factory
  *
- * After running this script, there are a few steps the GuildFX admins need to do in order to get Guilds onboarded:
- * 1. [OPTIONAL as the DAO should already have GFX_STAFF permissions] call .GuildFactory.sol `.whitelistGFXStaff()` function
+ * After running this script, only interact with the contracts via Openzeppelin Defender
+ * 1. GuildFX DAO to call .GuildFactory.sol `.whitelistGFXStaff()` function [OPTIONAL as the DAO should already have GFX_STAFF permissions and can whitelist themselves]
  *      - Do this in Openzeppelin Defender
  * 2. The GFX Staff needs to then call guildFactory `.whitelistGuildOwner()`, function to enable a guild to create a token
  *      - Do this in Openzeppelin Defender
  * 3. The guild owner will call guildFactory `.createGuild()` to deploy their token
  *      - Do this in Openzeppelin Defender
  * 4. Later on, the guild owner will call crowdsaleFactory `.createCrowdSale()` function via DEFENDER to make a crowdsale
+ *      - Do this in Openzeppelin Defender
+ * 5. The Guild owner will also need to whitelist the crowdsale on their GuildToken.sol
  *      - Do this in Openzeppelin Defender
  *
  * ... please README.md for more info.
@@ -31,10 +33,16 @@ import {
   uploadTokenDataToCDN,
   uploadTokenIndexToCDN,
 } from "./helpers/tokenlist";
-import { Address, ChainIDHex } from "@guildfx/helpers";
+import { Address } from "@guildfx/helpers";
 import { addresses, STABLECOINS } from "./constants";
 
 const semvar = "0.0.1-sandbox";
+
+const chainIdHex = network.config.chainId?.toString(16);
+
+const LOG_FILE_PATH = `${__dirname}/logs/${
+  network.name
+}_${chainIdHex}-deployGuildFactory_log_${Date.now()}.dev.txt`;
 
 // Needed to slow down transactions to avoid "replacement fee too low" errors...
 const sleep = async (ms = 1000) => {
@@ -45,28 +53,22 @@ const sleep = async (ms = 1000) => {
   });
 };
 
-const LOG_FILE_PATH = `${__dirname}/logs/${network.name}_${
-  network.config.chainId
-}-deployGuildFactory_log_${Date.now()}.dev.txt`;
-
 async function main() {
-  const chainId = network.config.chainId;
-
-  if (!chainId) {
+  if (!chainIdHex) {
     throw new Error(
       "Chain ID cannot be undefined! Please specify the chain ID in hardhat.config.json"
     );
   }
 
-  if (Object.keys(addresses).indexOf(`${chainId}`) === -1) {
+  if (Object.keys(addresses).indexOf(`${chainIdHex}`) === -1) {
     throw new Error(
-      `Please update config: "$addresses" for chain ID ${chainId}`
+      `Please update config.addresses for chain ID ${chainIdHex}`
     );
   }
 
-  if (Object.keys(STABLECOINS).indexOf(`${chainId}`) === -1) {
+  if (Object.keys(STABLECOINS).indexOf(`${chainIdHex}`) === -1) {
     throw new Error(
-      `Please update config: "$STABLECOINS" for chain ID ${chainId}`
+      `Please update config.STABLECOINS for chain ID ${chainIdHex}`
     );
   }
 
@@ -79,9 +81,9 @@ async function main() {
   const [__untrustedDeployer, _, __untrustedGFXDAO, __, __untrustedPurchaser] =
     await ethers.getSigners();
 
-  // Trusted GuildFX multisigs (see note above):
+  // GuildFX multisigs / contracts / addresses (see note above):
   const { Oxnewton, Oxterran, gfxDAO, gfxDeveloper, gfxTreasury } =
-    addresses[chainId];
+    addresses[chainIdHex];
 
   logToFile(
     `
@@ -90,7 +92,7 @@ async function main() {
 
 ---- Script starting
 
----- Network:                             ${network.name} (Decimal ID = ${chainId})
+---- Network:                             ${network.name} (Hex ID = ${chainIdHex}, Decimal ID = ${network.config.chainId})
 
 ---- 0xnewton:                            ${Oxnewton}
 
@@ -134,13 +136,13 @@ async function main() {
   await sleep();
   await uploadTokenDataToCDN({
     tokenFrag: { symbol: "ETH", address: ethStablecoin.address },
-    chainIdHex: chainId?.toString(16) || "undefined",
+    chainIdHex,
     semvar,
     loggerPath: LOG_FILE_PATH,
   });
   tokenAddresses.push(ethStablecoin.address);
   logToFile(
-    `ETH Stablecoin Address =             ${ethStablecoin.address} \n`,
+    `ETH Stablecoin Address = ${ethStablecoin.address} \n`,
     LOG_FILE_PATH
   );
 
@@ -167,13 +169,13 @@ async function main() {
   await sleep();
   await uploadTokenDataToCDN({
     tokenFrag: { symbol: "USDC", address: usdcStablecoin.address },
-    chainIdHex: chainId?.toString(16) || "undefined",
+    chainIdHex,
     semvar,
     loggerPath: LOG_FILE_PATH,
   });
   tokenAddresses.push(usdcStablecoin.address);
   logToFile(
-    `USDC Stablecoin Address =            ${usdcStablecoin.address} \n`,
+    `USDC Stablecoin Address = ${usdcStablecoin.address} \n`,
     LOG_FILE_PATH
   );
 
@@ -197,20 +199,20 @@ async function main() {
   await sleep();
   await uploadTokenDataToCDN({
     tokenFrag: { symbol: "USDT", address: usdtStablecoin.address },
-    chainIdHex: chainId?.toString(16) || "undefined",
+    chainIdHex,
     semvar,
     loggerPath: LOG_FILE_PATH,
   });
   tokenAddresses.push(usdtStablecoin.address);
   logToFile(
-    `USDT Stablecoin Address =            ${usdtStablecoin.address} \n`,
+    `USDT Stablecoin Address = ${usdtStablecoin.address} \n`,
     LOG_FILE_PATH
   );
 
   // --------- Index the Stablecoins --------- //
   await uploadTokenIndexToCDN({
     addresses: tokenAddresses,
-    chainIdHex: (chainId?.toString(16) || "undefined") as ChainIDHex,
+    chainIdHex,
     semvar,
     loggerPath: LOG_FILE_PATH,
   });
@@ -250,10 +252,10 @@ async function main() {
   await constants
     .connect(__untrustedGFXDAO)
     .setOraclePriceFeeds(
-      STABLECOINS[chainId].BNB.priceFeed,
-      STABLECOINS[chainId].ETH.priceFeed,
-      STABLECOINS[chainId].USDC.priceFeed,
-      STABLECOINS[chainId].USDT.priceFeed
+      STABLECOINS[chainIdHex].BNB.priceFeed,
+      STABLECOINS[chainIdHex].ETH.priceFeed,
+      STABLECOINS[chainIdHex].USDC.priceFeed,
+      STABLECOINS[chainIdHex].USDT.priceFeed
     );
   logToFile(`---------- Set Price Feed Addresses ---------- \n`, LOG_FILE_PATH);
   await sleep();
