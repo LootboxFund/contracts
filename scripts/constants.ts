@@ -14,7 +14,7 @@ interface IAddressesByChain {
 }
 
 interface IAddresses {
-  [key: number]: IAddressesByChain;
+  [key: string]: IAddressesByChain;
 }
 
 interface IStableCoinAddressesByChain {
@@ -39,21 +39,21 @@ interface IStableCoinAddressesByChain {
 }
 
 interface IStableCoins {
-  [key: number]: IStableCoinAddressesByChain;
+  [key: string]: IStableCoinAddressesByChain;
 }
 
 // TODO: Probably put this in @guildfx/helpers
 export const addresses: IAddresses = {
   // BSC MAINNET
   // 56: {},
-  // BSC TESTNET
-  97: {
+  // BSC TESTNET 0x61 = 97
+  "61": {
     gfxTreasury: "0xFec4243C1934907CF41298F868FdcCDfca9D7484",
     gfxDAO: "0x6A721843BAf298D49C709D0d77D23aDDE650AE44",
     gfxDeveloper: "0x6A721843BAf298D49C709D0d77D23aDDE650AE44",
     Oxnewton: "0x2C83b49EdB3f00A38331028e2D8bFA3Cd93B8288",
     Oxterran: "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F",
-    gfxConstants: "0x7E0e8E39Deb6f39E583202b7BbFC98E01A18af95",
+    gfxConstants: "0x64F79B84CaA7e8f5763e578F4EA67385C68Fc74b",
   },
 };
 
@@ -61,8 +61,8 @@ export const addresses: IAddresses = {
 export const STABLECOINS: IStableCoins = {
   // BSC MAINNET
   // 56: {},
-  // BSC TESTNET
-  97: {
+  // BSC TESTNET 0x61 = 97
+  "61": {
     BNB: {
       priceFeed: "0x2514895c72f50D8bd4B4F9b1110F0D6bD2c97526",
     },
