@@ -10,20 +10,16 @@
 // npm run deploy:rinkeby:guild-factory
 
 import { ethers, upgrades, network } from "hardhat";
-import { Constants, DAI, ETH, USDC, USDT, UST } from "../typechain";
+import { Constants, ETH, USDC, USDT } from "../typechain";
 import { logToFile } from "./helpers/logger";
-import { stripZeros } from "../test/helpers/test-helpers";
 import {
-  TokenFragment,
-  TokenFragsWithCDN,
   uploadTokenDataToCDN,
   uploadTokenIndexToCDN,
 } from "./helpers/tokenlist";
 import { Address, ChainIDHex } from "@guildfx/helpers";
+import { addresses, STABLECOINS } from "./constants";
 
 const semvar = "0.0.1-sandbox";
-const Oxnewton = "0x2C83b49EdB3f00A38331028e2D8bFA3Cd93B8288";
-const Oxterran = "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F";
 
 // Needed to slow down transactions to avoid "replacement fee too low" errors...
 const sleep = async (ms = 1000) => {
@@ -40,46 +36,38 @@ const LOG_FILE_PATH = `${__dirname}/logs/${network.name}_${
 
 const ENVIRONMENT = "development";
 
-const GUILD_TOKEN_NAME = "Artemis Guild";
-const GUILD_TOKEN_SYMBOL = "ARTMS";
-
-// Chainlink addresses from https://docs.chain.link/docs/binance-smart-chain-addresses
-const STABLECOINS = {
-  development: {
-    BNB: {
-      priceFeed: "0x2514895c72f50D8bd4B4F9b1110F0D6bD2c97526",
-    },
-    ETH: {
-      priceFeed: "0x143db3CEEfbdfe5631aDD3E50f7614B6ba708BA7",
-    },
-    DAI: {
-      priceFeed: "0xE4eE17114774713d2De0eC0f035d4F7665fc025D",
-    },
-    USDC: {
-      priceFeed: "0x90c069C4538adAc136E051052E14c1cD799C41B7",
-    },
-    USDT: {
-      priceFeed: "0xEca2605f0BCF2BA5966372C99837b1F182d3D620",
-    },
-    UST: {
-      priceFeed: "0xEca2605f0BCF2BA5966372C99837b1F182d3D620", // Note: chainlink does not have UST on testnet, using USDT for now
-    },
-  },
-};
-
 async function main() {
   const [
-    deployer,
-    treasury,
-    dao,
-    developer,
-    purchaser,
-    gfxStaff,
-    guildDao,
-    guildDev,
-    guildTreasury,
+    __untrustedDeployer,
+    __untrustedTreasury,
+    __untrustedGFXDAO,
+    __untrustedGFXDeveloper,
+    __untrustedPurchaser,
   ] = await ethers.getSigners();
-  const DEPLOYER_ADDRESS = deployer.address;
+
+  const chainId = network.config.chainId;
+
+  if (!chainId) {
+    throw new Error(
+      "Chain ID cannot be undefined! Please specify the chain ID in hardhat.config.json"
+    );
+  }
+
+  if (Object.keys(addresses).indexOf(`${chainId}`) === -1) {
+    throw new Error(
+      `Please update config: "$addresses" for chain ID ${chainId}`
+    );
+  }
+
+  if (Object.keys(STABLECOINS).indexOf(`${chainId}`) === -1) {
+    throw new Error(
+      `Please update config: "$STABLECOINS" for chain ID ${chainId}`
+    );
+  }
+
+  const { Oxnewton, Oxterran, gfxDAO, gfxDeveloper, gfxTreasury } =
+    addresses[chainId];
+
   logToFile(
     `
   
@@ -87,12 +75,15 @@ async function main() {
   
 Script starting
 
----- Network = ${network.name} (Decimal ID = ${network.config.chainId})
+---- Network = ${network.name} (Decimal ID = ${chainId})
 
   \n`,
     LOG_FILE_PATH
   );
-  logToFile(`Deployer Address =         ${DEPLOYER_ADDRESS} \n`, LOG_FILE_PATH);
+  logToFile(
+    `Deployer Address =         ${__untrustedDeployer} \n`,
+    LOG_FILE_PATH
+  );
 
   const tokenAddresses: Address[] = [];
 
@@ -101,7 +92,7 @@ Script starting
   const ethStablecoin = (await Eth.deploy(0)) as ETH;
   await sleep();
   await ethStablecoin.mint(
-    purchaser.address,
+    __untrustedPurchaser.address,
     ethers.BigNumber.from("100000000000000000000")
   );
   await sleep();
@@ -117,7 +108,7 @@ Script starting
   await sleep();
   await uploadTokenDataToCDN({
     tokenFrag: { symbol: "ETH", address: ethStablecoin.address },
-    chainIdHex: network.config.chainId?.toString(16) || "undefined",
+    chainIdHex: chainId?.toString(16) || "undefined",
     semvar,
     loggerPath: LOG_FILE_PATH,
   });
@@ -134,7 +125,7 @@ Script starting
   const usdcStablecoin = (await Usdc.deploy(0)) as USDC;
   await sleep();
   await usdcStablecoin.mint(
-    purchaser.address,
+    __untrustedPurchaser.address,
     ethers.BigNumber.from("100000000000000000000")
   );
   await sleep();
@@ -150,7 +141,7 @@ Script starting
   await sleep();
   await uploadTokenDataToCDN({
     tokenFrag: { symbol: "USDC", address: usdcStablecoin.address },
-    chainIdHex: network.config.chainId?.toString(16) || "undefined",
+    chainIdHex: chainId?.toString(16) || "undefined",
     semvar,
     loggerPath: LOG_FILE_PATH,
   });
@@ -164,7 +155,7 @@ Script starting
   const usdtStablecoin = (await Usdt.deploy(0)) as USDT;
   await sleep();
   await usdtStablecoin.mint(
-    purchaser.address,
+    __untrustedPurchaser.address,
     ethers.BigNumber.from("100000000000000000000")
   );
   await sleep();
@@ -180,7 +171,7 @@ Script starting
   await sleep();
   await uploadTokenDataToCDN({
     tokenFrag: { symbol: "USDT", address: usdtStablecoin.address },
-    chainIdHex: network.config.chainId?.toString(16) || "undefined",
+    chainIdHex: chainId?.toString(16) || "undefined",
     semvar,
     loggerPath: LOG_FILE_PATH,
   });
@@ -193,8 +184,7 @@ Script starting
   // --------- Index the Stablecoins --------- //
   await uploadTokenIndexToCDN({
     addresses: tokenAddresses,
-    chainIdHex: (network.config.chainId?.toString(16) ||
-      "undefined") as ChainIDHex,
+    chainIdHex: (chainId?.toString(16) || "undefined") as ChainIDHex,
     semvar,
     loggerPath: LOG_FILE_PATH,
   });
@@ -203,7 +193,10 @@ Script starting
   const Constants = await ethers.getContractFactory("Constants");
   const constants = (await upgrades.deployProxy(
     Constants,
-    [dao.address, developer.address, treasury.address],
+    // NOTE: we use __untrustedGFXDAO as temporary DAO. 
+    // We call constants.sol .transferGuildFXDAOAdminPrivileges() method later
+    // to transfer the DAO ownership to the trusted multisig wallets
+    [__untrustedGFXDAO, gfxDeveloper, gfxTreasury],
     {
       kind: "uups",
     }
@@ -218,7 +211,7 @@ Script starting
 
   // --------- Sets Stable Coin Addresses --------- //
   await constants
-    .connect(dao)
+    .connect(__untrustedGFXDAO)
     .setCrowdSaleStableCoins(
       ethStablecoin.address,
       usdcStablecoin.address,
@@ -229,22 +222,19 @@ Script starting
 
   // --------- Set Stable Coin Price Feed Addresses --------- //
   await constants
-    .connect(dao)
+    .connect(__untrustedGFXDAO)
     .setOraclePriceFeeds(
-      STABLECOINS[ENVIRONMENT].BNB.priceFeed,
-      STABLECOINS[ENVIRONMENT].ETH.priceFeed,
-      STABLECOINS[ENVIRONMENT].USDC.priceFeed,
-      STABLECOINS[ENVIRONMENT].USDT.priceFeed
+      STABLECOINS[chainId].BNB.priceFeed,
+      STABLECOINS[chainId].ETH.priceFeed,
+      STABLECOINS[chainId].USDC.priceFeed,
+      STABLECOINS[chainId].USDT.priceFeed
     );
   logToFile(`---------- Set Price Feed Addresses ---------- \n`, LOG_FILE_PATH);
   await sleep();
 
   // --------- Deploy Guild Factory --------- //
   const GuildFactory = await ethers.getContractFactory("GuildFactory");
-  const guildFactory = await GuildFactory.deploy(
-    dao.address,
-    constants.address
-  );
+  const guildFactory = await GuildFactory.deploy(gfxDAO, constants.address);
   await guildFactory.deployed();
   logToFile(
     `Guild Factory Contract Address =    ${guildFactory.address} \n`,
@@ -252,53 +242,13 @@ Script starting
   );
   await sleep();
 
-  // --------- Authorize GFX Staff --------- //
-  const txWhitelistGFXStaff = await guildFactory
-    .connect(dao)
-    .whitelistGFXStaff(gfxStaff.address, true);
-
-  await txWhitelistGFXStaff.wait();
-
-  logToFile(
-    `---- ${gfxStaff.address} ---> Whitelisted GuildFX staff \n`,
-    LOG_FILE_PATH
-  );
-
-  // --------- Authorize a Guild Owner --------- //
-  const txWhitelistGuildOwner = await guildFactory
-    .connect(gfxStaff)
-    .whitelistGuildOwner(guildDao.address, true);
-
-  await txWhitelistGuildOwner.wait();
-
-  logToFile(
-    `---- ${guildDao.address} ---> Whitelisted guild's DAO \n`,
-    LOG_FILE_PATH
-  );
-
-  // --------- Create the GuildToken --------- //
-  const tx = await guildFactory
-    .connect(guildDao)
-    .createGuild(
-      GUILD_TOKEN_NAME,
-      GUILD_TOKEN_SYMBOL,
-      guildDao.address,
-      guildDev.address
-    );
-
-  await tx.wait();
-  const [guildTokenAddress] = (await guildFactory.viewGuildTokens()).map(
-    stripZeros
-  );
-  logToFile(
-    `Guild Token Address =      ${guildTokenAddress} \n`,
-    LOG_FILE_PATH
-  );
-  await sleep();
-
-  // crowdsales are deployed later, in a separate script
-  // because in real life, the guild will need time to think over their crowdsale parameters
-  // such as crowdsale price, start and end dates, etc.
+  /**
+   * In Openzeppelin Defender, GuildFX DAOs need to follow the next manual steps
+   * 1. [OPTIONAL as the DAO should already have GFX_STAFF permissions] call guildFactory `.whitelistGFXStaff()` function
+   * 2. The GFX Staff needs to then call guildFactory `.whitelistGuildOwner()`, function to enable a guild to create a token
+   * 3. The guild owner will call guildFactory `.createGuild()` to deploy their token
+   * 4. Later on, the guild owner will call crowdsaleFactory `.createCrowdSale()` function via DEFENDER to make a crowdsale
+   */
 }
 
 main().catch((error) => {
