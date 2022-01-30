@@ -11,6 +11,10 @@ interface IAddressesByChain {
   Oxterran: string;
   /** GuildFX Constants address (from deploy script "./scripts/deployGuildFactory.dev.ts") */
   gfxConstants: string;
+  /** GuildFX Guild Factory address (from deploy script "./scripts/deployGuildFactory.dev.ts") */
+  gfcGuildFactory: string;
+  /** GuildFX Crowdsale Factory address (from deploy script "./scripts/deployCrowdsale.dev.ts") */
+  gfcCrowdsaleFactory: string;
 }
 
 interface IAddresses {
@@ -54,6 +58,8 @@ export const addresses: IAddresses = {
     Oxnewton: "0x2C83b49EdB3f00A38331028e2D8bFA3Cd93B8288",
     Oxterran: "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F",
     gfxConstants: "0x64F79B84CaA7e8f5763e578F4EA67385C68Fc74b",
+    gfcGuildFactory: "0x78EFCA1479011d194cA9eA2324C82d5B52f72b09",
+    gfcCrowdsaleFactory: "0xbb762B79A41ACc57971d957c7A089b4e69Fd608a",
   },
 };
 

@@ -31,21 +31,21 @@ import { sleep } from "./helpers/helpers";
 import { logToFile } from "./helpers/logger";
 import { addresses } from "./constants";
 
+const chainIdHex = network.config.chainId?.toString(16);
+
 const LOG_FILE_PATH = `${__dirname}/logs/${network.name}_${
   network.config.chainId
 }-deployCrowdSaleFactory_log_${Date.now()}.dev.txt`;
 
 async function main() {
-  const chainId = network.config.chainId;
-
-  if (!chainId) {
+  if (!chainIdHex) {
     throw new Error(
       "Chain ID cannot be undefined! Please specify the chain ID in hardhat.config.json"
     );
   }
 
-  if (Object.keys(addresses).indexOf(`${chainId}`) === -1) {
-    throw new Error(`Please update config for chain ID ${chainId}`);
+  if (Object.keys(addresses).indexOf(`${chainIdHex}`) === -1) {
+    throw new Error(`Please update config for chain ID ${chainIdHex}`);
   }
 
   /**
@@ -57,7 +57,7 @@ async function main() {
   const [__untrustedDeployer] = await ethers.getSigners();
 
   // GuildFX multisigs / contracts / addresses (see note above):
-  const { gfxDAO, gfxConstants } = addresses[chainId];
+  const { gfxDAO, gfxConstants } = addresses[chainIdHex];
 
   logToFile(
     ` 
@@ -66,7 +66,7 @@ async function main() {
   
 ---- Script starting...
 
----- Network:                             ${network.name} (Decimal ID = ${chainId})
+---- Network:                             ${network.name} (Decimal ID = ${chainIdHex})
 
 ---- GuildFX DAO (multisig):              ${gfxDAO}
 
