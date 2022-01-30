@@ -190,6 +190,14 @@ describe("📦 GUILD token", async () => {
           .connect(dao)
           .transferGovernorAdminPrivileges(governor.address);
       });
+      it("reverts when trying to assign GOVERNOR_ROLE when to a user that already has it", async () => {
+        await expect(
+          token.connect(governor).transferGovernorAdminPrivileges(governor.address)
+        ).to.be.revertedWith(
+          "Account already has GOVERNOR_ROLE"
+        );
+      })
+
       it("grants the address the GOVERNOR_ROLE", async () => {
         expect(await token.hasRole(GOVERNOR_ROLE, governor.address)).to.be.true;
       });
@@ -254,6 +262,13 @@ describe("📦 GUILD token", async () => {
         governor = purchaser;
         await token.connect(dao).grantRole(GOVERNOR_ROLE, governor.address);
       });
+      it("reverts when trying to assign GOVERNOR_ROLE when to a user that already has it", async () => {
+        await expect(
+          token.connect(governor).grantRole(GOVERNOR_ROLE, governor.address)
+        ).to.be.revertedWith(
+          "Account already has GOVERNOR_ROLE"
+        );
+      })
       it("grants the address the GOVERNOR_ROLE", async () => {
         expect(await token.hasRole(GOVERNOR_ROLE, governor.address)).to.be.true;
       });
