@@ -58,9 +58,10 @@ export const addresses: IAddresses = {
     gfxDeveloper: "0x767B123Bd05697d8Dda135D1D0092a94ac5a7510",
 
     // --- Contract addresses (from deploy scripts) ---
-    gfxConstants: "0x64F79B84CaA7e8f5763e578F4EA67385C68Fc74b",
-    gfcGuildFactory: "0x78EFCA1479011d194cA9eA2324C82d5B52f72b09",
-    gfcCrowdsaleFactory: "0xbb762B79A41ACc57971d957c7A089b4e69Fd608a",
+    gfxConstants: "0x3aeDdd9AE5681E78e1645685d5898d88C43B568c", // from running npm "npm run deploy:testnet:guild-factory"
+    gfcGuildFactory: "0xf4C65ba368BE9fB6BA50a4557F9870477B0F8A25", // from running "npm run deploy:testnet:guild-factory"
+    // [🚨🚨🚨 NOTE 🚨🚨🚨] $gfcCrowdsaleFactory needs to get updated when gfcGuildFactory changes!
+    gfcCrowdsaleFactory: "0x051B425B052C8920740d8bAB81EF6cE0C5021b72", // from running "npm run deploy:testnet:crowdsale-factory"
 
     // --- GuildFX admins
     Oxnewton: "0x2C83b49EdB3f00A38331028e2D8bFA3Cd93B8288",
