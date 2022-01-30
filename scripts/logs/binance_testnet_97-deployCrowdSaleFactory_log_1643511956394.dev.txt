@@ -1,0 +1,14 @@
+2022-01-30T03:05:56.700Z -  
+  
+---------- DEPLOY CROWDSALE FACTORY (development) ----------
+  
+---- Script starting...
+
+---- Network:                             binance_testnet (Decimal ID = 97)
+
+---- GuildFX DAO (multisig):              0x6A721843BAf298D49C709D0d77D23aDDE650AE44
+
+---- Deployer (UNTRUSTED):                0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A
+
+  
+2022-01-30T03:06:06.515Z - ---- 0x8e9a6a675C9f7aaB4CfAAA3f8ff6284CE30d5Eea ---> GuildFX Crowsale Factory
