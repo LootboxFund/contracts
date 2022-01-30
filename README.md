@@ -142,13 +142,13 @@
    - Add the guild factory contract
      - Name: `Guild Factory`
      - Network: `BSC Testnet` _or_ `97`
-     - Address: `0xc6d7Dfe0dE67651173c1f75b8E3deee0c9129909`
-     - ABI: Will be provided ###TODO
+     - Address: `0x78EFCA1479011d194cA9eA2324C82d5B52f72b09`
+     - ABI: From [artifacts](./artifacts/contracts/GuildFactory.sol/GuildFactory.json).
    - Add the crowdsale
      - Name: `Crowdsale Factory`
      - Network: `BSC Testnet` _or_ `97`
-     - Address: `0x853C810E0d23A69630bbaa749DDC5d7b14777146`
-     - ABI: Will be provided ###TODO
+     - Address: `0xbb762B79A41ACc57971d957c7A089b4e69Fd608a`
+     - ABI: [artifacts](./artifacts/contracts/CrowdSaleFactory.sol/CrowdSaleFactory.json).
 
 ## ⚙️ Setup - Independent Guild Tokens
 
