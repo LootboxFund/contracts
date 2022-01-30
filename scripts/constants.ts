@@ -52,14 +52,19 @@ export const addresses: IAddresses = {
   // 56: {},
   // BSC TESTNET 0x61 = 97
   "61": {
-    gfxTreasury: "0xFec4243C1934907CF41298F868FdcCDfca9D7484",
-    gfxDAO: "0x6A721843BAf298D49C709D0d77D23aDDE650AE44",
-    gfxDeveloper: "0x6A721843BAf298D49C709D0d77D23aDDE650AE44",
-    Oxnewton: "0x2C83b49EdB3f00A38331028e2D8bFA3Cd93B8288",
-    Oxterran: "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F",
+    // --- Multisigs ---
+    gfxTreasury: "0xe61e3516e98667A1c79F067DDeDB9005D911CF65",
+    gfxDAO: "0xebf0bBcfC341f22F587D579cE631935267DA7294",
+    gfxDeveloper: "0x767B123Bd05697d8Dda135D1D0092a94ac5a7510",
+
+    // --- Contract addresses (from deploy scripts) ---
     gfxConstants: "0x64F79B84CaA7e8f5763e578F4EA67385C68Fc74b",
     gfcGuildFactory: "0x78EFCA1479011d194cA9eA2324C82d5B52f72b09",
     gfcCrowdsaleFactory: "0xbb762B79A41ACc57971d957c7A089b4e69Fd608a",
+
+    // --- GuildFX admins
+    Oxnewton: "0x2C83b49EdB3f00A38331028e2D8bFA3Cd93B8288",
+    Oxterran: "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F",
   },
 };
 
