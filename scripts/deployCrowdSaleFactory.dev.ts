@@ -27,7 +27,7 @@
  */
 
 import { ethers, network } from "hardhat";
-import { sleep } from "./helpers/helpers";
+import { sleep } from "@guildfx/helpers";
 import { logToFile } from "./helpers/logger";
 import { addresses } from "./constants";
 
