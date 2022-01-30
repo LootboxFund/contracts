@@ -1,13 +1,19 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// When running the script with `npx hardhat run <script>` you'll find the Hardhat
-// Runtime Environment's members available in the global scope.
-//
-// Run this script as:
-// npm run deploy:testnet:guild-factory
-// OR
-// npm run deploy:rinkeby:guild-factory
+/**
+ * Script to deploy the GuildFX's GuildFactory contract (as well as the Constants contract)
+ *
+ * Run this script as:
+ * npm run deploy:testnet:guild-factory
+ * OR
+ * npm run deploy:rinkeby:guild-factory
+ *
+ * After running this script, there are a few steps the GuildFX admins need to do in order to get Guilds onboarded:
+ * 1. [OPTIONAL as the DAO should already have GFX_STAFF permissions] call .GuildFactory.sol `.whitelistGFXStaff()` function
+ * 2. The GFX Staff needs to then call guildFactory `.whitelistGuildOwner()`, function to enable a guild to create a token
+ * 3. The guild owner will call guildFactory `.createGuild()` to deploy their token
+ * 4. Later on, the guild owner will call crowdsaleFactory `.createCrowdSale()` function via DEFENDER to make a crowdsale
+ *
+ * ... please README.md for more info.
+ */
 
 import { ethers, upgrades, network } from "hardhat";
 import { Constants, ETH, USDC, USDT } from "../typechain";
@@ -81,7 +87,7 @@ Script starting
     LOG_FILE_PATH
   );
   logToFile(
-    `Deployer Address =         ${__untrustedDeployer} \n`,
+    `Deployer Address =         ${__untrustedDeployer.address} \n`,
     LOG_FILE_PATH
   );
 
@@ -193,10 +199,10 @@ Script starting
   const Constants = await ethers.getContractFactory("Constants");
   const constants = (await upgrades.deployProxy(
     Constants,
-    // NOTE: we use __untrustedGFXDAO as temporary DAO. 
+    // NOTE: we use __untrustedGFXDAO as temporary DAO.
     // We call constants.sol .transferGuildFXDAOAdminPrivileges() method later
     // to transfer the DAO ownership to the trusted multisig wallets
-    [__untrustedGFXDAO, gfxDeveloper, gfxTreasury],
+    [__untrustedGFXDAO.address, gfxDeveloper, gfxTreasury],
     {
       kind: "uups",
     }
@@ -232,11 +238,15 @@ Script starting
   logToFile(`---------- Set Price Feed Addresses ---------- \n`, LOG_FILE_PATH);
   await sleep();
 
-  await constants.connect(__untrustedGFXDAO).transferGuildFXDAOAdminPrivileges(gfxDAO);
+  await constants
+    .connect(__untrustedGFXDAO)
+    .transferGuildFXDAOAdminPrivileges(gfxDAO);
 
-  logToFile(`---- ${gfxDAO} --->  Transfered GuildFX DAO role for Constants Contract \n`, LOG_FILE_PATH);
+  logToFile(
+    `---- ${gfxDAO} --->  Transfered GuildFX DAO role for Constants Contract \n`,
+    LOG_FILE_PATH
+  );
   await sleep();
-
 
   // --------- Deploy Guild Factory --------- //
   const GuildFactory = await ethers.getContractFactory("GuildFactory");
@@ -247,14 +257,6 @@ Script starting
     LOG_FILE_PATH
   );
   await sleep();
-
-  /**
-   * In Openzeppelin Defender, GuildFX DAOs need to follow the next manual steps
-   * 1. [OPTIONAL as the DAO should already have GFX_STAFF permissions] call guildFactory `.whitelistGFXStaff()` function
-   * 2. The GFX Staff needs to then call guildFactory `.whitelistGuildOwner()`, function to enable a guild to create a token
-   * 3. The guild owner will call guildFactory `.createGuild()` to deploy their token
-   * 4. Later on, the guild owner will call crowdsaleFactory `.createCrowdSale()` function via DEFENDER to make a crowdsale
-   */
 }
 
 main().catch((error) => {
