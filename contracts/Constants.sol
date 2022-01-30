@@ -15,7 +15,6 @@ contract Constants is
     AccessControlUpgradeable,
     UUPSUpgradeable
 {
-
     // only the DAO (GuildFX) can control token
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
     bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE");
@@ -24,7 +23,7 @@ contract Constants is
     // Examples: 1000 = 100%, 500 = 50%, 20 = 2%, 1 = 0.1% fees
     uint256 public GUILD_FX_MINTING_FEE;
     uint8 public constant GUILD_FX_MINTING_FEE_DECIMALS = 3;
-    address payable public TREASURY;  // GuildFX treasury
+    address payable public TREASURY; // GuildFX treasury
 
     // Addresses for crowdsale stable coins
     address public ETH_ADDRESS;
@@ -41,10 +40,6 @@ contract Constants is
     // If you change any lines above when upgrading, you will fuck up shit
     // https://docs.openzeppelin.com/learn/upgrading-smart-contracts
     // ------------------------------------------------------------------
-
-
-
-
 
     // ------------------------------------------------------------------
 
@@ -67,9 +62,43 @@ contract Constants is
 
         _grantRole(DAO_ROLE, dao);
         _grantRole(DEVELOPER_ROLE, developer);
+        _setRoleAdmin(DAO_ROLE, DAO_ROLE); // Changes the DAO_ROLE's admin role to itself, so that DAOs can assign new DAOs
+
         TREASURY = _treasury;
 
         GUILD_FX_MINTING_FEE = 20; // in GUILD_FX_MINTING_FEE_DECIMALS (ex: 20 = 2% fee)
+    }
+
+    /**
+     * WARNING: This function will revoke the DAO_ROLE from the caller if granting the DAO_ROLE.
+     *          Please see overide in .grantRole() for more details
+     */
+    function transferGuildFXDAOAdminPrivileges(address account)
+        public
+        onlyRole(DAO_ROLE)
+    {
+        grantRole(DAO_ROLE, account);
+    }
+
+    /**
+     * Only addresses with the DEFAULT_ADMIN_ROLE or the DAO_ROLE (which is it's own admin) can call this.
+     * In practice, only the DAO_ROLE will be able to call this becau se no-one has the DEFAULT_ADMIN_ROLE.
+     * WARNING: This function will revoke the DAO_ROLE from the caller if granting the DAO_ROLE.
+     *          This is to ensure that only one DAO_ROLE (and it's admin) can exist.
+     */
+    function grantRole(bytes32 role, address account)
+        public
+        virtual
+        override
+        onlyRole(getRoleAdmin(role)) /** onlyRole() and getRoleAdmin() are inherited from AccessControlUpgradeable */
+    {
+        require(account != msg.sender, "Account already has DAO_ROLE"); // To safeguard against locking access out
+
+        super.grantRole(role, account);
+        if (role == DAO_ROLE) {
+            // Revokes GOVERNOR_ROLE so that there can only be at most one GOVERNOR_ADMIN
+            _revokeRole(DAO_ROLE, msg.sender);
+        }
     }
 
     function setCrowdSaleStableCoins(
