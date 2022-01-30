@@ -43,8 +43,8 @@ contract GuildFactory is Pausable, AccessControl {
 
     event GuildCreated(
         address contractAddress,
-        string name,
-        string token,
+        string guildTokenName,
+        string guildTokenSymbol,
         address dao,
         address developer,
         address creator,

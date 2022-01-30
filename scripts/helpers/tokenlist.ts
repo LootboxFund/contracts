@@ -1,9 +1,9 @@
 import { logToFile } from "./logger";
-import { filterMap, removeUndefined } from "./tsUtil";
+import { filterMap, removeUndefined } from "@guildfx/helpers";
 import { Storage } from "@google-cloud/storage";
 import {
   ChainIDHex,
-  buildTokenMoldCDNRoute,
+  buildTokenCDNRoute,
   TokenData,
   buildTokenIndexCDNRoutes,
   Address,
@@ -69,7 +69,7 @@ export const uploadTokenDataToCDN = async ({
   semvar,
   loggerPath,
 }: TokenFragsWithCDN) => {
-  const filePath = buildTokenMoldCDNRoute({
+  const filePath = buildTokenCDNRoute({
     chainIdHex: chainIdHex,
     semvar,
     address: tokenFrag.address,
