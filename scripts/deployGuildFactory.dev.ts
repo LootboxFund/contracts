@@ -232,6 +232,12 @@ Script starting
   logToFile(`---------- Set Price Feed Addresses ---------- \n`, LOG_FILE_PATH);
   await sleep();
 
+  await constants.connect(__untrustedGFXDAO).transferGuildFXDAOAdminPrivileges(gfxDAO);
+
+  logToFile(`---- ${gfxDAO} --->  Transfered GuildFX DAO role for Constants Contract \n`, LOG_FILE_PATH);
+  await sleep();
+
+
   // --------- Deploy Guild Factory --------- //
   const GuildFactory = await ethers.getContractFactory("GuildFactory");
   const guildFactory = await GuildFactory.deploy(gfxDAO, constants.address);
