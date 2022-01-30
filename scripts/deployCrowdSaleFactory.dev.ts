@@ -7,7 +7,7 @@
  * npm run deploy:rinkeby:guild-factory (not yet configured)
  *
  * After running this script, there are a few steps the GuildFX admins need to do in order to get Guilds onboarded:
- * 1. [OPTIONAL as the DAO should already have GFX_STAFF permissions] call .crowdsaleFactory.sol `.whitelistGFXStaff()` function
+ * 1. GuildFX DAO to call .crowdsaleFactory.sol `.whitelistGFXStaff()` function [OPTIONAL as the DAO should already have GFX_STAFF permissions and can whitelist themselves]
  *    to enable a GuildFX staff to manage the guilds.
  *      - Do this in Openzeppelin Defender
  * 2. The GFX Staff needs to then call crowdsaleFactory `.whitelistGuildOwner()`, function to enable a guild to create a token.
@@ -56,7 +56,7 @@ async function main() {
    */
   const [__untrustedDeployer] = await ethers.getSigners();
 
-  // Trusted GuildFX multisigs (see note above):
+  // GuildFX multisigs / contracts / addresses (see note above):
   const { gfxDAO, gfxConstants } = addresses[chainId];
 
   logToFile(
