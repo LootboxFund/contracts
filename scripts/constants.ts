@@ -15,6 +15,8 @@ interface IAddressesByChain {
   gfcGuildFactory: string;
   /** GuildFX Crowdsale Factory address (from deploy script "./scripts/deployCrowdsale.dev.ts") */
   gfcCrowdsaleFactory: string;
+  /** Multisig address for the super admin (treasury + dao + developer in one) from Defender */
+  artemisSuperAdmin: string;
 }
 
 interface IAddresses {
@@ -66,6 +68,9 @@ export const addresses: IAddresses = {
     // --- GuildFX admins
     Oxnewton: "0x2C83b49EdB3f00A38331028e2D8bFA3Cd93B8288",
     Oxterran: "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F",
+
+    // --- Artemis Super Admin multisig ---
+    artemisSuperAdmin: "0x8d380584A7B11231A7AA6F03CE3141C9F07688e4",
   },
 };
 
