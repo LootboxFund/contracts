@@ -13,6 +13,11 @@
  * 4. Later on, the guild owner will call crowdsaleFactory `.createCrowdSale()` function via DEFENDER to make a crowdsale
  *
  * ... please README.md for more info.
+ *
+ * IMPORTANT: Our hardhat config uses "untrusted" signers with a single private key.
+ *            However, we have "trusted" guild fx accounts which are secure multisigs created in Openzeppelin Defender.
+ *            Thus, we prefix the untrusted accounts with "__untrusted" in these scripts. The trusted multisigs are currently
+ *            configured in { addresses } from ./constants. Please read the ../README.md for more details.
  */
 
 import { ethers, upgrades, network } from "hardhat";
@@ -43,14 +48,6 @@ const LOG_FILE_PATH = `${__dirname}/logs/${network.name}_${
 const ENVIRONMENT = "development";
 
 async function main() {
-  const [
-    __untrustedDeployer,
-    __untrustedTreasury,
-    __untrustedGFXDAO,
-    __untrustedGFXDeveloper,
-    __untrustedPurchaser,
-  ] = await ethers.getSigners();
-
   const chainId = network.config.chainId;
 
   if (!chainId) {
@@ -71,6 +68,21 @@ async function main() {
     );
   }
 
+  /**
+   * IMPORTANT: Our hardhat config uses "untrusted" signers with a single private key.
+   *            However, we have "trusted" guild fx accounts which are secure multisigs created in Openzeppelin Defender.
+   *            Thus, we prefix the untrusted accounts with "__untrusted" in these scripts. The trusted multisigs are currently
+   *            configured in { addresses } from ./constants. Please read the ../README.md for more details.
+   */
+  const [
+    __untrustedDeployer,
+    __untrustedTreasury,
+    __untrustedGFXDAO,
+    __untrustedGFXDeveloper,
+    __untrustedPurchaser,
+  ] = await ethers.getSigners();
+
+  // Trusted GuildFX multisigs (see note above):
   const { Oxnewton, Oxterran, gfxDAO, gfxDeveloper, gfxTreasury } =
     addresses[chainId];
 
@@ -238,6 +250,7 @@ Script starting
   logToFile(`---------- Set Price Feed Addresses ---------- \n`, LOG_FILE_PATH);
   await sleep();
 
+  // --------- 🚨 IMPORTANT 🚨 Transfer Constants DAO ownership to the secure GuildFX multisig --------- //
   await constants
     .connect(__untrustedGFXDAO)
     .transferGuildFXDAOAdminPrivileges(gfxDAO);
