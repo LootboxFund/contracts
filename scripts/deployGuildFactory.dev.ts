@@ -45,8 +45,6 @@ const LOG_FILE_PATH = `${__dirname}/logs/${network.name}_${
   network.config.chainId
 }-deployGuildFactory_log_${Date.now()}.dev.txt`;
 
-const ENVIRONMENT = "development";
-
 async function main() {
   const chainId = network.config.chainId;
 
@@ -74,13 +72,8 @@ async function main() {
    *            Thus, we prefix the untrusted accounts with "__untrusted" in these scripts. The trusted multisigs are currently
    *            configured in { addresses } from ./constants. Please read the ../README.md for more details.
    */
-  const [
-    __untrustedDeployer,
-    __untrustedTreasury,
-    __untrustedGFXDAO,
-    __untrustedGFXDeveloper,
-    __untrustedPurchaser,
-  ] = await ethers.getSigners();
+  const [__untrustedDeployer, _, __untrustedGFXDAO, __, __untrustedPurchaser] =
+    await ethers.getSigners();
 
   // Trusted GuildFX multisigs (see note above):
   const { Oxnewton, Oxterran, gfxDAO, gfxDeveloper, gfxTreasury } =
@@ -90,19 +83,30 @@ async function main() {
     `
   
 ---------- DEPLOY GUILD FACTORY (development) ----------
-  
-Script starting
 
----- Network = ${network.name} (Decimal ID = ${chainId})
+---- Script starting
+
+---- Network:                             ${network.name} (Decimal ID = ${chainId})
+
+---- 0xnewton:                            ${Oxnewton}
+
+---- 0xterran:                            ${Oxterran}
+
+---- GuildFX DAO (multisig):              ${gfxDAO}
+
+---- GuildFX Treasury (multisig):         ${gfxTreasury}
+
+---- GuildFX Dev (multisig):              ${gfxDeveloper}
+
+---- Deployer (UNTRUSTED):                ${__untrustedDeployer.address}
+
+---- Temporary GuildFX DAO (UNTRUSTED):   ${__untrustedGFXDAO.address}
+
+---- Purchaser (UNTRUSTED):               ${__untrustedPurchaser.address}
 
   \n`,
     LOG_FILE_PATH
   );
-  logToFile(
-    `Deployer Address =         ${__untrustedDeployer.address} \n`,
-    LOG_FILE_PATH
-  );
-
   const tokenAddresses: Address[] = [];
 
   // --------- Deploy the Stablecoins --------- //
@@ -222,7 +226,7 @@ Script starting
   await constants.deployed();
   const CONSTANTS_ADDRESS = constants.address;
   logToFile(
-    `Constants Token Address =            ${CONSTANTS_ADDRESS} \n`,
+    `GuildFX Constants Token Address =            ${CONSTANTS_ADDRESS} \n`,
     LOG_FILE_PATH
   );
   await sleep();
