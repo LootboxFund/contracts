@@ -7,6 +7,7 @@ import {
   DEVELOPER_ROLE,
   generatePermissionRevokeMessage,
   generateMockAddress,
+  DEFAULT_ADMIN_ROLE
 } from "./helpers/test-helpers";
 
 describe("📦 Constants", async function () {
@@ -87,6 +88,138 @@ describe("📦 Constants", async function () {
     expect((await constants.GUILD_FX_MINTING_FEE_DECIMALS()).toString()).to.eq(
       "3"
     );
+  });
+
+  describe("🗳  transferGuildFXDAOAdminPrivileges()", () => {
+    it("reverts for all users other than the guildDao", async () => {
+      const users = [developer, treasury, purchaser, deployer];
+      // TODO: Find a way to break this down with a it.each()()
+      // No one can call this function
+      for (let user of users) {
+        // Check other generic roles
+        await expect(
+          constants.connect(user).transferGuildFXDAOAdminPrivileges(purchaser.address)
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(user.address, DAO_ROLE)
+        );
+      }
+    });
+
+    it("does not revert when called by guild dao", async () => {
+      // Make sure dao has the role
+      await expect(
+        constants.connect(dao).transferGuildFXDAOAdminPrivileges(purchaser.address)
+      ).to.not.be.reverted;
+    });
+
+    describe("when the dao grants the DAO_ROLE to an address", () => {
+      let newGuildDXDAO: SignerWithAddress;
+
+      beforeEach(async () => {
+        newGuildDXDAO = purchaser;
+        await constants
+          .connect(dao)
+          .transferGuildFXDAOAdminPrivileges(newGuildDXDAO.address);
+      });
+      it("reverts when trying to assign DAO_ROLE when to a user that already has it", async () => {
+        await expect(
+          constants.connect(newGuildDXDAO).transferGuildFXDAOAdminPrivileges(newGuildDXDAO.address)
+        ).to.be.revertedWith(
+          "Account already has DAO_ROLE"
+        );
+      })
+
+      it("grants the address the DAO_ROLE", async () => {
+        expect(await constants.hasRole(DAO_ROLE, newGuildDXDAO.address)).to.be.true;
+      });
+      it("revokes the DAO_ROLE from the dao", async () => {
+        expect(await constants.hasRole(DAO_ROLE, dao.address)).to.be.false;
+      });
+      it("revokes on subsequent calls with DAO_ROLE access control error when called by the dao", async () => {
+        await expect(
+          constants.connect(dao).transferGuildFXDAOAdminPrivileges(treasury.address)
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(dao.address, DAO_ROLE)
+        );
+      });
+      it("does not revoke when called by the new dao", async () => {
+        // Might as well make sure the whitelisted address can't call it either:
+        await expect(
+          constants
+            .connect(newGuildDXDAO)
+            .transferGuildFXDAOAdminPrivileges(treasury.address)
+        ).to.not.be.reverted;
+      });
+    });
+  });
+
+  describe("🗳  grantRole()", () => {
+    it("reverts for all users when assigning a role other than DAO_ROLE", async () => {
+      const users = [dao, developer, treasury, purchaser, deployer];
+      const roles = [DEFAULT_ADMIN_ROLE, DEVELOPER_ROLE];
+      // TODO: Find a way to break this down with a it.each()()
+      // No one can call this function
+      for (let user of users) {
+        // Check other generic roles
+        for (let role of roles) {
+          await expect(
+            constants.connect(user).grantRole(role, purchaser.address)
+          ).to.be.revertedWith(
+            generatePermissionRevokeMessage(user.address, DEFAULT_ADMIN_ROLE)
+          );
+        }
+      }
+    });
+
+    it("reverts for all users except the dao when assigning the DAO_ROLE", async () => {
+      const users = [deployer, treasury, developer, purchaser];
+      for (let user of users) {
+        await expect(
+          constants.connect(user).grantRole(DAO_ROLE, purchaser.address)
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(user.address, DAO_ROLE)
+        );
+      }
+      // Make sure dao has the role
+      await expect(
+        constants.connect(dao).grantRole(DAO_ROLE, purchaser.address)
+      ).to.not.be.reverted;
+    });
+
+    describe("when the dao grants the DAO_ROLE to an address", () => {
+      let newDao: SignerWithAddress;
+
+      beforeEach(async () => {
+        newDao = purchaser;
+        await constants.connect(dao).grantRole(DAO_ROLE, newDao.address);
+      });
+      it("reverts when trying to assign DAO_ROLE when to a user that already has it", async () => {
+        await expect(
+          constants.connect(newDao).grantRole(DAO_ROLE, newDao.address)
+        ).to.be.revertedWith(
+          "Account already has DAO_ROLE"
+        );
+      })
+      it("grants the address the DAO_ROLE", async () => {
+        expect(await constants.hasRole(DAO_ROLE, newDao.address)).to.be.true;
+      });
+      it("revokes the DAO_ROLE from the dao", async () => {
+        expect(await constants.hasRole(DAO_ROLE, dao.address)).to.be.false;
+      });
+      it("revokes on subsequent calls with DAO_ROLE access control error when called by the dao", async () => {
+        await expect(
+          constants.connect(dao).grantRole(DAO_ROLE, treasury.address)
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(dao.address, DAO_ROLE)
+        );
+      });
+      it("does not revoke when called by the new dao", async () => {
+        // Might as well make sure the whitelisted address can't call it either:
+        await expect(
+          constants.connect(newDao).grantRole(DAO_ROLE, treasury.address)
+        ).to.not.be.reverted;
+      });
+    });
   });
 
   describe("🗳 setCrowdSaleStableCoins()", () => {
