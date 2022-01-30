@@ -8,9 +8,13 @@
  *
  * After running this script, there are a few steps the GuildFX admins need to do in order to get Guilds onboarded:
  * 1. [OPTIONAL as the DAO should already have GFX_STAFF permissions] call .GuildFactory.sol `.whitelistGFXStaff()` function
+ *      - Do this in Openzeppelin Defender
  * 2. The GFX Staff needs to then call guildFactory `.whitelistGuildOwner()`, function to enable a guild to create a token
+ *      - Do this in Openzeppelin Defender
  * 3. The guild owner will call guildFactory `.createGuild()` to deploy their token
+ *      - Do this in Openzeppelin Defender
  * 4. Later on, the guild owner will call crowdsaleFactory `.createCrowdSale()` function via DEFENDER to make a crowdsale
+ *      - Do this in Openzeppelin Defender
  *
  * ... please README.md for more info.
  *

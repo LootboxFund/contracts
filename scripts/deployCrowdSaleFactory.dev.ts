@@ -7,10 +7,13 @@
  * npm run deploy:rinkeby:guild-factory (not yet configured)
  *
  * After running this script, there are a few steps the GuildFX admins need to do in order to get Guilds onboarded:
- * 1. [OPTIONAL as the DAO should already have GFX_STAFF permissions] call .GuildFactory.sol `.whitelistGFXStaff()` function
- * 2. The GFX Staff needs to then call guildFactory `.whitelistGuildOwner()`, function to enable a guild to create a token
- * 3. The guild owner will call guildFactory `.createGuild()` to deploy their token
- * 4. Later on, the guild owner will call crowdsaleFactory `.createCrowdSale()` function via DEFENDER to make a crowdsale
+ * 1. [OPTIONAL as the DAO should already have GFX_STAFF permissions] call .crowdsaleFactory.sol `.whitelistGFXStaff()` function
+ *    to enable a GuildFX staff to manage the guilds.
+ *      - Do this in Openzeppelin Defender
+ * 2. The GFX Staff needs to then call crowdsaleFactory `.whitelistGuildOwner()`, function to enable a guild to create a token.
+ *      - Do this Openzeppelin Defender
+ * 3. The guild owner will call crowdsaleFactory.sol `.createCrowdSale()` to deploy their crowdsale
+ *      - Do this Openzeppelin Defender
  *
  * ... please README.md for more info.
  *
@@ -24,12 +27,9 @@
  */
 
 import { ethers, network } from "hardhat";
-import { stripZeros } from "../test/helpers/test-helpers";
 import { sleep } from "./helpers/helpers";
 import { logToFile } from "./helpers/logger";
 import { addresses } from "./constants";
-
-const DEFAULT_GUILD_TOKEN_STARTING_PRICE = "7000000"; // 7 USD cents
 
 const LOG_FILE_PATH = `${__dirname}/logs/${network.name}_${
   network.config.chainId
@@ -54,23 +54,10 @@ async function main() {
    *            Thus, we prefix the untrusted accounts with "__untrusted" in these scripts. The trusted multisigs are currently
    *            configured in { addresses } from ./constants. Please read the ../README.md for more details.
    */
-  const [
-    __untrustedDeployer,
-    __untrustedTreasury,
-    __untrustedGFXDAO,
-    __untrustedGFXDeveloper,
-    __untrustedPurchaser,
-  ] = await ethers.getSigners();
+  const [__untrustedDeployer] = await ethers.getSigners();
 
   // Trusted GuildFX multisigs (see note above):
-  const {
-    Oxnewton,
-    Oxterran,
-    gfxDAO,
-    gfxDeveloper,
-    gfxTreasury,
-    gfxConstants,
-  } = addresses[chainId];
+  const { gfxDAO, gfxConstants } = addresses[chainId];
 
   logToFile(
     ` 
@@ -81,21 +68,9 @@ async function main() {
 
 ---- Network:                             ${network.name} (Decimal ID = ${chainId})
 
----- 0xnewton:                            ${Oxnewton}
-
----- 0xterran:                            ${Oxterran}
-
 ---- GuildFX DAO (multisig):              ${gfxDAO}
 
----- GuildFX Treasury (multisig):         ${gfxTreasury}
-
----- GuildFX Dev (multisig):              ${gfxDeveloper}
-
 ---- Deployer (UNTRUSTED):                ${__untrustedDeployer.address}
-
----- Temporary GuildFX DAO (UNTRUSTED):   ${__untrustedGFXDAO.address}
-
----- Purchaser (UNTRUSTED):               ${__untrustedPurchaser.address}
 
   \n`,
     LOG_FILE_PATH
@@ -106,34 +81,10 @@ async function main() {
   const crowdSaleFactory = await CrowdSaleFactory.deploy(gfxDAO, gfxConstants);
   await crowdSaleFactory.deployed();
   logToFile(
-    `---- ${crowdSaleFactory.address} ---> Crowsale Factory Contract Address\n`,
+    `---- ${crowdSaleFactory.address} ---> GuildFX Crowsale Factory\n`,
     LOG_FILE_PATH
   );
   await sleep();
-
-  // --------- Authorize GFX Staff --------- //
-  const txWhitelistGFXStaff = await crowdSaleFactory
-    .connect(dao)
-    .whitelistGFXStaff(gfxStaff.address, true);
-
-  await txWhitelistGFXStaff.wait();
-
-  logToFile(
-    `---- ${gfxStaff.address} ---> Whitelisted GuildFX staff \n`,
-    LOG_FILE_PATH
-  );
-
-  // --------- Authorize a Guild Owner --------- //
-  const txWhitelistGuildOwner = await crowdSaleFactory
-    .connect(gfxStaff)
-    .whitelistGuildOwner(guildDao.address, true);
-
-  await txWhitelistGuildOwner.wait();
-
-  logToFile(
-    `---- ${guildDao.address} ---> Whitelisted guild's DAO \n`,
-    LOG_FILE_PATH
-  );
 }
 
 // We recommend this pattern to be able to use async/await everywhere
