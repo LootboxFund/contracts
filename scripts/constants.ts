@@ -9,6 +9,8 @@ interface IAddressesByChain {
   Oxnewton: string;
   /** GuildFX Founder address (should be linked in openzeppelin Defender) */
   Oxterran: string;
+  /** GuildFX Constants address (from deploy script "./scripts/deployGuildFactory.dev.ts") */
+  gfxConstants: string;
 }
 
 interface IAddresses {
@@ -51,6 +53,7 @@ export const addresses: IAddresses = {
     gfxDeveloper: "0x6A721843BAf298D49C709D0d77D23aDDE650AE44",
     Oxnewton: "0x2C83b49EdB3f00A38331028e2D8bFA3Cd93B8288",
     Oxterran: "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F",
+    gfxConstants: "0x7E0e8E39Deb6f39E583202b7BbFC98E01A18af95",
   },
 };
 
