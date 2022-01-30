@@ -1,6 +1,7 @@
 import { logToFile } from "./logger";
 import { filterMap, removeUndefined } from "@guildfx/helpers";
 import { Storage } from "@google-cloud/storage";
+import axios from "axios";
 import {
   ChainIDHex,
   buildTokenCDNRoute,
@@ -56,9 +57,6 @@ export const tokenMolds: Omit<
   },
 ];
 
-export interface TokenDataWithCDN extends TokenData {
-  cdnFilePath: string;
-}
 export type TokenFragsWithCDN = {
   tokenFrag: TokenFragment;
   chainIdHex: ChainIDHex;
@@ -91,7 +89,7 @@ export const uploadTokenDataToCDN = async ({
   if (!tokenMold) {
     throw new Error(`Could not find a stablecoin mold for ${tokenFrag.symbol}`);
   }
-  const tokenData: TokenDataWithCDN = {
+  const tokenData: TokenData = {
     address: tokenFrag.address,
     chainIdHex: chainIdHex,
     chainIdDecimal: parseInt(chainIdHex, 16).toString(),
@@ -100,20 +98,26 @@ export const uploadTokenDataToCDN = async ({
     name: tokenMold.name,
     priceOracle: tokenMold.priceOracle,
     symbol: tokenMold.symbol,
-    cdnFilePath: filePath,
   };
-  await storage
-    .bucket(BUCKET_NAME)
-    .file(tokenData.cdnFilePath)
-    .save(
-      JSON.stringify(
-        removeUndefined({
-          ...tokenData,
-          cdnFilePath: undefined,
-        })
-      )
-    );
-  await storage.bucket(BUCKET_NAME).file(tokenData.cdnFilePath).makePublic();
+
+  await axios.post("https://89f633ef6cb67740697f3c0885695a46.m.pipedream.net", {
+    semvar: "0.0.1-sandbox",
+    chainIdHex: "0x61",
+    prefix: "tokens",
+    data: tokenData,
+  });
+  // await storage
+  //   .bucket(BUCKET_NAME)
+  //   .file(tokenData.cdnFilePath)
+  //   .save(
+  //     JSON.stringify(
+  //       removeUndefined({
+  //         ...tokenData,
+  //         cdnFilePath: undefined,
+  //       })
+  //     )
+  //   );
+  // await storage.bucket(BUCKET_NAME).file(tokenData.cdnFilePath).makePublic();
 };
 
 export const uploadTokenIndexToCDN = async ({
