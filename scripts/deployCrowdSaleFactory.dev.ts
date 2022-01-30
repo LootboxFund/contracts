@@ -1,51 +1,33 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// When running the script with `npx hardhat run <script>` you'll find the Hardhat
-// Runtime Environment's members available in the global scope.
-//
-// THIS SCRIPT ASSUMES YOU HAVE RAN ./deployCrowdSaleFactory.dev.ts which would have
-// created a constants file which we hardcode for now
-//
-// Run this script as:
-// npm run deploy:testnet:crowdsale-factory
-// OR
-// npm run deploy:rinkeby:guild-factory
-//
-// TODO:
-// Currently you can't call this script with args because of how it is called with hardhat.
-// Ideally, we would like to call this script as such:
-// EXAMPLE: npm run deploy:testnet:crowdsale-factory --arg1 [GUILD_TOKEN_ADDRESS] --arg2 [GFX_CONSTANTS_ADDRESS] --arg3 [GUILD_TOKEN_STARTING_PRICE]
-// It would be nice to change the call signature to this.
+/**
+ * Script to deploy the a GuildFX's CrowdsaleFactory contract
+ *
+ * Run this script as:
+ * npm run deploy:testnet:crowdsale-factory
+ * OR
+ * npm run deploy:rinkeby:guild-factory (not yet configured)
+ *
+ * After running this script, there are a few steps the GuildFX admins need to do in order to get Guilds onboarded:
+ * 1. [OPTIONAL as the DAO should already have GFX_STAFF permissions] call .GuildFactory.sol `.whitelistGFXStaff()` function
+ * 2. The GFX Staff needs to then call guildFactory `.whitelistGuildOwner()`, function to enable a guild to create a token
+ * 3. The guild owner will call guildFactory `.createGuild()` to deploy their token
+ * 4. Later on, the guild owner will call crowdsaleFactory `.createCrowdSale()` function via DEFENDER to make a crowdsale
+ *
+ * ... please README.md for more info.
+ *
+ * IMPORTANT: Our hardhat config uses "untrusted" signers with a single private key.
+ *            However, we have "trusted" guild fx accounts which are secure multisigs created in Openzeppelin Defender.
+ *            Thus, we prefix the untrusted accounts with "__untrusted" in these scripts. The trusted multisigs are currently
+ *            configured in { addresses } from ./constants. Please read the ../README.md for more details.
+ *
+ * Note: Currently you can't call this script with args because of how it is called with hardhat.
+ *       Due to this limitation, paramaters are hardcoded in the file.
+ */
 
 import { ethers, network } from "hardhat";
 import { stripZeros } from "../test/helpers/test-helpers";
 import { sleep } from "./helpers/helpers";
 import { logToFile } from "./helpers/logger";
-
-interface IAddressesByChain {
-  guildTokenAddress: string;
-  gfxConstants: string;
-}
-
-interface IAddresses {
-  [key: number]: IAddressesByChain;
-}
-
-const addresses: IAddresses = {
-  // BSC MAINNET
-  // 56: {},
-  // BSC TESTNET
-  97: {
-    guildTokenAddress: "0xa55f1d536a943c623b238dd452904060ba63f173",
-    gfxConstants: "0x9849721Cc9C02AE0A0D8914A8A246dAEF436e0A0",
-  },
-  // Rinkeby
-  4: {
-    guildTokenAddress: "0xf9d82fad77e65651c12606d12d749e1cbe2cf4d1",
-    gfxConstants: "0x01e4f496C2eBA3E868785E5cF87A0037D9a765Dc",
-  },
-};
+import { addresses } from "./constants";
 
 const DEFAULT_GUILD_TOKEN_STARTING_PRICE = "7000000"; // 7 USD cents
 
@@ -54,16 +36,6 @@ const LOG_FILE_PATH = `${__dirname}/logs/${network.name}_${
 }-deployCrowdSaleFactory_log_${Date.now()}.dev.txt`;
 
 async function main() {
-  let gfxConstants: string,
-    guildTokenAddress: string,
-    guildTokenStartingPrice: string;
-
-  /**
-   * TODO: currently argv does not work with how the script is called via hardhat. Please update this.
-   */
-  [guildTokenAddress, gfxConstants, guildTokenStartingPrice] =
-    process?.argv.slice(2) || [];
-
   const chainId = network.config.chainId;
 
   if (!chainId) {
@@ -76,68 +48,62 @@ async function main() {
     throw new Error(`Please update config for chain ID ${chainId}`);
   }
 
+  /**
+   * IMPORTANT: Our hardhat config uses "untrusted" signers with a single private key.
+   *            However, we have "trusted" guild fx accounts which are secure multisigs created in Openzeppelin Defender.
+   *            Thus, we prefix the untrusted accounts with "__untrusted" in these scripts. The trusted multisigs are currently
+   *            configured in { addresses } from ./constants. Please read the ../README.md for more details.
+   */
   const [
-    deployer,
-    treasury,
-    dao,
-    developer,
-    purchaser,
-    gfxStaff,
-    guildDao,
-    guildDev,
-    guildTreasury,
+    __untrustedDeployer,
+    __untrustedTreasury,
+    __untrustedGFXDAO,
+    __untrustedGFXDeveloper,
+    __untrustedPurchaser,
   ] = await ethers.getSigners();
-  const DEPLOYER_ADDRESS = deployer.address;
+
+  // Trusted GuildFX multisigs (see note above):
+  const {
+    Oxnewton,
+    Oxterran,
+    gfxDAO,
+    gfxDeveloper,
+    gfxTreasury,
+    gfxConstants,
+  } = addresses[chainId];
+
   logToFile(
     ` 
   
 ---------- DEPLOY CROWDSALE FACTORY (development) ----------
   
----- Script starting
+---- Script starting...
 
----- Network = ${network.name} (Decimal ID = ${chainId})
+---- Network:                             ${network.name} (Decimal ID = ${chainId})
 
----- Params:
+---- 0xnewton:                            ${Oxnewton}
 
-     Guild Token Address:        ${guildTokenAddress}
+---- 0xterran:                            ${Oxterran}
 
-     GuildFX Constants:          ${gfxConstants}
+---- GuildFX DAO (multisig):              ${gfxDAO}
 
-     Guild Token Starting Price: ${guildTokenStartingPrice}
+---- GuildFX Treasury (multisig):         ${gfxTreasury}
 
-----
+---- GuildFX Dev (multisig):              ${gfxDeveloper}
+
+---- Deployer (UNTRUSTED):                ${__untrustedDeployer.address}
+
+---- Temporary GuildFX DAO (UNTRUSTED):   ${__untrustedGFXDAO.address}
+
+---- Purchaser (UNTRUSTED):               ${__untrustedPurchaser.address}
+
   \n`,
-    LOG_FILE_PATH
-  );
-
-  if (!guildTokenAddress) {
-    guildTokenAddress = addresses[chainId]?.guildTokenAddress;
-  }
-
-  if (!gfxConstants) {
-    gfxConstants = addresses[chainId]?.gfxConstants;
-  }
-  if (!guildTokenStartingPrice) {
-    guildTokenStartingPrice = DEFAULT_GUILD_TOKEN_STARTING_PRICE;
-  }
-
-  logToFile(`---- ${DEPLOYER_ADDRESS} ---> Deployer Address \n`, LOG_FILE_PATH);
-  logToFile(
-    `---- ${guildTokenAddress} ---> GuildFX Gamer Token \n`,
-    LOG_FILE_PATH
-  );
-  logToFile(`---- ${gfxConstants} ---> GuildFX Constants \n`, LOG_FILE_PATH);
-  logToFile(
-    `---- ${guildTokenStartingPrice} ---> Crowdsale Starting Price $USD (8 decimals) \n`,
     LOG_FILE_PATH
   );
 
   // --------- Deploy CrowdSale Factory --------- //
   const CrowdSaleFactory = await ethers.getContractFactory("CrowdSaleFactory");
-  const crowdSaleFactory = await CrowdSaleFactory.deploy(
-    dao.address,
-    gfxConstants
-  );
+  const crowdSaleFactory = await CrowdSaleFactory.deploy(gfxDAO, gfxConstants);
   await crowdSaleFactory.deployed();
   logToFile(
     `---- ${crowdSaleFactory.address} ---> Crowsale Factory Contract Address\n`,
@@ -166,29 +132,6 @@ async function main() {
 
   logToFile(
     `---- ${guildDao.address} ---> Whitelisted guild's DAO \n`,
-    LOG_FILE_PATH
-  );
-
-  // --------- Create the CrowdSale --------- //
-  const tx = await crowdSaleFactory
-    .connect(guildDao)
-    .createCrowdSale(
-      guildTokenAddress,
-      guildDao.address,
-      guildDev.address,
-      guildTreasury.address,
-      guildTokenStartingPrice
-    );
-
-  await tx.wait();
-  // TODO Manually you will need to .whitelistMint() via the defender UI + multisig
-
-  const [crowdsaleAddress] = (await crowdSaleFactory.viewCrowdSales()).map(
-    stripZeros
-  );
-
-  logToFile(
-    `---- ${crowdsaleAddress} ---> Crowsale Contract Address\n`,
     LOG_FILE_PATH
   );
 }
