@@ -99,7 +99,6 @@ export const uploadTokenDataToCDN = async ({
     priceOracle: tokenMold.priceOracle,
     symbol: tokenMold.symbol,
   };
-
   await axios.post("https://89f633ef6cb67740697f3c0885695a46.m.pipedream.net", {
     semvar: "0.0.1-sandbox",
     chainIdHex: "0x61",
@@ -135,11 +134,17 @@ export const uploadTokenIndexToCDN = async ({
     semvar,
     chainIdHex,
   });
-  await storage
-    .bucket(BUCKET_NAME)
-    .file(filePath)
-    .save(JSON.stringify(addresses));
-  await storage.bucket(BUCKET_NAME).file(filePath).makePublic();
+  // await storage
+  //   .bucket(BUCKET_NAME)
+  //   .file(filePath)
+  //   .save(JSON.stringify(addresses));
+  // await storage.bucket(BUCKET_NAME).file(filePath).makePublic();
+
+  await axios.post("https://25a6aaa1c164a3160906727a7b1ed065.m.pipedream.net", {
+    semvar: "0.0.1-sandbox",
+    chainIdHex: "0x61",
+    prefix: "tokens",
+  });
   logToFile(
     `Uploading index to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/${BUCKET_NAME}/o/${encodeURISafe(
       filePath
