@@ -27,16 +27,16 @@ contract CrowdSaleFactory is Pausable, AccessControl {
     EnumerableSet.AddressSet private CROWDSALE_PROXIES;
 
     event CrowdSaleCreated(
-        address crowdsaleAddress,
-        address guildToken,
-        address dao,
+        address indexed crowdsaleAddress,
+        address indexed guildToken,
+        address indexed dao,
         address developer, 
         address treasury,
         uint256 startingPrice,
         address deployer
     );
-    event FactoryStaffWhitelist(address staffMember, address whitelistedBy, bool isActive);
-    event GuildOwnerWhitelist(address guildOwner, address whitelistedBy, bool isActive);
+    event FactoryStaffWhitelist(address indexed staffMember, address indexed whitelistedBy, bool isActive);
+    event GuildOwnerWhitelist(address indexed guildOwner, address indexed whitelistedBy, bool isActive);
 
     constructor(address dao, address _fxConstants) {
         require(dao != address(0), "DAO address cannot be zero");

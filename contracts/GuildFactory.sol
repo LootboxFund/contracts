@@ -42,16 +42,16 @@ contract GuildFactory is Pausable, AccessControl {
     EnumerableSet.AddressSet private GUILD_TOKEN_PROXIES;
 
     event GuildCreated(
-        address contractAddress,
+        address indexed contractAddress,
         string guildTokenName,
         string guildTokenSymbol,
-        address dao,
+        address indexed dao,
         address developer,
-        address creator,
+        address indexed creator,
         address guildFactory
     );
-    event FactoryStaffWhitelist(address staffMember, address whitelistedBy, bool isActive);
-    event GuildOwnerWhitelist(address guildOwner, address whitelistedBy, bool isActive);
+    event FactoryStaffWhitelist(address indexed staffMember, address indexed whitelistedBy, bool isActive);
+    event GuildOwnerWhitelist(address indexed guildOwner, address indexed whitelistedBy, bool isActive);
 
     constructor(address dao, address _fxConstants) {
         require(dao != address(0), "DAO address cannot be zero");
