@@ -167,17 +167,21 @@ describe("📦 CrowdSale of GUILD token", async function () {
     await crowdSale.deployed();
   });
 
-  it("sets the GUILD token address correctly", async function () {
+  it("sets the GUILD token address correctly", async () => {
     // expect(await crowdSale.deploymentStartTime()).to.eq(token.address);
     expect(true).to.be.true;
   });
 
-  it("sets the treasury address correctly", async function () {
+  it("sets the treasury address correctly", async () => {
     expect(await crowdSale.TREASURY()).to.eq(treasury.address);
   });
 
-  it("sets the constants address correctly", async function () {
+  it("sets the constants address correctly", async () => {
     expect(await crowdSale.CONSTANTS()).to.eq(constants.address);
+  });
+
+  it("it has 0 amountRaisedInUSD", async () => {
+    expect(await crowdSale.amountRaisedInUSD()).to.eq("0");
   });
 
   it("has a current USD price", async () => {
@@ -338,6 +342,13 @@ describe("📦 CrowdSale of GUILD token", async function () {
       expect(stablecoinPrice.toNumber()).to.be.equal(archivedPrice);
     });
 
+    it("increments the amountRaisedInUSD variable", async () => {
+      await crowdSale
+        .connect(purchaser)
+        .buyInBNB(purchaser.address, { value: stablecoinAmount.toString() });
+      expect(await crowdSale.amountRaisedInUSD()).to.eq("516188739550");
+    });
+
     it("purchaser exchanges native BNB for GUILD at a price of $0.07/GUILD", async () => {
       const initialSupply = await token.totalSupply();
       await expect(
@@ -351,6 +362,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
           ethers.constants.AddressZero,
           stablecoinAmount.toString(),
           gamerPurchasedAmount.toString(),
+          "516188739550",
           startingPriceUSD.toString()
         );
       expect(await crowdSale.GUILD()).to.equal(token.address);
@@ -366,8 +378,6 @@ describe("📦 CrowdSale of GUILD token", async function () {
       expect(await token.totalSupply()).to.equal(
         initialSupply.add(gamerPurchasedAmount).add(mintFeeAmount)
       );
-      // TODO Add check that it mints to the GuildFX treasury
-      // expect(await treasury.getBalance()).eq(mintFeeAmount);
     });
     it.skip("TODO: mints the token to the guildFX treasury", () => {});
   });
@@ -432,6 +442,11 @@ describe("📦 CrowdSale of GUILD token", async function () {
       expect(stablecoinPrice.toNumber()).to.be.equal(archivedPrice);
     });
 
+    it("increments the amountRaisedInUSD variable", async () => {
+      await crowdSale.connect(purchaser).buyInUSDC(stablecoinAmount);
+      expect(await crowdSale.amountRaisedInUSD()).to.eq("1000051590");
+    });
+
     it("purchaser approves transfer for 10 USDC", async () => {
       expect(
         await usdc_stablecoin.allowance(purchaser.address, crowdSale.address)
@@ -449,6 +464,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
           usdc_stablecoin.address,
           stablecoinAmount,
           gamerPurchasedAmount.toString(),
+          "1000051590",
           startingPriceUSD.toString()
         );
       expect(await crowdSale.GUILD()).to.equal(token.address);
@@ -536,6 +552,11 @@ describe("📦 CrowdSale of GUILD token", async function () {
       ).to.equal(stablecoinAmount);
     });
 
+    it("increments the amountRaisedInUSD variable", async () => {
+      await crowdSale.connect(purchaser).buyInUSDT(stablecoinAmount);
+      expect(await crowdSale.amountRaisedInUSD()).to.eq("1000189620");
+    });
+
     it("purchaser exchanges 10 USDT for ~142 GUILD at a price of $0.07/GUILD", async () => {
       const initialSupply = await token.totalSupply();
       await expect(
@@ -547,6 +568,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
           usdt_stablecoin.address,
           stablecoinAmount,
           gamerPurchasedAmount.toString(),
+          "1000189620",
           startingPriceUSD.toString()
         );
       expect(await crowdSale.GUILD()).to.equal(token.address);
@@ -630,6 +652,11 @@ describe("📦 CrowdSale of GUILD token", async function () {
       ).to.equal(stablecoinAmount);
     });
 
+    it("increments the amountRaisedInUSD variable", async () => {
+      await crowdSale.connect(purchaser).buyInETH(stablecoinAmount);
+      expect(await crowdSale.amountRaisedInUSD()).to.eq("3659935500000");
+    });
+
     it("purchaser exchanges ETH for GUILD at a price of $0.07/GUILD", async () => {
       const initialSupply = await token.totalSupply();
       await expect(
@@ -641,6 +668,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
           eth_stablecoin.address,
           stablecoinAmount,
           gamerPurchasedAmount.toString(),
+          "3659935500000",
           startingPriceUSD.toString()
         );
       expect(await crowdSale.GUILD()).to.equal(token.address);
