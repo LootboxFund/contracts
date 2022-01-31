@@ -69,7 +69,6 @@ interface ICONSTANTS {
     function USDC_PRICE_FEED() external view returns (address);
 
     function USDT_PRICE_FEED() external view returns (address);
-
 }
 
 contract CrowdSale is
@@ -84,10 +83,11 @@ contract CrowdSale is
     AggregatorV3Interface internal priceFeedUSDT;
 
     // only the DAO can control Treasury
-    bytes32 constant private DAO_ROLE = keccak256("DAO_ROLE");
-    bytes32 constant private DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE");
+    bytes32 private constant DAO_ROLE = keccak256("DAO_ROLE");
+    bytes32 private constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE");
 
-    uint256 public currentPriceUSD; // 8 decimals - THIS SHOULD NOT BE MODIFIED
+    uint256 public currentPriceUSD; // THIS SHOULD NOT BE MODIFIED (8 decimals)
+    uint256 public amountRaisedInUSD; // Tracks how much USD was fundraised from this crowdsale (8 decimals)
 
     address payable public TREASURY;
     address public GUILD;
@@ -103,6 +103,7 @@ contract CrowdSale is
         address indexed _stablecoin,
         uint256 _stablecoinPaid,
         uint256 _guildReceived,
+        uint256 _usdReceived,
         uint256 _priceInUSD
     );
 
@@ -125,6 +126,8 @@ contract CrowdSale is
         // solhint-disable-next-line not-rely-on-time
         deploymentStartTime = block.timestamp;
         currentPriceUSD = _startingPriceInUSD;
+
+        amountRaisedInUSD = 0;
 
         TREASURY = _treasuryAddress;
         GUILD = _guildToken;
@@ -157,6 +160,19 @@ contract CrowdSale is
                 stableCoinPrice *
                 10**(guildTokenDecimals - stablecoinDecimals)) /
             currentPriceUSD;
+    }
+
+    // converts stablecoin amount to USD (8 decimals)
+    function getUSDPurchaseAmount(
+        uint256 amountOfStableCoin,
+        uint256 stablecoinDecimals,
+        uint256 stableCoinPrice
+    ) internal pure returns (uint256 usdAmount) {
+        // Assumes currentPriceUSD & stableCoinPrice is 8 decimals
+        uint256 usdDecimals = 8;
+        return
+            ((amountOfStableCoin / 10**(stablecoinDecimals - usdDecimals)) *
+                stableCoinPrice) / 10**usdDecimals;
     }
 
     // price is to 8th decimal
@@ -231,12 +247,22 @@ contract CrowdSale is
         // transfer GUILD from newly minted, to buyer wallet
         IERC20GUILD tokenGUILD = IERC20GUILD(GUILD);
         tokenGUILD.mintRequest(msg.sender, guildPurchasedAmount);
+
+        // Update internal count of total amount raised
+        uint256 usdPurchasedAmount = getUSDPurchaseAmount(
+            _amount,
+            tokenUSDC.decimals(),
+            uint256(price)
+        );
+        amountRaisedInUSD = amountRaisedInUSD + usdPurchasedAmount;
+
         // emit purchase event
         emit Purchase(
             msg.sender,
             USDC,
             _amount,
             guildPurchasedAmount,
+            usdPurchasedAmount,
             currentPriceUSD
         );
     }
@@ -258,12 +284,22 @@ contract CrowdSale is
         // transfer GUILD from newly minted, to buyer wallet
         IERC20GUILD tokenGUILD = IERC20GUILD(GUILD);
         tokenGUILD.mintRequest(msg.sender, guildPurchasedAmount);
+
+        // Update internal count of total amount raised
+        uint256 usdPurchasedAmount = getUSDPurchaseAmount(
+            _amount,
+            tokenUSDT.decimals(),
+            uint256(price)
+        );
+        amountRaisedInUSD = amountRaisedInUSD + usdPurchasedAmount;
+
         // emit purchase event
         emit Purchase(
             msg.sender,
             USDT,
             _amount,
             guildPurchasedAmount,
+            usdPurchasedAmount,
             currentPriceUSD
         );
     }
@@ -285,12 +321,22 @@ contract CrowdSale is
         // transfer GUILD from newly minted, to buyer wallet
         IERC20GUILD tokenGUILD = IERC20GUILD(GUILD);
         tokenGUILD.mintRequest(msg.sender, guildPurchasedAmount);
+
+        // Update internal count of total amount raised
+        uint256 usdPurchasedAmount = getUSDPurchaseAmount(
+            _amount,
+            tokenETH.decimals(),
+            uint256(price)
+        );
+        amountRaisedInUSD = amountRaisedInUSD + usdPurchasedAmount;
+
         // emit purchase event
         emit Purchase(
             msg.sender,
             ETH,
             _amount,
             guildPurchasedAmount,
+            usdPurchasedAmount,
             currentPriceUSD
         );
     }
@@ -315,12 +361,22 @@ contract CrowdSale is
         // transfer GUILD from newly minted, to buyer wallet
         IERC20GUILD tokenGUILD = IERC20GUILD(GUILD);
         tokenGUILD.mintRequest(_beneficiary, guildPurchasedAmount);
+
+        // Update internal count of total amount raised
+        uint256 usdPurchasedAmount = getUSDPurchaseAmount(
+            msg.value,
+            bnbDecimals,
+            uint256(price)
+        );
+        amountRaisedInUSD = amountRaisedInUSD + usdPurchasedAmount;
+
         // emit purchase event
         emit Purchase(
             _beneficiary,
             address(0),
             msg.value,
             guildPurchasedAmount,
+            usdPurchasedAmount,
             currentPriceUSD
         );
     }
