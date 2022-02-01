@@ -105,7 +105,8 @@ contract GuildFactory is Pausable, AccessControl {
                 guildName,
                 guildSymbol,
                 guildDao,
-                guildDev
+                guildDev,
+                fxConstants
             )
         );
         GUILD_TOKEN_PROXIES.add(address(proxy));
