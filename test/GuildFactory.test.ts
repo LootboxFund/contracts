@@ -510,6 +510,13 @@ describe("📦 GuildFactory", () => {
           await guildToken.hasRole(DEVELOPER_ROLE, guildDev.address)
         ).to.eq(true);
       });
+
+      it("grants sets the guildTokens's fxConstants address", async () => {
+        const fxConstants = await guildFactory.fxConstants();
+        const tokenFXConstants = await guildToken.fxConstants();
+        expect(ethers.utils.isAddress(fxConstants)).to.be.true;
+        expect(tokenFXConstants).to.eq(fxConstants);
+      });
     });
 
     describe("making multiple guildtokens", () => {
