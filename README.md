@@ -33,13 +33,15 @@
     $ npm run test # or npx hardhat test test/file.test.js
     ```
 
-## ⚙️ Setup - Guild FX Admin
+## Setup
+
+###  Guild FX Admin ⚙️  
 
 > 💡 This only needs setup **once** by a GuildFX admin.
 
 1.  Setup [Openzeppelin Defender Account](https://defender.openzeppelin.com/) for GuildFX Admins
 
-    - Follow the steps in [Guild FX Defender Setup README](./readme/GUILD_FX_DEFENDER_SETUP.md)
+    - Follow the steps in [Guild FX Defender Setup README](./readme/DEFENDER_SETUP_FOR_GUILDFX_ADMIN.md)
 
 2.  Deploy **🚜 Guild Factory 🚜**
 
@@ -61,13 +63,15 @@
 
     > 📆 TODO: Add Documentation about this process
 
-## ⚙️ Setup - Independent Guild DAOs (AKA Artemis)
+### Independent Guilds (AKA Artemis) ⚙️
 
 1. We recomending following the [Guild Best Practices](./readme/GUILD_ADMIN_SETUP_BEST_PRACTICES.md) first
 
-2. Set up the Guild's [Defender](https://Defender.openzeppelin.com/) account by following the [Guild Defender Setup](./readme/GUILD_DEFENDER_SETUP.md) steps
+2. Set up the Guild's [Defender](https://Defender.openzeppelin.com/) account by following the [Guild Defender Setup](./readme/DEFENDER_SETUP_FOR_GUILDS.md) steps
 
 3. Create your first guild token! Follow [the docs here](./readme/GUILD_CREATE_TOKEN.md)
+
+4. Create a crowdsale and hook it up to your guild token! Follow [the docs here](./readme/GUILD_CREATE_CROWDSALE.md)
 
 ## 📔 Addresses
 

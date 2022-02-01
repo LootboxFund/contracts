@@ -22,3 +22,13 @@
    - Nice work! This proposal should now be viewable in the "Active proposals" section of Defender.
 
 4. Approve & execute the guild creation proposal
+
+5. Get the guild token address
+
+    - 🚨 Where will they get this from? (TODO)
+
+6. Add it to Defender UI
+
+    - Address from step 5
+    - other data...
+    - Add the token ABI.... 🚨 Where will they get this from? (TODO)
