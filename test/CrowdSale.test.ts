@@ -27,6 +27,11 @@ import {
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 
+const BNB_ARCHIVED_PRICE = "51618873955";
+const USDC_ARCHIVED_PRICE = "100005159";
+const USDT_ARCHIVED_PRICE = "100018962";
+const ETH_ARCHIVED_PRICE = "365993550000";
+
 describe("📦 CrowdSale of GUILD token", async function () {
   let deployer: SignerWithAddress;
   let treasury: SignerWithAddress;
@@ -309,7 +314,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
       ); // 200 BNB
       stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 BNB
 
-      archivedPrice = ethers.BigNumber.from("51618873955");
+      archivedPrice = ethers.BigNumber.from(BNB_ARCHIVED_PRICE);
       startingPriceUSD = ethers.BigNumber.from("7000000");
       gamerPurchasedAmount = ethers.BigNumber.from("73741248507142857142857");
       [mintFeeAmount] = await token.calculateGuildFXMintFee(
@@ -346,7 +351,9 @@ describe("📦 CrowdSale of GUILD token", async function () {
       await crowdSale
         .connect(purchaser)
         .buyInBNB(purchaser.address, { value: stablecoinAmount.toString() });
-      expect(await crowdSale.amountRaisedInUSD()).to.eq("516188739550");
+      expect(await crowdSale.amountRaisedInUSD()).to.eq(
+        `${BNB_ARCHIVED_PRICE}0`
+      );
     });
 
     it("purchaser exchanges native BNB for GUILD at a price of $0.07/GUILD", async () => {
@@ -362,16 +369,10 @@ describe("📦 CrowdSale of GUILD token", async function () {
           ethers.constants.AddressZero,
           stablecoinAmount.toString(),
           gamerPurchasedAmount.toString(),
-          "516188739550",
+          `${BNB_ARCHIVED_PRICE}0`,
           startingPriceUSD.toString()
         );
       expect(await crowdSale.GUILD()).to.equal(token.address);
-      expect(await purchaser.getBalance()).gt(
-        ethers.BigNumber.from("9989000000000000000000")
-      );
-      expect(await purchaser.getBalance()).lt(
-        ethers.BigNumber.from("9999000000000000000000")
-      );
       expect(await token.balanceOf(purchaser.address)).to.eq(
         gamerPurchasedAmount
       );
@@ -404,7 +405,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
       ); // $200 USD
       stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 USD
 
-      archivedPrice = ethers.BigNumber.from("100005159");
+      archivedPrice = ethers.BigNumber.from(USDC_ARCHIVED_PRICE);
       startingPriceUSD = ethers.BigNumber.from("7000000"); // ~7 usd cents
       gamerPurchasedAmount = ethers.BigNumber.from("142864512857142857142"); // ~142 tokens in 18 decimals
       [mintFeeAmount] = await token.calculateGuildFXMintFee(
@@ -444,7 +445,9 @@ describe("📦 CrowdSale of GUILD token", async function () {
 
     it("increments the amountRaisedInUSD variable", async () => {
       await crowdSale.connect(purchaser).buyInUSDC(stablecoinAmount);
-      expect(await crowdSale.amountRaisedInUSD()).to.eq("1000051590");
+      expect(await crowdSale.amountRaisedInUSD()).to.eq(
+        `${USDC_ARCHIVED_PRICE}0`
+      );
     });
 
     it("purchaser approves transfer for 10 USDC", async () => {
@@ -464,7 +467,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
           usdc_stablecoin.address,
           stablecoinAmount,
           gamerPurchasedAmount.toString(),
-          "1000051590",
+          `${USDC_ARCHIVED_PRICE}0`,
           startingPriceUSD.toString()
         );
       expect(await crowdSale.GUILD()).to.equal(token.address);
@@ -508,7 +511,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
       ); // $200 USD
       stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // $10 USD
 
-      archivedPrice = ethers.BigNumber.from("100018962");
+      archivedPrice = ethers.BigNumber.from(USDT_ARCHIVED_PRICE);
       startingPriceUSD = ethers.BigNumber.from("7000000");
       gamerPurchasedAmount = ethers.BigNumber.from("142884231428571428571");
       [mintFeeAmount] = await token.calculateGuildFXMintFee(
@@ -554,7 +557,9 @@ describe("📦 CrowdSale of GUILD token", async function () {
 
     it("increments the amountRaisedInUSD variable", async () => {
       await crowdSale.connect(purchaser).buyInUSDT(stablecoinAmount);
-      expect(await crowdSale.amountRaisedInUSD()).to.eq("1000189620");
+      expect(await crowdSale.amountRaisedInUSD()).to.eq(
+        `${USDT_ARCHIVED_PRICE}0`
+      );
     });
 
     it("purchaser exchanges 10 USDT for ~142 GUILD at a price of $0.07/GUILD", async () => {
@@ -568,7 +573,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
           usdt_stablecoin.address,
           stablecoinAmount,
           gamerPurchasedAmount.toString(),
-          "1000189620",
+          `${USDT_ARCHIVED_PRICE}0`,
           startingPriceUSD.toString()
         );
       expect(await crowdSale.GUILD()).to.equal(token.address);
@@ -611,7 +616,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
       ); // 200 ETH
       stablecoinAmount = ethers.utils.parseUnits("10", stableCoinDecimals); // 10 ETH
 
-      archivedPrice = ethers.BigNumber.from("365993550000");
+      archivedPrice = ethers.BigNumber.from(ETH_ARCHIVED_PRICE);
       startingPriceUSD = ethers.BigNumber.from("7000000");
       gamerPurchasedAmount = ethers.BigNumber.from("522847928571428571428571");
       [mintFeeAmount] = await token.calculateGuildFXMintFee(
@@ -654,7 +659,9 @@ describe("📦 CrowdSale of GUILD token", async function () {
 
     it("increments the amountRaisedInUSD variable", async () => {
       await crowdSale.connect(purchaser).buyInETH(stablecoinAmount);
-      expect(await crowdSale.amountRaisedInUSD()).to.eq("3659935500000");
+      expect(await crowdSale.amountRaisedInUSD()).to.eq(
+        `${ETH_ARCHIVED_PRICE}0`
+      );
     });
 
     it("purchaser exchanges ETH for GUILD at a price of $0.07/GUILD", async () => {
@@ -668,7 +675,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
           eth_stablecoin.address,
           stablecoinAmount,
           gamerPurchasedAmount.toString(),
-          "3659935500000",
+          `${ETH_ARCHIVED_PRICE}0`,
           startingPriceUSD.toString()
         );
       expect(await crowdSale.GUILD()).to.equal(token.address);
