@@ -341,7 +341,7 @@ contract CrowdSale is
         );
     }
 
-    function buyInBNB(address payable _beneficiary)
+    function buyInBNB()
         public
         payable
         whenNotPaused
@@ -360,7 +360,7 @@ contract CrowdSale is
 
         // transfer GUILD from newly minted, to buyer wallet
         IERC20GUILD tokenGUILD = IERC20GUILD(GUILD);
-        tokenGUILD.mintRequest(_beneficiary, guildPurchasedAmount);
+        tokenGUILD.mintRequest(msg.sender, guildPurchasedAmount);
 
         // Update internal count of total amount raised
         uint256 usdPurchasedAmount = getUSDPurchaseAmount(
@@ -372,7 +372,7 @@ contract CrowdSale is
 
         // emit purchase event
         emit Purchase(
-            _beneficiary,
+            msg.sender,
             address(0),
             msg.value,
             guildPurchasedAmount,
