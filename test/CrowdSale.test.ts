@@ -329,7 +329,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
       await expect(
         crowdSale
           .connect(purchaser)
-          .buyInBNB(purchaser.address, { value: stablecoinAmount.toString() })
+          .buyInBNB({ value: stablecoinAmount.toString() })
       ).to.be.revertedWith("Pausable: paused");
     });
 
@@ -350,7 +350,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     it("increments the amountRaisedInUSD variable", async () => {
       await crowdSale
         .connect(purchaser)
-        .buyInBNB(purchaser.address, { value: stablecoinAmount.toString() });
+        .buyInBNB({ value: stablecoinAmount.toString() });
       expect(await crowdSale.amountRaisedInUSD()).to.eq(
         `${BNB_ARCHIVED_PRICE}0`
       );
@@ -361,7 +361,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
       await expect(
         await crowdSale
           .connect(purchaser)
-          .buyInBNB(purchaser.address, { value: stablecoinAmount.toString() })
+          .buyInBNB({ value: stablecoinAmount.toString() })
       )
         .to.emit(crowdSale, "Purchase")
         .withArgs(
