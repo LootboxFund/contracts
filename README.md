@@ -92,7 +92,7 @@
 | GuildFX DEV (multi sig)      | 0x6A721843BAf298D49C709D0d77D23aDDE650AE44 |
 | GuildFX Constants            | 0x5523D8c92CE44f11b66607899415381eeBef1324 |
 | Guild Factory                | 0x3A416836Ea500fe18838Bd67BAF15A8606b25ACc |
-| Crowdsale Factory            | 0xbb762B79A41ACc57971d957c7A089b4e69Fd608a |
+| Crowdsale Factory            | 0x5cCA43369cFd4743F45d1c7379Df0fd53563bCEA |
 
 ---
 
