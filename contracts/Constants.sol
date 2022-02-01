@@ -92,7 +92,7 @@ contract Constants is
         override
         onlyRole(getRoleAdmin(role)) /** onlyRole() and getRoleAdmin() are inherited from AccessControlUpgradeable */
     {
-        require(account != msg.sender, "Account already has DAO_ROLE"); // To safeguard against locking access out
+        require(!hasRole(DAO_ROLE, account), "Account already has DAO_ROLE"); // To safeguard against locking access out
 
         super.grantRole(role, account);
         if (role == DAO_ROLE) {
