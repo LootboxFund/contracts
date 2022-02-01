@@ -12,9 +12,9 @@ interface IAddressesByChain {
   /** GuildFX Constants address (from deploy script "./scripts/deployGuildFactory.dev.ts") */
   gfxConstants: string;
   /** GuildFX Guild Factory address (from deploy script "./scripts/deployGuildFactory.dev.ts") */
-  gfcGuildFactory: string;
+  gfxGuildFactory: string;
   /** GuildFX Crowdsale Factory address (from deploy script "./scripts/deployCrowdsale.dev.ts") */
-  gfcCrowdsaleFactory: string;
+  gfxCrowdSaleFactory: string;
   /** Multisig address for the super admin (treasury + dao + developer in one) from Defender */
   artemisSuperAdmin: string;
 }
@@ -60,10 +60,10 @@ export const addresses: IAddresses = {
     gfxDeveloper: "0x767B123Bd05697d8Dda135D1D0092a94ac5a7510",
 
     // --- Contract addresses (from deploy scripts) ---
-    gfxConstants: "0x3aeDdd9AE5681E78e1645685d5898d88C43B568c", // from running npm "npm run deploy:testnet:guild-factory"
-    gfcGuildFactory: "0xf4C65ba368BE9fB6BA50a4557F9870477B0F8A25", // from running "npm run deploy:testnet:guild-factory"
-    // [🚨🚨🚨 NOTE 🚨🚨🚨] $gfcCrowdsaleFactory needs to get updated when gfcGuildFactory changes!
-    gfcCrowdsaleFactory: "0x051B425B052C8920740d8bAB81EF6cE0C5021b72", // from running "npm run deploy:testnet:crowdsale-factory"
+    gfxConstants: "0x5523D8c92CE44f11b66607899415381eeBef1324", // from running npm "npm run deploy:testnet:guild-factory"
+    gfxGuildFactory: "0x3A416836Ea500fe18838Bd67BAF15A8606b25ACc", // from running "npm run deploy:testnet:guild-factory"
+    // [🚨🚨🚨 NOTE 🚨🚨🚨] $gfxCrowdSaleFactory needs to get updated when gfxGuildFactory changes!
+    gfxCrowdSaleFactory: "0x5cCA43369cFd4743F45d1c7379Df0fd53563bCEA", // from running "npm run deploy:testnet:crowdsale-factory"
 
     // --- GuildFX admins
     Oxnewton: "0x2C83b49EdB3f00A38331028e2D8bFA3Cd93B8288",

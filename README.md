@@ -49,13 +49,17 @@
 
     1. This will output a [log file](.scripts/logs/binance_testnet_97-deployGuildFactory_log_1643510668040.dev) with important addresses etc.
 
-3.  **Manually** add the 📜 **GuildFX Constants** 📜 address from the log file to variable `addresses.gfxConstants` in [constants.ts](./scripts/constants.ts).
+3.  **Manually** add the 📜 **GuildFX Constants** 📜 address & the **🚜 Guild Factory 🚜** address from the log file to variable `addresses.gfxConstants` & `address.gfxGuildFactory` in [constants.ts](./scripts/constants.ts).
 
     > 💡 You can find the 📜 **GuildFX "Constants"** 📜 from the log files from step 2.1.
 
 4.  Deploy **🚜 Crowdsale Factory 🚜**
 
          $ npm run deploy:testnet:crowdsale-factory
+
+3.  **Manually** add the **🚜 Crowdsale Factory 🚜** addres from the log file to variable `addresses.gfxCrowdSaleFactory` in [constants.ts](./scripts/constants.ts).
+
+    > 💡 You can find the **🚜 Crowdsale Factory 🚜** from the log files from step 4.
 
 5.  🕰 _Optional_: As the 👨‍👩‍👦‍👦 **GuildFX DAO** 👨‍👩‍👦‍👦, we can grant a GuildFX Staff Member 🔐 **GFX_STAFF_ROLE** 🔐 priviledges to the factories.
 
@@ -86,8 +90,8 @@
 | GuildFX Treasury (multi sig) | 0xFec4243C1934907CF41298F868FdcCDfca9D7484 |
 | GuildFX DAO (multi sig)      | 0x6A721843BAf298D49C709D0d77D23aDDE650AE44 |
 | GuildFX DEV (multi sig)      | 0x6A721843BAf298D49C709D0d77D23aDDE650AE44 |
-| GuildFX Constants            | 0x64F79B84CaA7e8f5763e578F4EA67385C68Fc74b |
-| Guild Factory                | 0x78EFCA1479011d194cA9eA2324C82d5B52f72b09 |
+| GuildFX Constants            | 0x5523D8c92CE44f11b66607899415381eeBef1324 |
+| Guild Factory                | 0x3A416836Ea500fe18838Bd67BAF15A8606b25ACc |
 | Crowdsale Factory            | 0xbb762B79A41ACc57971d957c7A089b4e69Fd608a |
 
 ---

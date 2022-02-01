@@ -1,0 +1,37 @@
+2022-02-01T23:43:21.105Z - 
+  
+---------- DEPLOY GUILD FACTORY (development) ----------
+
+---- Script starting
+
+---- Network:                             binance_testnet (Hex ID = 61, Decimal ID = 97)
+
+---- 0xnewton:                            0x2C83b49EdB3f00A38331028e2D8bFA3Cd93B8288
+
+---- 0xterran:                            0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F
+
+---- GuildFX DAO (multisig):              0xebf0bBcfC341f22F587D579cE631935267DA7294
+
+---- GuildFX Treasury (multisig):         0xe61e3516e98667A1c79F067DDeDB9005D911CF65
+
+---- GuildFX Dev (multisig):              0x767B123Bd05697d8Dda135D1D0092a94ac5a7510
+
+---- Deployer (UNTRUSTED):                0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A
+
+---- Temporary GuildFX DAO (UNTRUSTED):   0xfD45C9e09E6fD3ee45669Da146104542c28C93F5
+
+---- Purchaser (UNTRUSTED):               0x60404Db53ADD5aAF14F6654FF913a4307Dc6bF29
+
+  
+2022-02-01T23:43:37.110Z - Uploading ETH to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/guildfx-exchange.appspot.com/o/tokens%2F61%2Fv%2F0.0.1-sandbox%2F0x5Db52f14c8bB2771b716dbDC9B7e916d45Dd4751.json?alt=media 
+2022-02-01T23:43:39.360Z - ETH Stablecoin Address = 0x5Db52f14c8bB2771b716dbDC9B7e916d45Dd4751 
+2022-02-01T23:43:51.850Z - Uploading USDC to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/guildfx-exchange.appspot.com/o/tokens%2F61%2Fv%2F0.0.1-sandbox%2F0xAf5bf989F74cd19931C8556f34628c04C9221645.json?alt=media 
+2022-02-01T23:43:52.699Z - USDC Stablecoin Address = 0xAf5bf989F74cd19931C8556f34628c04C9221645 
+2022-02-01T23:44:09.767Z - Uploading USDT to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/guildfx-exchange.appspot.com/o/tokens%2F61%2Fv%2F0.0.1-sandbox%2F0xb90B90090f1812CcB0baDF445F6ae5621D77359a.json?alt=media 
+2022-02-01T23:44:10.775Z - USDT Stablecoin Address = 0xb90B90090f1812CcB0baDF445F6ae5621D77359a 
+2022-02-01T23:44:11.813Z - Uploading index to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/guildfx-exchange.appspot.com/o/tokens%2F61%2Fv%2F0.0.1-sandbox%2Findex.json?alt=media 
+2022-02-01T23:44:31.913Z - GuildFX Constants Token Address =            0x5523D8c92CE44f11b66607899415381eeBef1324 
+2022-02-01T23:44:33.896Z - ---------- Set Stablecoin Addresses ---------- 
+2022-02-01T23:44:35.921Z - ---------- Set Price Feed Addresses ---------- 
+2022-02-01T23:44:38.131Z - ---- 0xebf0bBcfC341f22F587D579cE631935267DA7294 --->  Transfered GuildFX DAO role for Constants Contract 
+2022-02-01T23:44:48.992Z - Guild Factory Contract Address =    0x3A416836Ea500fe18838Bd67BAF15A8606b25ACc 
