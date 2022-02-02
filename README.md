@@ -67,6 +67,8 @@
 
     > 📆 TODO: Add Documentation about this process
 
+6. Add the two factories to Defender so that you can manage them through the UI.
+
 ### Independent Guilds (AKA Artemis) ⚙️
 
 1. We recomending following the [Guild Best Practices](./readme/GUILD_ADMIN_SETUP_BEST_PRACTICES.md) first
