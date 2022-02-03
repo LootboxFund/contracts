@@ -381,6 +381,9 @@ describe("📦 CrowdSale of GUILD token", async function () {
       expect(await token.totalSupply()).to.equal(
         initialSupply.add(gamerPurchasedAmount).add(mintFeeAmount)
       );
+      expect(await token.balanceOf(await constants.TREASURY())).to.eq(
+        mintFeeAmount.toString()
+      );
     });
 
     it("amountRaisedBNB() stores amount BNB purchased", async () => {
@@ -400,7 +403,6 @@ describe("📦 CrowdSale of GUILD token", async function () {
         `${BNB_ARCHIVED_PRICE}0`
       );
     });
-    it.skip("TODO: mints the token to the guildFX treasury", () => {});
   });
 
   describe("buyer can purchase GUILD tokens using USDC", async () => {
@@ -495,6 +497,10 @@ describe("📦 CrowdSale of GUILD token", async function () {
       expect(await token.totalSupply()).to.equal(
         initialSupply.add(gamerPurchasedAmount).add(mintFeeAmount)
       );
+
+      expect(await token.balanceOf(await constants.TREASURY())).to.eq(
+        mintFeeAmount.toString()
+      );
     });
 
     it("amountRaisedUSDC() stores amount USDC purchased", async () => {
@@ -510,8 +516,6 @@ describe("📦 CrowdSale of GUILD token", async function () {
         `${USDC_ARCHIVED_PRICE}0`
       );
     });
-
-    it.skip("TODO: mints the token to the guildFX treasury", () => {});
   });
 
   describe("buyer can purchase GUILD tokens using USDT", async () => {
@@ -607,6 +611,10 @@ describe("📦 CrowdSale of GUILD token", async function () {
       expect(await token.totalSupply()).to.equal(
         initialSupply.add(gamerPurchasedAmount).add(mintFeeAmount)
       );
+
+      expect(await token.balanceOf(await constants.TREASURY())).to.eq(
+        mintFeeAmount.toString()
+      );
     });
 
     it("amountRaisedUSDT() stores amount USDT purchased", async () => {
@@ -622,7 +630,6 @@ describe("📦 CrowdSale of GUILD token", async function () {
         `${USDT_ARCHIVED_PRICE}0`
       );
     });
-    it.skip("TODO: mints the token to the guildFX treasury", () => {});
   });
 
   describe("buyer can purchase GUILD tokens using ETH", async () => {
@@ -715,6 +722,10 @@ describe("📦 CrowdSale of GUILD token", async function () {
       expect(await token.totalSupply()).to.equal(
         initialSupply.add(gamerPurchasedAmount).add(mintFeeAmount)
       );
+
+      expect(await token.balanceOf(await constants.TREASURY())).to.eq(
+        mintFeeAmount.toString()
+      );
     });
 
     it("amountRaisedETH() stores amount ETH purchased", async () => {
@@ -730,6 +741,5 @@ describe("📦 CrowdSale of GUILD token", async function () {
         `${ETH_ARCHIVED_PRICE}0`
       );
     });
-    it.skip("TODO: mints the token to the guildFX treasury", () => {});
   });
 });
