@@ -17,6 +17,10 @@ jobs:
         with:
           node-version: "16"
 
+      - name: Loading npm access token
+        run: |
+          echo '//registry.npmjs.org/:_authToken=${{ secrets.NPM_ACCESS_TOKEN_DEV }}' > .npmrc
+
       - name: Fetching Dependencies...
         run: |
           yarn install
