@@ -746,4 +746,60 @@ describe("📦 CrowdSale of GUILD token", async function () {
       );
     });
   });
+
+  describe("totalAmountRaisedInUSD()", () => {
+    it("calculates the sum in usd when purchasing from each coin", async () => {
+      const stablecoinEthers = ethers.BigNumber.from("10");
+      const seedUserStableCoinAmount = ethers.utils.parseUnits("100", 18);
+      const stablecoinAmount = ethers.utils.parseUnits(
+        stablecoinEthers.toString(),
+        18
+      );
+
+      await token.connect(governor).whitelistMint(crowdSale.address, true);
+
+      await eth_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
+      await usdc_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
+      await usdt_stablecoin.mint(purchaser.address, seedUserStableCoinAmount);
+
+      await eth_stablecoin
+        .connect(purchaser)
+        .approve(crowdSale.address, seedUserStableCoinAmount);
+      await usdc_stablecoin
+        .connect(purchaser)
+        .approve(crowdSale.address, seedUserStableCoinAmount);
+      await usdt_stablecoin
+        .connect(purchaser)
+        .approve(crowdSale.address, seedUserStableCoinAmount);
+
+      await crowdSale
+        .connect(purchaser)
+        .buyInBNB({ value: stablecoinAmount.toString() });
+      await crowdSale.connect(purchaser).buyInUSDC(stablecoinAmount);
+      await crowdSale.connect(purchaser).buyInUSDT(stablecoinAmount);
+      await crowdSale.connect(purchaser).buyInETH(stablecoinAmount);
+
+      const expectedUSDAmount = ethers.BigNumber.from(BNB_ARCHIVED_PRICE)
+        .mul(stablecoinEthers)
+        .add(ethers.BigNumber.from(ETH_ARCHIVED_PRICE).mul(stablecoinEthers))
+        .add(ethers.BigNumber.from(USDC_ARCHIVED_PRICE).mul(stablecoinEthers))
+        .add(ethers.BigNumber.from(USDT_ARCHIVED_PRICE).mul(stablecoinEthers));
+
+      expect(await crowdSale.amountRaisedETH()).to.eq(stablecoinAmount);
+      expect(await crowdSale.amountRaisedBNB()).to.eq(stablecoinAmount);
+      expect(await crowdSale.amountRaisedUSDC()).to.eq(stablecoinAmount);
+      expect(await crowdSale.amountRaisedUSDT()).to.eq(stablecoinAmount);
+      expect(await crowdSale.totalAmountRaisedInUSD()).to.eq(expectedUSDAmount);
+
+      await crowdSale
+        .connect(purchaser)
+        .buyInBNB({ value: stablecoinAmount.toString() });
+      await crowdSale.connect(purchaser).buyInUSDC(stablecoinAmount);
+      await crowdSale.connect(purchaser).buyInUSDT(stablecoinAmount);
+      await crowdSale.connect(purchaser).buyInETH(stablecoinAmount);
+      expect(await crowdSale.totalAmountRaisedInUSD()).to.eq(
+        expectedUSDAmount.mul(2)
+      );
+    });
+  });
 });
