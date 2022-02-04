@@ -242,7 +242,7 @@ async function main() {
   await constants.deployed();
   const CONSTANTS_ADDRESS = constants.address;
   logToFile(
-    `GuildFX Constants Token Address =            ${CONSTANTS_ADDRESS} \n`,
+    `GuildFX Constants Token Address = ${CONSTANTS_ADDRESS} \n`,
     LOG_FILE_PATH
   );
   await sleep();
@@ -286,7 +286,7 @@ async function main() {
   const guildFactory = await GuildFactory.deploy(gfxDAO, constants.address);
   await guildFactory.deployed();
   logToFile(
-    `Guild Factory Contract Address =    ${guildFactory.address} \n`,
+    `Guild Factory Contract Address = ${guildFactory.address} \n`,
     LOG_FILE_PATH
   );
   await sleep();
