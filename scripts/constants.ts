@@ -53,7 +53,7 @@ export const addresses: IAddresses = {
   // BSC MAINNET
   // 56: {},
   // BSC TESTNET 0x61 = 97
-  "61": {
+  "0x61": {
     // --- Multisigs ---
     gfxTreasury: "0xe61e3516e98667A1c79F067DDeDB9005D911CF65",
     gfxDAO: "0xebf0bBcfC341f22F587D579cE631935267DA7294",
@@ -79,7 +79,7 @@ export const STABLECOINS: IStableCoins = {
   // BSC MAINNET
   // 56: {},
   // BSC TESTNET 0x61 = 97
-  "61": {
+  "0x61": {
     BNB: {
       priceFeed: "0x2514895c72f50D8bd4B4F9b1110F0D6bD2c97526",
     },
