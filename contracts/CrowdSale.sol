@@ -111,7 +111,8 @@ contract CrowdSale is
         address indexed _stablecoin,
         uint256 _stablecoinPaid,
         uint256 _guildReceived,
-        uint256 _priceInUSD
+        uint256 _priceInUSD,
+        int256 _stablecoinPriceInUSD
     );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -170,19 +171,6 @@ contract CrowdSale is
                 stableCoinPrice *
                 10**(guildTokenDecimals - stablecoinDecimals)) /
             currentPriceUSD;
-    }
-
-    // converts stablecoin amount to USD (8 decimals)
-    function getUSDPurchaseAmount(
-        uint256 amountOfStableCoin,
-        uint256 stablecoinDecimals,
-        uint256 stableCoinPrice
-    ) internal pure returns (uint256 usdAmount) {
-        // Assumes currentPriceUSD & stableCoinPrice is 8 decimals
-        uint256 usdDecimals = 8;
-        return
-            ((amountOfStableCoin / 10**(stablecoinDecimals - usdDecimals)) *
-                stableCoinPrice) / 10**usdDecimals;
     }
 
     // price is to 8th decimal
@@ -293,7 +281,8 @@ contract CrowdSale is
             USDC,
             _amount,
             guildPurchasedAmount,
-            currentPriceUSD
+            currentPriceUSD,
+            price
         );
     }
 
@@ -322,7 +311,8 @@ contract CrowdSale is
             USDT,
             _amount,
             guildPurchasedAmount,
-            currentPriceUSD
+            currentPriceUSD,
+            price
         );
     }
 
@@ -353,7 +343,8 @@ contract CrowdSale is
             ETH,
             _amount,
             guildPurchasedAmount,
-            currentPriceUSD
+            currentPriceUSD,
+            price
         );
     }
 
@@ -383,7 +374,8 @@ contract CrowdSale is
             address(0),
             msg.value,
             guildPurchasedAmount,
-            currentPriceUSD
+            currentPriceUSD,
+            price
         );
     }
 

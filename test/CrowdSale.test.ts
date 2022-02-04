@@ -372,7 +372,8 @@ describe("📦 CrowdSale of GUILD token", async function () {
           ethers.constants.AddressZero,
           stablecoinAmount.toString(),
           gamerPurchasedAmount.toString(),
-          startingPriceUSD.toString()
+          startingPriceUSD.toString(),
+          BNB_ARCHIVED_PRICE
         );
       expect(await crowdSale.GUILD()).to.equal(token.address);
       expect(await token.balanceOf(purchaser.address)).to.eq(
@@ -482,7 +483,8 @@ describe("📦 CrowdSale of GUILD token", async function () {
           usdc_stablecoin.address,
           stablecoinAmount,
           gamerPurchasedAmount.toString(),
-          startingPriceUSD.toString()
+          startingPriceUSD.toString(),
+          USDC_ARCHIVED_PRICE
         );
       expect(await crowdSale.GUILD()).to.equal(token.address);
       expect(await usdc_stablecoin.balanceOf(purchaser.address)).to.equal(
@@ -596,7 +598,8 @@ describe("📦 CrowdSale of GUILD token", async function () {
           usdt_stablecoin.address,
           stablecoinAmount,
           gamerPurchasedAmount.toString(),
-          startingPriceUSD.toString()
+          startingPriceUSD.toString(),
+          USDT_ARCHIVED_PRICE
         );
       expect(await crowdSale.GUILD()).to.equal(token.address);
       expect(await usdt_stablecoin.balanceOf(purchaser.address)).to.equal(
@@ -707,7 +710,8 @@ describe("📦 CrowdSale of GUILD token", async function () {
           eth_stablecoin.address,
           stablecoinAmount,
           gamerPurchasedAmount.toString(),
-          startingPriceUSD.toString()
+          startingPriceUSD.toString(),
+          ETH_ARCHIVED_PRICE
         );
       expect(await crowdSale.GUILD()).to.equal(token.address);
       expect(await eth_stablecoin.balanceOf(purchaser.address)).to.equal(
