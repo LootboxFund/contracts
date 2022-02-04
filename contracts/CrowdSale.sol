@@ -253,7 +253,7 @@ contract CrowdSale is
                 amountRaisedETH() *
                 uint256(getETHPrice()) +
                 amountRaisedBNB() *
-                uint256(getBNBPrice())) / 10**stablecoinDecimals;
+                uint256(getBNBPrice())) / (10**stablecoinDecimals);
     }
 
     function buyInUSDC(uint256 _amount) public payable whenNotPaused {
