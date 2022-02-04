@@ -38,7 +38,7 @@ import { addresses, STABLECOINS } from "./constants";
 
 const semvar = "0.0.1-sandbox";
 
-const chainIdHex = network.config.chainId?.toString(16);
+const chainIdHex = `0x${network.config.chainId?.toString(16)}`;
 
 const LOG_FILE_PATH = `${__dirname}/logs/${
   network.name
