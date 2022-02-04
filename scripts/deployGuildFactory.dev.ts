@@ -60,13 +60,13 @@ async function main() {
     );
   }
 
-  if (Object.keys(addresses).indexOf(`${chainIdHex}`) === -1) {
+  if (Object.keys(addresses).indexOf(chainIdHex) === -1) {
     throw new Error(
       `Please update config.addresses for chain ID ${chainIdHex}`
     );
   }
 
-  if (Object.keys(STABLECOINS).indexOf(`${chainIdHex}`) === -1) {
+  if (Object.keys(STABLECOINS).indexOf(chainIdHex) === -1) {
     throw new Error(
       `Please update config.STABLECOINS for chain ID ${chainIdHex}`
     );
@@ -82,8 +82,16 @@ async function main() {
     await ethers.getSigners();
 
   // GuildFX multisigs / contracts / addresses (see note above):
-  const { Oxnewton, Oxterran, gfxDAO, gfxDeveloper, gfxTreasury, guia, cana } =
-    addresses[chainIdHex];
+  const {
+    Oxnewton,
+    Oxterran,
+    gfxDAO,
+    gfxDeveloper,
+    gfxTreasury,
+    crimson,
+    cana,
+    mklion,
+  } = addresses[chainIdHex];
 
   logToFile(
     `
@@ -98,7 +106,7 @@ async function main() {
 
 ---- 0xterran:                            ${Oxterran}
 
----- Guia:                                ${guia}
+---- Crimson:                             ${crimson}
 
 ---- Cana:                                ${cana}
 
@@ -136,6 +144,10 @@ async function main() {
   await sleep();
   await ethStablecoin.mint(Oxterran, stableCoinInitialMintAmount);
   await sleep();
+  await ethStablecoin.mint(crimson, stableCoinInitialMintAmount);
+  await sleep();
+  await ethStablecoin.mint(cana, stableCoinInitialMintAmount);
+  await sleep();
   await uploadTokenDataToCDN({
     tokenFrag: { symbol: "ETH", address: ethStablecoin.address },
     chainIdHex,
@@ -163,6 +175,10 @@ async function main() {
   await sleep();
   await usdcStablecoin.mint(Oxterran, stableCoinInitialMintAmount);
   await sleep();
+  await ethStablecoin.mint(crimson, stableCoinInitialMintAmount);
+  await sleep();
+  await ethStablecoin.mint(cana, stableCoinInitialMintAmount);
+  await sleep();
   await uploadTokenDataToCDN({
     tokenFrag: { symbol: "USDC", address: usdcStablecoin.address },
     chainIdHex,
@@ -186,6 +202,10 @@ async function main() {
   await usdtStablecoin.mint(Oxnewton, stableCoinInitialMintAmount);
   await sleep();
   await usdtStablecoin.mint(Oxterran, stableCoinInitialMintAmount);
+  await sleep();
+  await ethStablecoin.mint(crimson, stableCoinInitialMintAmount);
+  await sleep();
+  await ethStablecoin.mint(cana, stableCoinInitialMintAmount);
   await sleep();
   await uploadTokenDataToCDN({
     tokenFrag: { symbol: "USDT", address: usdtStablecoin.address },

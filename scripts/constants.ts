@@ -10,17 +10,17 @@ interface IAddressesByChain {
   /** GuildFX Founder address (should be linked in openzeppelin Defender) */
   Oxterran: string;
   /** GuildFX staff address */
-  guia: string;
+  crimson: string;
   /** GuildFX staff address */
   cana: string;
+  /** GuildFX staff address */
+  mklion: string;
   /** GuildFX Constants address (from deploy script "./scripts/deployGuildFactory.dev.ts") */
   gfxConstants: string;
   /** GuildFX Guild Factory address (from deploy script "./scripts/deployGuildFactory.dev.ts") */
   gfxGuildFactory: string;
   /** GuildFX Crowdsale Factory address (from deploy script "./scripts/deployCrowdsale.dev.ts") */
   gfxCrowdSaleFactory: string;
-  /** Multisig address for the super admin (treasury + dao + developer in one) from Defender */
-  artemisSuperAdmin: string;
 }
 
 interface IAddresses {
@@ -34,16 +34,10 @@ interface IStableCoinAddressesByChain {
   ETH: {
     priceFeed: string;
   };
-  DAI: {
-    priceFeed: string;
-  };
   USDC: {
     priceFeed: string;
   };
   USDT: {
-    priceFeed: string;
-  };
-  UST: {
     priceFeed: string;
   };
 }
@@ -63,20 +57,36 @@ export const addresses: IAddresses = {
     gfxDAO: "0xebf0bBcfC341f22F587D579cE631935267DA7294",
     gfxDeveloper: "0x767B123Bd05697d8Dda135D1D0092a94ac5a7510",
 
-    // --- Contract addresses (from deploy scripts) ---
+    // --- Contract addresses (from deploy scripts) 🚨 must be updated when deploy scripts are run! ---
     gfxConstants: "0x5523D8c92CE44f11b66607899415381eeBef1324", // from running npm "npm run deploy:testnet:guild-factory"
     gfxGuildFactory: "0x3A416836Ea500fe18838Bd67BAF15A8606b25ACc", // from running "npm run deploy:testnet:guild-factory"
-    // [🚨🚨🚨 NOTE 🚨🚨🚨] $gfxCrowdSaleFactory needs to get updated when gfxGuildFactory changes!
     gfxCrowdSaleFactory: "0x5cCA43369cFd4743F45d1c7379Df0fd53563bCEA", // from running "npm run deploy:testnet:crowdsale-factory"
 
     // --- GuildFX admins
     Oxnewton: "0x2C83b49EdB3f00A38331028e2D8bFA3Cd93B8288",
     Oxterran: "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F",
-    guia: "0xd58aa0057934eD345C07d14Db6EC48428c62b388",
+    crimson: "0xd58aa0057934eD345C07d14Db6EC48428c62b388",
     cana: "0x1e069c19Fd6f436e1754097bDE43CD594FC5711f",
+    mklion: "_________________________________________",
+  },
+  // RINKEBY
+  "0x4": {
+    // --- Multisigs ---
+    gfxTreasury: "0x316DC88C61147824E6BFe535dE55C7D4a3Ef09C0",
+    gfxDAO: "0xc67818C9fB15cA831177a2c8176Bc6a7483bB74E",
+    gfxDeveloper: "0x3d7237b3836Abb20353d68452Abf139e6F256C4C",
 
-    // --- Artemis Super Admin multisig ---
-    artemisSuperAdmin: "0x8d380584A7B11231A7AA6F03CE3141C9F07688e4",
+    // --- Contract addresses (from deploy scripts) 🚨 must be updated when deploy scripts are run! ---
+    gfxConstants: "0x5523D8c92CE44f11b66607899415381eeBef1324", // from running npm "npm run deploy:testnet:guild-factory"
+    gfxGuildFactory: "0x3A416836Ea500fe18838Bd67BAF15A8606b25ACc", // from running "npm run deploy:testnet:guild-factory"
+    gfxCrowdSaleFactory: "0x5cCA43369cFd4743F45d1c7379Df0fd53563bCEA", // from running "npm run deploy:testnet:crowdsale-factory"
+
+    // --- GuildFX admins
+    Oxnewton: "0x2C83b49EdB3f00A38331028e2D8bFA3Cd93B8288",
+    Oxterran: "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F",
+    crimson: "0xd58aa0057934eD345C07d14Db6EC48428c62b388",
+    cana: "0x1e069c19Fd6f436e1754097bDE43CD594FC5711f",
+    mklion: "_________________________________________",
   },
 };
 
@@ -92,17 +102,26 @@ export const STABLECOINS: IStableCoins = {
     ETH: {
       priceFeed: "0x143db3CEEfbdfe5631aDD3E50f7614B6ba708BA7",
     },
-    DAI: {
-      priceFeed: "0xE4eE17114774713d2De0eC0f035d4F7665fc025D",
-    },
     USDC: {
       priceFeed: "0x90c069C4538adAc136E051052E14c1cD799C41B7",
     },
     USDT: {
       priceFeed: "0xEca2605f0BCF2BA5966372C99837b1F182d3D620",
     },
-    UST: {
-      priceFeed: "0xEca2605f0BCF2BA5966372C99837b1F182d3D620", // Note: chainlink does not have UST on testnet, using USDT for now
+  },
+  // Rinkeby
+  "0x4": {
+    BNB: {
+      priceFeed: "0xcf0f51ca2cDAecb464eeE4227f5295F2384F84ED",
+    },
+    ETH: {
+      priceFeed: "0x8A753747A1Fa494EC906cE90E9f37563A8AF630e",
+    },
+    USDC: {
+      priceFeed: "0xa24de01df22b63d23Ebc1882a5E3d4ec0d907bFB",
+    },
+    USDT: {
+      priceFeed: "0xa24de01df22b63d23Ebc1882a5E3d4ec0d907bFB", // Chainlink does not have a USDT pricefeed on rinkeby. Re-using USDC pricefeed.
     },
   },
 };
