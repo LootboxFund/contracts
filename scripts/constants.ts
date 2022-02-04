@@ -9,6 +9,10 @@ interface IAddressesByChain {
   Oxnewton: string;
   /** GuildFX Founder address (should be linked in openzeppelin Defender) */
   Oxterran: string;
+  /** GuildFX staff address */
+  guia: string;
+  /** GuildFX staff address */
+  cana: string;
   /** GuildFX Constants address (from deploy script "./scripts/deployGuildFactory.dev.ts") */
   gfxConstants: string;
   /** GuildFX Guild Factory address (from deploy script "./scripts/deployGuildFactory.dev.ts") */
@@ -68,6 +72,8 @@ export const addresses: IAddresses = {
     // --- GuildFX admins
     Oxnewton: "0x2C83b49EdB3f00A38331028e2D8bFA3Cd93B8288",
     Oxterran: "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F",
+    guia: "0xd58aa0057934eD345C07d14Db6EC48428c62b388",
+    cana: "0x1e069c19Fd6f436e1754097bDE43CD594FC5711f",
 
     // --- Artemis Super Admin multisig ---
     artemisSuperAdmin: "0x8d380584A7B11231A7AA6F03CE3141C9F07688e4",

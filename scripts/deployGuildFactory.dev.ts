@@ -82,7 +82,7 @@ async function main() {
     await ethers.getSigners();
 
   // GuildFX multisigs / contracts / addresses (see note above):
-  const { Oxnewton, Oxterran, gfxDAO, gfxDeveloper, gfxTreasury } =
+  const { Oxnewton, Oxterran, gfxDAO, gfxDeveloper, gfxTreasury, guia, cana } =
     addresses[chainIdHex];
 
   logToFile(
@@ -97,6 +97,10 @@ async function main() {
 ---- 0xnewton:                            ${Oxnewton}
 
 ---- 0xterran:                            ${Oxterran}
+
+---- Guia:                                ${guia}
+
+---- Cana:                                ${cana}
 
 ---- GuildFX DAO (multisig):              ${gfxDAO}
 
@@ -115,24 +119,22 @@ async function main() {
   );
   const tokenAddresses: Address[] = [];
 
+  const stableCoinInitialMintAmount = ethers.BigNumber.from(
+    "10000000000000000000000"
+  ); // 10,000 coins
+
   // --------- Deploy the Stablecoins --------- //
   const Eth = await ethers.getContractFactory("ETH");
   const ethStablecoin = (await Eth.deploy(0)) as ETH;
   await sleep();
   await ethStablecoin.mint(
     __untrustedPurchaser.address,
-    ethers.BigNumber.from("100000000000000000000")
+    stableCoinInitialMintAmount
   );
   await sleep();
-  await ethStablecoin.mint(
-    Oxnewton,
-    ethers.BigNumber.from("100000000000000000000")
-  );
+  await ethStablecoin.mint(Oxnewton, stableCoinInitialMintAmount);
   await sleep();
-  await ethStablecoin.mint(
-    Oxterran,
-    ethers.BigNumber.from("100000000000000000000")
-  );
+  await ethStablecoin.mint(Oxterran, stableCoinInitialMintAmount);
   await sleep();
   await uploadTokenDataToCDN({
     tokenFrag: { symbol: "ETH", address: ethStablecoin.address },
@@ -154,18 +156,12 @@ async function main() {
   await sleep();
   await usdcStablecoin.mint(
     __untrustedPurchaser.address,
-    ethers.BigNumber.from("100000000000000000000")
+    stableCoinInitialMintAmount
   );
   await sleep();
-  await usdcStablecoin.mint(
-    Oxnewton,
-    ethers.BigNumber.from("100000000000000000000")
-  );
+  await usdcStablecoin.mint(Oxnewton, stableCoinInitialMintAmount);
   await sleep();
-  await usdcStablecoin.mint(
-    Oxterran,
-    ethers.BigNumber.from("100000000000000000000")
-  );
+  await usdcStablecoin.mint(Oxterran, stableCoinInitialMintAmount);
   await sleep();
   await uploadTokenDataToCDN({
     tokenFrag: { symbol: "USDC", address: usdcStablecoin.address },
@@ -184,18 +180,12 @@ async function main() {
   await sleep();
   await usdtStablecoin.mint(
     __untrustedPurchaser.address,
-    ethers.BigNumber.from("100000000000000000000")
+    stableCoinInitialMintAmount
   );
   await sleep();
-  await usdtStablecoin.mint(
-    Oxnewton,
-    ethers.BigNumber.from("100000000000000000000")
-  );
+  await usdtStablecoin.mint(Oxnewton, stableCoinInitialMintAmount);
   await sleep();
-  await usdtStablecoin.mint(
-    Oxterran,
-    ethers.BigNumber.from("100000000000000000000")
-  );
+  await usdtStablecoin.mint(Oxterran, stableCoinInitialMintAmount);
   await sleep();
   await uploadTokenDataToCDN({
     tokenFrag: { symbol: "USDT", address: usdtStablecoin.address },
