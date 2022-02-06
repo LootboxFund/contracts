@@ -24,7 +24,7 @@ module.exports = {
   solidity: "0.8.0",
   networks: {
     binance_testnet: {
-      url: `https://speedy-nodes-nyc.moralis.io/f111521389b4b4a5701c6b0b/bsc/testnet`,
+      url: `https://https://data-seed-prebsc-1-s1.binance.org:8545/f111521389b4b4a5701c6b0b/bsc/testnet`,
       accounts: [`METAMASK_PRIVATE_KEY`]
     }
   }

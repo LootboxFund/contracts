@@ -39,7 +39,7 @@ const config: HardhatUserConfig = {
     },
     binance_testnet: {
       chainId: 97,
-      url: `https://speedy-nodes-nyc.moralis.io/f111521389b4b4a5701c6b0b/bsc/testnet`,
+      url: `https://https://data-seed-prebsc-1-s1.binance.org:8545/f111521389b4b4a5701c6b0b/bsc/testnet`,
       accounts: [
         `${process.env.DEV_DEPLOYER_PRIVATE_KEY}`,
         `${process.env.DEV_TREASURY_PRIVATE_KEY}`,
@@ -54,7 +54,7 @@ const config: HardhatUserConfig = {
     },
     rinkeby: {
       chainId: 4,
-      url: `https://speedy-nodes-nyc.moralis.io/f111521389b4b4a5701c6b0b/eth/rinkeby`,
+      url: `https://https://data-seed-prebsc-1-s1.binance.org:8545/f111521389b4b4a5701c6b0b/eth/rinkeby`,
       accounts: [
         `${process.env.DEV_DEPLOYER_PRIVATE_KEY}`,
         `${process.env.DEV_TREASURY_PRIVATE_KEY}`,
@@ -69,7 +69,7 @@ const config: HardhatUserConfig = {
     },
     hardhat: {
       forking: {
-        url: "https://speedy-nodes-nyc.moralis.io/27a1e291c662f960ae4245da/bsc/mainnet/archive",
+        url: "https://https://data-seed-prebsc-1-s1.binance.org:8545/27a1e291c662f960ae4245da/bsc/mainnet/archive",
         blockNumber: 13913313,
       },
     },
