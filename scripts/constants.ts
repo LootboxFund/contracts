@@ -1,3 +1,5 @@
+import { SemanticVersion } from "@guildfx/helpers";
+
 interface IAddressesByChain {
   /** Created as gnosis multi-sig in Defender */
   gfxTreasury: string;
@@ -46,28 +48,30 @@ interface IStableCoins {
   [key: string]: IStableCoinAddressesByChain;
 }
 
+export const CURRENT_SEMVER = "0.1.0-demo" as SemanticVersion;
+
 // TODO: Probably put this in @guildfx/helpers
 export const addresses: IAddresses = {
   // BSC MAINNET
   // 56: {},
   // BSC TESTNET 0x61 = 97
   "0x61": {
+    // --- GuildFX admins
+    Oxnewton: "0x08a50559e8D358D6Ae69F2f5D19155bb077344b3",
+    Oxterran: "0x148F507Ca903fb322DaA9Ad420537F689973e99A",
+    crimson: "0xd58aa0057934eD345C07d14Db6EC48428c62b388",
+    cana: "0x1e069c19Fd6f436e1754097bDE43CD594FC5711f",
+    mklion: "_________________________________________",
+
     // --- Multisigs ---
-    gfxTreasury: "0xA5bF075f453464f3EC8B64Ea50076f70bbB0d994",
-    gfxDAO: "0x6897CD98857dBf3E3d54aaB250a85B5aBBAE7b9D",
-    gfxDeveloper: "0xA471dfd91666EA3EC4a0975f6c30AA1C79c6791D",
+    gfxTreasury: "0x9b8388d9bAbC2A0AfE890993805B8A396Ec8DcD8",
+    gfxDAO: "0x9b8388d9bAbC2A0AfE890993805B8A396Ec8DcD8",
+    gfxDeveloper: "0x9b8388d9bAbC2A0AfE890993805B8A396Ec8DcD8",
 
     // --- Contract addresses (from deploy scripts) 🚨 must be updated when deploy scripts are run! ---
     gfxConstants: "0x5523D8c92CE44f11b66607899415381eeBef1324", // from running npm "npm run deploy:testnet:guild-factory"
     gfxGuildFactory: "0x3A416836Ea500fe18838Bd67BAF15A8606b25ACc", // from running "npm run deploy:testnet:guild-factory"
     gfxCrowdSaleFactory: "0x5cCA43369cFd4743F45d1c7379Df0fd53563bCEA", // from running "npm run deploy:testnet:crowdsale-factory"
-
-    // --- GuildFX admins
-    Oxnewton: "0x2C83b49EdB3f00A38331028e2D8bFA3Cd93B8288",
-    Oxterran: "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F",
-    crimson: "0xd58aa0057934eD345C07d14Db6EC48428c62b388",
-    cana: "0x1e069c19Fd6f436e1754097bDE43CD594FC5711f",
-    mklion: "_________________________________________",
   },
   // RINKEBY
   "0x4": {

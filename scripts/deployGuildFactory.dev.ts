@@ -34,9 +34,7 @@ import {
   uploadTokenIndexToCDN,
 } from "./helpers/tokenlist";
 import { Address } from "@guildfx/helpers";
-import { addresses, STABLECOINS } from "./constants";
-
-const semvar = "0.0.1-sandbox";
+import { addresses, STABLECOINS, CURRENT_SEMVER } from "./constants";
 
 const chainIdHex = `0x${network.config.chainId?.toString(16)}`;
 
@@ -151,7 +149,7 @@ async function main() {
   await uploadTokenDataToCDN({
     tokenFrag: { symbol: "ETH", address: ethStablecoin.address },
     chainIdHex,
-    semvar,
+    semver: CURRENT_SEMVER,
     loggerPath: LOG_FILE_PATH,
   });
   tokenAddresses.push(ethStablecoin.address);
@@ -182,7 +180,7 @@ async function main() {
   await uploadTokenDataToCDN({
     tokenFrag: { symbol: "USDC", address: usdcStablecoin.address },
     chainIdHex,
-    semvar,
+    semver: CURRENT_SEMVER,
     loggerPath: LOG_FILE_PATH,
   });
   tokenAddresses.push(usdcStablecoin.address);
@@ -210,7 +208,7 @@ async function main() {
   await uploadTokenDataToCDN({
     tokenFrag: { symbol: "USDT", address: usdtStablecoin.address },
     chainIdHex,
-    semvar,
+    semver: CURRENT_SEMVER,
     loggerPath: LOG_FILE_PATH,
   });
   tokenAddresses.push(usdtStablecoin.address);
@@ -223,7 +221,7 @@ async function main() {
   await uploadTokenIndexToCDN({
     addresses: tokenAddresses,
     chainIdHex,
-    semvar,
+    semver: CURRENT_SEMVER,
     loggerPath: LOG_FILE_PATH,
   });
 

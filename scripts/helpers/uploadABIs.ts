@@ -4,27 +4,29 @@ dotenv.config();
 import axios from "axios";
 import fs from "fs";
 import { encodeURISafe } from "./logger";
+import { CURRENT_SEMVER } from "../constants";
+import { SemanticVersion } from "@guildfx/helpers";
 
 export const uploadABI = async ({
   alias,
   pathToFile,
   webhookEndpoint,
   bucket,
-  semvar,
+  semver,
   chainIdHex,
 }: {
   alias: string;
   pathToFile: string;
   webhookEndpoint: string;
   bucket: string;
-  semvar: string;
+  semver: SemanticVersion;
   chainIdHex: string;
 }) => {
   const secret = process.env.WEBHOOK_ABI_UPLOADER_SECRET || "mysecret";
   const metadata = {
     alias,
     bucket,
-    semvar,
+    semver,
     chainIdHex,
   };
   fs.readFile(pathToFile, "utf8", async (err, abi) => {
@@ -36,7 +38,7 @@ export const uploadABI = async ({
       metadata,
       abi,
     };
-    const filePath = `v/${semvar}/${chainIdHex}/abi/${alias}.json`;
+    const filePath = `v/${semver}/${chainIdHex}/abi/${alias}.json`;
     const downloadablePath = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURISafe(
       filePath
     )}?alt=media \n`;
@@ -63,7 +65,7 @@ export const uploadABI = async ({
 const CONSTANTS = {
   webhookEndpoint: "https://eef236c059a42b8b5d39ae05efddede7.m.pipedream.net",
   bucket: "guildfx-exchange.appspot.com",
-  semvar: "0.0.1-sandbox",
+  semver: CURRENT_SEMVER,
   chainIdHex: "0x61",
 };
 

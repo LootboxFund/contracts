@@ -1,0 +1,33 @@
+2022-02-06T07:02:10.216Z - 
+  
+---------- DEPLOY GUILD FACTORY (development) ----------
+
+---- Script starting
+
+---- Network:                             binance_testnet (Hex ID = 0x61, Decimal ID = 97)
+
+---- 0xnewton:                            0x08a50559e8D358D6Ae69F2f5D19155bb077344b3
+
+---- 0xterran:                            0x148F507Ca903fb322DaA9Ad420537F689973e99A
+
+---- Crimson:                             0xd58aa0057934eD345C07d14Db6EC48428c62b388
+
+---- Cana:                                0x1e069c19Fd6f436e1754097bDE43CD594FC5711f
+
+---- GuildFX DAO (multisig):              0x9b8388d9bAbC2A0AfE890993805B8A396Ec8DcD8
+
+---- GuildFX Treasury (multisig):         0x9b8388d9bAbC2A0AfE890993805B8A396Ec8DcD8
+
+---- GuildFX Dev (multisig):              0x9b8388d9bAbC2A0AfE890993805B8A396Ec8DcD8
+
+---- Deployer (UNTRUSTED):                0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A
+
+---- Temporary GuildFX DAO (UNTRUSTED):   0xfD45C9e09E6fD3ee45669Da146104542c28C93F5
+
+---- Purchaser (UNTRUSTED):               0x60404Db53ADD5aAF14F6654FF913a4307Dc6bF29
+
+  
+2022-02-06T07:02:27.097Z - Uploading ETH to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/guildfx-exchange.appspot.com/o/v%2F0.1.0-genesis%2F0x61%2Ftokens%2F0x523A1058C58E7F66Ac30Fc6553ea3039a36C028c.json?alt=media 
+2022-02-06T07:02:28.135Z - ETH Stablecoin Address = 0x523A1058C58E7F66Ac30Fc6553ea3039a36C028c 
+2022-02-06T07:02:45.117Z - Uploading USDC to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/guildfx-exchange.appspot.com/o/v%2F0.1.0-genesis%2F0x61%2Ftokens%2F0x710513EF85973eA32DE23f0F23f6B067909C7c52.json?alt=media 
+2022-02-06T07:02:45.981Z - USDC Stablecoin Address = 0x710513EF85973eA32DE23f0F23f6B067909C7c52 
