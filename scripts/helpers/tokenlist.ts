@@ -62,19 +62,19 @@ export interface TokenDataWithCDN extends TokenData {
 export type TokenFragsWithCDN = {
   tokenFrag: TokenFragment;
   chainIdHex: ChainIDHex;
-  semvar: SemanticVersion;
+  semver: SemanticVersion;
   loggerPath: string;
 };
 
 export const uploadTokenDataToCDN = async ({
   tokenFrag,
   chainIdHex,
-  semvar,
+  semver,
   loggerPath,
 }: TokenFragsWithCDN) => {
   const filePath = buildTokenCDNRoute({
     chainIdHex: chainIdHex,
-    semvar,
+    semver,
     address: tokenFrag.address,
   });
   logToFile(
@@ -117,18 +117,18 @@ export const uploadTokenDataToCDN = async ({
 };
 
 export const uploadTokenIndexToCDN = async ({
-  semvar,
+  semver,
   chainIdHex,
   addresses,
   loggerPath,
 }: {
-  semvar: SemanticVersion;
+  semver: SemanticVersion;
   chainIdHex: ChainIDHex;
   addresses: Address[];
   loggerPath: string;
 }) => {
   const filePath = buildTokenIndexCDNRoutes({
-    semvar,
+    semver,
     chainIdHex,
   });
   await storage

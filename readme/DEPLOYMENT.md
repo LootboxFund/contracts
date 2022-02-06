@@ -5,30 +5,30 @@
 0. 📦 Set up 3 guildDaos registered in Firestore
     i. 📦 Create record in Firestore/guilds with `firestoreGuilds.deploy`
     ii. 📦 Create record in Webflow/guilds with `webflowGuilds.deploy`
-1. ✅ Run the `GuildFactory.deploy` script. Sync semvar.
+1. ✅ Run the `GuildFactory.deploy` script. Sync semver.
     i. ✅ Deploy the mock stablecoins. JSON data uploaded to GBucket/tokens for WidgetsFE
     i. ✅ Deploy `Constants.sol`. Set the stablecoins & price feeds.
     ii. ✅ Deploy `GuildFactory.sol`. Authorize gfxStaff
-2. 📦 Attach Moralis event listeners on `GuildFactory` for creation of guilds. Sync semvar.
+2. 📦 Attach Moralis event listeners on `GuildFactory` for creation of guilds. Sync semver.
     i. 📦 Deploy Moralis CloudFn `GuildFactory.createGuild.listener()`
     ii. 📦 Listener uploads guild token JSON data to GBucket/tokens for WidgetsFE.
     iii. 📦 Update the GBucket/tokens/index.json for WidgetsFE
-3. 📦 Run the `GuildCreation.mock` script. Sync semvar.
+3. 📦 Run the `GuildCreation.mock` script. Sync semver.
     i. 📦 Use gfxStaff to authorize a list of 3 guildDaos. Update in Firestore/guilds
     ii. 📦 Call `GuildFactory.createGuild()` as 3 guildDaos to create a guild token. Update in Firestore/guilds
     iii. 📦 Moralis listeners upload JSON data to GBucket/tokens for WidgetsFE
-4. 📦 Run the `CrowdSale.deploy` script. Sync semvar.
+4. 📦 Run the `CrowdSale.deploy` script. Sync semver.
     i. 📦 Copy over the addresses for `Constants.sol` and the 3 `GuildToken.sol` (see .txt logs)
     ii. 📦 Deploy `CrowdSaleFactory.sol`
     iii. 📦 Whitelist gfxStaff so they can whitelist 3 guildDaos to call `CrowdSaleFactory.createCrowdSale()`. Update in Firestore/guilds
     iv. 📦 Create 3 crowdsales as the 3 guildDaos. Update Firestore/crowdsales & Webflow/crowdsales
     v. 📦 Moralis listeners upload JSON data to GBucket/crowdsales for WidgetsFE
-5. 📦 Attach Moralis event listerners on `CrowdSaleFactory` for creation of crowdsales. Sync semvar.
+5. 📦 Attach Moralis event listerners on `CrowdSaleFactory` for creation of crowdsales. Sync semver.
     i. 📦 Deploy Moralis CloudFn `CrowdSaleFactory.createCrowdSale.listener()`
     ii. 📦 Listener uploads crowdsale JSON data to GBucket/crowdsales for WidgetsFE.
     iii. 📦 Update the GBucket/crowdsales/index.json for WidgetsFE
 6. 📦 Deploy `@guildfx/widgets` to WidgetsFE
-    i. 📦 Deploy to correct semvar version that matches GBucket folder for token JSON data.
+    i. 📦 Deploy to correct semver version that matches GBucket folder for token JSON data.
     ii. 📦 Load widgets on Storybook and playtest
     iii. 📦 Load widgets on Webflow and playtest
 
