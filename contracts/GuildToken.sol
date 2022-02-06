@@ -12,8 +12,6 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/draft-ERC20PermitUpgradeable.sol";
 
 interface ICONSTANTS {
     function TREASURY() external view returns (address);
@@ -29,9 +27,7 @@ contract GuildToken is
     ERC20BurnableUpgradeable,
     PausableUpgradeable,
     AccessControlUpgradeable,
-    UUPSUpgradeable,
-    ERC20PermitUpgradeable,
-    ERC20VotesUpgradeable
+    UUPSUpgradeable
 {
     // roles to trusted smart contracts & the DAO
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE"); // our mint smart contracts
@@ -79,7 +75,6 @@ contract GuildToken is
         );
 
         __ERC20_init(_name, _symbol);
-        __ERC20Permit_init(_name);
         __ERC20Burnable_init();
         __Pausable_init();
         __AccessControl_init();
@@ -172,7 +167,7 @@ contract GuildToken is
 
     function _mint(address to, uint256 amount)
         internal
-        override(ERC20Upgradeable, ERC20VotesUpgradeable)
+        override(ERC20Upgradeable)
     {
       // Mints provided amount of tokens to the desired recipient
       super._mint(to, amount);
@@ -180,7 +175,7 @@ contract GuildToken is
 
     function _burn(address account, uint256 amount)
         internal
-        override(ERC20Upgradeable, ERC20VotesUpgradeable)
+        override(ERC20Upgradeable)
     {
         super._burn(account, amount);
     }
@@ -198,7 +193,7 @@ contract GuildToken is
         address from,
         address to,
         uint256 amount
-    ) internal override(ERC20Upgradeable, ERC20VotesUpgradeable) {
+    ) internal override(ERC20Upgradeable) {
         super._afterTokenTransfer(from, to, amount);
     }
 
