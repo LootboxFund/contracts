@@ -53,9 +53,9 @@ export const addresses: IAddresses = {
   // BSC TESTNET 0x61 = 97
   "0x61": {
     // --- Multisigs ---
-    gfxTreasury: "0xe61e3516e98667A1c79F067DDeDB9005D911CF65",
-    gfxDAO: "0xebf0bBcfC341f22F587D579cE631935267DA7294",
-    gfxDeveloper: "0x767B123Bd05697d8Dda135D1D0092a94ac5a7510",
+    gfxTreasury: "0xA5bF075f453464f3EC8B64Ea50076f70bbB0d994",
+    gfxDAO: "0x6897CD98857dBf3E3d54aaB250a85B5aBBAE7b9D",
+    gfxDeveloper: "0xA471dfd91666EA3EC4a0975f6c30AA1C79c6791D",
 
     // --- Contract addresses (from deploy scripts) 🚨 must be updated when deploy scripts are run! ---
     gfxConstants: "0x5523D8c92CE44f11b66607899415381eeBef1324", // from running npm "npm run deploy:testnet:guild-factory"

@@ -57,11 +57,16 @@
 
          $ npm run deploy:testnet:crowdsale-factory
 
-3.  **Manually** add the **🚜 Crowdsale Factory 🚜** addres from the log file to variable `addresses.gfxCrowdSaleFactory` in [constants.ts](./scripts/constants.ts).
+5.  **Manually** add the **🚜 Crowdsale Factory 🚜** addres from the log file to variable `addresses.gfxCrowdSaleFactory` in [constants.ts](./scripts/constants.ts).
 
     > 💡 You can find the **🚜 Crowdsale Factory 🚜** from the log files from step 4.
 
-5.  🕰 _Optional_: As the 👨‍👩‍👦‍👦 **GuildFX DAO** 👨‍👩‍👦‍👦, we can grant a GuildFX Staff Member 🔐 **GFX_STAFF_ROLE** 🔐 priviledges to the factories.
+
+
+
+6. Import the `GuildFactory` and `CrowdSaleFactory` addresses into OpenZeppelin Defender as an imported contract. 
+
+7.  🕰 _Optional_: As the 👨‍👩‍👦‍👦 **GuildFX DAO** 👨‍👩‍👦‍👦, we can grant a GuildFX Staff Member 🔐 **GFX_STAFF_ROLE** 🔐 priviledges to the factories.
 
     > 💡 In the deployment scripts, the GuildFX DAO has already given 🔐 **GFX_STAFF_ROLE** 🔐 priviledges - hence the immediate use of this function is not needed.
 
@@ -75,9 +80,11 @@
 
 2. Set up the Guild's [Defender](https://Defender.openzeppelin.com/) account by following the [Guild Defender Setup](./readme/DEFENDER_SETUP_FOR_GUILDS.md) steps
 
-3. Create your first guild token! Follow [the docs here](./readme/GUILD_CREATE_TOKEN.md)
+3. Create your first guild token! Follow [the docs here](./readme/GUILD_CREATE_TOKEN.md). Note, your multisig must be whitelisted by GuildFX in order to create a Guild.
 
 4. Create a crowdsale and hook it up to your guild token! Follow [the docs here](./readme/GUILD_CREATE_CROWDSALE.md)
+
+5. Test purchasing from your crowdsale via OZ Defender admin proposal. Buy with tBNB, and also try buying with USDC. Remember to add the guild token to your metamask.
 
 ## 📔 Addresses
 

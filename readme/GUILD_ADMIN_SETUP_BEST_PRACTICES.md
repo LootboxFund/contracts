@@ -18,11 +18,12 @@
 
 5. Link your chrome instance to the chrome account created in step 3.
 
-6. Install metamask chrome extension & create an account
+6. Install metamask chrome extension & create an account & add BSC mainnet to metamask
 
    - Store wallet password in lastpass
    - Store wallet recovery phrase in lastpass
    - Export & store private key in lastpass
+   - Visit chainlist.org and add BSC mainnet to metamask
 
 7. Get testnet credits from [BSC testnet faucet](https://testnet.binance.org/faucet-smart)
 
