@@ -192,11 +192,11 @@ describe("📦 GUILD token", async () => {
       });
       it("reverts when trying to assign GOVERNOR_ROLE when to a user that already has it", async () => {
         await expect(
-          token.connect(governor).transferGovernorAdminPrivileges(governor.address)
-        ).to.be.revertedWith(
-          "Account already has GOVERNOR_ROLE"
-        );
-      })
+          token
+            .connect(governor)
+            .transferGovernorAdminPrivileges(governor.address)
+        ).to.be.revertedWith("Account already has GOVERNOR_ROLE");
+      });
 
       it("grants the address the GOVERNOR_ROLE", async () => {
         expect(await token.hasRole(GOVERNOR_ROLE, governor.address)).to.be.true;
@@ -265,10 +265,8 @@ describe("📦 GUILD token", async () => {
       it("reverts when trying to assign GOVERNOR_ROLE when to a user that already has it", async () => {
         await expect(
           token.connect(governor).grantRole(GOVERNOR_ROLE, governor.address)
-        ).to.be.revertedWith(
-          "Account already has GOVERNOR_ROLE"
-        );
-      })
+        ).to.be.revertedWith("Account already has GOVERNOR_ROLE");
+      });
       it("grants the address the GOVERNOR_ROLE", async () => {
         expect(await token.hasRole(GOVERNOR_ROLE, governor.address)).to.be.true;
       });
@@ -724,18 +722,6 @@ describe("📦 GUILD token", async () => {
         await expect(request).to.be.revertedWith("Cannot mint zero tokens");
       });
 
-      it("reverts with 'ERC20Votes: total supply risks overflowing votes' error for 2^224 tokens", async () => {
-        const initialSupply = await token.totalSupply();
-        const amount = ethers.BigNumber.from("2").pow("224").toString();
-        const request = token
-          .connect(whitelistedAddress)
-          .mintRequest(whitelistedAddress.address, amount.toString());
-        await expect(request).to.be.revertedWith(
-          "ERC20Votes: total supply risks overflowing votes"
-        );
-        expect(initialSupply).eq(await token.totalSupply());
-      });
-
       it("does not mint negative amount", async () => {
         const initialSupply = await token.totalSupply();
         const promise = token
@@ -887,26 +873,6 @@ describe("📦 GUILD token", async () => {
           await constants.TREASURY()
         );
         expect(treasuryBalance.toString()).eq(mintFeeAmount);
-      });
-
-      it("reverts with 'ERC20Votes: total supply risks overflowing votes' error if more that 2^224 -1 tokens are minted", async () => {
-        // TODO: test boundary points
-
-        const maxSupply = ethers.BigNumber.from("2").pow("224").sub(1);
-        const mintFeeDecimals = ethers.BigNumber.from(
-          (await constants.GUILD_FX_MINTING_FEE_DECIMALS()).toString()
-        );
-        const amount = maxSupply;
-
-        const request = token
-          .connect(whitelistedAddress)
-          .mintRequest(whitelistedAddress.address, amount.toString());
-
-        // console.log("TOTAL SUPPLY", (await token.totalSupply()).toString());
-
-        await expect(request).to.be.revertedWith(
-          "ERC20Votes: total supply risks overflowing votes"
-        );
       });
     });
   });
