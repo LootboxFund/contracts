@@ -31,7 +31,7 @@ import { sleep } from "@guildfx/helpers";
 import { logToFile } from "./helpers/logger";
 import { addresses } from "./constants";
 
-const chainIdHex = network.config.chainId?.toString(16);
+const chainIdHex = `0x${network.config.chainId?.toString(16)}`;
 
 const LOG_FILE_PATH = `${__dirname}/logs/${network.name}_${
   network.config.chainId

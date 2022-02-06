@@ -1,0 +1,34 @@
+name: push-master
+
+# Run when opening pull request to master.
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-18.04
+    steps:
+      # Checks-out repository under $GITHUB_WORKSPACE
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+
+      - name: Loading npm access token
+        run: |
+          echo '//registry.npmjs.org/:_authToken=${{ secrets.NPM_ACCESS_TOKEN_DEV }}' > .npmrc
+
+      - name: Loading wallet secrets (dev)
+        run: |
+          echo '${{ secrets.WALLET_SECRETS_DEV }}' > .env
+
+      - name: Fetching Dependencies...
+        run: |
+          yarn install
+
+      - name: Running tests...
+        run: |
+          npx hardhat compile && npm run test
