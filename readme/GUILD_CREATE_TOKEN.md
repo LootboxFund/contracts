@@ -32,3 +32,6 @@
     - Address from step 5
     - other data...
     - Add the token ABI.... 🚨 Where will they get this from? (TODO)
+
+
+7. Remove the GuildFactory from Defender so it doesnt clutter

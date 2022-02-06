@@ -13,3 +13,6 @@ export const logToFile = (message: string, filePath: string) => {
     console.error(err);
   }
 };
+
+export const encodeURISafe = (stringFragment: string) =>
+  encodeURIComponent(stringFragment).replace(/'/g, "%27").replace(/"/g, "%22");

@@ -10,7 +10,8 @@
     "deploy:testnet:crowdsale-factory": "npx hardhat compile && npx hardhat run scripts/deployCrowdSaleFactory.dev.ts --network binance_testnet",
     "deploy:testnet:guild-factory": "npx hardhat compile && npx hardhat run scripts/deployGuildFactory.dev.ts --network binance_testnet",
     "deploy:rinkeby:crowdsale-factory": "npx hardhat compile && npx hardhat run scripts/deployCrowdSaleFactory.dev.ts --network rinkeby",
-    "deploy:rinkeby:guild-factory": "npx hardhat compile && npx hardhat run scripts/deployGuildFactory.dev.ts --network rinkeby"
+    "deploy:rinkeby:guild-factory": "npx hardhat compile && npx hardhat run scripts/deployGuildFactory.dev.ts --network rinkeby",
+    "abi:publish": "ts-node ./scripts/helpers/uploadABIs.ts"
   },
   "author": "",
   "license": "ISC",
