@@ -64,14 +64,14 @@ export const addresses: IAddresses = {
     mklion: "_________________________________________",
 
     // --- Multisigs ---
-    gfxTreasury: "0x9b8388d9bAbC2A0AfE890993805B8A396Ec8DcD8",
-    gfxDAO: "0x9b8388d9bAbC2A0AfE890993805B8A396Ec8DcD8",
-    gfxDeveloper: "0x9b8388d9bAbC2A0AfE890993805B8A396Ec8DcD8",
+    gfxTreasury: "0x37147Dc47761cb60eA290e85bECe9D7F41ff4cF6",
+    gfxDAO: "0x37147Dc47761cb60eA290e85bECe9D7F41ff4cF6",
+    gfxDeveloper: "0x37147Dc47761cb60eA290e85bECe9D7F41ff4cF6",
 
     // --- Contract addresses (from deploy scripts) 🚨 must be updated when deploy scripts are run! ---
-    gfxConstants: "0x5523D8c92CE44f11b66607899415381eeBef1324", // from running npm "npm run deploy:testnet:guild-factory"
-    gfxGuildFactory: "0x3A416836Ea500fe18838Bd67BAF15A8606b25ACc", // from running "npm run deploy:testnet:guild-factory"
-    gfxCrowdSaleFactory: "0x5cCA43369cFd4743F45d1c7379Df0fd53563bCEA", // from running "npm run deploy:testnet:crowdsale-factory"
+    gfxConstants: "0x168083FDF252ccF2543fbAE6cA44b42E1214D0c1", // from running npm "npm run deploy:testnet:guild-factory"
+    gfxGuildFactory: "0xa73b86A33D187221139721d9d0aDD15503ccF11f", // from running "npm run deploy:testnet:guild-factory"
+    gfxCrowdSaleFactory: "0x74e434Eec316B46b1073A3Ec4490afa391e69d63", // from running "npm run deploy:testnet:crowdsale-factory"
   },
   // RINKEBY
   "0x4": {

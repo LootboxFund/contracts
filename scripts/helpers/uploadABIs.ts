@@ -63,7 +63,7 @@ export const uploadABI = async ({
 };
 
 const CONSTANTS = {
-  webhookEndpoint: "https://eef236c059a42b8b5d39ae05efddede7.m.pipedream.net",
+  webhookEndpoint: "https://e293add8c25c2b272067813eb4fcd6f9.m.pipedream.net",
   bucket: "guildfx-exchange.appspot.com",
   semver: CURRENT_SEMVER,
   chainIdHex: "0x61",
