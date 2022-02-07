@@ -1,5 +1,5 @@
 {
-  "name": "v1-contracts",
+  "name": "@guildfx/contracts",
   "version": "0.1.0-demo",
   "description": "",
   "main": "index.js",
