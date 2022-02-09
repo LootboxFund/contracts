@@ -146,6 +146,8 @@ async function main() {
   await sleep();
   await ethStablecoin.mint(cana, stableCoinInitialMintAmount);
   await sleep();
+  await ethStablecoin.mint(mklion, stableCoinInitialMintAmount);
+  await sleep();
   await uploadTokenDataToCDN({
     tokenFrag: { symbol: "ETH", address: ethStablecoin.address },
     chainIdHex,
@@ -177,6 +179,8 @@ async function main() {
   await sleep();
   await usdcStablecoin.mint(cana, stableCoinInitialMintAmount);
   await sleep();
+  await usdcStablecoin.mint(mklion, stableCoinInitialMintAmount);
+  await sleep();
   await uploadTokenDataToCDN({
     tokenFrag: { symbol: "USDC", address: usdcStablecoin.address },
     chainIdHex,
@@ -204,6 +208,8 @@ async function main() {
   await usdtStablecoin.mint(crimson, stableCoinInitialMintAmount);
   await sleep();
   await usdtStablecoin.mint(cana, stableCoinInitialMintAmount);
+  await sleep();
+  await usdtStablecoin.mint(mklion, stableCoinInitialMintAmount);
   await sleep();
   await uploadTokenDataToCDN({
     tokenFrag: { symbol: "USDT", address: usdtStablecoin.address },

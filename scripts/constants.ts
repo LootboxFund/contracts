@@ -61,7 +61,7 @@ export const addresses: IAddresses = {
     Oxterran: "0x148F507Ca903fb322DaA9Ad420537F689973e99A",
     crimson: "0xd58aa0057934eD345C07d14Db6EC48428c62b388",
     cana: "0x1e069c19Fd6f436e1754097bDE43CD594FC5711f",
-    mklion: "_________________________________________",
+    mklion: "0xc407317bcB76e3620bf1d74e07334E28358D4FE5",
 
     // --- Multisigs ---
     gfxTreasury: "0x37147Dc47761cb60eA290e85bECe9D7F41ff4cF6",
@@ -90,7 +90,7 @@ export const addresses: IAddresses = {
     Oxterran: "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F",
     crimson: "0xd58aa0057934eD345C07d14Db6EC48428c62b388",
     cana: "0x1e069c19Fd6f436e1754097bDE43CD594FC5711f",
-    mklion: "_________________________________________",
+    mklion: "0xc407317bcB76e3620bf1d74e07334E28358D4FE5",
   },
 };
 
