@@ -194,6 +194,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     it("only the owner of the NFT can withdraw with it", async () => { });
     it("correct amount of native token is withdrawn", async () => { });
     it("correct amount of erc20 token is withdrawn", async () => { });
+    it("emits a withdraw event", async () => { });
     it("withdrawing will withdraw from all past unredeemed deposits", async () => { });
     it("NFT is marked redeemed for those past depositIds", async () => { });
     it("new deposits can be withdrawn", async () => { });
@@ -215,6 +216,13 @@ describe("📦 CrowdSale of GUILD token", async function () {
     it("can list out all erc20 tokens deposited", async () => { });
     it("can query the total amount deposited in a specific erc20 token", async () => { });
     it("can query the total amount deposited in native token", async () => { });
+  })
+
+  describe("incurs fees", async () => {
+    it("charges a 2% fee on ticket sales (no affiliates yet)", async () => { });
+    it("charges a 0% fee on deposits", async () => { });
+    it("charges a 2% fee on withdrawals, 2% to LootboxDAO", async () => { });
+    it("charges a 2% fee on transfers, 1% to issuingEntity & 1% to LootboxDAO", async () => { });
   })
 
   describe("_____", async () => {
