@@ -47,6 +47,14 @@ describe("📦 Lootbox smart contract", async function () {
   let bnb_stablecoin: BNB;
   let bnb_pricefeed = "0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE";
 
+  let Usdc: USDC__factory;
+  let usdc_stablecoin: USDC;
+  let usdc_pricefeed = "0x51597f405303C4377E36123cBc172b13269EA163";
+
+  let Usdt: USDT__factory;
+  let usdt_stablecoin: USDT;
+  let usdt_pricefeed = "0xB97Ad0E74fa7d920791E90258A6E2085088b4320";
+
   const LOOTBOX_NAME = "Pinata Lootbox";
   const LOOTBOX_SYMBOL = "PINATA";
 
@@ -55,10 +63,17 @@ describe("📦 Lootbox smart contract", async function () {
 
   const HARDHAT_TYPICAL_STARTING_NATIVE_BALANCE = "10000000000000000000000"
   const GAS_FEE_APPROXIMATION = "10000000000000000"
+  const USDC_STARTING_BALANCE = "10000000000000000000000"
 
   const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
   const buyAmountInEtherA2 = ethers.utils.parseUnits("0.00013560931", "ether")
   const buyAmountInEtherB = ethers.utils.parseUnits("0.10013560931", "ether");
+
+  const depositAmountInEtherA1 = ethers.utils.parseUnits("1", "ether");
+  const depositAmountInEtherA2 = ethers.utils.parseUnits("0.5", "ether")
+
+  const depositAmountInUSDCB1 = ethers.utils.parseUnits("100", "ether");
+  const depositAmountInUSDCB2 = ethers.utils.parseUnits("70", "ether")
 
   before(async function () {
     const [
@@ -82,6 +97,9 @@ describe("📦 Lootbox smart contract", async function () {
 
     Bnb = await ethers.getContractFactory("BNB");
     Lootbox = await ethers.getContractFactory("Lootbox");
+
+    Usdc = await ethers.getContractFactory("USDC");
+    Usdt = await ethers.getContractFactory("USDT");
   });
 
   beforeEach(async function () {
@@ -96,6 +114,9 @@ describe("📦 Lootbox smart contract", async function () {
       bnb_pricefeed
     )) as Lootbox;
     await lootbox.deployed();
+
+    usdc_stablecoin = (await Usdc.deploy(0)) as USDC;
+    usdt_stablecoin = (await Usdt.deploy(0)) as USDT;
   });
 
   describe("basic details", async () => {
@@ -241,7 +262,7 @@ describe("📦 Lootbox smart contract", async function () {
       await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
       expect((await lootbox.nativeTokenRaisedTotal()).toString()).to.eq(buyAmountInEtherA1.toString())
     });
-    it.only("treasury receives the money & reduces the purchasers native token balance accordingly", async () => {
+    it("treasury receives the money & reduces the purchasers native token balance accordingly", async () => {
       const provider = waffle.provider;
       const treasuryPreBalance = await provider.getBalance(entityTreasury.address)
       const purchaserPreBalance = await provider.getBalance(purchaser.address)
@@ -257,7 +278,7 @@ describe("📦 Lootbox smart contract", async function () {
       expect(purchaserPostBalance).to.be.gt(ethers.BigNumber.from(HARDHAT_TYPICAL_STARTING_NATIVE_BALANCE).sub(buyAmountInEtherA1).sub(ethers.BigNumber.from(GAS_FEE_APPROXIMATION)))
       expect(purchaserPostBalance).to.be.lt(ethers.BigNumber.from(HARDHAT_TYPICAL_STARTING_NATIVE_BALANCE).sub(buyAmountInEtherA1))
     });
-    it.only("tracks an EnumerableSet of addresses of purchasers", async () => {
+    it("viewPurchasers() => tracks an EnumerableSet of addresses of purchasers", async () => {
       const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
       await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
       const purchasers = await lootbox.viewPurchasers();
@@ -267,12 +288,60 @@ describe("📦 Lootbox smart contract", async function () {
   });
 
   describe("depositing payout", async () => {
-    it("anyone can deposit into a Lootbox", async () => { });
-    it("emits a Deposit event", async () => { });
-    it("deposits will increment the depositId", async () => { });
-    it("can deposit native token into Lootbox", async () => { });
-    it("can deposit erc20 token into Lootbox", async () => { });
-    it("tracks in an EnumerableSet all erc20 tokens paid out", async () => { });
+    beforeEach(async () => {
+      await lootbox.connect(issuingEntity).endFundraisingPeriod();
+      await usdc_stablecoin.mint(issuingEntity.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
+      await usdc_stablecoin.connect(issuingEntity).approve(lootbox.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
+      
+      await usdt_stablecoin.mint(issuingEntity.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
+      await usdt_stablecoin.connect(issuingEntity).approve(lootbox.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
+    })
+    it("anyone can deposit into a Lootbox", async () => {
+      await expect(
+        lootbox.connect(deployer).depositEarningsNative({ value: depositAmountInEtherA1.toString() })
+      ).to.not.be.revertedWith(
+        "Error that will never happen because anyone can deposit into a lootbox"
+      );
+    });
+    it("depositEarningsNative() => can deposit native token into Lootbox and emits a Deposit event", async () => {
+      // native token
+      await expect(
+        lootbox.connect(issuingEntity).depositEarningsNative({ value: depositAmountInEtherA1.toString() })
+      ).to.emit(lootbox, "DepositEarnings")
+      .withArgs(
+        issuingEntity.address,
+        lootbox.address,
+        depositAmountInEtherA1.toString(),
+        ethers.constants.AddressZero,
+        "0"
+      );
+    });
+    it("depositEarningsErc20() => can deposit erc20 token into Lootbox and emits a Deposit event", async () => {
+      // erc20 token
+      await expect(
+        lootbox.connect(issuingEntity).depositEarningsErc20(usdc_stablecoin.address, depositAmountInUSDCB1.toString())
+      ).to.emit(lootbox, "DepositEarnings")
+      .withArgs(
+        issuingEntity.address,
+        lootbox.address,
+        "0",
+        usdc_stablecoin.address,
+        depositAmountInUSDCB1.toString()
+      );
+    });
+    it("deposits will increment the depositId", async () => {
+      await lootbox.connect(issuingEntity).depositEarningsNative({ value: depositAmountInEtherA1.toString() })
+      expect(await lootbox.depositIdCounter()).to.eq("1")
+      await lootbox.connect(issuingEntity).depositEarningsNative({ value: depositAmountInEtherA2.toString() })
+      expect(await lootbox.depositIdCounter()).to.eq("2")
+    });
+    it("viewDepositedTokens() => tracks an EnumerableSet of all erc20 tokens paid out", async () => {
+      await lootbox.connect(issuingEntity).depositEarningsErc20(usdc_stablecoin.address, depositAmountInUSDCB1.toString())
+      await lootbox.connect(issuingEntity).depositEarningsErc20(usdt_stablecoin.address, depositAmountInUSDCB1.toString())
+      const [a, b] = await lootbox.viewDepositedTokens()
+      expect(a).to.eq(padAddressTo32Bytes(usdc_stablecoin.address))
+      expect(b).to.eq(padAddressTo32Bytes(usdt_stablecoin.address))
+    });
   })
 
   describe("withdrawing payout", async () => {
@@ -284,6 +353,7 @@ describe("📦 Lootbox smart contract", async function () {
     it("NFT is marked redeemed for those past depositIds", async () => { });
     it("new deposits can be withdrawn", async () => { });
     it("owner of NFT receives withdrawal", async () => { });
+    it("sweepAllDeposits()", async () => { });
   })
 
   describe("limitations during fundraising period", async () => {
@@ -293,7 +363,7 @@ describe("📦 Lootbox smart contract", async function () {
     it("deposit succeeds if outside fundraising period", async () => { });
     it("withdrawl fails if during fundraising period", async () => { });
     it("withdrawl succeeds if outside fundraising period", async () => { });
-    it("only allows the issuingEntity to end the fundraising period", async () => { });
+    it("endFundraisingPeriod() => only allows the issuingEntity to end the fundraising period", async () => { });
   })
 
   describe("trading the NFT", async () => {
@@ -303,9 +373,11 @@ describe("📦 Lootbox smart contract", async function () {
 
   describe("reading info from Lootbox", async () => {
     it("can read info about a specific Ticket", async () => { });
-    it("can list out all erc20 tokens deposited", async () => { });
+    it("viewDepositedTokens() => can list out all erc20 tokens deposited", async () => { });
     it("can query the total amount deposited in a specific erc20 token", async () => { });
     it("can query the total amount deposited in native token", async () => { });
+    it("viewAllTicketsOfHolder()", async () => { });
+    it("viewPurchasers()", async () => { });
   })
 
   describe("incurs fees", async () => {

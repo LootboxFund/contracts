@@ -248,6 +248,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
       erc20Token,
       erc20Amount
     );
+    
     // transfer the erc20 tokens to this Lootbox contract
     IERC20 token = IERC20(erc20Token);
     token.approve(address(this), erc20Amount);
@@ -414,4 +415,6 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   function unpause() public onlyRole(DAO_ROLE) {
       _unpause();
   }
+
+  receive() external payable {}
 }
