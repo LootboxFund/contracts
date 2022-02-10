@@ -13,6 +13,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 
 interface IERC20 {
@@ -55,13 +56,14 @@ contract Lootbox is
     AccessControlUpgradeable,
     UUPSUpgradeable
 {
+  using CountersUpgradeable for CountersUpgradeable.Counter;
+  using EnumerableSet for EnumerableSet.AddressSet;
 
   bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
   bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE");
 
   uint256 public deploymentStartTime;
 
-  using CountersUpgradeable for CountersUpgradeable.Counter;
   CountersUpgradeable.Counter public ticketIdCounter;
 
   AggregatorV3Interface internal nativeTokenPriceFeed;
@@ -69,6 +71,7 @@ contract Lootbox is
   uint256 public sharePriceUSD; // THIS SHOULD NOT BE MODIFIED (8 decimals)
   uint256 public sharesSoldGoal;
   uint256 public sharesSoldCount;
+  uint256 public nativeTokenRaisedTotal;
 
   mapping(uint256 => uint256) public sharesInTicket;
 
@@ -85,6 +88,10 @@ contract Lootbox is
   mapping(uint256 => Deposit) public depositReciepts;
   CountersUpgradeable.Counter public depositIdCounter;
 
+  mapping(address => uint256) public erc20PaidOut;
+  EnumerableSet.AddressSet private erc20TokensDeposited;
+  uint256 public nativeTokenDeposited;
+
   mapping(uint256 => mapping(uint256 => bool)) public depositRedemptions;
 
   function supportsInterface(bytes4 interfaceId) public view override(ERC721Upgradeable, AccessControlUpgradeable) returns (bool) {
@@ -97,6 +104,7 @@ contract Lootbox is
     string memory _name,
     string memory _symbol,
     uint256 _sharesSoldGoal,
+    uint256 _sharePriceUSD,
     address _treasury,
     address _issuingEntity,
     address _nativeTokenPriceFeed
@@ -108,6 +116,9 @@ contract Lootbox is
 
       // solhint-disable-next-line not-rely-on-time
       deploymentStartTime = block.timestamp;
+      nativeTokenRaisedTotal = 0;
+
+      sharePriceUSD = _sharePriceUSD;
       sharesSoldGoal = _sharesSoldGoal;
 
       nativeTokenPriceFeed = AggregatorV3Interface(_nativeTokenPriceFeed);
@@ -130,6 +141,7 @@ contract Lootbox is
     sharesInTicket[tokenId] = sharesPurchased;
     // update the total count of shares sold
     sharesSoldCount = sharesSoldCount + sharesPurchased;
+    nativeTokenRaisedTotal = nativeTokenRaisedTotal + msg.value;
     // collect the payment and send to treasury (should be a multisig)
     payable(treasury).transfer(msg.value);
     // mint the NFT ticket
@@ -150,6 +162,20 @@ contract Lootbox is
     return uint256(price) * msg.value / sharePriceUSD;
   }
 
+  function estimateSharesPurchase (uint256 amount) public view returns (uint256) {
+    // get price feed of native token
+    (
+      uint80 roundID,
+      int256 price,
+      uint256 startedAt,
+      uint256 timeStamp,
+      uint80 answeredInRound
+    ) = nativeTokenPriceFeed.latestRoundData();
+    // If the round is not complete yet, timestamp is 0
+    require(timeStamp > 0, "Round not complete");
+    return uint256(price) * amount / sharePriceUSD;
+  }
+
   function endFundraisingPeriod () public onlyRole(DAO_ROLE) {
     require(isFundraising == true, "Fundraising period has already ended");
     isFundraising = false;
@@ -157,6 +183,9 @@ contract Lootbox is
 
   function depositEarnings (address erc20Token, uint256 erc20Amount) public payable {
     require(isFundraising == false, "Deposits cannot be made during fundraising period");
+    // log this to our list of erc20 tokens
+    erc20TokensDeposited.add(erc20Token);
+    erc20PaidOut[erc20Token] = erc20PaidOut[erc20Token] + erc20Amount;
     // create the deposit receipt
     uint256 depositId = depositIdCounter.current();
     Deposit memory deposit = Deposit ({
@@ -177,6 +206,8 @@ contract Lootbox is
 
   function depositEarningsNative () public payable {
     require(isFundraising == false, "Deposits cannot be made during fundraising period");
+    // log this payout in sum
+    nativeTokenDeposited = nativeTokenDeposited + msg.value;
     // create the deposit receipt
     uint256 depositId = depositIdCounter.current();
     Deposit memory deposit = Deposit ({
@@ -210,11 +241,11 @@ contract Lootbox is
           uint256 owedErc20 = deposit.erc20TokenAmount * sharesOwned / sharesSoldCount;
           // transfer the erc20 tokens to the sender
           IERC20 token = IERC20(deposit.erc20Token);
-          token.transferFrom(address(this), msg.sender, owedErc20);
+          token.transferFrom(address(this), ownerOf(ticketId), owedErc20);
         }
         // handle native tokens
         uint256 owedNative = deposit.nativeTokenAmount * sharesOwned / sharesSoldCount;
-        payable(msg.sender).transfer(owedNative);
+        payable(ownerOf(ticketId)).transfer(owedNative);
       }
     }
   }
@@ -228,6 +259,10 @@ contract Lootbox is
       sharePriceUSD
     );
   }
+
+   function viewDepositedTokens() public view returns (bytes32[] memory) {
+        return erc20TokensDeposited._inner._values;
+    }
 
   // --------- Managing the Token ---------
 
