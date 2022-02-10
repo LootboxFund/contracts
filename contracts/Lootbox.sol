@@ -169,6 +169,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     return ticketId;
   }
 
+  // internal implementation function to handle conversion of msg.value to shares
   function calculateSharesPurchase () internal returns (uint256 _sharesPurchased) {
     // get price feed of native token
     (
@@ -188,7 +189,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     return sharesPurchased;
   }
 
-  // converts stablecoin amount to guild token amount
+  // internal helper function that converts stablecoin amount to guild token amount
   function getSharePurchaseAmount(
       uint256 amountOfStableCoin,
       uint256 stablecoinDecimals,
@@ -202,6 +203,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
           sharePriceUSD;
   }
 
+  // external function to estimate how much guild tokens a user will receive
   function estimateSharesPurchase (uint256 amount) public view returns (uint256) {
     // get price feed of native token
     (
