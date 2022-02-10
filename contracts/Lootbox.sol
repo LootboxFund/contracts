@@ -90,6 +90,32 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
 
   mapping(uint256 => mapping(uint256 => bool)) public depositRedemptions;
 
+  event MintTicket(
+    address indexed purchaser,
+    address indexed treasury,
+    address lootbox,
+    uint256 ticketId,
+    uint256 sharesPurchased,
+    uint256 sharePriceUSD
+  );
+
+  event DepositEarnings(
+    address indexed depositor,
+    address lootbox,
+    uint256 nativeTokenAmount,
+    address erc20Token,
+    uint256 erc20Amount
+  );
+
+  event WithdrawEarnings(
+    address indexed withdrawer,
+    address lootbox,
+    uint256 ticketId,
+    uint256 nativeTokenAmount,
+    address erc20Token,
+    uint256 erc20Amount
+  );
+
   constructor(
     string memory _name,
     string memory _symbol,
@@ -128,6 +154,15 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     // update the total count of shares sold
     sharesSoldCount = sharesSoldCount + sharesPurchased;
     nativeTokenRaisedTotal = nativeTokenRaisedTotal + msg.value;
+    // emit the Purchase event
+    emit MintTicket(
+      msg.sender,
+      treasury,
+      address(this),
+      ticketId,
+      sharesPurchased,
+      sharePriceUSD
+    );
     // collect the payment and send to treasury (should be a multisig)
     payable(treasury).transfer(msg.value);
     // mint the NFT ticket
@@ -156,18 +191,18 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   }
 
   // converts stablecoin amount to guild token amount
-    function getSharePurchaseAmount(
-        uint256 amountOfStableCoin,
-        uint256 stablecoinDecimals,
-        uint256 stableCoinPrice
-    ) internal view returns (uint256 guildTokenAmount) {
-        uint256 ticketDecimals = 18;
-        return
-            (amountOfStableCoin *
-                stableCoinPrice *
-                10**(ticketDecimals - stablecoinDecimals)) /
-            sharePriceUSD;
-    }
+  function getSharePurchaseAmount(
+      uint256 amountOfStableCoin,
+      uint256 stablecoinDecimals,
+      uint256 stableCoinPrice
+  ) internal view returns (uint256 guildTokenAmount) {
+      uint256 ticketDecimals = 18;
+      return
+          (amountOfStableCoin *
+              stableCoinPrice *
+              10**(ticketDecimals - stablecoinDecimals)) /
+          sharePriceUSD;
+  }
 
   function estimateSharesPurchase (uint256 amount) public view returns (uint256) {
     // get price feed of native token
@@ -188,7 +223,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     isFundraising = false;
   }
 
-  function depositEarnings (address erc20Token, uint256 erc20Amount) public payable {
+  function depositEarningsErc20 (address erc20Token, uint256 erc20Amount) public payable {
     require(isFundraising == false, "Deposits cannot be made during fundraising period");
     // log this to our list of erc20 tokens
     erc20TokensDeposited.add(erc20Token);
@@ -205,6 +240,14 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     // save deposit receipt to mapping, increment ID
     depositReciepts[block.number] = deposit;
     depositIdCounter.increment();
+    // emit the DepositEarnings event
+    emit DepositEarnings(
+      msg.sender,
+      address(this),
+      0,
+      erc20Token,
+      erc20Amount
+    );
     // transfer the erc20 tokens to this Lootbox contract
     IERC20 token = IERC20(erc20Token);
     token.approve(address(this), erc20Amount);
@@ -227,6 +270,14 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     // save deposit receipt to mapping, increment ID
     depositReciepts[block.number] = deposit;
     depositIdCounter.increment();
+    // emit the DepositEarnings event
+    emit DepositEarnings(
+      msg.sender,
+      address(this),
+      msg.value,
+      address(0),
+      0
+    );
     // transfer the native tokens to this Lootbox contract
     address payable lootbox = payable(address(this));
     lootbox.transfer(msg.value);
@@ -246,13 +297,32 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
         if (deposit.erc20Token != address(0)) {
           // calculate how much is owed
           uint256 owedErc20 = deposit.erc20TokenAmount * sharesOwned / sharesSoldCount;
+          // emit the WithdrawEarnings event
+          emit WithdrawEarnings(
+            msg.sender,
+            address(this),
+            ticketId,
+            0,
+            deposit.erc20Token,
+            owedErc20
+          );
           // transfer the erc20 tokens to the sender
           IERC20 token = IERC20(deposit.erc20Token);
           token.transferFrom(address(this), ownerOf(ticketId), owedErc20);
+        } else {
+          // handle native tokens
+          uint256 owedNative = deposit.nativeTokenAmount * sharesOwned / sharesSoldCount;
+          // emit the WithdrawEarnings event
+          emit WithdrawEarnings(
+            msg.sender,
+            address(this),
+            ticketId,
+            owedNative,
+            address(0),
+            0
+          );
+          payable(ownerOf(ticketId)).transfer(owedNative);
         }
-        // handle native tokens
-        uint256 owedNative = deposit.nativeTokenAmount * sharesOwned / sharesSoldCount;
-        payable(ownerOf(ticketId)).transfer(owedNative);
       }
     }
   }
