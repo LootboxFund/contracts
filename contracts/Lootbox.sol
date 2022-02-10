@@ -58,21 +58,19 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
 
   uint256 public deploymentStartTime;
 
-  Counters.Counter public ticketIdCounter;
-
   AggregatorV3Interface internal nativeTokenPriceFeed;
 
   uint256 public sharePriceUSD; // THIS SHOULD NOT BE MODIFIED (8 decimals)
   uint256 public sharesSoldGoal;
   uint256 public sharesSoldCount;
   uint256 public nativeTokenRaisedTotal;
+  EnumerableSet.AddressSet private purchasers;
 
   mapping(uint256 => uint256) public sharesInTicket;
+  Counters.Counter public ticketIdCounter;
 
   bool public isFundraising;
   address public treasury;
-
-  EnumerableSet.AddressSet private purchasers;
 
   struct Deposit {
     uint256 depositId;
