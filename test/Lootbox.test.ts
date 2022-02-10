@@ -198,45 +198,73 @@ describe("📦 Lootbox smart contract", async function () {
     });
   });
 
-  describe("purchaseTicket() => 'purchasing lootbox tickets'", async () => {
-    it("buyer receives the NFT with the right amount of shares & ticketId is incremented", async () => {
-      
+  describe.only("purchaseTicket() => 'purchasing lootbox tickets'", async () => {
+
+    let purchasers: string[] = [];
+    
+    let ticketsA: BigNumber[] = [];
+    let ticketsB: BigNumber[] = [];
+
+    let sharesOwnedA1: BigNumber;
+    let percentageOwnedA1: BigNumber;
+    let sharePriceUSDA: BigNumber;
+
+    let sharesOwnedA2: BigNumber;
+    let percentageOwnedA2: BigNumber;
+
+    let sharesOwnedB: BigNumber;
+    let percentageOwnedB: BigNumber;
+    let sharePriceUSDB: BigNumber;
+
+    beforeEach(async () => {
+
       await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
       await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA2.toString() })
 
       await lootbox.connect(purchaser2).purchaseTicket({ value: buyAmountInEtherB.toString() })
 
-      const purchasers = await lootbox.viewPurchasers()
+      purchasers = await lootbox.viewPurchasers()
 
-      const ticketsA = await lootbox.viewAllTicketsOfHolder(purchaser.address)
-      const ticketsB = await lootbox.viewAllTicketsOfHolder(purchaser2.address)
+      ticketsA = await lootbox.viewAllTicketsOfHolder(purchaser.address);
+      ticketsB = await lootbox.viewAllTicketsOfHolder(purchaser2.address);
 
-      const [sharesOwnedA1, percentageOwnedA1, sharePriceUSDA] = await lootbox.viewTicketInfo(ticketsA[0])
-      const [sharesOwnedA2, percentageOwnedA2] = await lootbox.viewTicketInfo(ticketsA[1])
-      const [sharesOwnedB, percentageOwnedB, sharePriceUSDB] = await lootbox.viewTicketInfo(ticketsB[0])
+      [sharesOwnedA1, percentageOwnedA1, sharePriceUSDA] = await lootbox.viewTicketInfo(ticketsA[0]);
+      [sharesOwnedA2, percentageOwnedA2] = await lootbox.viewTicketInfo(ticketsA[1]);
+      [sharesOwnedB, percentageOwnedB, sharePriceUSDB] = await lootbox.viewTicketInfo(ticketsB[0]);
 
-      expect(purchasers[0]).to.eq(padAddressTo32Bytes(purchaser.address));
-      expect(purchasers[1]).to.eq(padAddressTo32Bytes(purchaser2.address));
+    })
 
+    it("viewAllTicketsOfHolder() => can view all the NFT tickets owned by an address", async () => {
       expect(ticketsA[0]).to.eq("0");
       expect(ticketsA[1]).to.eq("1");
+      expect(ticketsA.length).to.eq(2)
       expect(ticketsB[0]).to.eq("2");
       expect(ticketsB[1]).to.eq(undefined);
+      expect(ticketsB.length).to.eq(1)
+    })
 
+    it("tracks the proper amount of shares owned by each NFT ticket", async () => {
       expect(sharesOwnedA1.toString()).to.eq(buyAmountInEtherA1.mul(BNB_ARCHIVED_PRICE).div(SHARE_PRICE_USD));
-      expect(percentageOwnedA1.toString()).to.eq("49932287");
-      expect(sharePriceUSDA.toString()).to.eq(SHARE_PRICE_USD);
-
       expect(sharesOwnedA2.toString()).to.eq(buyAmountInEtherA2.mul(BNB_ARCHIVED_PRICE).div(SHARE_PRICE_USD));
-      expect(percentageOwnedA2.toString()).to.eq("67712");
-      expect(sharePriceUSDA.toString()).to.eq(SHARE_PRICE_USD);
-
       expect(sharesOwnedB.toString()).to.eq(buyAmountInEtherB.mul(BNB_ARCHIVED_PRICE).div(SHARE_PRICE_USD));
-      expect(percentageOwnedB.toString()).to.eq("50000000");
-      expect(sharePriceUSDB.toString()).to.eq(SHARE_PRICE_USD);
+    })
 
+    it("tracks the proper percentage of total shares owned by each NFT ticket", async () => {
+      expect(percentageOwnedA1.toString()).to.eq("49932287");
+      expect(percentageOwnedA2.toString()).to.eq("67712");
+      expect(percentageOwnedB.toString()).to.eq("50000000");
+    })
+
+    it("has a consistent share price per ticket", async () => {
+      expect(sharePriceUSDA.toString()).to.eq(SHARE_PRICE_USD);
+      expect(sharePriceUSDB.toString()).to.eq(SHARE_PRICE_USD);
       expect(sharePriceUSDA.toString()).to.eq(sharePriceUSDB.toString());
-    });
+    })
+    
+    it("ticketId is incremented", async () => {
+      expect(lootbox.ticketIdCounter()).to.eq("3");
+    })
+
     it("emits a purchase event", async () => {
       const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
       await expect(
@@ -279,11 +307,14 @@ describe("📦 Lootbox smart contract", async function () {
       expect(purchaserPostBalance).to.be.lt(ethers.BigNumber.from(HARDHAT_TYPICAL_STARTING_NATIVE_BALANCE).sub(buyAmountInEtherA1))
     });
     it("viewPurchasers() => tracks an EnumerableSet of addresses of purchasers", async () => {
-      const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
-      await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
-      const purchasers = await lootbox.viewPurchasers();
-      expect(purchasers.length).to.eq(1);
+      // const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
+      // await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
+      // const purchasers = await lootbox.viewPurchasers();
+      // expect(purchasers.length).to.eq(1);
+      // expect(purchasers[0]).to.eq(padAddressTo32Bytes(purchaser.address));
+      expect(purchasers.length).to.eq(2);
       expect(purchasers[0]).to.eq(padAddressTo32Bytes(purchaser.address));
+      expect(purchasers[1]).to.eq(padAddressTo32Bytes(purchaser2.address));
     });
   });
 
@@ -345,7 +376,10 @@ describe("📦 Lootbox smart contract", async function () {
   })
 
   describe("withdrawing payout", async () => {
-    it("only the owner of the NFT can withdraw with it", async () => { });
+    it("only the owner of the NFT can withdraw with it", async () => {
+      await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
+      // await lootbox.connect(deployer).withdrawEarnings("0").to.be.reverted
+    });
     it("correct amount of native token is withdrawn", async () => { });
     it("correct amount of erc20 token is withdrawn", async () => { });
     it("emits a withdraw event", async () => { });

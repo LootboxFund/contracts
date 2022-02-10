@@ -82,7 +82,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   mapping(uint256 => Deposit) public depositReciepts;
   Counters.Counter public depositIdCounter;
 
-  mapping(address => uint256) public erc20PaidOut;
+  mapping(address => uint256) public erc20Deposited;
   EnumerableSet.AddressSet private erc20TokensDeposited;
   uint256 public nativeTokenDeposited;
 
@@ -213,7 +213,12 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     ) = nativeTokenPriceFeed.latestRoundData();
     // If the round is not complete yet, timestamp is 0
     require(timeStamp > 0, "Round not complete");
-    return uint256(price) * amount / sharePriceUSD;
+    uint256 sharesPurchased = getSharePurchaseAmount(
+      amount,
+      18,
+      uint256(price)
+    );
+    return sharesPurchased;
   }
 
   function endFundraisingPeriod () public onlyRole(DAO_ROLE) {
@@ -225,7 +230,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     require(isFundraising == false, "Deposits cannot be made during fundraising period");
     // log this to our list of erc20 tokens
     erc20TokensDeposited.add(erc20Token);
-    erc20PaidOut[erc20Token] = erc20PaidOut[erc20Token] + erc20Amount;
+    erc20Deposited[erc20Token] = erc20Deposited[erc20Token] + erc20Amount;
     // create the deposit receipt
     uint256 depositId = depositIdCounter.current();
     Deposit memory deposit = Deposit ({
