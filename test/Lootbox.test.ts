@@ -170,7 +170,7 @@ describe("📦 Lootbox smart contract", async function () {
     });
   });
 
-  describe("purchasing lootbox tickets", async () => {
+  describe("purchaseTicket() => 'purchasing lootbox tickets'", async () => {
     it("buyer receives the NFT with the right amount of shares & ticketId is incremented", async () => {
       
       const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
@@ -213,7 +213,21 @@ describe("📦 Lootbox smart contract", async function () {
 
       expect(sharePriceUSDA.toString()).to.eq(sharePriceUSDB.toString());
     });
-    it("emits a purchase event", async () => { });
+    it.only("emits a purchase event", async () => {
+      const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
+      await expect(
+        await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
+      )
+        .to.emit(lootbox, "MintTicket")
+        .withArgs(
+          purchaser.address,
+          entityTreasury.address,
+          lootbox.address,
+          "0",
+          buyAmountInEtherA1.mul(BNB_ARCHIVED_PRICE).div(SHARE_PRICE_USD),
+          SHARE_PRICE_USD
+        );
+    });
     it("increments the sharesSoldCount", async () => { });
     it("increments the nativeTokenRaisedTotal", async () => { });
     it("treasury receives the money", async () => { });
