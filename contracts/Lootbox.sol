@@ -115,15 +115,15 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   }
 
   // only accepts native token
-  function purchaseTicket () public payable {
+  function purchaseTicket () public payable returns (uint256 _ticketId) {
     require(isFundraising == true, "Tickets cannot be purchased after the fundraising period");
     // get an ID
-    uint256 tokenId = ticketIdCounter.current();
+    uint256 ticketId = ticketIdCounter.current();
     ticketIdCounter.increment();
     // calculate how many shares to buy based on msg.value
     uint256 sharesPurchased = calculateSharesPurchase();
     // update the mapping that tracks how many shares a ticket owns
-    sharesInTicket[tokenId] = sharesPurchased;
+    sharesInTicket[ticketId] = sharesPurchased;
     purchasers.add(msg.sender);
     // update the total count of shares sold
     sharesSoldCount = sharesSoldCount + sharesPurchased;
@@ -131,10 +131,12 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     // collect the payment and send to treasury (should be a multisig)
     payable(treasury).transfer(msg.value);
     // mint the NFT ticket
-    _safeMint(msg.sender, tokenId);
+    _safeMint(msg.sender, ticketId);
+    // return the ticket ID
+    return ticketId;
   }
 
-  function calculateSharesPurchase () internal returns (uint256 sharesPurchased) {
+  function calculateSharesPurchase () internal returns (uint256 _sharesPurchased) {
     // get price feed of native token
     (
       uint80 roundID,
@@ -145,8 +147,27 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     ) = nativeTokenPriceFeed.latestRoundData();
     // If the round is not complete yet, timestamp is 0
     require(timeStamp > 0, "Round not complete");
-    return uint256(price) * msg.value / sharePriceUSD;
+    uint256 sharesPurchased = getSharePurchaseAmount(
+      msg.value,
+      18,
+      uint256(price)
+    );
+    return sharesPurchased;
   }
+
+  // converts stablecoin amount to guild token amount
+    function getSharePurchaseAmount(
+        uint256 amountOfStableCoin,
+        uint256 stablecoinDecimals,
+        uint256 stableCoinPrice
+    ) internal view returns (uint256 guildTokenAmount) {
+        uint256 ticketDecimals = 18;
+        return
+            (amountOfStableCoin *
+                stableCoinPrice *
+                10**(ticketDecimals - stablecoinDecimals)) /
+            sharePriceUSD;
+    }
 
   function estimateSharesPurchase (uint256 amount) public view returns (uint256) {
     // get price feed of native token
@@ -238,7 +259,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
 
   function viewTicketInfo(uint256 ticketId) public view returns (uint256 _sharesOwned, uint256 _percentageOwned, uint256 _sharePriceUSD) {
     uint256 sharesOwned = sharesInTicket[ticketId];
-    uint256 percentageOwned = sharesOwned / sharesSoldCount;
+    uint256 percentageOwned = sharesOwned * 1*(10**8) / sharesSoldCount;
     return (
       sharesOwned,
       percentageOwned,
@@ -267,7 +288,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
 
   function viewAllTicketsOfHolder(address holder) public view returns (uint256[] memory _tickets) {
     uint256 ownedByHolder = balanceOf(holder);
-    uint256[] memory tokensOwned;
+    uint256[] memory tokensOwned = new uint256[](ownedByHolder);
     for(uint256 i=0; i < ownedByHolder; i++){
       tokensOwned[i] = (tokenOfOwnerByIndex(holder, i));
     }
@@ -280,7 +301,6 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   }
 
   // The following functions are overrides required by Solidity.
-
   function _beforeTokenTransfer(address from, address to, uint256 tokenId)
     internal
     whenNotPaused

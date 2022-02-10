@@ -1,10 +1,11 @@
 import { expect } from "chai";
-import { ethers, upgrades } from "hardhat";
+import { ethers } from "hardhat";
 import {
   DAO_ROLE,
   generatePermissionRevokeMessage,
   GOVERNOR_ROLE,
   MINTER_ROLE,
+  padAddressTo32Bytes,
 } from "./helpers/test-helpers";
 
 /* eslint-disable */
@@ -31,12 +32,13 @@ import { BigNumber } from "ethers";
 
 const BNB_ARCHIVED_PRICE = "51618873955";
 
-describe("📦 CrowdSale of GUILD token", async function () {
+describe("📦 Lootbox smart contract", async function () {
   let deployer: SignerWithAddress;
   let purchaser: SignerWithAddress;
   let issuingEntity: SignerWithAddress;
   let entityTreasury: SignerWithAddress;
   let developer: SignerWithAddress;
+  let purchaser2: SignerWithAddress;
 
   let Lootbox: Lootbox__factory;
   let lootbox: Lootbox;
@@ -69,6 +71,7 @@ describe("📦 CrowdSale of GUILD token", async function () {
     issuingEntity = _guildDao;
     developer = _developer;
     purchaser = _purchaser;
+    purchaser2 = _gfxStaff;
 
     Bnb = await ethers.getContractFactory("BNB");
     Lootbox = await ethers.getContractFactory("Lootbox");
@@ -76,50 +79,45 @@ describe("📦 CrowdSale of GUILD token", async function () {
 
   beforeEach(async function () {
     bnb_stablecoin = (await Bnb.deploy(0)) as BNB;
-
-    lootbox = (await upgrades.deployProxy(
-      Lootbox,
-      [
-        LOOTBOX_NAME,
-        LOOTBOX_SYMBOL,
-        SHARES_SOLD_GOAL,
-        SHARE_PRICE_USD,
-        entityTreasury.address,
-        issuingEntity.address,
-        bnb_pricefeed
-      ],
-      {
-        kind: "uups",
-      }
+    lootbox = (await Lootbox.deploy(
+      LOOTBOX_NAME,
+      LOOTBOX_SYMBOL,
+      ethers.BigNumber.from(SHARES_SOLD_GOAL),
+      ethers.BigNumber.from(SHARE_PRICE_USD),
+      entityTreasury.address,
+      issuingEntity.address,
+      bnb_pricefeed
     )) as Lootbox;
     await lootbox.deployed();
   });
 
-  it("sets the player treasury address correctly", async () => {
-    expect(await lootbox.treasury()).to.eq(entityTreasury.address);
-  });
-
-  it("sets the sharePriceUSD correctly", async () => {
-    expect(await lootbox.sharePriceUSD()).to.eq(SHARE_PRICE_USD);
-  });
-
-  it("sets the sharesSoldGoal correctly", async () => {
-    expect(await lootbox.sharesSoldGoal()).to.eq(SHARES_SOLD_GOAL);
-  });
-
-  it("has a native token oracle price feed", async () => {
-    const weiPaid = 1000
-    const sharesEstimated = await lootbox.estimateSharesPurchase(weiPaid);
-    expect(sharesEstimated.toNumber()).gt(0);
-  });
-
-  it("fundraising period has immediately begun", async () => {
-    expect(await lootbox.isFundraising()).to.eq(true);
-  });
-
-  it("has zero native token raised", async () => {
-    expect(await lootbox.nativeTokenRaisedTotal()).to.eq("0");
-  });
+  describe("basic details", async () => {
+    it("sets the player treasury address correctly", async () => {
+      expect(await lootbox.treasury()).to.eq(entityTreasury.address);
+    });
+  
+    it("sets the sharePriceUSD correctly", async () => {
+      expect(await lootbox.sharePriceUSD()).to.eq(SHARE_PRICE_USD);
+    });
+  
+    it("sets the sharesSoldGoal correctly", async () => {
+      expect(await lootbox.sharesSoldGoal()).to.eq(SHARES_SOLD_GOAL);
+    });
+  
+    it("has a native token oracle price feed", async () => {
+      const weiPaid = 1000
+      const sharesEstimated = await lootbox.estimateSharesPurchase(weiPaid);
+      expect(sharesEstimated.toNumber()).gt(0);
+    });
+  
+    it("fundraising period has immediately begun", async () => {
+      expect(await lootbox.isFundraising()).to.eq(true);
+    });
+  
+    it("has zero native token raised", async () => {
+      expect(await lootbox.nativeTokenRaisedTotal()).to.eq("0");
+    });
+  })
 
   describe("🗳 pause()", () => {
     describe("called by address with the DAO_ROLE", () => {
@@ -173,16 +171,51 @@ describe("📦 CrowdSale of GUILD token", async function () {
   });
 
   describe("purchasing lootbox tickets", async () => {
-    it("purchases the right amount", async () => {
-      const decimals = 18;
-      const buyAmountInWei = ethers.utils.parseUnits("0.1", decimals);
-      lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInWei.toString() })
-      // expect
+    it("buyer receives the NFT with the right amount of shares & ticketId is incremented", async () => {
+      
+      const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
+      const buyAmountInEtherA2 = ethers.utils.parseUnits("0.00013560931", "ether")
+      const buyAmountInEtherB = ethers.utils.parseUnits("0.10013560931", "ether");
+
+      await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
+      await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA2.toString() })
+
+      await lootbox.connect(purchaser2).purchaseTicket({ value: buyAmountInEtherB.toString() })
+
+      const purchasers = await lootbox.viewPurchasers()
+
+      const ticketsA = await lootbox.viewAllTicketsOfHolder(purchaser.address)
+      const ticketsB = await lootbox.viewAllTicketsOfHolder(purchaser2.address)
+
+      const [sharesOwnedA1, percentageOwnedA1, sharePriceUSDA] = await lootbox.viewTicketInfo(ticketsA[0])
+      const [sharesOwnedA2, percentageOwnedA2] = await lootbox.viewTicketInfo(ticketsA[1])
+      const [sharesOwnedB, percentageOwnedB, sharePriceUSDB] = await lootbox.viewTicketInfo(ticketsB[0])
+
+      expect(purchasers[0]).to.eq(padAddressTo32Bytes(purchaser.address));
+      expect(purchasers[1]).to.eq(padAddressTo32Bytes(purchaser2.address));
+
+      expect(ticketsA[0]).to.eq("0");
+      expect(ticketsA[1]).to.eq("1");
+      expect(ticketsB[0]).to.eq("2");
+      expect(ticketsB[1]).to.eq(undefined);
+
+      expect(sharesOwnedA1.toString()).to.eq(buyAmountInEtherA1.mul(BNB_ARCHIVED_PRICE).div(SHARE_PRICE_USD));
+      expect(percentageOwnedA1.toString()).to.eq("49932287");
+      expect(sharePriceUSDA.toString()).to.eq(SHARE_PRICE_USD);
+
+      expect(sharesOwnedA2.toString()).to.eq(buyAmountInEtherA2.mul(BNB_ARCHIVED_PRICE).div(SHARE_PRICE_USD));
+      expect(percentageOwnedA2.toString()).to.eq("67712");
+      expect(sharePriceUSDA.toString()).to.eq(SHARE_PRICE_USD);
+
+      expect(sharesOwnedB.toString()).to.eq(buyAmountInEtherB.mul(BNB_ARCHIVED_PRICE).div(SHARE_PRICE_USD));
+      expect(percentageOwnedB.toString()).to.eq("50000000");
+      expect(sharePriceUSDB.toString()).to.eq(SHARE_PRICE_USD);
+
+      expect(sharePriceUSDA.toString()).to.eq(sharePriceUSDB.toString());
     });
     it("emits a purchase event", async () => { });
     it("increments the sharesSoldCount", async () => { });
     it("increments the nativeTokenRaisedTotal", async () => { });
-    it("buyer receives the NFT & ticketId is incremented", async () => { });
     it("treasury receives the money", async () => { });
     it("tracks an EnumerableSet of addresses of purchasers", async () => { });
   });
@@ -215,6 +248,11 @@ describe("📦 CrowdSale of GUILD token", async function () {
     it("withdrawl fails if during fundraising period", async () => { });
     it("withdrawl succeeds if outside fundraising period", async () => { });
     it("only allows the issuingEntity to end the fundraising period", async () => { });
+  })
+
+  describe("trading the NFT", async () => {
+    it("ownership of the NFT changes properly", async () => { });
+    it("NFT is not double redeemable", async () => { });
   })
 
   describe("reading info from Lootbox", async () => {
