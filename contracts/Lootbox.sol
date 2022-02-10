@@ -6,12 +6,12 @@ pragma solidity 0.8.4;
 
 
 import "hardhat/console.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
@@ -49,14 +49,8 @@ interface IERC20 {
     );
 }
 
-contract Lootbox is
-    Initializable,
-    ERC721Upgradeable,
-    PausableUpgradeable,
-    AccessControlUpgradeable,
-    UUPSUpgradeable
-{
-  using CountersUpgradeable for CountersUpgradeable.Counter;
+contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, AccessControl {
+  using Counters for Counters.Counter;
   using EnumerableSet for EnumerableSet.AddressSet;
 
   bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
@@ -64,7 +58,7 @@ contract Lootbox is
 
   uint256 public deploymentStartTime;
 
-  CountersUpgradeable.Counter public ticketIdCounter;
+  Counters.Counter public ticketIdCounter;
 
   AggregatorV3Interface internal nativeTokenPriceFeed;
 
@@ -78,6 +72,8 @@ contract Lootbox is
   bool public isFundraising;
   address public treasury;
 
+  EnumerableSet.AddressSet private purchasers;
+
   struct Deposit {
     uint256 depositId;
     uint256 blockNumber;
@@ -86,7 +82,7 @@ contract Lootbox is
     uint256 erc20TokenAmount;
   }
   mapping(uint256 => Deposit) public depositReciepts;
-  CountersUpgradeable.Counter public depositIdCounter;
+  Counters.Counter public depositIdCounter;
 
   mapping(address => uint256) public erc20PaidOut;
   EnumerableSet.AddressSet private erc20TokensDeposited;
@@ -94,13 +90,7 @@ contract Lootbox is
 
   mapping(uint256 => mapping(uint256 => bool)) public depositRedemptions;
 
-  function supportsInterface(bytes4 interfaceId) public view override(ERC721Upgradeable, AccessControlUpgradeable) returns (bool) {
-    return super.supportsInterface(interfaceId);
-  }
-
-  constructor() initializer {}
-  // UUPS Upgradeable
-  function initialize(
+  constructor(
     string memory _name,
     string memory _symbol,
     uint256 _sharesSoldGoal,
@@ -108,25 +98,20 @@ contract Lootbox is
     address _treasury,
     address _issuingEntity,
     address _nativeTokenPriceFeed
-  ) public initializer {
-      __ERC721_init(_name, _symbol);
-      __Pausable_init();
-      __AccessControl_init();
-      __UUPSUpgradeable_init();
+  ) ERC721(_name, _symbol) {
+    // solhint-disable-next-line not-rely-on-time
+    deploymentStartTime = block.timestamp;
+    nativeTokenRaisedTotal = 0;
 
-      // solhint-disable-next-line not-rely-on-time
-      deploymentStartTime = block.timestamp;
-      nativeTokenRaisedTotal = 0;
+    sharePriceUSD = _sharePriceUSD;
+    sharesSoldGoal = _sharesSoldGoal;
 
-      sharePriceUSD = _sharePriceUSD;
-      sharesSoldGoal = _sharesSoldGoal;
+    nativeTokenPriceFeed = AggregatorV3Interface(_nativeTokenPriceFeed);
 
-      nativeTokenPriceFeed = AggregatorV3Interface(_nativeTokenPriceFeed);
+    isFundraising = true;
+    treasury = _treasury;
 
-      isFundraising = true;
-      treasury = _treasury;
-
-      _grantRole(DAO_ROLE, _issuingEntity);
+    _grantRole(DAO_ROLE, _issuingEntity);
   }
 
   // only accepts native token
@@ -139,6 +124,7 @@ contract Lootbox is
     uint256 sharesPurchased = calculateSharesPurchase();
     // update the mapping that tracks how many shares a ticket owns
     sharesInTicket[tokenId] = sharesPurchased;
+    purchasers.add(msg.sender);
     // update the total count of shares sold
     sharesSoldCount = sharesSoldCount + sharesPurchased;
     nativeTokenRaisedTotal = nativeTokenRaisedTotal + msg.value;
@@ -260,20 +246,79 @@ contract Lootbox is
     );
   }
 
-   function viewDepositedTokens() public view returns (bytes32[] memory) {
-        return erc20TokensDeposited._inner._values;
+  function viewOwedOfErc20Token (uint256 ticketId, address erc20Token) public returns (uint256 _owed) {
+    // TODO: implement
+    // returns the total of this erc20 that is owed to the ticket
+    // frontend should use this in conjunction with viewDepositedTokens()
+  }
+
+  function viewOwedOfNativeToken (uint256 ticketId) public returns (uint256 _owed) {
+    // TODO: implement
+    // returns the total amount of native tokens that is owed to the ticket
+  }
+
+  function viewDepositedTokens() public view returns (bytes32[] memory) {
+    return erc20TokensDeposited._inner._values;
+  }
+
+  function viewPurchasers() public view returns (bytes32[] memory) {
+    return purchasers._inner._values;
+  }
+
+  function viewAllTicketsOfHolder(address holder) public view returns (uint256[] memory _tickets) {
+    uint256 ownedByHolder = balanceOf(holder);
+    uint256[] memory tokensOwned;
+    for(uint256 i=0; i < ownedByHolder; i++){
+      tokensOwned[i] = (tokenOfOwnerByIndex(holder, i));
     }
+    return tokensOwned;
+  }
+
+  function sweepAllDeposits () public {
+    // TODO: implement
+    // this should send all deposits to their holders
+  }
+
+  // The following functions are overrides required by Solidity.
+
+  function _beforeTokenTransfer(address from, address to, uint256 tokenId)
+    internal
+    whenNotPaused
+    override(ERC721, ERC721Enumerable)
+  {
+    super._beforeTokenTransfer(from, to, tokenId);
+  }
+
+  function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
+    super._burn(tokenId);
+  }
+
+  function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal override(ERC721URIStorage) {
+    super._setTokenURI(tokenId, _tokenURI);
+  }
+
+  function tokenURI(uint256 tokenId)
+    public
+    view
+    override(ERC721, ERC721URIStorage)
+    returns (string memory)
+  {
+    return super.tokenURI(tokenId);
+  }
+
+  function supportsInterface(bytes4 interfaceId)
+    public
+    view
+    override(ERC721, ERC721Enumerable, AccessControl)
+    returns (bool)
+  {
+    return super.supportsInterface(interfaceId);
+  }
 
   // --------- Managing the Token ---------
 
-  function _authorizeUpgrade(address newImplementation)
-        internal
-        override
-        onlyRole(DEVELOPER_ROLE)
-    {}
-
   function pause() public onlyRole(DAO_ROLE) {
-      _pause();
+    _pause();
   }
 
   function unpause() public onlyRole(DAO_ROLE) {

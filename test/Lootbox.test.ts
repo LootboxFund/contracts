@@ -173,12 +173,18 @@ describe("📦 CrowdSale of GUILD token", async function () {
   });
 
   describe("purchasing lootbox tickets", async () => {
-    it("purchases the right amount", async () => { });
+    it("purchases the right amount", async () => {
+      const decimals = 18;
+      const buyAmountInWei = ethers.utils.parseUnits("0.1", decimals);
+      lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInWei.toString() })
+      // expect
+    });
     it("emits a purchase event", async () => { });
     it("increments the sharesSoldCount", async () => { });
     it("increments the nativeTokenRaisedTotal", async () => { });
     it("buyer receives the NFT & ticketId is incremented", async () => { });
     it("treasury receives the money", async () => { });
+    it("tracks an EnumerableSet of addresses of purchasers", async () => { });
   });
 
   describe("depositing payout", async () => {
