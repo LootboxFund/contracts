@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import { ethers, waffle } from "hardhat";
 import {
   DAO_ROLE,
   generatePermissionRevokeMessage,
@@ -52,6 +52,13 @@ describe("📦 Lootbox smart contract", async function () {
 
   const SHARE_PRICE_USD = "7000000"; // 7 usd cents
   const SHARES_SOLD_GOAL = 1000;
+
+  const HARDHAT_TYPICAL_STARTING_NATIVE_BALANCE = "10000000000000000000000"
+  const GAS_FEE_APPROXIMATION = "10000000000000000"
+
+  const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
+  const buyAmountInEtherA2 = ethers.utils.parseUnits("0.00013560931", "ether")
+  const buyAmountInEtherB = ethers.utils.parseUnits("0.10013560931", "ether");
 
   before(async function () {
     const [
@@ -173,10 +180,6 @@ describe("📦 Lootbox smart contract", async function () {
   describe("purchaseTicket() => 'purchasing lootbox tickets'", async () => {
     it("buyer receives the NFT with the right amount of shares & ticketId is incremented", async () => {
       
-      const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
-      const buyAmountInEtherA2 = ethers.utils.parseUnits("0.00013560931", "ether")
-      const buyAmountInEtherB = ethers.utils.parseUnits("0.10013560931", "ether");
-
       await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
       await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA2.toString() })
 
@@ -213,7 +216,7 @@ describe("📦 Lootbox smart contract", async function () {
 
       expect(sharePriceUSDA.toString()).to.eq(sharePriceUSDB.toString());
     });
-    it.only("emits a purchase event", async () => {
+    it("emits a purchase event", async () => {
       const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
       await expect(
         await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
@@ -228,10 +231,39 @@ describe("📦 Lootbox smart contract", async function () {
           SHARE_PRICE_USD
         );
     });
-    it("increments the sharesSoldCount", async () => { });
-    it("increments the nativeTokenRaisedTotal", async () => { });
-    it("treasury receives the money", async () => { });
-    it("tracks an EnumerableSet of addresses of purchasers", async () => { });
+    it("increments the sharesSoldCount", async () => {
+      const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
+      await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
+      expect((await lootbox.sharesSoldCount()).toString()).to.eq(buyAmountInEtherA1.mul(BNB_ARCHIVED_PRICE).div(SHARE_PRICE_USD))
+    });
+    it("increments the nativeTokenRaisedTotal", async () => {
+      const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
+      await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
+      expect((await lootbox.nativeTokenRaisedTotal()).toString()).to.eq(buyAmountInEtherA1.toString())
+    });
+    it.only("treasury receives the money & reduces the purchasers native token balance accordingly", async () => {
+      const provider = waffle.provider;
+      const treasuryPreBalance = await provider.getBalance(entityTreasury.address)
+      const purchaserPreBalance = await provider.getBalance(purchaser.address)
+      expect(treasuryPreBalance.toString()).to.eq(HARDHAT_TYPICAL_STARTING_NATIVE_BALANCE)
+      expect(purchaserPreBalance.toString()).to.eq(HARDHAT_TYPICAL_STARTING_NATIVE_BALANCE)
+      
+      const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
+      await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
+
+      const treasuryPostBalance = await provider.getBalance(entityTreasury.address)
+      const purchaserPostBalance = await provider.getBalance(purchaser.address)
+      expect(treasuryPostBalance.toString()).to.eq(ethers.BigNumber.from(HARDHAT_TYPICAL_STARTING_NATIVE_BALANCE).add(buyAmountInEtherA1).toString())
+      expect(purchaserPostBalance).to.be.gt(ethers.BigNumber.from(HARDHAT_TYPICAL_STARTING_NATIVE_BALANCE).sub(buyAmountInEtherA1).sub(ethers.BigNumber.from(GAS_FEE_APPROXIMATION)))
+      expect(purchaserPostBalance).to.be.lt(ethers.BigNumber.from(HARDHAT_TYPICAL_STARTING_NATIVE_BALANCE).sub(buyAmountInEtherA1))
+    });
+    it.only("tracks an EnumerableSet of addresses of purchasers", async () => {
+      const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
+      await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
+      const purchasers = await lootbox.viewPurchasers();
+      expect(purchasers.length).to.eq(1);
+      expect(purchasers[0]).to.eq(padAddressTo32Bytes(purchaser.address));
+    });
   });
 
   describe("depositing payout", async () => {
