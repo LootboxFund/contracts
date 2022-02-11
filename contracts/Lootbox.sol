@@ -292,7 +292,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   function withdrawEarnings (uint256 ticketId) public {
     require(isFundraising == false, "Withdrawals cannot be made during fundraising period");
     require(ownerOf(ticketId) == msg.sender, "You do not own this ticket");
-    uint sharesOwned = sharesInTicket[ticketId]; // TODO: calculate shares owned
+    uint sharesOwned = sharesInTicket[ticketId]; 
     // loop through all deposits
     for(uint256 i=0; i < depositIdCounter.current(); i++){
       Deposit memory deposit = depositReciepts[i];
@@ -317,7 +317,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
           token.transferFrom(address(this), ownerOf(ticketId), owedErc20);
         } else {
           // handle native tokens
-          uint256 owedNative = deposit.nativeTokenAmount * sharesOwned / sharesSoldCount;
+          uint256 owedNative = deposit.nativeTokenAmount * sharesSoldCount / sharesOwned;
           // emit the WithdrawEarnings event
           emit WithdrawEarnings(
             msg.sender,

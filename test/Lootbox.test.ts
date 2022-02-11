@@ -64,6 +64,7 @@ describe("📦 Lootbox smart contract", async function () {
   const HARDHAT_TYPICAL_STARTING_NATIVE_BALANCE = "10000000000000000000000"
   const GAS_FEE_APPROXIMATION = "10000000000000000"
   const USDC_STARTING_BALANCE = "10000000000000000000000"
+  const USDT_STARTING_BALANCE = "10000000000000000000000"
 
   const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
   const buyAmountInEtherA2 = ethers.utils.parseUnits("0.00013560931", "ether")
@@ -74,6 +75,11 @@ describe("📦 Lootbox smart contract", async function () {
 
   const depositAmountInUSDCB1 = ethers.utils.parseUnits("100", "ether");
   const depositAmountInUSDCB2 = ethers.utils.parseUnits("70", "ether")
+
+  const depositAmountInUSDTC1 = ethers.utils.parseUnits("30", "ether")
+  const depositAmountInUSDTC2 = ethers.utils.parseUnits("5", "ether")
+
+  const provider = waffle.provider;
 
   before(async function () {
     const [
@@ -239,7 +245,6 @@ describe("📦 Lootbox smart contract", async function () {
     // this test goes immediately after the beforeEach() so that we dont deal with duplicate purchases in the beforeEach() loop
     // if this test with 3rd in the order, then purchases will have been duplicated 3X and the test will fail (unless we multiply by 3)
     it("treasury receives the money & reduces the purchasers native token balance accordingly", async () => {
-      const provider = waffle.provider;
       const treasuryBalance = await provider.getBalance(entityTreasury.address)
       const purchaserBalance = await provider.getBalance(purchaser2.address)
       expect(await lootbox.ticketIdCounter()).to.eq("3");
@@ -373,12 +378,64 @@ describe("📦 Lootbox smart contract", async function () {
     });
   })
 
-  describe("withdrawing payout", async () => {
-    it("only the owner of the NFT can withdraw with it", async () => {
+  describe.only("withdrawing payout", async () => {
+
+    beforeEach(async () => {
+
       await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
-      // await lootbox.connect(deployer).withdrawEarnings("0").to.be.reverted
+      await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA2.toString() })
+      await lootbox.connect(purchaser2).purchaseTicket({ value: buyAmountInEtherB.toString() })
+
+      await lootbox.connect(issuingEntity).endFundraisingPeriod();
+
+      await lootbox.connect(issuingEntity).depositEarningsNative({ value: depositAmountInEtherA1.toString() });
+
+      await usdc_stablecoin.mint(issuingEntity.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
+      await usdc_stablecoin.connect(issuingEntity).approve(lootbox.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
+      await lootbox.connect(issuingEntity).depositEarningsErc20(usdc_stablecoin.address, depositAmountInUSDCB1.toString())
+      
+      await usdt_stablecoin.mint(issuingEntity.address, ethers.BigNumber.from(USDT_STARTING_BALANCE));
+      await usdt_stablecoin.connect(issuingEntity).approve(lootbox.address, ethers.BigNumber.from(USDT_STARTING_BALANCE));
+      await lootbox.connect(issuingEntity).depositEarningsErc20(usdt_stablecoin.address, depositAmountInUSDTC1.toString())
+
+    })
+    
+    it("correct amount of native token is withdrawn", async () => {
+      const nativeBalance = await provider.getBalance(purchaser2.address);
+      expect(await lootbox.ticketIdCounter()).to.eq("3");
+      const [
+        sharesOwned,
+        percentageOwned,
+        sharePriceUSD
+      ] = await lootbox.connect(purchaser2).viewTicketInfo("2");
+      await lootbox.connect(purchaser2).withdrawEarnings("2");
+      const expectedApproxBalance = nativeBalance
+        .sub(ethers.BigNumber.from(GAS_FEE_APPROXIMATION))
+        .add(depositAmountInEtherA1.div(2))
+      const newNativeBalance = await provider.getBalance(purchaser2.address);
+      console.log(`
+
+      sharesOwned:            ${sharesOwned} 
+      percentageOwned:        ${percentageOwned}
+      sharePriceUSD:          ${sharePriceUSD}  
+      
+      nativeBalance:          ${nativeBalance}
+      expectedApproxBalance:  ${expectedApproxBalance}
+      newNativeBalance:       ${newNativeBalance}
+      
+      `)
+      expect(expectedApproxBalance.toString()).to.eq(
+        newNativeBalance.toString()
+      )
+      expect(nativeBalance).to.be.lt(
+        expectedApproxBalance
+      )
     });
-    it("correct amount of native token is withdrawn", async () => { });
+    it("only the owner of the NFT can withdraw with it", async () => {
+      expect(
+        await lootbox.connect(deployer).withdrawEarnings("0")
+      ).to.be.revertedWith("You do not own this ticket");
+    });
     it("correct amount of erc20 token is withdrawn", async () => { });
     it("emits a withdraw event", async () => { });
     it("withdrawing will withdraw from all past unredeemed deposits", async () => { });
