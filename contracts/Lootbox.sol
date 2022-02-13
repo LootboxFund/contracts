@@ -198,11 +198,14 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   function purchaseTicket () public payable returns (uint256 _ticketId, uint256 _sharesPurchased) {
     require(msg.sender != treasury, "Treasury cannot purchase tickets");
     require(isFundraising == true, "Tickets cannot be purchased after the fundraising period");
+    // calculate how many shares to buy based on msg.value
+    uint256 sharesPurchased = estimateSharesPurchase(msg.value);
+
+    // do not allow selling above sharesSoldMax 
+    require(sharesPurchased < checkMaxSharesRemainingForSale(), "Not enough shares remaining to purchase, try a smaller amount");
     // get an ID
     uint256 ticketId = ticketIdCounter.current();
     ticketIdCounter.increment();
-    // calculate how many shares to buy based on msg.value
-    uint256 sharesPurchased = calculateSharesPurchase();
     // update the mapping that tracks how many shares a ticket owns
     sharesInTicket[ticketId] = sharesPurchased;
     purchasers.add(msg.sender);
@@ -244,26 +247,6 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     _safeMint(msg.sender, ticketId);
     // return the ticket ID & sharesPurchased
     return (ticketId, sharesPurchased);
-  }
-
-  // internal implementation function to handle conversion of msg.value to shares
-  function calculateSharesPurchase () internal returns (uint256 _sharesPurchased) {
-    // get price feed of native token
-    (
-      uint80 roundID,
-      int256 price,
-      uint256 startedAt,
-      uint256 timeStamp,
-      uint80 answeredInRound
-    ) = nativeTokenPriceFeed.latestRoundData();
-    // If the round is not complete yet, timestamp is 0
-    require(timeStamp > 0, "Round not complete");
-    uint256 sharesPurchased = getSharePurchaseAmount(
-      msg.value,
-      18,
-      uint256(price)
-    );
-    return sharesPurchased;
   }
 
   // internal helper function that converts stablecoin amount to guild token amount

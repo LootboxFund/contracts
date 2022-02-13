@@ -30,7 +30,7 @@ import {
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 
-const BNB_ARCHIVED_PRICE = "51618873955";
+const BNB_ARCHIVED_PRICE = "51618873955";   // $516.18873955 USD per BNB
 
 describe("📦 Lootbox smart contract", async function () {
   let deployer: SignerWithAddress;
@@ -60,7 +60,7 @@ describe("📦 Lootbox smart contract", async function () {
   const LOOTBOX_NAME = "Pinata Lootbox";
   const LOOTBOX_SYMBOL = "PINATA";
 
-  const SHARE_PRICE_USD = "7000000"; // 7 usd cents
+  const SHARE_PRICE_USD = "7000000"; // $0.07 usd per share
 
   const TICKET_PURCHASE_FEE = "2000000" // 2%
   const AFFILIATE_FEE = "500000" // 1%
@@ -69,6 +69,8 @@ describe("📦 Lootbox smart contract", async function () {
   const HARDHAT_TYPICAL_STARTING_NATIVE_BALANCE = "10000000000000000000000"
   const USDC_STARTING_BALANCE = "10000000000000000000000"
   const USDT_STARTING_BALANCE = "10000000000000000000000"
+
+  const MAX_SHARES_AVAILABLE_FOR_SALE = "50000" // 
 
   const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
   const buyAmountInEtherA2 = ethers.utils.parseUnits("0.00013560931", "ether")
@@ -116,11 +118,11 @@ describe("📦 Lootbox smart contract", async function () {
     })
 
     it("Name cannot be empty", async () => {
-      expect(
+      await expect(
         Lootbox.deploy(
           "",
           "SYMBOL",
-          ethers.utils.parseUnits("50000", "18"), // 50k shares, 18 decimals
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
           entityTreasury.address,
           issuingEntity.address,
@@ -133,11 +135,11 @@ describe("📦 Lootbox smart contract", async function () {
       ).to.be.revertedWith("Name cannot be empty")
     })
     it("Symbol cannot be empty", async () => {
-      expect(
+      await expect(
         Lootbox.deploy(
           "Name",
           "",
-          ethers.utils.parseUnits("50000", "18"), // 50k shares, 18 decimals
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
           entityTreasury.address,
           issuingEntity.address,
@@ -150,11 +152,11 @@ describe("📦 Lootbox smart contract", async function () {
       ).to.be.revertedWith("Symbol cannot be empty")
     })
     it("Purchase ticket fee must be less than 100000000 (100%)", async () => {
-      expect(
+      await expect(
         Lootbox.deploy(
           "Name",
           "Symbol",
-          ethers.utils.parseUnits("50000", "18"), // 50k shares, 18 decimals
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
           entityTreasury.address,
           issuingEntity.address,
@@ -167,11 +169,11 @@ describe("📦 Lootbox smart contract", async function () {
       ).to.be.revertedWith("Purchase ticket fee must be less than 100000000 (100%)")
     })
     it("Affiliate ticket fee must be less than or equal to purchase ticket fee", async () => {
-      expect(
+      await expect(
         Lootbox.deploy(
           "Name",
           "SYMBOL",
-          ethers.utils.parseUnits("50000", "18"), // 50k shares, 18 decimals
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
           entityTreasury.address,
           issuingEntity.address,
@@ -184,11 +186,11 @@ describe("📦 Lootbox smart contract", async function () {
       ).to.be.revertedWith("Affiliate ticket fee must be less than or equal to purchase ticket fee")
     })
     it("Treasury cannot be the zero address", async () => {
-      expect(
+      await expect(
         Lootbox.deploy(
           "Name",
           "SYMBOL",
-          ethers.utils.parseUnits("50000", "18"), // 50k shares, 18 decimals
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
           ethers.constants.AddressZero,
           issuingEntity.address,
@@ -201,11 +203,11 @@ describe("📦 Lootbox smart contract", async function () {
       ).to.be.revertedWith("Treasury cannot be the zero address")
     })
     it("Issuer cannot be the zero address", async () => {
-      expect(
+      await expect(
         Lootbox.deploy(
           "Name",
           "SYMBOL",
-          ethers.utils.parseUnits("50000", "18"), // 50k shares, 18 decimals
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
           entityTreasury.address,
           ethers.constants.AddressZero,
@@ -218,11 +220,11 @@ describe("📦 Lootbox smart contract", async function () {
       ).to.be.revertedWith("Issuer cannot be the zero address")
     })
     it("Native token price feed is required", async () => {
-      expect(
+      await expect(
         Lootbox.deploy(
           "Name",
           "SYMBOL",
-          ethers.utils.parseUnits("50000", "18"), // 50k shares, 18 decimals
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
           entityTreasury.address,
           issuingEntity.address,
@@ -235,11 +237,11 @@ describe("📦 Lootbox smart contract", async function () {
       ).to.be.revertedWith("Native token price feed is required")
     })
     it("Broker cannot be the zero address", async () => {
-      expect(
+      await expect(
         Lootbox.deploy(
           "Name",
           "SYMBOL",
-          ethers.utils.parseUnits("50000", "18"), // 50k shares, 18 decimals
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
           entityTreasury.address,
           issuingEntity.address,
@@ -252,11 +254,11 @@ describe("📦 Lootbox smart contract", async function () {
       ).to.be.revertedWith("Broker cannot be the zero address")
     })
     it("Affiliate cannot be the zero address", async () => {
-      expect(
+      await expect(
         Lootbox.deploy(
           "Name",
           "SYMBOL",
-          ethers.utils.parseUnits("50000", "18"), // 50k shares, 18 decimals
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
           entityTreasury.address,
           issuingEntity.address,
@@ -269,7 +271,7 @@ describe("📦 Lootbox smart contract", async function () {
       ).to.be.revertedWith("Affiliate cannot be the zero address")
     })
     it("Max shares sold must be greater than zero", async () => {
-      expect(
+      await expect(
         Lootbox.deploy(
           "Name",
           "SYMBOL",
@@ -319,7 +321,7 @@ describe("📦 Lootbox smart contract", async function () {
       lootbox = (await Lootbox.deploy(
         LOOTBOX_NAME,
         LOOTBOX_SYMBOL,
-        ethers.utils.parseUnits("50000", "18"), // 50k shares, 18 decimals
+        ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, 18), // 50k shares, 18 decimals
         ethers.BigNumber.from(SHARE_PRICE_USD),
         entityTreasury.address,
         issuingEntity.address,
@@ -361,11 +363,7 @@ describe("📦 Lootbox smart contract", async function () {
       it("only the owner of the NFT can change the ownership", async () => {
         const ticketId = "0"
         await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
-        expect(lootbox.connect(purchaser2).transferFrom(purchaser.address, purchaser2.address, ticketId)).to.be.revertedWith("ERC721: transfer caller is not owner nor approved")
-      })
-      it("checkMaxSharesRemainingForSale() => how many shares are available for sale", async () => {
-        // TODO
-        // uint256 remainingShares = lootbox.checkMaxSharesRemainingForSale() 
+        await expect(lootbox.connect(purchaser2).transferFrom(purchaser.address, purchaser2.address, ticketId)).to.be.revertedWith("ERC721: transfer caller is not owner nor approved")
       })
     })
 
@@ -493,14 +491,58 @@ describe("📦 Lootbox smart contract", async function () {
     });
 
     describe("max shares for sale", async () => {
+      it("checkMaxSharesRemainingForSale() => how many shares are available for sale", async () => {
+        const beforeRemainingShares = await lootbox.checkMaxSharesRemainingForSale();
+        expect(beforeRemainingShares.toString()).to.eq(ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, 18));
+
+        await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
+        const sharesPurchased = await lootbox.estimateSharesPurchase(buyAmountInEtherA1.toString())
+        const afterRemainingShares = await lootbox.checkMaxSharesRemainingForSale();
+        expect(afterRemainingShares.toString()).to.eq(beforeRemainingShares.sub(sharesPurchased).toString());
+      })
       it("decreases the max shares remaining for sale after each purchase", async () => {
-        // TODO
+        const initialRemainingShares = await lootbox.checkMaxSharesRemainingForSale();
+        expect(initialRemainingShares.toString()).to.eq(ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, 18));
+
+        await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
+        const round1SharesPurchased = await lootbox.estimateSharesPurchase(buyAmountInEtherA1.toString())
+        const round1RemainingShares = await lootbox.checkMaxSharesRemainingForSale();
+        expect(round1RemainingShares.toString()).to.eq(initialRemainingShares.sub(round1SharesPurchased).toString());
+
+        await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA2.toString() })
+        const round2SharesPurchased = await lootbox.estimateSharesPurchase(buyAmountInEtherA2.toString())
+        const round2RemainingShares = await lootbox.checkMaxSharesRemainingForSale();
+        expect(round2RemainingShares.toString()).to.eq(round1RemainingShares.sub(round2SharesPurchased).toString());
+
+        await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherB.toString() })
+        const round3SharesPurchased = await lootbox.estimateSharesPurchase(buyAmountInEtherB.toString())
+        const round3RemainingShares = await lootbox.checkMaxSharesRemainingForSale();
+        expect(round3RemainingShares.toString()).to.eq(round2RemainingShares.sub(round3SharesPurchased).toString());
       });
-      it("rejects purchases exceeding the max shares remaining for sale", async () => {
-        // TODO
-      });
-      it("Lootbox does NOT auto-end fundraising period even if max shares are sold", async () => {
-        // TODO
+      it("rejects purchase attempts exceeding the max shares remaining for sale", async () => {
+        
+        const priceFeedDecimalsUSD = ethers.utils.parseUnits("1", 8);
+        const sharePriceUSD = await lootbox.sharePriceUSD();
+
+        const remainingShares = await lootbox.checkMaxSharesRemainingForSale();
+        const remainingSharesValueUSD = remainingShares.mul(sharePriceUSD).div(priceFeedDecimalsUSD)
+
+        const excessSharesPurchase = remainingShares.add(ethers.utils.parseUnits("1", 18));
+        const excessSharesValueUSD = excessSharesPurchase.mul(sharePriceUSD).div(priceFeedDecimalsUSD)
+
+        const buyExcessWithNativeToken = excessSharesValueUSD.div(BNB_ARCHIVED_PRICE).mul(priceFeedDecimalsUSD)
+
+        await expect(
+           lootbox.connect(purchaser).purchaseTicket({ value: buyExcessWithNativeToken.toString() })
+        ).to.be.revertedWith("Not enough shares remaining to purchase, try a smaller amount")
+
+        const buyExactWithNativeToken = remainingSharesValueUSD.mul(priceFeedDecimalsUSD).div(BNB_ARCHIVED_PRICE)
+
+        await expect(
+          lootbox.connect(purchaser).purchaseTicket({ value: buyExactWithNativeToken.toString() })
+        ).to.not.be.reverted;
+        const marginOfError = "7000" // 6808
+        expect(await lootbox.checkMaxSharesRemainingForSale()).to.be.lt(marginOfError)
       });
     })
 
@@ -577,7 +619,7 @@ describe("📦 Lootbox smart contract", async function () {
         ).to.be.revertedWith("Deposits of erc20 cannot also include native tokens in the same transaction");
       })
       it("treasury cannot purchase tickets", async () => {
-        expect(
+        await expect(
           lootbox.connect(entityTreasury).purchaseTicket({ value: buyAmountInEtherA1.toString() })
         ).to.be.revertedWith("Treasury cannot purchase tickets");
       })
@@ -640,16 +682,16 @@ describe("📦 Lootbox smart contract", async function () {
           to: lootbox.address,
           value: depositAmount
         })
-        expect(
+        await expect(
           lootbox.connect(purchaser).rescueTrappedErc20Tokens(usdc_stablecoin.address)
         ).to.be.revertedWith(generatePermissionRevokeMessage(purchaser.address, DAO_ROLE))
-        expect(
+        await expect(
           lootbox.connect(purchaser).rescueTrappedNativeTokens()
         ).to.be.revertedWith(generatePermissionRevokeMessage(purchaser.address, DAO_ROLE))
-        expect(
+        await expect(
           lootbox.connect(issuingEntity).rescueTrappedErc20Tokens(usdc_stablecoin.address)
         ).to.not.be.reverted;
-        expect(
+        await expect(
           lootbox.connect(issuingEntity).rescueTrappedNativeTokens()
         ).to.not.be.reverted;
       })
@@ -724,7 +766,7 @@ describe("📦 Lootbox smart contract", async function () {
         )
       });
       it("only the owner of the NFT can withdraw with it", async () => {
-        expect(
+        await expect(
           lootbox.connect(deployer).withdrawEarnings("0")
         ).to.be.revertedWith("You do not own this ticket");
       });
@@ -844,22 +886,22 @@ describe("📦 Lootbox smart contract", async function () {
       it("withdrawal fails if during fundraising period", async () => {
         const ticketId = "0"
         await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
-        expect(lootbox.withdrawEarnings(ticketId)).to.be.revertedWith("Withdrawals cannot be made during fundraising period")
+        await expect(lootbox.withdrawEarnings(ticketId)).to.be.revertedWith("Withdrawals cannot be made during fundraising period")
       });
       it("withdrawal succeeds if outside fundraising period", async () => {
         const ticketId = "0"
         await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
         await lootbox.connect(issuingEntity).endFundraisingPeriod()
         await lootbox.connect(issuingEntity).depositEarningsNative({ value: depositAmountInEtherA1.toString() })
-        expect(lootbox.connect(purchaser).withdrawEarnings(ticketId)).to.not.be.reverted
+        await expect(lootbox.connect(purchaser).withdrawEarnings(ticketId)).to.not.be.reverted
       });
       it("endFundraisingPeriod() => only allows the issuingEntity to end the fundraising period", async () => {
-        expect(lootbox.connect(deployer).endFundraisingPeriod()).to.be.revertedWith(generatePermissionRevokeMessage(deployer.address, DAO_ROLE))
-        expect(lootbox.connect(issuingEntity).endFundraisingPeriod()).to.not.be.reverted
+        await expect(lootbox.connect(deployer).endFundraisingPeriod()).to.be.revertedWith(generatePermissionRevokeMessage(deployer.address, DAO_ROLE))
+        await expect(lootbox.connect(issuingEntity).endFundraisingPeriod()).to.not.be.reverted
       });
       it("endFundraisingPeriod() => cannot be called twice", async () => {
         await lootbox.connect(issuingEntity).endFundraisingPeriod()
-        expect(lootbox.connect(issuingEntity).endFundraisingPeriod()).to.be.revertedWith("Fundraising period has already ended")
+        await expect(lootbox.connect(issuingEntity).endFundraisingPeriod()).to.be.revertedWith("Fundraising period has already ended")
       })
     })
 

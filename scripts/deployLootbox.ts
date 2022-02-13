@@ -95,14 +95,19 @@ async function main() {
   const bnbPriceOracle = "0x2514895c72f50D8bd4B4F9b1110F0D6bD2c97526"
   const Lootbox = await ethers.getContractFactory("Lootbox");
   const lootbox = await Lootbox.deploy(
-    "Artemis Guild",
-    "ATMS",
-    "100000",
-    "7000000",
-    gfxTreasury,
-    gfxDAO,
-    bnbPriceOracle
+    "Artemis Guild",    // string  _name
+    "ATMS",             // string  _symbol
+    "100000",           // uint256 _maxSharesSold
+    "7000000",          // uint256 _sharePriceUSD
+    gfxTreasury,        // address _treasury
+    gfxDAO,             // address _issuingEntity
+    bnbPriceOracle,     // address _nativeTokenPriceFeed
+    "2000000",          // uint256 _ticketPurchaseFee,
+    "500000",           // uint256 _ticketAffiliateFee,
+    Oxnewton,           // address _broker,
+    Oxterran            // address _affiliate
   );
+
   await lootbox.deployed();
   logToFile(
     `Lootbox Contract Address = ${lootbox.address} \n`,
