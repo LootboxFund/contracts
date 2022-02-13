@@ -9,7 +9,8 @@
     "geth-local": "npx hardhat node",
     "deploy-local": "npx hardhat compile && npx hardhat run scripts/deploy.ts --network localhost",
     "deploy:testnet:crowdsale-factory": "npx hardhat compile && yarn abi:publish && npx hardhat run scripts/deployCrowdSaleFactory.dev.ts --network binance_testnet",
-    "deploy:testnet:guild-factory": "npx hardhat compile && yarn abi:publish && npx hardhat run scripts/deployGuildFactory.dev.ts --network binance_testnet"
+    "deploy:testnet:guild-factory": "npx hardhat compile && yarn abi:publish && npx hardhat run scripts/deployGuildFactory.dev.ts --network binance_testnet",
+    "deploy:testnet:lootbox": "npx hardhat compile && npx hardhat run scripts/deployLootbox.ts --network binance_testnet"
   },
   "author": "",
   "license": "ISC",
