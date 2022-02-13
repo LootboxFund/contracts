@@ -110,6 +110,9 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     uint256 sharePriceUSD
   );
 
+  // TODO: Obscure affiliate information (hide it)
+  // hide it by refactoring InvestmentFundsDispersed into two events,
+  // one for public (sharable event ABI), another for private (affiliate rates & wallets)
   event InvestmentFundsDispersed(
     address indexed purchaser,
     address indexed treasury,
