@@ -820,10 +820,42 @@ describe("📦 Lootbox smart contract", async function () {
   })
 
   describe("incurs fees", async () => {
-    it("charges a 2% fee on ticket sales (no affiliates yet)", async () => { });
-    it("charges a 0% fee on deposits", async () => { });
-    it("charges a 2% fee on withdrawals, 2% to LootboxDAO", async () => { });
-    it("charges a 5% fee on transfers, 4% to issuingEntity & 1% to LootboxDAO", async () => { });
+    beforeEach(async () => {
+      await usdc_stablecoin.mint(issuingEntity.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
+      await usdc_stablecoin.connect(issuingEntity).approve(lootbox.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
+      
+      await usdt_stablecoin.mint(issuingEntity.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
+      await usdt_stablecoin.connect(issuingEntity).approve(lootbox.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
+    })
+    it("charges a 2% fee on ticket sales (no affiliates yet)", async () => {
+
+    });
+    it.only("charges a 0% fee on deposits", async () => {
+      const ticketId = "1";
+      await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
+      await lootbox.connect(issuingEntity).endFundraisingPeriod();
+      await lootbox.connect(issuingEntity).depositEarningsNative({ value: depositAmountInEtherA1.toString() })
+      await lootbox.connect(issuingEntity).depositEarningsErc20(usdc_stablecoin.address, depositAmountInUSDCB1.toString())
+      
+      const owedNative = await lootbox.viewOwedOfNativeTokenToTicket(ticketId)
+      expect(
+        owedNative
+      ).to.eq(
+        depositAmountInEtherA1.toString()
+      )
+      const owedErc20 = await lootbox.viewOwedErc20TokensToTicket(ticketId, usdc_stablecoin.address)
+      expect(
+        owedErc20
+      ).to.eq(
+        depositAmountInUSDCB1.toString()
+      )
+    });
+    it("charges a 0% fee on withdrawals, 0% to LootboxDAO", async () => {
+
+    });
+    it("charges a 0% fee on transfers, 0% to issuingEntity & 0% to LootboxDAO", async () => {
+
+    });
   })
 
   describe("_____", async () => {
