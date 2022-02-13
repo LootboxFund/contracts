@@ -421,7 +421,7 @@ describe("📦 Lootbox smart contract", async function () {
     });
   })
 
-  describe("Trapped Tokens", async () => {
+  describe("Trapped Tokens are handled", async () => {
     beforeEach(async () => {
       await usdc_stablecoin.mint(issuingEntity.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
       await usdc_stablecoin.connect(issuingEntity).approve(lootbox.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
@@ -429,35 +429,77 @@ describe("📦 Lootbox smart contract", async function () {
       await usdt_stablecoin.mint(issuingEntity.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
       await usdt_stablecoin.connect(issuingEntity).approve(lootbox.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
     })
-    it.only("sending native tokens directly to lootbox will result in them being trapped", async () => {
+    it("sending native tokens directly to lootbox will result in them being trapped", async () => {
       await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
       await lootbox.connect(issuingEntity).endFundraisingPeriod();
+      const depositAmount = ethers.utils.parseEther("1")
       await issuingEntity.sendTransaction({
         to: lootbox.address,
-        value: ethers.utils.parseEther("1")
+        value: depositAmount
       })
       const recognizedDeposits = await lootbox.viewTotalDepositOfNativeToken()
       expect(recognizedDeposits.toString()).to.eq("0")
+      const trappedTokens = await lootbox.checkForTrappedNativeTokens()
+      expect(trappedTokens.toString()).to.eq(depositAmount)
     })
     it("sending erc20 tokens directly to lootbox will result in them being trapped", async () => {
-      
+      await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
+      await lootbox.connect(issuingEntity).endFundraisingPeriod();
+      const depositAmount = ethers.utils.parseEther("1")
+      await usdc_stablecoin.connect(issuingEntity).transfer(lootbox.address, depositAmount)
+      const recognizedDeposits = await lootbox.viewTotalDepositOfErc20Token(usdc_stablecoin.address)
+      expect(recognizedDeposits.toString()).to.eq("0")
+      const trappedTokens = await lootbox.checkForTrappedErc20Tokens(usdc_stablecoin.address)
+      expect(trappedTokens.toString()).to.eq(depositAmount)
     })
     it("only the issuingEntity can rescue trapped tokens", async () => {
-      
+      await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
+      await lootbox.connect(issuingEntity).endFundraisingPeriod();
+      const depositAmount = ethers.utils.parseEther("1")
+      await usdc_stablecoin.connect(issuingEntity).transfer(lootbox.address, depositAmount)
+      await issuingEntity.sendTransaction({
+        to: lootbox.address,
+        value: depositAmount
+      })
+      expect(
+        lootbox.connect(purchaser).rescueTrappedErc20Tokens(usdc_stablecoin.address)
+      ).to.be.revertedWith(generatePermissionRevokeMessage(purchaser.address, DAO_ROLE))
+      expect(
+        lootbox.connect(purchaser).rescueTrappedNativeTokens()
+      ).to.be.revertedWith(generatePermissionRevokeMessage(purchaser.address, DAO_ROLE))
+      expect(
+        lootbox.connect(issuingEntity).rescueTrappedErc20Tokens(usdc_stablecoin.address)
+      ).to.not.be.reverted;
+      expect(
+        lootbox.connect(issuingEntity).rescueTrappedNativeTokens()
+      ).to.not.be.reverted;
     })
-    it("trapped tokens can be rescued by the issuingEntity and flush them to treasury", async () => {
-      // when sending ether or erc20 tokens directly to the lootbox address, the funds will get trapped
-      // ether & erc20 tokens must be deposited using their specified functions (depositEarningsNative() & depositEarningsErc20())
-      // in this case, we allow the treasury to flush the trapped tokens back to the treasury (NOT the issuer as we dont have that data)
+    it.only("trapped tokens can be rescued by the issuingEntity and flush them to treasury", async () => {
+      await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
+      await lootbox.connect(issuingEntity).endFundraisingPeriod();
+      const depositAmount = ethers.utils.parseEther("1")
+      await usdc_stablecoin.connect(issuingEntity).transfer(lootbox.address, depositAmount)
+      await issuingEntity.sendTransaction({
+        to: lootbox.address,
+        value: depositAmount
+      })
+      const preRescueNativeTreasuryBalance = await provider.getBalance(entityTreasury.address)
+      const preRescueErc20TreasuryBalance = await usdc_stablecoin.balanceOf(entityTreasury.address)
 
-      // steps
-      // 1. iterate through past deposits and sum the amounts
-      // 2. compare the deposits vs lootbox balance
-      // 3. the difference should be the trapped tokens
-      // 4. the treasury can then flush the trapped tokens back to the treasury and emit an event RescueTrappedTokens
-      // 5. same process for erc20, but an address must be provided
+      await lootbox.connect(issuingEntity).rescueTrappedErc20Tokens(usdc_stablecoin.address)
+      await lootbox.connect(issuingEntity).rescueTrappedNativeTokens()
 
-      // we should prbly have a function to view trapped tokens too
+      const postRescueNativeTreasuryBalance = await provider.getBalance(entityTreasury.address)
+      const postRescueErc20TreasuryBalance = await usdc_stablecoin.balanceOf(entityTreasury.address)
+
+      expect(postRescueNativeTreasuryBalance.toString()).to.eq(preRescueNativeTreasuryBalance.add(depositAmount).toString())
+      expect(postRescueErc20TreasuryBalance.toString()).to.eq(preRescueErc20TreasuryBalance.add(depositAmount).toString())
+
+      const remainingTrappedNativeTokens = await lootbox.checkForTrappedNativeTokens()
+      const remainingTrappedErc20Tokens = await lootbox.checkForTrappedErc20Tokens(usdc_stablecoin.address)
+
+      expect(remainingTrappedNativeTokens.toString()).to.eq("0")
+      expect(remainingTrappedErc20Tokens.toString()).to.eq("0")
     })
   })
 

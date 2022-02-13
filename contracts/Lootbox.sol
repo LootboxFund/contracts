@@ -57,12 +57,13 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE");
 
   uint256 public deploymentStartTime;
+  uint256 public shareDecimals = 18;
 
   AggregatorV3Interface internal nativeTokenPriceFeed;
 
   uint256 public sharePriceUSD; // THIS SHOULD NOT BE MODIFIED (8 decimals)
   uint256 public sharesSoldGoal;
-  uint256 public sharesSoldCount;
+  uint256 public sharesSoldCount; // TODO: fix decimals! 
   uint256 public nativeTokenRaisedTotal;
   EnumerableSet.AddressSet private purchasers;
 
@@ -158,7 +159,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     sharesInTicket[ticketId] = sharesPurchased;
     purchasers.add(msg.sender);
     // update the total count of shares sold
-    sharesSoldCount = sharesSoldCount + sharesPurchased;
+    shareDecimals = shareDecimals + sharesPurchased;
     nativeTokenRaisedTotal = nativeTokenRaisedTotal + msg.value;
     // emit the Purchase event
     emit MintTicket(
@@ -203,11 +204,10 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
       uint256 stablecoinDecimals,
       uint256 stableCoinPrice
   ) internal view returns (uint256 guildTokenAmount) {
-      uint256 ticketDecimals = 18;
       return
           (amountOfStableCoin *
               stableCoinPrice *
-              10**(ticketDecimals - stablecoinDecimals)) /
+              10**(shareDecimals - stablecoinDecimals)) /
           sharePriceUSD;
   }
 
@@ -238,7 +238,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
 
   function depositEarningsErc20 (address erc20Token, uint256 erc20Amount) public payable { 
     require(isFundraising == false, "Deposits cannot be made during fundraising period");
-    require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
+    require(shareDecimals > 0, "No shares have been sold. Deposits will not be accepted");
     require(msg.value == 0, "Deposits of erc20 cannot also include native tokens in the same transaction");
     // log this to our list of erc20 tokens
     erc20TokensDeposited.add(erc20Token);
@@ -274,7 +274,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
 
   function depositEarningsNative () public payable {
     require(isFundraising == false, "Deposits cannot be made during fundraising period");
-    require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
+    require(shareDecimals > 0, "No shares have been sold. Deposits will not be accepted");
     // log this payout in sum
     nativeTokenDeposited = nativeTokenDeposited + msg.value;
     // create the deposit receipt
@@ -317,7 +317,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
         // handle erc20 tokens
         if (deposit.erc20Token != address(0)) {
           // calculate how much is owed
-          uint256 owedErc20 = deposit.erc20TokenAmount * sharesOwned / sharesSoldCount;
+          uint256 owedErc20 = deposit.erc20TokenAmount * sharesOwned / shareDecimals;
           // emit the WithdrawEarnings event
           emit WithdrawEarnings(
             msg.sender,
@@ -333,7 +333,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
           token.transferFrom(address(this), ownerOf(ticketId), owedErc20);
         } else {
           // handle native tokens
-          uint256 owedNative = deposit.nativeTokenAmount * sharesOwned / sharesSoldCount;
+          uint256 owedNative = deposit.nativeTokenAmount * sharesOwned / shareDecimals;
           // emit the WithdrawEarnings event
           emit WithdrawEarnings(
             msg.sender,
@@ -352,7 +352,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
 
   function viewTicketInfo(uint256 ticketId) public view returns (uint256 _sharesOwned, uint256 _percentageOwned, uint256 _sharePriceUSD) {
     uint256 sharesOwned = sharesInTicket[ticketId];
-    uint256 percentageOwned = sharesOwned * 1*(10**8) / sharesSoldCount;
+    uint256 percentageOwned = sharesOwned * 1*(10**8) / shareDecimals;
     return (
       sharesOwned,
       percentageOwned,
@@ -414,8 +414,19 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     return ticketsOwned;
   }
 
-  function rescueTrappedErc20Tokens(address erc20Token) public onlyRole(DAO_ROLE) {
-    require(isFundraising == false, "Rescue cannot be made during fundraising period");
+  function checkForTrappedNativeTokens() public view returns (uint256 _trappedTokens) {
+    uint256 depositedTokens = 0;
+    for (uint256 i=0; i < depositIdCounter.current(); i++) {
+      Deposit memory deposit = depositReciepts[i];
+      if (deposit.erc20Token == address(0)) {
+        depositedTokens = depositedTokens + deposit.nativeTokenAmount;
+      }
+    }
+    uint256 trappedTokens = address(this).balance - depositedTokens;
+    return trappedTokens;
+  }
+
+  function checkForTrappedErc20Tokens(address erc20Token) public view returns (uint256 _trappedTokens) {
     uint256 depositedTokens = 0;
     for (uint256 i=0; i < depositIdCounter.current(); i++) {
       Deposit memory deposit = depositReciepts[i];
@@ -425,6 +436,13 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     }
     IERC20 token = IERC20(erc20Token);
     uint256 trappedTokens = token.balanceOf(address(this)) - depositedTokens;
+    return trappedTokens;
+  }
+
+  function rescueTrappedErc20Tokens(address erc20Token) public onlyRole(DAO_ROLE) {
+    require(isFundraising == false, "Rescue cannot be made during fundraising period");
+    uint256 trappedTokens = checkForTrappedErc20Tokens(erc20Token);
+    IERC20 token = IERC20(erc20Token);
     if (trappedTokens > 0) {
       token.transfer(treasury, trappedTokens);
     }
@@ -432,16 +450,9 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
 
   function rescueTrappedNativeTokens() public onlyRole(DAO_ROLE) {
     require(isFundraising == false, "Rescue cannot be made during fundraising period");
-    uint256 depositedTokens = 0;
-    for (uint256 i=0; i < depositIdCounter.current(); i++) {
-      Deposit memory deposit = depositReciepts[i];
-      if (deposit.erc20Token == address(0)) {
-        depositedTokens = depositedTokens + deposit.nativeTokenAmount;
-      }
-    }
-    uint256 trappedNativeTokens = address(this).balance - depositedTokens;
-    if (trappedNativeTokens > 0) {
-      payable(treasury).transfer(trappedNativeTokens);
+    uint256 trappedTokens = checkForTrappedNativeTokens();
+    if (trappedTokens > 0) {
+      payable(treasury).transfer(trappedTokens);
     }
   }
 
