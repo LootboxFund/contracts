@@ -61,7 +61,6 @@ describe("📦 Lootbox smart contract", async function () {
   const LOOTBOX_SYMBOL = "PINATA";
 
   const SHARE_PRICE_USD = "7000000"; // 7 usd cents
-  const SHARES_SOLD_GOAL = 1000;
 
   const TICKET_PURCHASE_FEE = "2000000" // 2%
   const AFFILIATE_FEE = "500000" // 1%
@@ -121,8 +120,8 @@ describe("📦 Lootbox smart contract", async function () {
         Lootbox.deploy(
           "",
           "SYMBOL",
+          ethers.utils.parseUnits("50000", "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
-          ethers.BigNumber.from("7000000"),
           entityTreasury.address,
           issuingEntity.address,
           bnb_pricefeed,
@@ -138,8 +137,8 @@ describe("📦 Lootbox smart contract", async function () {
         Lootbox.deploy(
           "Name",
           "",
+          ethers.utils.parseUnits("50000", "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
-          ethers.BigNumber.from("7000000"),
           entityTreasury.address,
           issuingEntity.address,
           bnb_pricefeed,
@@ -155,8 +154,8 @@ describe("📦 Lootbox smart contract", async function () {
         Lootbox.deploy(
           "Name",
           "Symbol",
+          ethers.utils.parseUnits("50000", "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
-          ethers.BigNumber.from("7000000"),
           entityTreasury.address,
           issuingEntity.address,
           bnb_pricefeed,
@@ -172,8 +171,8 @@ describe("📦 Lootbox smart contract", async function () {
         Lootbox.deploy(
           "Name",
           "SYMBOL",
+          ethers.utils.parseUnits("50000", "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
-          ethers.BigNumber.from("7000000"),
           entityTreasury.address,
           issuingEntity.address,
           bnb_pricefeed,
@@ -189,8 +188,8 @@ describe("📦 Lootbox smart contract", async function () {
         Lootbox.deploy(
           "Name",
           "SYMBOL",
+          ethers.utils.parseUnits("50000", "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
-          ethers.BigNumber.from("7000000"),
           ethers.constants.AddressZero,
           issuingEntity.address,
           bnb_pricefeed,
@@ -206,8 +205,8 @@ describe("📦 Lootbox smart contract", async function () {
         Lootbox.deploy(
           "Name",
           "SYMBOL",
+          ethers.utils.parseUnits("50000", "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
-          ethers.BigNumber.from("7000000"),
           entityTreasury.address,
           ethers.constants.AddressZero,
           bnb_pricefeed,
@@ -223,8 +222,8 @@ describe("📦 Lootbox smart contract", async function () {
         Lootbox.deploy(
           "Name",
           "SYMBOL",
+          ethers.utils.parseUnits("50000", "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
-          ethers.BigNumber.from("7000000"),
           entityTreasury.address,
           issuingEntity.address,
           ethers.constants.AddressZero,
@@ -240,8 +239,8 @@ describe("📦 Lootbox smart contract", async function () {
         Lootbox.deploy(
           "Name",
           "SYMBOL",
+          ethers.utils.parseUnits("50000", "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
-          ethers.BigNumber.from("7000000"),
           entityTreasury.address,
           issuingEntity.address,
           bnb_pricefeed,
@@ -257,8 +256,8 @@ describe("📦 Lootbox smart contract", async function () {
         Lootbox.deploy(
           "Name",
           "SYMBOL",
+          ethers.utils.parseUnits("50000", "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
-          ethers.BigNumber.from("7000000"),
           entityTreasury.address,
           issuingEntity.address,
           bnb_pricefeed,
@@ -268,6 +267,23 @@ describe("📦 Lootbox smart contract", async function () {
           ethers.constants.AddressZero
         )
       ).to.be.revertedWith("Affiliate cannot be the zero address")
+    })
+    it("Max shares sold must be greater than zero", async () => {
+      expect(
+        Lootbox.deploy(
+          "Name",
+          "SYMBOL",
+          "0",
+          ethers.BigNumber.from("100000"),
+          entityTreasury.address,
+          issuingEntity.address,
+          bnb_pricefeed,
+          "2000000",
+          "1000000",
+          broker.address,
+          affiliate.address
+        )
+      ).to.be.revertedWith("Max shares sold must be greater than zero")
     })
   })
 
@@ -303,7 +319,7 @@ describe("📦 Lootbox smart contract", async function () {
       lootbox = (await Lootbox.deploy(
         LOOTBOX_NAME,
         LOOTBOX_SYMBOL,
-        ethers.BigNumber.from(SHARES_SOLD_GOAL),
+        ethers.utils.parseUnits("50000", "18"), // 50k shares, 18 decimals
         ethers.BigNumber.from(SHARE_PRICE_USD),
         entityTreasury.address,
         issuingEntity.address,
@@ -326,9 +342,6 @@ describe("📦 Lootbox smart contract", async function () {
       it("sets the sharePriceUSD correctly", async () => {
         expect(await lootbox.sharePriceUSD()).to.eq(SHARE_PRICE_USD);
       });
-      it("sets the sharesSoldGoal correctly", async () => {
-        expect(await lootbox.sharesSoldGoal()).to.eq(SHARES_SOLD_GOAL);
-      });
       it("has a native token oracle price feed", async () => {
         const weiPaid = 1000
         const sharesEstimated = await lootbox.estimateSharesPurchase(weiPaid);
@@ -350,61 +363,11 @@ describe("📦 Lootbox smart contract", async function () {
         await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
         expect(lootbox.connect(purchaser2).transferFrom(purchaser.address, purchaser2.address, ticketId)).to.be.revertedWith("ERC721: transfer caller is not owner nor approved")
       })
-      it("burning lootbox tickets reduces total shares", async () => {
-
+      it("checkMaxSharesRemainingForSale() => how many shares are available for sale", async () => {
+        // TODO
+        // uint256 remainingShares = lootbox.checkMaxSharesRemainingForSale() 
       })
     })
-
-    describe("🗳 pause()", () => {
-      describe("called by address with the DAO_ROLE", () => {
-        let promise: Promise<any>;
-
-        beforeEach(async () => {
-          promise = lootbox.connect(issuingEntity).pause();
-        });
-
-        it("pauses the contract", async () => {
-          await promise;
-          expect(await lootbox.paused()).to.be.equal(true);
-        });
-
-        it("emits a paused event", async () => {
-          await expect(promise).to.emit(lootbox, "Paused");
-        });
-      });
-
-      it("reverts with access control error when called with address without DAO_ROLE", async () => {
-        await expect(lootbox.connect(purchaser).pause()).to.be.revertedWith(
-          generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
-        );
-      });
-    });
-
-    describe("🗳 unpause()", () => {
-      describe("called by address with the DAO_ROLE", function () {
-        let promise: Promise<any>;
-
-        beforeEach(async () => {
-          await lootbox.connect(issuingEntity).pause();
-          promise = lootbox.connect(issuingEntity).unpause();
-        });
-
-        it("unpauses the contract", async () => {
-          await promise;
-          expect(await lootbox.paused()).to.be.equal(false);
-        });
-
-        it("emits an unpaused event", async () => {
-          await expect(promise).to.emit(lootbox, "Unpaused");
-        });
-      });
-
-      it("reverts with access control error when called with address without DAO_ROLE", async () => {
-        await expect(lootbox.connect(purchaser).unpause()).to.be.revertedWith(
-          generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
-        );
-      });
-    });
 
     describe("purchaseTicket() => 'purchasing lootbox tickets'", async () => {
 
@@ -528,6 +491,18 @@ describe("📦 Lootbox smart contract", async function () {
         expect(purchasers[1]).to.eq(padAddressTo32Bytes(purchaser2.address));
       });
     });
+
+    describe("max shares for sale", async () => {
+      it("decreases the max shares remaining for sale after each purchase", async () => {
+        // TODO
+      });
+      it("rejects purchases exceeding the max shares remaining for sale", async () => {
+        // TODO
+      });
+      it("Lootbox does NOT auto-end fundraising period even if max shares are sold", async () => {
+        // TODO
+      });
+    })
 
     describe("depositing payout", async () => {
       beforeEach(async () => {
@@ -913,6 +888,14 @@ describe("📦 Lootbox smart contract", async function () {
         expect(est3.toString()).to.eq(rec3.toString());
         expect(per3.toString()).to.eq(ethers.utils.parseUnits("0.5", shareOwnershipPercentageDecimals))
       });
+      it("retrieve tokenURI will return just the ticketId, without an https url", async () => {
+        const ticketId = "0"
+        await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
+        const tokenURI = await lootbox.tokenURI(ticketId)
+        expect(tokenURI).to.eq(
+          ticketId
+        )
+      })
       it("viewPurchasers() => can list out all investors", async () => {
         const beforePurchasers = await lootbox.viewPurchasers()
         expect(beforePurchasers).to.deep.eq([])
@@ -1119,6 +1102,63 @@ describe("📦 Lootbox smart contract", async function () {
         });
       })
     })
+
+    describe("burn", async () => {
+      it("no ability to burn NFT tickets", async () => {
+        expect("burn" in lootbox).to.be.false
+      })
+    })
+
+    describe("🗳 pause()", async () => {
+      describe("called by address with the DAO_ROLE", () => {
+        let promise: Promise<any>;
+
+        beforeEach(async () => {
+          promise = lootbox.connect(issuingEntity).pause();
+        });
+
+        it("pauses the contract", async () => {
+          await promise;
+          expect(await lootbox.paused()).to.be.equal(true);
+        });
+
+        it("emits a paused event", async () => {
+          await expect(promise).to.emit(lootbox, "Paused");
+        });
+      });
+
+      it("reverts with access control error when called with address without DAO_ROLE", async () => {
+        await expect(lootbox.connect(purchaser).pause()).to.be.revertedWith(
+          generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
+        );
+      });
+    });
+
+    describe("🗳 unpause()", async () => {
+      describe("called by address with the DAO_ROLE", function () {
+        let promise: Promise<any>;
+
+        beforeEach(async () => {
+          await lootbox.connect(issuingEntity).pause();
+          promise = lootbox.connect(issuingEntity).unpause();
+        });
+
+        it("unpauses the contract", async () => {
+          await promise;
+          expect(await lootbox.paused()).to.be.equal(false);
+        });
+
+        it("emits an unpaused event", async () => {
+          await expect(promise).to.emit(lootbox, "Unpaused");
+        });
+      });
+
+      it("reverts with access control error when called with address without DAO_ROLE", async () => {
+        await expect(lootbox.connect(purchaser).unpause()).to.be.revertedWith(
+          generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
+        );
+      });
+    });
   })
 
 

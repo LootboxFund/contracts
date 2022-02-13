@@ -15,7 +15,6 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-
 interface IERC20 {
     function decimals() external view returns (uint8);
 
@@ -63,8 +62,8 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   AggregatorV3Interface internal nativeTokenPriceFeed;
 
   uint256 public sharePriceUSD; // THIS SHOULD NOT BE MODIFIED (8 decimals)
-  uint256 public sharesSoldGoal;
   uint256 public sharesSoldCount;
+  uint256 public sharesSoldMax;
   uint256 public nativeTokenRaisedTotal;
   EnumerableSet.AddressSet private purchasers;
 
@@ -148,7 +147,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   constructor(
     string memory _name,
     string memory _symbol,
-    uint256 _sharesSoldGoal,
+    uint256 _maxSharesSold,
     uint256 _sharePriceUSD,
     address _treasury,
     address _issuingEntity,
@@ -164,20 +163,23 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
 
     require(tempEmptyNameTest.length != 0, "Name cannot be empty");
     require(tempEmptySymbolTest.length != 0, "Symbol cannot be empty");
+
     require(_ticketPurchaseFee < 100000000, "Purchase ticket fee must be less than 100000000 (100%)");
     require(_ticketAffiliateFee <= _ticketPurchaseFee , "Affiliate ticket fee must be less than or equal to purchase ticket fee");
     require(_treasury != address(0), "Treasury cannot be the zero address");
     require(_issuingEntity != address(0), "Issuer cannot be the zero address");
     require(_nativeTokenPriceFeed != address(0), "Native token price feed is required");
+    require(_maxSharesSold > 0, "Max shares sold must be greater than zero");
+    require(_sharePriceUSD > 0, "Share price must be greater than zero");
     require(_broker != address(0), "Broker cannot be the zero address");        // the broker is Lootbox Ltd.
     require(_affiliate != address(0), "Affiliate cannot be the zero address");  // if there is no affiliate, set affiliate to the broker
 
     // solhint-disable-next-line not-rely-on-time
     deploymentStartTime = block.timestamp;
-    nativeTokenRaisedTotal = 0;
 
+    nativeTokenRaisedTotal = 0;
     sharePriceUSD = _sharePriceUSD;
-    sharesSoldGoal = _sharesSoldGoal;
+    sharesSoldMax = _maxSharesSold;
 
     nativeTokenPriceFeed = AggregatorV3Interface(_nativeTokenPriceFeed);
 
@@ -216,7 +218,6 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
       sharesPurchased,
       sharePriceUSD
     );
-
     // emit the InvestmentFundsDispersed event);
     uint256 affiliateReceived = msg.value * ticketAffiliateFee / (1*10**(8));
     uint256 brokerReceived = msg.value * (ticketPurchaseFee - ticketAffiliateFee) / (1*10**(8));
@@ -241,7 +242,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     payable(affiliate).transfer(affiliateReceived);
     // mint the NFT ticket
     _safeMint(msg.sender, ticketId);
-    // return the ticket ID
+    // return the ticket ID & sharesPurchased
     return (ticketId, sharesPurchased);
   }
 
@@ -418,6 +419,10 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     }
   }
 
+  function checkMaxSharesRemainingForSale () public view returns (uint256) {
+    return sharesSoldMax - sharesSoldCount;
+  }
+
   function viewTicketInfo(uint256 ticketId) public view returns (uint256 _sharesOwned, uint256 _percentageOwned, uint256 _sharePriceUSD) {
     uint256 sharesOwned = sharesInTicket[ticketId];
     uint256 percentageDecimals = 8;
@@ -559,11 +564,11 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
 
   function tokenURI(uint256 tokenId)
     public
-    view
+    pure
     override(ERC721, ERC721URIStorage)
     returns (string memory)
   {
-    return super.tokenURI(tokenId);
+    return uint2str(tokenId);
   }
 
   function supportsInterface(bytes4 interfaceId)
@@ -586,4 +591,27 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   }
 
   receive() external payable {}
+
+  // --------- Misc Helpers ---------
+  function uint2str(uint _i) internal pure returns (string memory _uintAsString) {
+    if (_i == 0) {
+        return "0";
+    }
+    uint j = _i;
+    uint len;
+    while (j != 0) {
+        len++;
+        j /= 10;
+    }
+    bytes memory bstr = new bytes(len);
+    uint k = len;
+    while (_i != 0) {
+        k = k-1;
+        uint8 temp = (48 + uint8(_i - _i / 10 * 10));
+        bytes1 b1 = bytes1(temp);
+        bstr[k] = b1;
+        _i /= 10;
+    }
+    return string(bstr);
+  }
 }
