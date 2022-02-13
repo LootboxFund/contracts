@@ -49,6 +49,7 @@ interface IERC20 {
     );
 }
 
+// solhint-disable-next-line max-states-count
 contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, AccessControl {
   using Counters for Counters.Counter;
   using EnumerableSet for EnumerableSet.AddressSet;
@@ -66,6 +67,13 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   uint256 public sharesSoldCount;
   uint256 public nativeTokenRaisedTotal;
   EnumerableSet.AddressSet private purchasers;
+
+  address public broker;
+  address public affiliate;
+
+  uint256 public purchaseTicketFeeDecimals = 8;
+  uint256 public purchaseTicketFee;
+  uint256 public affiliateTicketFee;
 
   // ticketId => numShares
   mapping(uint256 => uint256) public sharesInTicket;
@@ -103,6 +111,21 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     uint256 sharePriceUSD
   );
 
+  event InvestmentFundsDispersed(
+    address indexed purchaser,
+    address indexed treasury,
+    address indexed affiliate,
+    address broker,
+    address lootbox,
+    uint256 ticketId,
+    uint256 nativeTokenRaisedTotal,
+    uint256 nativeTokensSentToTreasury,
+    uint256 nativeTokensSentToBroker,
+    uint256 nativeTokensSentToAffiliate,
+    uint256 sharesPurchased,
+    uint256 sharePriceUSD
+  );
+
   event DepositEarnings(
     address indexed depositor,
     address lootbox,
@@ -129,8 +152,26 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     uint256 _sharePriceUSD,
     address _treasury,
     address _issuingEntity,
-    address _nativeTokenPriceFeed
+    address _nativeTokenPriceFeed,
+    uint256 _purchaseTicketFee,
+    uint256 _affiliateTicketFee,
+    address _broker,
+    address _affiliate
   ) ERC721(_name, _symbol) {
+
+    bytes memory tempEmptyNameTest = bytes(_name);
+    bytes memory tempEmptySymbolTest = bytes(_symbol);
+
+    require(tempEmptyNameTest.length != 0, "Name cannot be empty");
+    require(tempEmptySymbolTest.length != 0, "Symbol cannot be empty");
+    require(_purchaseTicketFee < 100000000, "Purchase ticket fee must be less than 100000000 (100%)");
+    require(_purchaseTicketFee >= _affiliateTicketFee, "Affiliate ticket fee must be less than or equal to purchase ticket fee");
+    require(_treasury != address(0), "Treasury cannot be the zero address");
+    require(_issuingEntity != address(0), "Issuer cannot be the zero address");
+    require(_nativeTokenPriceFeed != address(0), "Native token price feed is required");
+    require(_broker != address(0), "Broker cannot be the zero address");        // the broker is Lootbox Ltd.
+    require(_affiliate != address(0), "Affiliate cannot be the zero address");  // if there is no affiliate, set affiliate to the broker
+
     // solhint-disable-next-line not-rely-on-time
     deploymentStartTime = block.timestamp;
     nativeTokenRaisedTotal = 0;
@@ -142,6 +183,11 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
 
     isFundraising = true;
     treasury = _treasury;
+
+    purchaseTicketFee = _purchaseTicketFee;
+    affiliateTicketFee = _affiliateTicketFee;
+    broker = _broker;
+    affiliate = _affiliate;
 
     _grantRole(DAO_ROLE, _issuingEntity);
   }
@@ -170,8 +216,28 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
       sharesPurchased,
       sharePriceUSD
     );
+    // emit the InvestmentFundsDispersed event
+    uint256 affiliateFee = msg.value * affiliateTicketFee / 1*10**purchaseTicketFeeDecimals;
+    uint256 brokerFee = msg.value * purchaseTicketFee / 1*10**purchaseTicketFeeDecimals - affiliateFee;
+    uint256 treasuryReceived = msg.value - brokerFee - affiliateFee;
+    emit InvestmentFundsDispersed(
+      msg.sender,
+      treasury,
+      affiliate,
+      broker,
+      address(this),
+      ticketId,
+      msg.value,
+      treasuryReceived,
+      brokerFee,
+      affiliateFee,
+      sharesPurchased,
+      sharePriceUSD
+    );
     // collect the payment and send to treasury (should be a multisig)
-    payable(treasury).transfer(msg.value);
+    payable(treasury).transfer(treasuryReceived);
+    payable(broker).transfer(brokerFee);
+    payable(affiliate).transfer(affiliateFee);
     // mint the NFT ticket
     _safeMint(msg.sender, ticketId);
     // return the ticket ID
@@ -251,6 +317,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
       nativeTokenAmount: 0,
       erc20Token: erc20Token,
       erc20TokenAmount: erc20Amount,
+      // solhint-disable-next-line not-rely-on-time
       timestamp: block.timestamp
     });
     // save deposit receipt to mapping, increment ID
@@ -352,7 +419,8 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
 
   function viewTicketInfo(uint256 ticketId) public view returns (uint256 _sharesOwned, uint256 _percentageOwned, uint256 _sharePriceUSD) {
     uint256 sharesOwned = sharesInTicket[ticketId];
-    uint256 percentageOwned = sharesOwned * 1*(10**8) / sharesSoldCount;
+    uint256 percentageDecimals = 8;
+    uint256 percentageOwned = sharesOwned * 1*(10**percentageDecimals) / sharesSoldCount;
     return (
       sharesOwned,
       percentageOwned,
