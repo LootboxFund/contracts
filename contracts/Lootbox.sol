@@ -465,6 +465,8 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   }
 
   receive() external payable {
+    require(isFundraising == false, "Deposits cannot be made during fundraising period");
+    require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
     // depositEarningsNative();
   }
 }
