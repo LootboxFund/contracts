@@ -189,6 +189,8 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     ticketPurchaseFee = _ticketPurchaseFee;
     ticketAffiliateFee = _ticketAffiliateFee;
     broker = _broker;
+
+    // we can set the broker to a designated smart contract that handles splitting with affiliate fees
     affiliate = _affiliate;
 
     _grantRole(DAO_ROLE, _issuingEntity);
