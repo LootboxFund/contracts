@@ -63,7 +63,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
 
   uint256 public sharePriceUSD; // THIS SHOULD NOT BE MODIFIED (8 decimals)
   uint256 public sharesSoldGoal;
-  uint256 public sharesSoldCount; // TODO: fix decimals! 
+  uint256 public sharesSoldCount;
   uint256 public nativeTokenRaisedTotal;
   EnumerableSet.AddressSet private purchasers;
 
@@ -159,7 +159,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     sharesInTicket[ticketId] = sharesPurchased;
     purchasers.add(msg.sender);
     // update the total count of shares sold
-    shareDecimals = shareDecimals + sharesPurchased;
+    sharesSoldCount = sharesSoldCount + sharesPurchased;
     nativeTokenRaisedTotal = nativeTokenRaisedTotal + msg.value;
     // emit the Purchase event
     emit MintTicket(
@@ -238,7 +238,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
 
   function depositEarningsErc20 (address erc20Token, uint256 erc20Amount) public payable { 
     require(isFundraising == false, "Deposits cannot be made during fundraising period");
-    require(shareDecimals > 0, "No shares have been sold. Deposits will not be accepted");
+    require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
     require(msg.value == 0, "Deposits of erc20 cannot also include native tokens in the same transaction");
     // log this to our list of erc20 tokens
     erc20TokensDeposited.add(erc20Token);
@@ -274,7 +274,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
 
   function depositEarningsNative () public payable {
     require(isFundraising == false, "Deposits cannot be made during fundraising period");
-    require(shareDecimals > 0, "No shares have been sold. Deposits will not be accepted");
+    require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
     // log this payout in sum
     nativeTokenDeposited = nativeTokenDeposited + msg.value;
     // create the deposit receipt
@@ -317,7 +317,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
         // handle erc20 tokens
         if (deposit.erc20Token != address(0)) {
           // calculate how much is owed
-          uint256 owedErc20 = deposit.erc20TokenAmount * sharesOwned / shareDecimals;
+          uint256 owedErc20 = deposit.erc20TokenAmount * sharesOwned / sharesSoldCount;
           // emit the WithdrawEarnings event
           emit WithdrawEarnings(
             msg.sender,
@@ -333,7 +333,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
           token.transferFrom(address(this), ownerOf(ticketId), owedErc20);
         } else {
           // handle native tokens
-          uint256 owedNative = deposit.nativeTokenAmount * sharesOwned / shareDecimals;
+          uint256 owedNative = deposit.nativeTokenAmount * sharesOwned / sharesSoldCount;
           // emit the WithdrawEarnings event
           emit WithdrawEarnings(
             msg.sender,
@@ -352,7 +352,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
 
   function viewTicketInfo(uint256 ticketId) public view returns (uint256 _sharesOwned, uint256 _percentageOwned, uint256 _sharePriceUSD) {
     uint256 sharesOwned = sharesInTicket[ticketId];
-    uint256 percentageOwned = sharesOwned * 1*(10**8) / shareDecimals;
+    uint256 percentageOwned = sharesOwned * 1*(10**8) / sharesSoldCount;
     return (
       sharesOwned,
       percentageOwned,
@@ -360,15 +360,32 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     );
   }
 
-  function viewOwedErc20TokensToTicket (uint256 ticketId, address erc20Token) public returns (uint256 _owed) {
-    // TODO: implement
-    // returns the total of this erc20 that is owed to the ticket
-    // frontend should use this in conjunction with viewDepositedTokens()
+  function viewOwedErc20TokensToTicket (uint256 ticketId, address erc20Token) public view returns (uint256 _owed) {
+    uint sharesOwned = sharesInTicket[ticketId]; 
+    uint256 owed = 0;
+    for(uint256 i=0; i < depositIdCounter.current(); i++){
+      Deposit memory deposit = depositReciepts[i];
+      if (depositRedemptions[ticketId][deposit.depositId] != true) {
+        if (deposit.erc20Token == erc20Token) {
+          owed = owed + (deposit.erc20TokenAmount * sharesOwned / sharesSoldCount);
+        }
+      }
+    }
+    return owed;
   }
 
-  function viewOwedOfNativeTokenToTicket (uint256 ticketId) public returns (uint256 _owed) {
-    // TODO: implement
-    // returns the total amount of native tokens that is owed to the ticket
+  function viewOwedOfNativeTokenToTicket (uint256 ticketId) public view returns (uint256 _owed) {
+    uint sharesOwned = sharesInTicket[ticketId]; 
+    uint256 owed = 0;
+    for(uint256 i=0; i < depositIdCounter.current(); i++){
+      Deposit memory deposit = depositReciepts[i];
+      if (depositRedemptions[ticketId][deposit.depositId] != true) {
+        if (deposit.erc20Token == address(0)) {
+          owed = owed + (deposit.nativeTokenAmount * sharesOwned / sharesSoldCount);
+        }
+      }
+    }
+    return owed;
   }
 
   function viewDepositedTokens() public view returns (bytes32[] memory) {
@@ -456,11 +473,6 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     }
   }
 
-  function sweepAllDeposits () public {
-    // TODO: implement
-    // this should send all deposits to their holders
-  }
-
   // The following functions are overrides required by Solidity.
   function _beforeTokenTransfer(address from, address to, uint256 tokenId)
     internal
@@ -470,9 +482,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     super._beforeTokenTransfer(from, to, tokenId);
   }
 
-  function _burn(uint256 tokenId) internal pure override(ERC721, ERC721URIStorage) {
-    // TODO: Burning ticket reduces total shares
-  }
+  function _burn(uint256 tokenId) internal pure override(ERC721, ERC721URIStorage) {}
 
   function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal override(ERC721URIStorage) {
     super._setTokenURI(tokenId, _tokenURI);

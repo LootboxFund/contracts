@@ -474,7 +474,7 @@ describe("📦 Lootbox smart contract", async function () {
         lootbox.connect(issuingEntity).rescueTrappedNativeTokens()
       ).to.not.be.reverted;
     })
-    it.only("trapped tokens can be rescued by the issuingEntity and flush them to treasury", async () => {
+    it("trapped tokens can be rescued by the issuingEntity and flush them to treasury", async () => {
       await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
       await lootbox.connect(issuingEntity).endFundraisingPeriod();
       const depositAmount = ethers.utils.parseEther("1")
@@ -684,7 +684,7 @@ describe("📦 Lootbox smart contract", async function () {
     })
   })
 
-  describe("reading info from Lootbox", async () => {
+  describe("reading info from Ticket or Lootbox", async () => {
     beforeEach(async () => {
       await usdc_stablecoin.mint(issuingEntity.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
       await usdc_stablecoin.connect(issuingEntity).approve(lootbox.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
@@ -769,6 +769,54 @@ describe("📦 Lootbox smart contract", async function () {
       expect(ticketId2.toString()).to.eq("1");
       expect(ticketId3.toString()).to.eq("2");
     });
+    it("can get the unredeemed sum of all native tokens still owing", async () => {
+      const ticketId = "2"
+
+      await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
+      await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA2.toString() })
+      await lootbox.connect(purchaser2).purchaseTicket({ value: buyAmountInEtherB.toString() }) // equal to 50%
+
+      await lootbox.connect(issuingEntity).endFundraisingPeriod();
+      await lootbox.connect(issuingEntity).depositEarningsNative({ value: depositAmountInEtherA1.toString() })
+      const owed1 = await lootbox.viewOwedOfNativeTokenToTicket(ticketId)
+      expect(
+        owed1
+      ).to.eq(
+        depositAmountInEtherA1.div(2).toString()
+      )
+      await lootbox.connect(purchaser2).withdrawEarnings(ticketId);
+      await lootbox.connect(issuingEntity).depositEarningsNative({ value: depositAmountInEtherA2.toString() })
+      const owed2 = await lootbox.viewOwedOfNativeTokenToTicket(ticketId)
+      expect(
+        owed2
+      ).to.eq(
+        depositAmountInEtherA2.div(2).toString()
+      )
+    })
+    it("can get the unredeemed sum of a specific erc20 token still owing", async () => {
+      const ticketId = "2"
+
+      await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
+      await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA2.toString() })
+      await lootbox.connect(purchaser2).purchaseTicket({ value: buyAmountInEtherB.toString() }) // equal to 50%
+
+      await lootbox.connect(issuingEntity).endFundraisingPeriod();
+      await lootbox.connect(issuingEntity).depositEarningsErc20(usdc_stablecoin.address, depositAmountInUSDCB1.toString())
+      const owed1 = await lootbox.viewOwedErc20TokensToTicket(ticketId, usdc_stablecoin.address)
+      expect(
+        owed1
+      ).to.eq(
+        depositAmountInUSDCB1.div(2).toString()
+      )
+      await lootbox.connect(purchaser2).withdrawEarnings(ticketId);
+      await lootbox.connect(issuingEntity).depositEarningsErc20(usdc_stablecoin.address, depositAmountInUSDCB2.toString())
+      const owed2 = await lootbox.viewOwedErc20TokensToTicket(ticketId, usdc_stablecoin.address)
+      expect(
+        owed2
+      ).to.eq(
+        depositAmountInUSDCB2.div(2).toString()
+      )
+    })
   })
 
   describe("incurs fees", async () => {
