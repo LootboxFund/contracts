@@ -71,9 +71,9 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   address public broker;
   address public affiliate;
 
-  uint256 public purchaseTicketFeeDecimals = 8;
-  uint256 public purchaseTicketFee;
-  uint256 public affiliateTicketFee;
+  uint256 public feeDecimals = 8;
+  uint256 public ticketPurchaseFee;
+  uint256 public ticketAffiliateFee;
 
   // ticketId => numShares
   mapping(uint256 => uint256) public sharesInTicket;
@@ -153,8 +153,8 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     address _treasury,
     address _issuingEntity,
     address _nativeTokenPriceFeed,
-    uint256 _purchaseTicketFee,
-    uint256 _affiliateTicketFee,
+    uint256 _ticketPurchaseFee,
+    uint256 _ticketAffiliateFee,
     address _broker,
     address _affiliate
   ) ERC721(_name, _symbol) {
@@ -164,8 +164,8 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
 
     require(tempEmptyNameTest.length != 0, "Name cannot be empty");
     require(tempEmptySymbolTest.length != 0, "Symbol cannot be empty");
-    require(_purchaseTicketFee < 100000000, "Purchase ticket fee must be less than 100000000 (100%)");
-    require(_purchaseTicketFee >= _affiliateTicketFee, "Affiliate ticket fee must be less than or equal to purchase ticket fee");
+    require(_ticketPurchaseFee < 100000000, "Purchase ticket fee must be less than 100000000 (100%)");
+    require(_ticketAffiliateFee <= _ticketPurchaseFee , "Affiliate ticket fee must be less than or equal to purchase ticket fee");
     require(_treasury != address(0), "Treasury cannot be the zero address");
     require(_issuingEntity != address(0), "Issuer cannot be the zero address");
     require(_nativeTokenPriceFeed != address(0), "Native token price feed is required");
@@ -184,8 +184,8 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     isFundraising = true;
     treasury = _treasury;
 
-    purchaseTicketFee = _purchaseTicketFee;
-    affiliateTicketFee = _affiliateTicketFee;
+    ticketPurchaseFee = _ticketPurchaseFee;
+    ticketAffiliateFee = _ticketAffiliateFee;
     broker = _broker;
     affiliate = _affiliate;
 
@@ -216,10 +216,11 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
       sharesPurchased,
       sharePriceUSD
     );
-    // emit the InvestmentFundsDispersed event
-    uint256 affiliateFee = msg.value * affiliateTicketFee / 1*10**purchaseTicketFeeDecimals;
-    uint256 brokerFee = msg.value * purchaseTicketFee / 1*10**purchaseTicketFeeDecimals - affiliateFee;
-    uint256 treasuryReceived = msg.value - brokerFee - affiliateFee;
+
+    // emit the InvestmentFundsDispersed event);
+    uint256 affiliateReceived = msg.value * ticketAffiliateFee / (1*10**(8));
+    uint256 brokerReceived = msg.value * (ticketPurchaseFee - ticketAffiliateFee) / (1*10**(8));
+    uint256 treasuryReceived = msg.value - brokerReceived - affiliateReceived;
     emit InvestmentFundsDispersed(
       msg.sender,
       treasury,
@@ -229,15 +230,15 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
       ticketId,
       msg.value,
       treasuryReceived,
-      brokerFee,
-      affiliateFee,
+      brokerReceived,
+      affiliateReceived,
       sharesPurchased,
       sharePriceUSD
     );
     // collect the payment and send to treasury (should be a multisig)
     payable(treasury).transfer(treasuryReceived);
-    payable(broker).transfer(brokerFee);
-    payable(affiliate).transfer(affiliateFee);
+    payable(broker).transfer(brokerReceived);
+    payable(affiliate).transfer(affiliateReceived);
     // mint the NFT ticket
     _safeMint(msg.sender, ticketId);
     // return the ticket ID

@@ -63,10 +63,9 @@ describe("📦 Lootbox smart contract", async function () {
   const SHARE_PRICE_USD = "7000000"; // 7 usd cents
   const SHARES_SOLD_GOAL = 1000;
 
-  // const BROKER_FEE = "2000000" // 2%
-  // const AFFILIATE_FEE = "1000000" // 1%
-  const BROKER_FEE = "0" 
-  const AFFILIATE_FEE = "0" 
+  const TICKET_PURCHASE_FEE = "2000000" // 2%
+  const AFFILIATE_FEE = "500000" // 1%
+  const FEE_DECIMALS = 8;
 
   const HARDHAT_TYPICAL_STARTING_NATIVE_BALANCE = "10000000000000000000000"
   const USDC_STARTING_BALANCE = "10000000000000000000000"
@@ -309,7 +308,7 @@ describe("📦 Lootbox smart contract", async function () {
         entityTreasury.address,
         issuingEntity.address,
         bnb_pricefeed,
-        BROKER_FEE,
+        TICKET_PURCHASE_FEE,
         AFFILIATE_FEE,
         broker.address,
         affiliate.address
@@ -448,6 +447,13 @@ describe("📦 Lootbox smart contract", async function () {
         const startPurchaserBalance = await provider.getBalance(purchaser2.address)
         expect(await lootbox.ticketIdCounter()).to.eq("3");
         const tx = await lootbox.connect(purchaser2).purchaseTicket({ value: buyAmountInEtherC.toString() }) 
+        const ticketPurchaseFee = buyAmountInEtherC.mul(
+          ethers
+            .BigNumber
+            .from(TICKET_PURCHASE_FEE)
+        ).div(
+          ethers.BigNumber.from("10").pow(ethers.BigNumber.from(FEE_DECIMALS))
+        )
         const receipt = await tx.wait();
         const gasUsed = receipt.cumulativeGasUsed.mul(receipt.effectiveGasPrice)
         const endTreasuryBalance = await provider.getBalance(entityTreasury.address)
@@ -455,6 +461,7 @@ describe("📦 Lootbox smart contract", async function () {
         expect(endTreasuryBalance.toString()).to.eq(
           startTreasuryBalance
             .add(buyAmountInEtherC)
+            .sub(ticketPurchaseFee)
             .toString()
         )
         expect(endPurchaserBalance.toString()).to.eq(
@@ -1024,17 +1031,101 @@ describe("📦 Lootbox smart contract", async function () {
         await usdt_stablecoin.mint(issuingEntity.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
         await usdt_stablecoin.connect(issuingEntity).approve(lootbox.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
       })
-      it("charges a 2% fee on ticket sales (no affiliates yet)", async () => {
+      describe("purchase ticket fees", async () => {
+        it("charges a 2% fee on ticket sales (0.5% go to affiliate, 1.5% go to broker aka Lootbox Ltd", async () => {
+          const startPurchaserBalance = await provider.getBalance(purchaser.address)
+          const startTreasuryBalance = await provider.getBalance(entityTreasury.address)
+          const startBrokerBalance = await provider.getBalance(broker.address)
+          const startAffiliateBalance = await provider.getBalance(affiliate.address)
+          expect(await lootbox.ticketIdCounter()).to.eq("0");
 
-      });
+          const buyAmountInEtherD = ethers.BigNumber.from(1);
+          const tx = await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherD.toString() }) 
+          const receipt = await tx.wait();
+          const gasUsed = receipt.cumulativeGasUsed.mul(receipt.effectiveGasPrice)
+
+          const endPurchaserBalance = await provider.getBalance(purchaser.address)
+          const endTreasuryBalance = await provider.getBalance(entityTreasury.address)
+          const endBrokerBalance = await provider.getBalance(broker.address)
+          const endAffiliateBalance = await provider.getBalance(affiliate.address)
+
+          expect(endPurchaserBalance).to.eq(startPurchaserBalance.sub(buyAmountInEtherD).sub(gasUsed))
+
+          const ticketPurchaseFee = ethers.BigNumber.from(TICKET_PURCHASE_FEE);
+          const ticketPurchaseFeeAmount = buyAmountInEtherD.mul(
+            ticketPurchaseFee
+          ).div(
+            ethers.BigNumber.from("10").pow(ethers.BigNumber.from(FEE_DECIMALS))
+          )
+          const ticketSalesAfterPurchaseFee = buyAmountInEtherD.sub(ticketPurchaseFeeAmount)
+          expect(endTreasuryBalance.toString()).to.eq(startTreasuryBalance.add(ticketSalesAfterPurchaseFee))
+
+          const affiliateFee = ethers.BigNumber.from(AFFILIATE_FEE)
+          const affiliateFeeAmount = buyAmountInEtherD.mul(
+            affiliateFee
+          ).div(
+            ethers.BigNumber.from("10").pow(ethers.BigNumber.from(FEE_DECIMALS))
+          )
+          expect(endAffiliateBalance.toString()).to.eq(startAffiliateBalance.add(affiliateFeeAmount))
+
+          const brokerFee = ticketPurchaseFee.sub(affiliateFee)
+          const brokerFeeAmount = buyAmountInEtherD.mul(
+            brokerFee
+          ).div(
+            ethers.BigNumber.from("10").pow(ethers.BigNumber.from(FEE_DECIMALS))
+          )
+          expect(endBrokerBalance.toString()).to.eq(startBrokerBalance.add(brokerFeeAmount))
+        });
+        it("emits a InvestmentFundsDispersed event", async () => {
+          const ticketId = "0"
+          const buyAmountInEtherD = ethers.BigNumber.from(1);
+          const estimatedSharesReceived = await lootbox.estimateSharesPurchase(buyAmountInEtherD.toString())
+          const ticketPurchaseFee = ethers.BigNumber.from(TICKET_PURCHASE_FEE);
+          const ticketPurchaseFeeAmount = buyAmountInEtherD.mul(
+            ticketPurchaseFee
+          ).div(
+            ethers.BigNumber.from("10").pow(ethers.BigNumber.from(FEE_DECIMALS))
+          )
+          const treasuryReceivedAmount = buyAmountInEtherD.sub(ticketPurchaseFeeAmount)
+          const affiliateFee = ethers.BigNumber.from(AFFILIATE_FEE)
+          const affiliateFeeAmount = buyAmountInEtherD.mul(
+            affiliateFee
+          ).div(
+            ethers.BigNumber.from("10").pow(ethers.BigNumber.from(FEE_DECIMALS))
+          )
+          const brokerFee = ticketPurchaseFee.sub(affiliateFee)
+          const brokerFeeAmount = buyAmountInEtherD.mul(
+            brokerFee
+          ).div(
+            ethers.BigNumber.from("10").pow(ethers.BigNumber.from(FEE_DECIMALS))
+          )
+          expect(
+            lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherD.toString() }) 
+          ).to.emit(lootbox, "InvestmentFundsDispersed")
+          .withArgs(
+            purchaser.address,
+            entityTreasury.address,
+            affiliate.address,
+            broker.address,
+            lootbox.address,
+            ticketId,
+            buyAmountInEtherD.toString(),
+            treasuryReceivedAmount,
+            brokerFeeAmount,
+            affiliateFeeAmount,
+            estimatedSharesReceived,
+            SHARE_PRICE_USD
+          )
+        });
+      })
     })
   })
 
 
-  describe("_____", async () => {
-    it("______", async () => { });
-    it("______", async () => { });
-    it("______", async () => { });
-  })
+  // describe("_____", async () => {
+  //   it("______", async () => { });
+  //   it("______", async () => { });
+  //   it("______", async () => { });
+  // })
 
 });
