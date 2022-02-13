@@ -97,7 +97,7 @@ async function main() {
   const lootbox = await Lootbox.deploy(
     "Artemis Guild",    // string  _name
     "ATMS",             // string  _symbol
-    "100000",           // uint256 _maxSharesSold
+    ethers.utils.parseUnits("100000", 18),           // uint256 _maxSharesSold
     "7000000",          // uint256 _sharePriceUSD
     gfxTreasury,        // address _treasury
     gfxDAO,             // address _issuingEntity
