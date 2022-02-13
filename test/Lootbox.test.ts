@@ -323,7 +323,7 @@ describe("📦 Lootbox smart contract", async function () {
       expect(purchasers[0]).to.eq(padAddressTo32Bytes(purchaser.address));
       expect(purchasers[1]).to.eq(padAddressTo32Bytes(purchaser2.address));
     });
-    it("sending ether direct to lootbox is not a valid purchase", async () => {
+    it("sending ether direct to lootbox is not a valid purchase nor a valid deposit", async () => {
       // TODO: 
     })
   });
@@ -389,8 +389,10 @@ describe("📦 Lootbox smart contract", async function () {
         depositAmountInUSDCB1.toString()
       );
     });
-    it.only("sending ether direct to lootbox address is a valid deposit", async () => {
+    it("sending ether direct to lootbox address is not a valid deposit. funds will get trapped", async () => {
       // TODO: 
+      await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
+      await lootbox.connect(issuingEntity).endFundraisingPeriod();
       const tx = await issuingEntity.sendTransaction({
         to: lootbox.address,
         value: ethers.utils.parseEther("1")
@@ -407,10 +409,6 @@ describe("📦 Lootbox smart contract", async function () {
           { value: depositAmountInEtherA1.toString() }
         )
       ).to.be.revertedWith("Deposits of erc20 cannot also include native tokens in the same transaction");
-    })
-    it("sending ether directly to contract will call depositEarningsNative()", async () => {
-      // TODO:
-      // test that the revert rules are followed
     })
     it("treasury cannot purchase tickets", async () => {
       expect(
@@ -434,6 +432,18 @@ describe("📦 Lootbox smart contract", async function () {
       expect(a).to.eq(padAddressTo32Bytes(usdc_stablecoin.address))
       expect(b).to.eq(padAddressTo32Bytes(usdt_stablecoin.address))
     });
+    it("trapped tokens are able to be flushed back to treasury", async () => {
+      // when sending ether or erc20 tokens directly to the lootbox address, the funds will get trapped
+      // ether & erc20 tokens must be deposited using their specified functions (depositEarningsNative() & depositEarningsErc20())
+      // in this case, we allow the treasury to flush the trapped tokens back to the treasury (NOT the issuer as we dont have that data)
+
+      // steps
+      // 1. iterate through past deposits and sum the amounts
+      // 2. compare the deposits vs lootbox balance
+      // 3. the difference should be the trapped tokens
+      // 4. the treasury can then flush the trapped tokens back to the treasury and emit an event RescueTrappedTokens
+      // 5. same process for erc20, but an address must be provided
+    })
   })
 
   describe("withdrawing payout", async () => {
