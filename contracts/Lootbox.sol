@@ -414,6 +414,37 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     return ticketsOwned;
   }
 
+  function rescueTrappedErc20Tokens(address erc20Token) public onlyRole(DAO_ROLE) {
+    require(isFundraising == false, "Rescue cannot be made during fundraising period");
+    uint256 depositedTokens = 0;
+    for (uint256 i=0; i < depositIdCounter.current(); i++) {
+      Deposit memory deposit = depositReciepts[i];
+      if (deposit.erc20Token == erc20Token) {
+        depositedTokens = depositedTokens + deposit.erc20TokenAmount;
+      }
+    }
+    IERC20 token = IERC20(erc20Token);
+    uint256 trappedTokens = token.balanceOf(address(this)) - depositedTokens;
+    if (trappedTokens > 0) {
+      token.transfer(treasury, trappedTokens);
+    }
+  }
+
+  function rescueTrappedNativeTokens() public onlyRole(DAO_ROLE) {
+    require(isFundraising == false, "Rescue cannot be made during fundraising period");
+    uint256 depositedTokens = 0;
+    for (uint256 i=0; i < depositIdCounter.current(); i++) {
+      Deposit memory deposit = depositReciepts[i];
+      if (deposit.erc20Token == address(0)) {
+        depositedTokens = depositedTokens + deposit.nativeTokenAmount;
+      }
+    }
+    uint256 trappedNativeTokens = address(this).balance - depositedTokens;
+    if (trappedNativeTokens > 0) {
+      payable(treasury).transfer(trappedNativeTokens);
+    }
+  }
+
   function sweepAllDeposits () public {
     // TODO: implement
     // this should send all deposits to their holders

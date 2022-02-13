@@ -323,9 +323,6 @@ describe("📦 Lootbox smart contract", async function () {
       expect(purchasers[0]).to.eq(padAddressTo32Bytes(purchaser.address));
       expect(purchasers[1]).to.eq(padAddressTo32Bytes(purchaser2.address));
     });
-    it("sending ether direct to lootbox is not a valid purchase nor a valid deposit", async () => {
-      // TODO: 
-    })
   });
 
   describe("depositing payout", async () => {
@@ -389,16 +386,6 @@ describe("📦 Lootbox smart contract", async function () {
         depositAmountInUSDCB1.toString()
       );
     });
-    it("sending ether direct to lootbox address is not a valid deposit. funds will get trapped", async () => {
-      // TODO: 
-      await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
-      await lootbox.connect(issuingEntity).endFundraisingPeriod();
-      const tx = await issuingEntity.sendTransaction({
-        to: lootbox.address,
-        value: ethers.utils.parseEther("1")
-      })
-      
-    })
     it("not possible to deposit both native tokens & erc20 in the same transaction", async () => {
       await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
       await lootbox.connect(issuingEntity).endFundraisingPeriod();
@@ -432,7 +419,33 @@ describe("📦 Lootbox smart contract", async function () {
       expect(a).to.eq(padAddressTo32Bytes(usdc_stablecoin.address))
       expect(b).to.eq(padAddressTo32Bytes(usdt_stablecoin.address))
     });
-    it("trapped tokens are able to be flushed back to treasury", async () => {
+  })
+
+  describe("Trapped Tokens", async () => {
+    beforeEach(async () => {
+      await usdc_stablecoin.mint(issuingEntity.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
+      await usdc_stablecoin.connect(issuingEntity).approve(lootbox.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
+      
+      await usdt_stablecoin.mint(issuingEntity.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
+      await usdt_stablecoin.connect(issuingEntity).approve(lootbox.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
+    })
+    it.only("sending native tokens directly to lootbox will result in them being trapped", async () => {
+      await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
+      await lootbox.connect(issuingEntity).endFundraisingPeriod();
+      await issuingEntity.sendTransaction({
+        to: lootbox.address,
+        value: ethers.utils.parseEther("1")
+      })
+      const recognizedDeposits = await lootbox.viewTotalDepositOfNativeToken()
+      expect(recognizedDeposits.toString()).to.eq("0")
+    })
+    it("sending erc20 tokens directly to lootbox will result in them being trapped", async () => {
+      
+    })
+    it("only the issuingEntity can rescue trapped tokens", async () => {
+      
+    })
+    it("trapped tokens can be rescued by the issuingEntity and flush them to treasury", async () => {
       // when sending ether or erc20 tokens directly to the lootbox address, the funds will get trapped
       // ether & erc20 tokens must be deposited using their specified functions (depositEarningsNative() & depositEarningsErc20())
       // in this case, we allow the treasury to flush the trapped tokens back to the treasury (NOT the issuer as we dont have that data)
@@ -443,6 +456,8 @@ describe("📦 Lootbox smart contract", async function () {
       // 3. the difference should be the trapped tokens
       // 4. the treasury can then flush the trapped tokens back to the treasury and emit an event RescueTrappedTokens
       // 5. same process for erc20, but an address must be provided
+
+      // we should prbly have a function to view trapped tokens too
     })
   })
 
