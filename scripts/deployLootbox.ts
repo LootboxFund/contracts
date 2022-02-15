@@ -121,3 +121,17 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
+
+// const lootbox = await Lootbox.deploy(
+  // string  _name
+  // string  _symbol
+  // uint256 _maxSharesSold
+  // uint256 _sharePriceUSD
+  // address _treasury
+  // address _issuingEntity
+  // address _nativeTokenPriceFeed
+  // uint256 _ticketPurchaseFee,
+  // uint256 _ticketAffiliateFee,
+  // address _broker,
+  // address _affiliate
+// );
