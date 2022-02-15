@@ -1046,6 +1046,188 @@ describe("📦 Lootbox smart contract", async function () {
           depositAmountInUSDCB2.div(2).toString()
         )
       })
+      it.only("can read all deposits for a ticket", async () => {
+        await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
+        await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA2.toString() })
+        await lootbox.connect(purchaser2).purchaseTicket({ value: buyAmountInEtherB.toString() })
+        await lootbox.connect(issuingEntity).endFundraisingPeriod();
+
+        const tx1 = await lootbox.connect(issuingEntity).depositEarningsNative({ value: depositAmountInEtherA1.toString() })
+        const tx2 = await lootbox.connect(issuingEntity).depositEarningsErc20(usdc_stablecoin.address, depositAmountInUSDCB1.toString())
+        
+        const receipt1 = await tx1.wait();
+        const receipt2 = await tx2.wait();
+
+        const timestamp1 = (await provider.getBlock(receipt1.blockNumber)).timestamp;
+        const timestamp2 = (await provider.getBlock(receipt2.blockNumber)).timestamp;
+
+        const ticketId = "2"
+        const [deposit1, deposit2] = await lootbox.viewProratedDepositsForTicket(ticketId);
+
+        expect({
+          ticketId:  deposit1[0].toString(),
+          depositId: deposit1[1].toString(),
+          redeemed: deposit1[2],
+          nativeTokenAmount: deposit1[3].toString(),
+          erc20Token: deposit1[4],
+          erc20TokenAmount: deposit1[5].toString(),
+          timestamp: deposit1[6].toNumber(),
+        }).to.deep.eq({
+          ticketId,
+          depositId: "0",
+          redeemed: false,
+          nativeTokenAmount: depositAmountInEtherA1.div(2).toString(),
+          erc20Token: ethers.constants.AddressZero,
+          erc20TokenAmount: "0",
+          timestamp: timestamp1,
+        })
+        expect({
+          ticketId:  deposit2[0].toString(),
+          depositId: deposit2[1].toString(),
+          redeemed: deposit2[2],
+          nativeTokenAmount: deposit2[3].toString(),
+          erc20Token: deposit2[4],
+          erc20TokenAmount: deposit2[5].toString(),
+          timestamp: deposit2[6].toNumber(),
+        }).to.deep.eq({
+          ticketId,
+          depositId: "1",
+          redeemed: false,
+          nativeTokenAmount: "0",
+          erc20Token: usdc_stablecoin.address,
+          erc20TokenAmount: depositAmountInUSDCB1.div(2).toString(),
+          timestamp: timestamp2,
+        })
+
+        await lootbox.connect(purchaser2).withdrawEarnings(ticketId);
+
+        const tx3 = await lootbox.connect(issuingEntity).depositEarningsNative({ value: depositAmountInEtherA2.toString() })
+        const tx4 = await lootbox.connect(issuingEntity).depositEarningsErc20(usdc_stablecoin.address, depositAmountInUSDCB2.toString())
+        
+        const receipt3 = await tx3.wait();
+        const receipt4 = await tx4.wait();
+
+        const timestamp3 = (await provider.getBlock(receipt3.blockNumber)).timestamp;
+        const timestamp4 = (await provider.getBlock(receipt4.blockNumber)).timestamp;
+
+        const [_deposit1, _deposit2, deposit3, deposit4] = await lootbox.viewProratedDepositsForTicket(ticketId);
+
+        expect({
+          ticketId:  _deposit1[0].toString(),
+          depositId: _deposit1[1].toString(),
+          redeemed: _deposit1[2],
+          nativeTokenAmount: _deposit1[3].toString(),
+          erc20Token: _deposit1[4],
+          erc20TokenAmount: _deposit1[5].toString(),
+          timestamp: _deposit1[6].toNumber(),
+        }).to.deep.eq({
+          ticketId,
+          depositId: "0",
+          redeemed: true,
+          nativeTokenAmount: depositAmountInEtherA1.div(2).toString(),
+          erc20Token: ethers.constants.AddressZero,
+          erc20TokenAmount: "0",
+          timestamp: timestamp1,
+        })
+        expect({
+          ticketId:  _deposit2[0].toString(),
+          depositId: _deposit2[1].toString(),
+          redeemed: _deposit2[2],
+          nativeTokenAmount: _deposit2[3].toString(),
+          erc20Token: _deposit2[4],
+          erc20TokenAmount: _deposit2[5].toString(),
+          timestamp: _deposit2[6].toNumber(),
+        }).to.deep.eq({
+          ticketId,
+          depositId: "1",
+          redeemed: true,
+          nativeTokenAmount: "0",
+          erc20Token: usdc_stablecoin.address,
+          erc20TokenAmount: depositAmountInUSDCB1.div(2).toString(),
+          timestamp: timestamp2,
+        })
+
+        expect({
+          ticketId:  deposit3[0].toString(),
+          depositId: deposit3[1].toString(),
+          redeemed: deposit3[2],
+          nativeTokenAmount: deposit3[3].toString(),
+          erc20Token: deposit3[4],
+          erc20TokenAmount: deposit3[5].toString(),
+          timestamp: deposit3[6].toNumber(),
+        }).to.deep.eq({
+          ticketId,
+          depositId: "2",
+          redeemed: false,
+          nativeTokenAmount: depositAmountInEtherA2.div(2).toString(),
+          erc20Token: ethers.constants.AddressZero,
+          erc20TokenAmount: "0",
+          timestamp: timestamp3,
+        })
+        expect({
+          ticketId:  deposit4[0].toString(),
+          depositId: deposit4[1].toString(),
+          redeemed: deposit4[2],
+          nativeTokenAmount: deposit4[3].toString(),
+          erc20Token: deposit4[4],
+          erc20TokenAmount: deposit4[5].toString(),
+          timestamp: deposit4[6].toNumber(),
+        }).to.deep.eq({
+          ticketId,
+          depositId: "3",
+          redeemed: false,
+          nativeTokenAmount: "0",
+          erc20Token: usdc_stablecoin.address,
+          erc20TokenAmount: depositAmountInUSDCB2.div(2).toString(),
+          timestamp: timestamp4,
+        })
+      })
+      it("can read all deposits", async () => {
+        await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
+        await lootbox.connect(issuingEntity).endFundraisingPeriod();
+        const tx1 = await lootbox.connect(issuingEntity).depositEarningsNative({ value: depositAmountInEtherA1.toString() })
+        const tx2 = await lootbox.connect(issuingEntity).depositEarningsErc20(usdc_stablecoin.address, depositAmountInUSDCB1.toString())
+        
+        const receipt1 = await tx1.wait();
+        const receipt2 = await tx2.wait();
+
+        const timestamp1 = (await provider.getBlock(receipt1.blockNumber)).timestamp;
+        const timestamp2 = (await provider.getBlock(receipt2.blockNumber)).timestamp;
+
+        const [deposit1, deposit2] = await lootbox.viewAllDeposits()
+        console.log(deposit1);
+        console.log(deposit2);
+        expect({
+          depositId: deposit1[0].toString(),
+          blockNumber: deposit1[1].toNumber(),
+          nativeTokenAmount: deposit1[2].toString(),
+          erc20Token: deposit1[3],
+          erc20TokenAmount: deposit1[4].toString(),
+          timestamp: deposit1[5].toNumber(),
+        }).to.deep.eq({
+          depositId: "0",
+          blockNumber: receipt1.blockNumber,
+          nativeTokenAmount: depositAmountInEtherA1.toString(),
+          erc20Token: ethers.constants.AddressZero,
+          erc20TokenAmount: "0",
+          timestamp: timestamp1,
+        })
+        expect({
+          depositId: deposit2[0].toString(),
+          blockNumber: deposit2[1].toNumber(),
+          nativeTokenAmount: deposit2[2].toString(),
+          erc20Token: deposit2[3],
+          erc20TokenAmount: deposit2[4].toString(),
+          timestamp: deposit2[5].toNumber(),
+        }).to.deep.eq({
+          depositId: "1",
+          blockNumber: receipt2.blockNumber,
+          nativeTokenAmount: "0",
+          erc20Token: usdc_stablecoin.address,
+          erc20TokenAmount: depositAmountInUSDCB1.toString(),
+          timestamp: timestamp2,
+        })
+      })
     })
 
     describe("incurs fees", async () => {

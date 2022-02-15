@@ -52,35 +52,52 @@ interface IERC20 {
 contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, AccessControl {
   using Counters for Counters.Counter;
   using EnumerableSet for EnumerableSet.AddressSet;
-
+  
+  /** ------------------ SETUP & AUTH ------------------
+   * 
+   */
+  // roles
   bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
-  bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE");
-
-  uint256 public deploymentStartTime;
+  // decimals
   uint256 public shareDecimals = 18;
-
+  uint256 public feeDecimals = 8;
+  // references
+  uint256 public deploymentStartTime;
   AggregatorV3Interface internal nativeTokenPriceFeed;
 
+  /** ------------------ FUNDRAISING STATE ------------------
+   * 
+   */
   uint256 public sharePriceUSD; // THIS SHOULD NOT BE MODIFIED (8 decimals)
   uint256 public sharesSoldCount;
   uint256 public sharesSoldMax;
   uint256 public nativeTokenRaisedTotal;
   EnumerableSet.AddressSet private purchasers;
-
-  address public broker;
-  address public affiliate;
-
-  uint256 public feeDecimals = 8;
-  uint256 public ticketPurchaseFee;
-  uint256 public ticketAffiliateFee;
-
+  bool public isFundraising;
+  address public treasury;
   // ticketId => numShares
   mapping(uint256 => uint256) public sharesInTicket;
   Counters.Counter public ticketIdCounter;
+  event MintTicket(
+    address indexed purchaser,
+    address indexed treasury,
+    address lootbox,
+    uint256 ticketId,
+    uint256 sharesPurchased,
+    uint256 sharePriceUSD
+  );
 
-  bool public isFundraising;
-  address public treasury;
+  /** ------------------ FEES STATE ------------------
+   * 
+   */
+  address public broker;
+  address public affiliate;
+  uint256 public ticketPurchaseFee;
+  uint256 public ticketAffiliateFee;
 
+  /** ------------------ DEPOSITS ------------------
+   * 
+   */
   struct Deposit {
     uint256 depositId;
     uint256 blockNumber;
@@ -92,24 +109,33 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   // depositId => Deposit
   mapping(uint256 => Deposit) public depositReciepts;
   Counters.Counter public depositIdCounter;
-
   // token => totalDeposited
   mapping(address => uint256) public erc20Deposited;
   EnumerableSet.AddressSet private erc20TokensDeposited;
   uint256 public nativeTokenDeposited;
+  event DepositEarnings(
+    address indexed depositor,
+    address lootbox,
+    uint256 depositId,
+    uint256 nativeTokenAmount,
+    address erc20Token,
+    uint256 erc20Amount
+  );
+  struct DepositMetadata {
+    uint256 ticketId;
+    uint256 depositId;
+    bool redeemed;
+    uint256 nativeTokenAmount;
+    address erc20Token;
+    uint256 erc20TokenAmount;
+    uint256 timestamp;
+  }
 
+  /** ------------------ WITHDRAWALS ------------------
+   * 
+   */
   // ticketID => depositID => redeemed
   mapping(uint256 => mapping(uint256 => bool)) public depositRedemptions;
-
-  event MintTicket(
-    address indexed purchaser,
-    address indexed treasury,
-    address lootbox,
-    uint256 ticketId,
-    uint256 sharesPurchased,
-    uint256 sharePriceUSD
-  );
-
   event InvestmentFundsDispersed(
     address indexed purchaser,
     address indexed treasury,
@@ -124,16 +150,6 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     uint256 sharesPurchased,
     uint256 sharePriceUSD
   );
-
-  event DepositEarnings(
-    address indexed depositor,
-    address lootbox,
-    uint256 depositId,
-    uint256 nativeTokenAmount,
-    address erc20Token,
-    uint256 erc20Amount
-  );
-
   event WithdrawEarnings(
     address indexed withdrawer,
     address lootbox,
@@ -144,6 +160,9 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     uint256 erc20Amount
   );
 
+  /** ------------------ CONSTRUCTOR ------------------
+   * 
+   */
   constructor(
     string memory _name,
     string memory _symbol,
@@ -196,7 +215,17 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     _grantRole(DAO_ROLE, _issuingEntity);
   }
 
-  // only accepts native token
+
+
+  /**
+  * ------------------ PURCHASE TICKET ------------------
+  *
+  *   purchaseTicket()
+  *
+  *   estimateSharesPurchase(nativeTokenAmount)
+  *   checkMaxSharesRemainingForSale()
+  */
+  // buy in native tokens only. use purchaseTicket(), do not directly send $ to lootbox
   function purchaseTicket () public payable returns (uint256 _ticketId, uint256 _sharesPurchased) {
     require(msg.sender != treasury, "Treasury cannot purchase tickets");
     require(isFundraising == true, "Tickets cannot be purchased after the fundraising period");
@@ -250,9 +279,32 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     // return the ticket ID & sharesPurchased
     return (ticketId, sharesPurchased);
   }
-
+  // external function to estimate how much guild tokens a user will receive
+  function estimateSharesPurchase (uint256 nativeTokenAmount) public view returns (uint256) {
+    // get price feed of native token
+    (
+      uint80 roundID,
+      int256 price,
+      uint256 startedAt,
+      uint256 timeStamp,
+      uint80 answeredInRound
+    ) = nativeTokenPriceFeed.latestRoundData();
+    uint256 nativeTokenDecimals = 18;
+    // If the round is not complete yet, timestamp is 0
+    require(timeStamp > 0, "Round not complete");
+    uint256 sharesPurchased = convertInputTokenToShares(
+      nativeTokenAmount,
+      nativeTokenDecimals,
+      uint256(price)
+    );
+    return sharesPurchased;
+  }
+  // external function to check how many shares are remaining for sale
+  function checkMaxSharesRemainingForSale () public view returns (uint256) {
+    return sharesSoldMax - sharesSoldCount;
+  }
   // internal helper function that converts stablecoin amount to guild token amount
-  function getSharePurchaseAmount(
+  function convertInputTokenToShares(
       uint256 amountOfStableCoin,
       uint256 stablecoinDecimals,
       uint256 stableCoinPrice
@@ -264,31 +316,66 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
           sharePriceUSD;
   }
 
-  // external function to estimate how much guild tokens a user will receive
-  function estimateSharesPurchase (uint256 amount) public view returns (uint256) {
-    // get price feed of native token
-    (
-      uint80 roundID,
-      int256 price,
-      uint256 startedAt,
-      uint256 timeStamp,
-      uint80 answeredInRound
-    ) = nativeTokenPriceFeed.latestRoundData();
-    // If the round is not complete yet, timestamp is 0
-    require(timeStamp > 0, "Round not complete");
-    uint256 sharesPurchased = getSharePurchaseAmount(
-      amount,
-      18,
-      uint256(price)
-    );
-    return sharesPurchased;
-  }
 
+
+  /**
+  * ------------------ END FUNDRAISING PERIOD ------------------
+  *
+  *   endFundraising()
+  */
   function endFundraisingPeriod () public onlyRole(DAO_ROLE) {
     require(isFundraising == true, "Fundraising period has already ended");
     isFundraising = false;
   }
 
+
+
+  /**
+  * ------------------ DEPOSIT DIVIDENDS ------------------
+  *
+  *   depositEarningsNative()
+  *   depositEarningsErc20(address, amount)
+  *
+  *   viewDeposit(depositId)
+  *
+  *   checkForTrappedNativeTokens()
+  *   rescueTrappedNativeTokens()
+  *   checkForTrappedErc20Tokens(address)
+  *   rescueTrappedErc20Tokens(address)
+  */
+  // do not send native tokens direct to lootbox or it will get stuck. use depositEarningsNative()
+  function depositEarningsNative () public payable {
+    require(isFundraising == false, "Deposits cannot be made during fundraising period");
+    require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
+    // log this payout in sum
+    nativeTokenDeposited = nativeTokenDeposited + msg.value;
+    // create the deposit receipt
+    uint256 depositId = depositIdCounter.current();
+    Deposit memory deposit = Deposit ({
+      depositId: depositId,
+      blockNumber: block.number,
+      nativeTokenAmount: msg.value,
+      erc20Token: address(0),
+      erc20TokenAmount: 0,
+      timestamp: block.timestamp
+    });
+    // save deposit receipt to mapping, increment ID
+    depositReciepts[depositId] = deposit;
+    // emit the DepositEarnings event
+    emit DepositEarnings(
+      msg.sender,
+      address(this),
+      depositId,
+      msg.value,
+      address(0),
+      0
+    );
+    depositIdCounter.increment();
+    // transfer the native tokens to this Lootbox contract
+    address payable lootbox = payable(address(this));
+    lootbox.transfer(msg.value);
+  }
+  // do not send erc20 direct to lootbox or it will get stuck. use depositEarningsErc20()
   function depositEarningsErc20 (address erc20Token, uint256 erc20Amount) public payable { 
     require(isFundraising == false, "Deposits cannot be made during fundraising period");
     require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
@@ -325,39 +412,141 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     token.approve(address(this), erc20Amount);
     token.transferFrom(msg.sender, address(this), erc20Amount);
   }
-
-  function depositEarningsNative () public payable {
-    require(isFundraising == false, "Deposits cannot be made during fundraising period");
-    require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
-    // log this payout in sum
-    nativeTokenDeposited = nativeTokenDeposited + msg.value;
-    // create the deposit receipt
-    uint256 depositId = depositIdCounter.current();
-    Deposit memory deposit = Deposit ({
-      depositId: depositId,
-      blockNumber: block.number,
-      nativeTokenAmount: msg.value,
-      erc20Token: address(0),
-      erc20TokenAmount: 0,
-      timestamp: block.timestamp
-    });
-    // save deposit receipt to mapping, increment ID
-    depositReciepts[depositId] = deposit;
-    // emit the DepositEarnings event
-    emit DepositEarnings(
-      msg.sender,
-      address(this),
-      depositId,
-      msg.value,
-      address(0),
-      0
-    );
-    depositIdCounter.increment();
-    // transfer the native tokens to this Lootbox contract
-    address payable lootbox = payable(address(this));
-    lootbox.transfer(msg.value);
+  function viewDeposit(uint depositId) public view returns (Deposit memory _deposit) {
+    return depositReciepts[depositId];
+  }
+  function checkForTrappedNativeTokens() public view returns (uint256 _trappedTokens) {
+    uint256 depositedTokens = 0;
+    for (uint256 i=0; i < depositIdCounter.current(); i++) {
+      Deposit memory deposit = depositReciepts[i];
+      if (deposit.erc20Token == address(0)) {
+        depositedTokens = depositedTokens + deposit.nativeTokenAmount;
+      }
+    }
+    uint256 trappedTokens = address(this).balance - depositedTokens;
+    return trappedTokens;
+  }
+  function rescueTrappedNativeTokens() public onlyRole(DAO_ROLE) {
+    require(isFundraising == false, "Rescue cannot be made during fundraising period");
+    uint256 trappedTokens = checkForTrappedNativeTokens();
+    if (trappedTokens > 0) {
+      payable(treasury).transfer(trappedTokens);
+    }
+  }
+  function checkForTrappedErc20Tokens(address erc20Token) public view returns (uint256 _trappedTokens) {
+    uint256 depositedTokens = 0;
+    for (uint256 i=0; i < depositIdCounter.current(); i++) {
+      Deposit memory deposit = depositReciepts[i];
+      if (deposit.erc20Token == erc20Token) {
+        depositedTokens = depositedTokens + deposit.erc20TokenAmount;
+      }
+    }
+    IERC20 token = IERC20(erc20Token);
+    uint256 trappedTokens = token.balanceOf(address(this)) - depositedTokens;
+    return trappedTokens;
+  }
+  function rescueTrappedErc20Tokens(address erc20Token) public onlyRole(DAO_ROLE) {
+    require(isFundraising == false, "Rescue cannot be made during fundraising period");
+    uint256 trappedTokens = checkForTrappedErc20Tokens(erc20Token);
+    IERC20 token = IERC20(erc20Token);
+    if (trappedTokens > 0) {
+      token.transfer(treasury, trappedTokens);
+    }
   }
 
+
+
+  /**
+  * ------------------ TICKET INFO ------------------
+  *  
+  *  tokenURI(ticketId)
+  *  viewTicketInfo(ticketId)
+  *  viewProratedDepositsForTicket(ticketId)
+  *  viewOwedOfNativeTokenToTicket(ticketId)
+  *  viewOwedErc20TokensToTicket(ticketId, erc20address)
+  *  viewAllTicketsOfHolder(address)
+  */
+  // metadata about token. returns only the ticketId. the url is built by frontend & actual data is stored off-chain on GBucket
+  function tokenURI(uint256 ticketId)
+    public
+    pure
+    override(ERC721, ERC721URIStorage)
+    returns (string memory)
+  {
+    return uint2str(ticketId);
+  }
+  function viewProratedDepositsForTicket(uint256 ticketId) public view returns (DepositMetadata[] memory _depositsMetadatas) {
+    uint sharesOwned = sharesInTicket[ticketId]; 
+    _depositsMetadatas = new DepositMetadata[](depositIdCounter.current());
+    for (uint256 i=0; i < depositIdCounter.current(); i++) {
+      uint256 owedNative = depositReciepts[i].nativeTokenAmount * sharesOwned / sharesSoldCount;
+      uint256 owedErc20 = depositReciepts[i].erc20TokenAmount * sharesOwned / sharesSoldCount;
+      DepositMetadata memory depositMetadata = DepositMetadata ({
+        ticketId: ticketId,
+        depositId: depositReciepts[i].depositId,
+        redeemed: depositRedemptions[ticketId][depositReciepts[i].depositId],
+        nativeTokenAmount: owedNative,
+        erc20Token: depositReciepts[i].erc20Token,
+        erc20TokenAmount: owedErc20,
+        timestamp: depositReciepts[i].timestamp
+      });
+      _depositsMetadatas[i] = depositMetadata;
+    }
+    return _depositsMetadatas;
+  }
+  // info about the ticket shares owned, % owned, and share price
+  function viewTicketInfo(uint256 ticketId) public view returns (uint256 _sharesOwned, uint256 _percentageOwned, uint256 _sharePriceUSD) {
+    uint256 sharesOwned = sharesInTicket[ticketId];
+    uint256 percentageDecimals = 8;
+    uint256 percentageOwned = sharesOwned * 1*(10**percentageDecimals) / sharesSoldCount;
+    return (
+      sharesOwned,
+      percentageOwned,
+      sharePriceUSD
+    );
+  }
+  function viewOwedOfNativeTokenToTicket (uint256 ticketId) public view returns (uint256 _owed) {
+    uint sharesOwned = sharesInTicket[ticketId]; 
+    uint256 owed = 0;
+    for(uint256 i=0; i < depositIdCounter.current(); i++){
+      Deposit memory deposit = depositReciepts[i];
+      if (depositRedemptions[ticketId][deposit.depositId] != true) {
+        if (deposit.erc20Token == address(0)) {
+          owed = owed + (deposit.nativeTokenAmount * sharesOwned / sharesSoldCount);
+        }
+      }
+    }
+    return owed;
+  }
+  function viewOwedErc20TokensToTicket (uint256 ticketId, address erc20Token) public view returns (uint256 _owed) {
+    uint sharesOwned = sharesInTicket[ticketId]; 
+    uint256 owed = 0;
+    for(uint256 i=0; i < depositIdCounter.current(); i++){
+      Deposit memory deposit = depositReciepts[i];
+      if (depositRedemptions[ticketId][deposit.depositId] != true) {
+        if (deposit.erc20Token == erc20Token) {
+          owed = owed + (deposit.erc20TokenAmount * sharesOwned / sharesSoldCount);
+        }
+      }
+    }
+    return owed;
+  }
+  function viewAllTicketsOfHolder(address holder) public view returns (uint256[] memory _tickets) {
+    uint256 ownedByHolder = balanceOf(holder);
+    uint256[] memory ticketsOwned = new uint256[](ownedByHolder);
+    for(uint256 i=0; i < ownedByHolder; i++){
+      ticketsOwned[i] = tokenOfOwnerByIndex(holder, i);
+    }
+    return ticketsOwned;
+  }
+
+
+
+  /**
+  * ------------------ WITHDRAW EARNINGS ------------------
+  * 
+  *  withdrawEarnings(ticketId)
+  */
   function withdrawEarnings (uint256 ticketId) public {
     require(isFundraising == false, "Withdrawals cannot be made during fundraising period");
     require(ownerOf(ticketId) == msg.sender, "You do not own this ticket");
@@ -404,61 +593,30 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     }
   }
 
-  function checkMaxSharesRemainingForSale () public view returns (uint256) {
-    return sharesSoldMax - sharesSoldCount;
-  }
 
-  function viewTicketInfo(uint256 ticketId) public view returns (uint256 _sharesOwned, uint256 _percentageOwned, uint256 _sharePriceUSD) {
-    uint256 sharesOwned = sharesInTicket[ticketId];
-    uint256 percentageDecimals = 8;
-    uint256 percentageOwned = sharesOwned * 1*(10**percentageDecimals) / sharesSoldCount;
-    return (
-      sharesOwned,
-      percentageOwned,
-      sharePriceUSD
-    );
-  }
 
-  function viewOwedErc20TokensToTicket (uint256 ticketId, address erc20Token) public view returns (uint256 _owed) {
-    uint sharesOwned = sharesInTicket[ticketId]; 
-    uint256 owed = 0;
-    for(uint256 i=0; i < depositIdCounter.current(); i++){
-      Deposit memory deposit = depositReciepts[i];
-      if (depositRedemptions[ticketId][deposit.depositId] != true) {
-        if (deposit.erc20Token == erc20Token) {
-          owed = owed + (deposit.erc20TokenAmount * sharesOwned / sharesSoldCount);
-        }
-      }
+  /**
+  * ------------------ LOOTBOX INFO ------------------
+  *  
+  *  viewAllDeposits()
+  *  viewDepositedTokens()
+  *  viewPurchasers()
+  *  viewTotalDepositOfNativeToken()
+  *  viewTotalDepositOfErc20Token(address)
+  */
+  function viewAllDeposits() public view returns (Deposit[] memory _deposits) {
+    _deposits = new Deposit[](depositIdCounter.current());
+    for (uint256 i=0; i < depositIdCounter.current(); i++) {
+      _deposits[i] = depositReciepts[i];
     }
-    return owed;
+    return _deposits;
   }
-
-  function viewOwedOfNativeTokenToTicket (uint256 ticketId) public view returns (uint256 _owed) {
-    uint sharesOwned = sharesInTicket[ticketId]; 
-    uint256 owed = 0;
-    for(uint256 i=0; i < depositIdCounter.current(); i++){
-      Deposit memory deposit = depositReciepts[i];
-      if (depositRedemptions[ticketId][deposit.depositId] != true) {
-        if (deposit.erc20Token == address(0)) {
-          owed = owed + (deposit.nativeTokenAmount * sharesOwned / sharesSoldCount);
-        }
-      }
-    }
-    return owed;
-  }
-
   function viewDepositedTokens() public view returns (bytes32[] memory) {
     return erc20TokensDeposited._inner._values;
   }
-
   function viewPurchasers() public view returns (bytes32[] memory) {
     return purchasers._inner._values;
   }
-
-  function viewDeposit(uint depositId) public view returns (Deposit memory _deposit) {
-    return depositReciepts[depositId];
-  }
-
   function viewTotalDepositOfNativeToken() public view returns (uint256 _totalDeposit) {
     uint256 totalDeposit = 0;
     for (uint256 i=0; i < depositIdCounter.current(); i++) {
@@ -469,7 +627,6 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     }
     return totalDeposit;
   }
-
   function viewTotalDepositOfErc20Token(address erc20Token) public view returns (uint256 _totalDeposit) {
     uint256 totalDeposit = 0;
     for (uint256 i=0; i < depositIdCounter.current(); i++) {
@@ -481,57 +638,13 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     return totalDeposit;
   }
 
-  function viewAllTicketsOfHolder(address holder) public view returns (uint256[] memory _tickets) {
-    uint256 ownedByHolder = balanceOf(holder);
-    uint256[] memory ticketsOwned = new uint256[](ownedByHolder);
-    for(uint256 i=0; i < ownedByHolder; i++){
-      ticketsOwned[i] = tokenOfOwnerByIndex(holder, i);
-    }
-    return ticketsOwned;
-  }
 
-  function checkForTrappedNativeTokens() public view returns (uint256 _trappedTokens) {
-    uint256 depositedTokens = 0;
-    for (uint256 i=0; i < depositIdCounter.current(); i++) {
-      Deposit memory deposit = depositReciepts[i];
-      if (deposit.erc20Token == address(0)) {
-        depositedTokens = depositedTokens + deposit.nativeTokenAmount;
-      }
-    }
-    uint256 trappedTokens = address(this).balance - depositedTokens;
-    return trappedTokens;
-  }
 
-  function checkForTrappedErc20Tokens(address erc20Token) public view returns (uint256 _trappedTokens) {
-    uint256 depositedTokens = 0;
-    for (uint256 i=0; i < depositIdCounter.current(); i++) {
-      Deposit memory deposit = depositReciepts[i];
-      if (deposit.erc20Token == erc20Token) {
-        depositedTokens = depositedTokens + deposit.erc20TokenAmount;
-      }
-    }
-    IERC20 token = IERC20(erc20Token);
-    uint256 trappedTokens = token.balanceOf(address(this)) - depositedTokens;
-    return trappedTokens;
-  }
-
-  function rescueTrappedErc20Tokens(address erc20Token) public onlyRole(DAO_ROLE) {
-    require(isFundraising == false, "Rescue cannot be made during fundraising period");
-    uint256 trappedTokens = checkForTrappedErc20Tokens(erc20Token);
-    IERC20 token = IERC20(erc20Token);
-    if (trappedTokens > 0) {
-      token.transfer(treasury, trappedTokens);
-    }
-  }
-
-  function rescueTrappedNativeTokens() public onlyRole(DAO_ROLE) {
-    require(isFundraising == false, "Rescue cannot be made during fundraising period");
-    uint256 trappedTokens = checkForTrappedNativeTokens();
-    if (trappedTokens > 0) {
-      payable(treasury).transfer(trappedTokens);
-    }
-  }
-
+  /**
+  * ------------------ CLASS INHERITANCE OVERHEAD ------------------
+  *  
+  * 
+  */
   // The following functions are overrides required by Solidity.
   function _beforeTokenTransfer(address from, address to, uint256 tokenId)
     internal
@@ -540,22 +653,11 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   {
     super._beforeTokenTransfer(from, to, tokenId);
   }
-
+  // disable burns
   function _burn(uint256 tokenId) internal pure override(ERC721, ERC721URIStorage) {}
-
   function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal override(ERC721URIStorage) {
     super._setTokenURI(tokenId, _tokenURI);
   }
-
-  function tokenURI(uint256 tokenId)
-    public
-    pure
-    override(ERC721, ERC721URIStorage)
-    returns (string memory)
-  {
-    return uint2str(tokenId);
-  }
-
   function supportsInterface(bytes4 interfaceId)
     public
     view
@@ -564,19 +666,14 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   {
     return super.supportsInterface(interfaceId);
   }
-
   // --------- Managing the Token ---------
-
   function pause() public onlyRole(DAO_ROLE) {
     _pause();
   }
-
   function unpause() public onlyRole(DAO_ROLE) {
       _unpause();
   }
-
   receive() external payable {}
-
   // --------- Misc Helpers ---------
   function uint2str(uint _i) internal pure returns (string memory _uintAsString) {
     if (_i == 0) {
