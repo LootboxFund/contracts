@@ -1,0 +1,30 @@
+2022-02-13T13:21:25.933Z - 
+  
+---------- DEPLOY GUILD FACTORY (development) ----------
+
+---- Script starting
+
+---- Network:                             binance_testnet (Hex ID = 0x61, Decimal ID = 97)
+
+---- 0xnewton:                            0x08a50559e8D358D6Ae69F2f5D19155bb077344b3
+
+---- 0xterran:                            0x148F507Ca903fb322DaA9Ad420537F689973e99A
+
+---- Crimson:                             0xd58aa0057934eD345C07d14Db6EC48428c62b388
+
+---- Cana:                                0x1e069c19Fd6f436e1754097bDE43CD594FC5711f
+
+---- GuildFX DAO (multisig):              0x37147Dc47761cb60eA290e85bECe9D7F41ff4cF6
+
+---- GuildFX Treasury (multisig):         0x37147Dc47761cb60eA290e85bECe9D7F41ff4cF6
+
+---- GuildFX Dev (multisig):              0x37147Dc47761cb60eA290e85bECe9D7F41ff4cF6
+
+---- Deployer (UNTRUSTED):                0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A
+
+---- Temporary GuildFX DAO (UNTRUSTED):   0xfD45C9e09E6fD3ee45669Da146104542c28C93F5
+
+---- Purchaser (UNTRUSTED):               0x60404Db53ADD5aAF14F6654FF913a4307Dc6bF29
+
+  
+2022-02-13T13:21:36.087Z - Lootbox Contract Address = 0x47B4D2b01F77CfDedeF2A641dBb56d13385fFe2c 
