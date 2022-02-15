@@ -10,11 +10,9 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./Lootbox.sol";
 
-
 contract LootboxFactory is Pausable, AccessControl {
 
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE"); // Lootbox Ltd
-    bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE"); // GuildFX devs
 
     address public immutable nativeTokenPriceFeed;
     uint256 internal immutable ticketPurchaseFee;
@@ -22,6 +20,8 @@ contract LootboxFactory is Pausable, AccessControl {
 
     // affiliate => ticketAffiliateFee
     mapping(address => uint256) internal affiliateFees;
+    // lootbox => affiliate
+    mapping(address => address) internal lootboxAffiliates;
 
     // Points to the Lootboxes deployed by this factory
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -69,6 +69,10 @@ contract LootboxFactory is Pausable, AccessControl {
       affiliateFees[affiliate] = ticketAffiliateFee;
     }
 
+    function checkLootboxAffiliate(address lootbox) public view returns (address) {
+      return lootboxAffiliates[lootbox];
+    }
+
     function createLootbox(
         string memory _lootboxName,
         string memory _lootboxSymbol,
@@ -98,6 +102,7 @@ contract LootboxFactory is Pausable, AccessControl {
           _affiliate
         );
         LOOTBOXES.add(address(lootbox));
+        lootboxAffiliates[address(lootbox)] = _affiliate;
         emit LootboxCreated(
             _lootboxName,
             address(lootbox),
