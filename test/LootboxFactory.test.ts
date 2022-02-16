@@ -195,7 +195,6 @@ describe("📦 LootboxFactory", () => {
         await lootboxFactory.createLootbox(
           LOOTBOX_NAME,
           LOOTBOX_SYMBOL,
-          dao.address,
           MAX_SHARES_BUY,
           SHARE_PRICE_USD,
           treasury.address,
@@ -261,7 +260,6 @@ describe("📦 LootboxFactory", () => {
           lootboxFactory.createLootbox(
             LOOTBOX_NAME,
             LOOTBOX_SYMBOL,
-            dao.address,
             MAX_SHARES_BUY,
             SHARE_PRICE_USD,
             treasury.address,
@@ -273,7 +271,6 @@ describe("📦 LootboxFactory", () => {
         const tx = lootboxFactory.connect(deployer).createLootbox(
           LOOTBOX_NAME,
           LOOTBOX_SYMBOL,
-          dao.address,
           MAX_SHARES_BUY,
           SHARE_PRICE_USD,
           treasury.address,
@@ -298,7 +295,6 @@ describe("📦 LootboxFactory", () => {
         const tx = lootboxFactory.connect(deployer).createLootbox(
           LOOTBOX_NAME,
           LOOTBOX_SYMBOL,
-          dao.address,
           MAX_SHARES_BUY,
           SHARE_PRICE_USD,
           treasury.address,
@@ -324,7 +320,6 @@ describe("📦 LootboxFactory", () => {
         const tx = lootboxFactory.connect(deployer).createLootbox(
           LOOTBOX_NAME,
           LOOTBOX_SYMBOL,
-          dao.address,
           MAX_SHARES_BUY,
           SHARE_PRICE_USD,
           treasury.address,
@@ -351,7 +346,6 @@ describe("📦 LootboxFactory", () => {
       await lootboxFactory.createLootbox(
         LOOTBOX_NAME,
         LOOTBOX_SYMBOL,
-        dao.address,
         MAX_SHARES_BUY,
         SHARE_PRICE_USD,
         treasury.address,

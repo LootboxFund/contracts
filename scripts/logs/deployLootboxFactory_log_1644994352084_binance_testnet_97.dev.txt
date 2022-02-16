@@ -1,0 +1,14 @@
+2022-02-16T06:52:32.477Z -  
+  
+---------- DEPLOY LOOTBOX FACTORY (development) ----------
+  
+---- Script starting...
+
+---- Network:                             binance_testnet (Hex ID = 0x61)
+
+---- Lootbox DAO (multisig):              0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F
+
+---- Deployer (UNTRUSTED):                0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A
+
+  
+2022-02-16T06:52:38.880Z - ---- 0x390cf9617D4c7e07863F3482736D05FC1dC0406E ---> Lootbox Factory 
