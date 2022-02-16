@@ -1,0 +1,14 @@
+2022-02-16T06:50:17.282Z -  
+  
+---------- DEPLOY LOOTBOX FACTORY (development) ----------
+  
+---- Script starting...
+
+---- Network:                             binance_testnet (Hex ID = 0x61)
+
+---- Lootbox DAO (multisig):              ____________________
+
+---- Deployer (UNTRUSTED):                0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A
+
+  
+2022-02-16T06:50:17.487Z - network does not support ENS (operation="ENS", network="bnbt", code=UNSUPPORTED_OPERATION, version=providers/5.5.2)

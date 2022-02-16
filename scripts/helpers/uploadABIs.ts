@@ -75,6 +75,8 @@ const ABI_FILES = [
   "artifacts/contracts/CrowdSaleFactory.sol/CrowdSaleFactory.json",
   "artifacts/contracts/GuildFactory.sol/GuildFactory.json",
   "artifacts/contracts/GuildToken.sol/GuildToken.json",
+  "artifacts/contracts/LootboxFactory.sol/LootboxFactory.json",
+  "artifacts/contracts/Lootbox.sol/Lootbox.json",
 ];
 
 ABI_FILES.forEach(async (filePath) => {

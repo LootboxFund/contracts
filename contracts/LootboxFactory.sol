@@ -74,7 +74,6 @@ contract LootboxFactory is Pausable, AccessControl {
         nativeTokenPriceFeed = _nativeTokenPriceFeed;
         ticketPurchaseFee = _ticketPurchaseFee;
         brokerAddress = _brokerAddress;
-       
     }
 
     function addAffiliate (address affiliate, uint256 ticketAffiliateFee) public onlyRole(DAO_ROLE) {
@@ -104,7 +103,6 @@ contract LootboxFactory is Pausable, AccessControl {
     function createLootbox(
         string memory _lootboxName,
         string memory _lootboxSymbol,
-        address _issuingEntity,
         uint256 _maxSharesSold,
         uint256 _sharePriceUSD,
         address _treasury,
@@ -112,7 +110,6 @@ contract LootboxFactory is Pausable, AccessControl {
     ) public whenNotPaused returns (address _lootbox) {
         require(bytes(_lootboxName).length != 0, "Lootbox name cannot be empty");
         require(bytes(_lootboxSymbol).length != 0, "Lootbox symbol cannot be empty");
-        require(_issuingEntity != address(0), "Issuer address cannot be zero");
         require(_treasury != address(0), "Treasury address cannot be zero");
         require(_affiliate != address(0), "Affiliate address cannot be zero");
         require(_maxSharesSold > 0, "Max shares sold must be greater than zero");
