@@ -6,11 +6,13 @@ pragma solidity 0.8.4;
 
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "./Lootbox.sol";
 
 contract LootboxFactory is Pausable, AccessControl {
+
+    address internal immutable lootboxImplementation;
 
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE"); // Lootbox Ltd
 
@@ -46,17 +48,19 @@ contract LootboxFactory is Pausable, AccessControl {
     );
 
     constructor(
-      address _daoLootbox,
+      address _lootboxDao,
       address _nativeTokenPriceFeed,
       uint256 _ticketPurchaseFee,
       address _brokerAddress
     ) {
-        require(_daoLootbox != address(0), "DAO Lootbox address cannot be zero");
+        require(_lootboxDao != address(0), "DAO Lootbox address cannot be zero");
+        require(_brokerAddress != address(0), "Broker address cannot be zero");
         require(_nativeTokenPriceFeed != address(0), "nativeTokenPriceFeed address cannot be zero");
         require(_ticketPurchaseFee < 100000000, "Purchase ticket fee must be less than 100000000 (100%)");
         
+        lootboxImplementation = address(new Lootbox());
 
-        _grantRole(DAO_ROLE, _daoLootbox);
+        _grantRole(DAO_ROLE, _lootboxDao);
 
         nativeTokenPriceFeed = _nativeTokenPriceFeed;
         ticketPurchaseFee = _ticketPurchaseFee;
@@ -88,38 +92,63 @@ contract LootboxFactory is Pausable, AccessControl {
         require(_maxSharesSold > 0, "Max shares sold must be greater than zero");
         require(_sharePriceUSD > 0, "Share price must be greater than zero");
  
-        Lootbox lootbox = new Lootbox(
-          _lootboxName,
-          _lootboxSymbol,
-          _maxSharesSold,
-          _sharePriceUSD,
-          _treasury,
-          msg.sender,
-          nativeTokenPriceFeed,
-          ticketPurchaseFee,
-          affiliateFees[_affiliate],
-          brokerAddress,
-          _affiliate
+        // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
+        ERC1967Proxy proxy = new ERC1967Proxy(
+            lootboxImplementation,
+            abi.encodeWithSelector(
+                Lootbox(payable(address(0))).initialize.selector,
+                _lootboxName,
+                _lootboxSymbol,
+                _maxSharesSold,
+                _sharePriceUSD,
+                _treasury,
+                msg.sender,
+                nativeTokenPriceFeed,
+                ticketPurchaseFee,
+                affiliateFees[_affiliate],
+                brokerAddress,
+                _affiliate
+            )
         );
-        LOOTBOXES.add(address(lootbox));
-        lootboxAffiliates[address(lootbox)] = _affiliate;
+        LOOTBOXES.add(address(proxy));
+        lootboxAffiliates[address(proxy)] = _affiliate;
+
+        /**
+          // Lootbox lootbox = new Lootbox(
+          //   _lootboxName,
+          //   _lootboxSymbol,
+          //   _maxSharesSold,
+          //   _sharePriceUSD,
+          //   _treasury,
+          //   msg.sender,
+          //   nativeTokenPriceFeed,
+          //   ticketPurchaseFee,
+          //   affiliateFees[_affiliate],
+          //   brokerAddress,
+          //   _affiliate
+          // );
+          // LOOTBOXES.add(address(lootbox));
+          // lootboxAffiliates[address(lootbox)] = _affiliate;
+         */
+       
+
         emit LootboxCreated(
             _lootboxName,
-            address(lootbox),
+            address(proxy),
             msg.sender,
             _treasury,
             _maxSharesSold,
             _sharePriceUSD
         );
         emit AffiliateReceipt(
-            address(lootbox),
+            address(proxy),
             _affiliate,
             affiliateFees[_affiliate],
             ticketPurchaseFee,
             msg.sender,
             _treasury
         );
-        return address(lootbox);
+        return address(proxy);
     }
 
     function viewLootboxes() public view returns (bytes32[] memory) {
