@@ -270,65 +270,75 @@ describe("📦 LootboxFactory", () => {
         ).to.not.be.reverted;
       })      
       it("emits a LootboxCreated event", async () => {
-        expect(
-          lootboxFactory.createLootbox(
-            LOOTBOX_NAME,
-            LOOTBOX_SYMBOL,
-            dao.address,
-            MAX_SHARES_BUY,
-            SHARE_PRICE_USD,
-            treasury.address,
-            affiliate.address
-          )
-        )
+        const tx = lootboxFactory.connect(deployer).createLootbox(
+          LOOTBOX_NAME,
+          LOOTBOX_SYMBOL,
+          dao.address,
+          MAX_SHARES_BUY,
+          SHARE_PRICE_USD,
+          treasury.address,
+          affiliate.address
+        );
+        const receipt = await (await tx).wait();
+        const event = receipt.events?.filter((x) => { return x.event == "LootboxCreated" })[0]
+        const emittedLootboxAddress = event?.args?.lootbox || ethers.constants.AddressZero;
+        expect(tx)
           .to.emit(lootboxFactory, "LootboxCreated")
           .withArgs(
             LOOTBOX_NAME,
-            "FIX -> address indexed lootbox",
-            dao.address,
+            emittedLootboxAddress,
+            deployer.address,
             treasury.address,
             MAX_SHARES_BUY,
             SHARE_PRICE_USD
           )
       })
       it("properly tracks affiliates and emits an AffiliateReceipt event", async () => {
-        expect(
-          lootboxFactory.connect(deployer).createLootbox(
-            LOOTBOX_NAME,
-            LOOTBOX_SYMBOL,
-            dao.address,
-            MAX_SHARES_BUY,
-            SHARE_PRICE_USD,
-            treasury.address,
-            affiliate.address
-          )
+        await lootboxFactory.connect(dao).addAffiliate(affiliate.address, ticketAffiliateFee)
+        const tx = lootboxFactory.connect(deployer).createLootbox(
+          LOOTBOX_NAME,
+          LOOTBOX_SYMBOL,
+          dao.address,
+          MAX_SHARES_BUY,
+          SHARE_PRICE_USD,
+          treasury.address,
+          affiliate.address
         )
+        const receipt = await (await tx).wait();
+        const event = receipt.events?.filter((x) => { return x.event == "AffiliateReceipt" })[0]
+        const emittedLootboxAddress = event?.args?.lootbox || ethers.constants.AddressZero;
+
+        expect(tx)
           .to.emit(lootboxFactory, "AffiliateReceipt")
           .withArgs(
-            "FIX -> address indexed lootbox",
-            "ethers.constants.AddressZero",
-            "0",
+            emittedLootboxAddress,
+            affiliate.address,
+            ticketAffiliateFee,
             ticketPurchaseFee,
             deployer.address,
             treasury.address
           )
-        await lootboxFactory.connect(dao).addAffiliate(affiliate.address, ticketAffiliateFee)
-        expect(
-          lootboxFactory.connect(deployer).createLootbox(
-            LOOTBOX_NAME,
-            LOOTBOX_SYMBOL,
-            dao.address,
-            MAX_SHARES_BUY,
-            SHARE_PRICE_USD,
-            treasury.address,
-            affiliate.address
-          )
+      })
+      it("safely sets the affiliate fee to zero if no affiliate was found in mapping", async () => {
+        const affiliateFeeUnknownAffiliate = "0"
+        const tx = lootboxFactory.connect(deployer).createLootbox(
+          LOOTBOX_NAME,
+          LOOTBOX_SYMBOL,
+          dao.address,
+          MAX_SHARES_BUY,
+          SHARE_PRICE_USD,
+          treasury.address,
+          deployer.address
         )
+        const receipt = await (await tx).wait();
+        const event = receipt.events?.filter((x) => { return x.event == "AffiliateReceipt" })[0]
+        const emittedLootboxAddress = event?.args?.lootbox || ethers.constants.AddressZero;
+        expect(tx)
           .to.emit(lootboxFactory, "AffiliateReceipt")
           .withArgs(
-            "FIX -> address indexed lootbox",
-            affiliate.address,
-            "ticketAffiliateFee",
+            emittedLootboxAddress,
+            deployer.address,
+            affiliateFeeUnknownAffiliate,
             ticketPurchaseFee,
             deployer.address,
             treasury.address

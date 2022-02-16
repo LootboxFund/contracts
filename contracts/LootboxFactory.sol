@@ -117,7 +117,7 @@ contract LootboxFactory is Pausable, AccessControl {
         require(_affiliate != address(0), "Affiliate address cannot be zero");
         require(_maxSharesSold > 0, "Max shares sold must be greater than zero");
         require(_sharePriceUSD > 0, "Share price must be greater than zero");
- 
+
         // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
         ERC1967Proxy proxy = new ERC1967Proxy(
             lootboxImplementation,
