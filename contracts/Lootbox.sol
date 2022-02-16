@@ -6,14 +6,16 @@ pragma solidity 0.8.4;
 
 
 import "hardhat/console.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 interface IERC20 {
     function decimals() external view returns (uint8);
@@ -49,9 +51,9 @@ interface IERC20 {
 }
 
 // solhint-disable-next-line max-states-count
-contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, AccessControl {
-  using Counters for Counters.Counter;
-  using EnumerableSet for EnumerableSet.AddressSet;
+contract Lootbox is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, ERC721URIStorageUpgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
+  using CountersUpgradeable for CountersUpgradeable.Counter;
+  using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
   
   /** ------------------ SETUP & AUTH ------------------
    * 
@@ -59,8 +61,8 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   // roles
   bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
   // decimals
-  uint256 public shareDecimals = 18;
-  uint256 public feeDecimals = 8;
+  uint256 public shareDecimals;
+  uint256 public feeDecimals;
   // references
   uint256 public deploymentStartTime;
   AggregatorV3Interface internal nativeTokenPriceFeed;
@@ -72,12 +74,12 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   uint256 public sharesSoldCount;
   uint256 public sharesSoldMax;
   uint256 public nativeTokenRaisedTotal;
-  EnumerableSet.AddressSet private purchasers;
+  EnumerableSetUpgradeable.AddressSet private purchasers;
   bool public isFundraising;
   address public treasury;
   // ticketId => numShares
   mapping(uint256 => uint256) public sharesInTicket;
-  Counters.Counter public ticketIdCounter;
+  CountersUpgradeable.Counter public ticketIdCounter;
   event MintTicket(
     address indexed purchaser,
     address indexed treasury,
@@ -108,10 +110,10 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   }
   // depositId => Deposit
   mapping(uint256 => Deposit) public depositReciepts;
-  Counters.Counter public depositIdCounter;
+  CountersUpgradeable.Counter public depositIdCounter;
   // token => totalDeposited
   mapping(address => uint256) public erc20Deposited;
-  EnumerableSet.AddressSet private erc20TokensDeposited;
+  EnumerableSetUpgradeable.AddressSet private erc20TokensDeposited;
   uint256 public nativeTokenDeposited;
   event DepositEarnings(
     address indexed depositor,
@@ -159,11 +161,17 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     address erc20Token,
     uint256 erc20Amount
   );
+  // TODO: Obscure affiliate information (hide it)
+  // hide it by refactoring InvestmentFundsDispersed into two events,
+  // one for public (sharable event ABI), another for private (affiliate rates & wallets)
+  
 
   /** ------------------ CONSTRUCTOR ------------------
    * 
    */
-  constructor(
+   /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() initializer {}
+  function initialize(
     string memory _name,
     string memory _symbol,
     uint256 _maxSharesSold,
@@ -175,7 +183,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     uint256 _ticketAffiliateFee,
     address _broker,
     address _affiliate
-  ) ERC721(_name, _symbol) {
+  ) initializer public {
 
     bytes memory tempEmptyNameTest = bytes(_name);
     bytes memory tempEmptySymbolTest = bytes(_symbol);
@@ -193,8 +201,17 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
     require(_broker != address(0), "Broker cannot be the zero address");        // the broker is Lootbox Ltd.
     require(_affiliate != address(0), "Affiliate cannot be the zero address");  // if there is no affiliate, set affiliate to the broker
 
+    __ERC721_init(_name, _symbol);
+    __ERC721Enumerable_init();
+    __ERC721URIStorage_init();
+    __Pausable_init();
+    __AccessControl_init();
+    __UUPSUpgradeable_init();
+
     // solhint-disable-next-line not-rely-on-time
     deploymentStartTime = block.timestamp;
+    shareDecimals = 18;
+    feeDecimals = 8;
 
     nativeTokenRaisedTotal = 0;
     sharePriceUSD = _sharePriceUSD;
@@ -470,7 +487,7 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   function tokenURI(uint256 ticketId)
     public
     pure
-    override(ERC721, ERC721URIStorage)
+    override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
     returns (string memory)
   {
     return uint2str(ticketId);
@@ -649,19 +666,19 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   function _beforeTokenTransfer(address from, address to, uint256 tokenId)
     internal
     whenNotPaused
-    override(ERC721, ERC721Enumerable)
+    override(ERC721Upgradeable,ERC721EnumerableUpgradeable)
   {
     super._beforeTokenTransfer(from, to, tokenId);
   }
   // disable burns
-  function _burn(uint256 tokenId) internal pure override(ERC721, ERC721URIStorage) {}
-  function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal override(ERC721URIStorage) {
+  function _burn(uint256 tokenId) internal pure override(ERC721Upgradeable, ERC721URIStorageUpgradeable) {}
+  function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal override(ERC721URIStorageUpgradeable) {
     super._setTokenURI(tokenId, _tokenURI);
   }
   function supportsInterface(bytes4 interfaceId)
     public
     view
-    override(ERC721, ERC721Enumerable, AccessControl)
+    override(ERC721Upgradeable,ERC721EnumerableUpgradeable, AccessControlUpgradeable)
     returns (bool)
   {
     return super.supportsInterface(interfaceId);
@@ -673,6 +690,11 @@ contract Lootbox is ERC721, ERC721Enumerable, ERC721URIStorage, Pausable, Access
   function unpause() public onlyRole(DAO_ROLE) {
       _unpause();
   }
+  function _authorizeUpgrade(address newImplementation)
+      internal
+      onlyRole(DAO_ROLE)
+      override
+  {}
   receive() external payable {}
   // --------- Misc Helpers ---------
   function uint2str(uint _i) internal pure returns (string memory _uintAsString) {

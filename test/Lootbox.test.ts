@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { ethers, waffle } from "hardhat";
+import { ethers, waffle, upgrades } from "hardhat";
 import {
   DAO_ROLE,
   generatePermissionRevokeMessage,
@@ -90,7 +90,6 @@ describe("📦 Lootbox smart contract", async function () {
 
   describe("Before constructor & deployment", async () => {
 
-    let Lootbox: Lootbox__factory;
     const bnb_pricefeed = "0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE";
 
     let entityTreasury: SignerWithAddress;
@@ -118,8 +117,9 @@ describe("📦 Lootbox smart contract", async function () {
     })
 
     it("Name cannot be empty", async () => {
-      await expect(
-        Lootbox.deploy(
+      const lootbox = upgrades.deployProxy(
+        Lootbox,
+        [
           "",
           "SYMBOL",
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
@@ -130,13 +130,16 @@ describe("📦 Lootbox smart contract", async function () {
           "2000000",
           "1000000",
           broker.address,
-          affiliate.address
-        )
-      ).to.be.revertedWith("Name cannot be empty")
+            affiliate.address
+        ],
+        { kind: "uups" }
+      )
+      expect(lootbox).to.be.revertedWith("Name cannot be empty")
     })
     it("Symbol cannot be empty", async () => {
-      await expect(
-        Lootbox.deploy(
+      const lootbox = upgrades.deployProxy(
+        Lootbox,
+        [
           "Name",
           "",
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
@@ -148,12 +151,15 @@ describe("📦 Lootbox smart contract", async function () {
           "1000000",
           broker.address,
           affiliate.address
-        )
-      ).to.be.revertedWith("Symbol cannot be empty")
+        ],
+        { kind: "uups" }
+      )
+      expect(lootbox).to.be.revertedWith("Symbol cannot be empty")
     })
     it("Purchase ticket fee must be less than 100000000 (100%)", async () => {
-      await expect(
-        Lootbox.deploy(
+      const lootbox = upgrades.deployProxy(
+        Lootbox,
+        [
           "Name",
           "Symbol",
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
@@ -161,16 +167,19 @@ describe("📦 Lootbox smart contract", async function () {
           entityTreasury.address,
           issuingEntity.address,
           bnb_pricefeed,
-          "1000000000",
+          "100000001",
           "1000000",
           broker.address,
           affiliate.address
+        ],
+          { kind: "uups" }
         )
-      ).to.be.revertedWith("Purchase ticket fee must be less than 100000000 (100%)")
+        expect(lootbox).to.be.revertedWith("Purchase ticket fee must be less than 100000000 (100%)")
     })
     it("Affiliate ticket fee must be less than or equal to purchase ticket fee", async () => {
-      await expect(
-        Lootbox.deploy(
+      const lootbox = upgrades.deployProxy(
+        Lootbox,
+        [
           "Name",
           "SYMBOL",
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
@@ -182,12 +191,15 @@ describe("📦 Lootbox smart contract", async function () {
           "3000000",
           broker.address,
           affiliate.address
+        ],
+          { kind: "uups" }
         )
-      ).to.be.revertedWith("Affiliate ticket fee must be less than or equal to purchase ticket fee")
+        expect(lootbox).to.be.revertedWith("Affiliate ticket fee must be less than or equal to purchase ticket fee")
     })
     it("Treasury cannot be the zero address", async () => {
-      await expect(
-        Lootbox.deploy(
+      const lootbox = upgrades.deployProxy(
+        Lootbox,
+        [
           "Name",
           "SYMBOL",
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
@@ -199,12 +211,15 @@ describe("📦 Lootbox smart contract", async function () {
           "1000000",
           broker.address,
           affiliate.address
+        ],
+          { kind: "uups" }
         )
-      ).to.be.revertedWith("Treasury cannot be the zero address")
+        expect(lootbox).to.be.revertedWith("Treasury cannot be the zero address")
     })
     it("Issuer cannot be the zero address", async () => {
-      await expect(
-        Lootbox.deploy(
+      const lootbox = upgrades.deployProxy(
+        Lootbox,
+        [
           "Name",
           "SYMBOL",
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
@@ -216,12 +231,15 @@ describe("📦 Lootbox smart contract", async function () {
           "1000000",
           broker.address,
           affiliate.address
-        )
-      ).to.be.revertedWith("Issuer cannot be the zero address")
+        ],
+        { kind: "uups" }
+      )
+      expect(lootbox).to.be.revertedWith("Issuer cannot be the zero address")
     })
     it("Native token price feed is required", async () => {
-      await expect(
-        Lootbox.deploy(
+      const lootbox = upgrades.deployProxy(
+        Lootbox,
+        [
           "Name",
           "SYMBOL",
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
@@ -233,12 +251,15 @@ describe("📦 Lootbox smart contract", async function () {
           "1000000",
           broker.address,
           affiliate.address
-        )
-      ).to.be.revertedWith("Native token price feed is required")
+        ],
+        { kind: "uups" }
+      )
+      expect(lootbox).to.be.revertedWith("Native token price feed is required")
     })
     it("Broker cannot be the zero address", async () => {
-      await expect(
-        Lootbox.deploy(
+      const lootbox = upgrades.deployProxy(
+        Lootbox,
+        [
           "Name",
           "SYMBOL",
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
@@ -250,12 +271,15 @@ describe("📦 Lootbox smart contract", async function () {
           "1000000",
           ethers.constants.AddressZero,
           affiliate.address
-        )
-      ).to.be.revertedWith("Broker cannot be the zero address")
+        ],
+        { kind: "uups" }
+      )
+      expect(lootbox).to.be.revertedWith("Broker cannot be the zero address")
     })
     it("Affiliate cannot be the zero address", async () => {
-      await expect(
-        Lootbox.deploy(
+      const lootbox = upgrades.deployProxy(
+        Lootbox,
+        [
           "Name",
           "SYMBOL",
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
@@ -267,12 +291,15 @@ describe("📦 Lootbox smart contract", async function () {
           "1000000",
           broker.address,
           ethers.constants.AddressZero
-        )
-      ).to.be.revertedWith("Affiliate cannot be the zero address")
+        ],
+        { kind: "uups" }
+      )
+      expect(lootbox).to.be.revertedWith("Affiliate cannot be the zero address")
     })
     it("Max shares sold must be greater than zero", async () => {
-      await expect(
-        Lootbox.deploy(
+      const lootbox = upgrades.deployProxy(
+        Lootbox,
+        [
           "Name",
           "SYMBOL",
           "0",
@@ -284,8 +311,10 @@ describe("📦 Lootbox smart contract", async function () {
           "1000000",
           broker.address,
           affiliate.address
-        )
-      ).to.be.revertedWith("Max shares sold must be greater than zero")
+        ],
+        { kind: "uups" }
+      )
+      expect(lootbox).to.be.revertedWith("Max shares sold must be greater than zero")
     })
   })
 
@@ -318,18 +347,23 @@ describe("📦 Lootbox smart contract", async function () {
       Usdc = await ethers.getContractFactory("USDC");
       Usdt = await ethers.getContractFactory("USDT");
       bnb_stablecoin = (await Bnb.deploy(0)) as BNB;
-      lootbox = (await Lootbox.deploy(
-        LOOTBOX_NAME,
-        LOOTBOX_SYMBOL,
-        ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, 18), // 50k shares, 18 decimals
-        ethers.BigNumber.from(SHARE_PRICE_USD),
-        entityTreasury.address,
-        issuingEntity.address,
-        bnb_pricefeed,
-        TICKET_PURCHASE_FEE,
-        AFFILIATE_FEE,
-        broker.address,
-        affiliate.address
+
+      lootbox = (await upgrades.deployProxy(
+        Lootbox,
+        [
+          LOOTBOX_NAME,
+          LOOTBOX_SYMBOL,
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, 18), // 50k shares, 18 decimals
+          ethers.BigNumber.from(SHARE_PRICE_USD),
+          entityTreasury.address,
+          issuingEntity.address,
+          bnb_pricefeed,
+          TICKET_PURCHASE_FEE,
+          AFFILIATE_FEE,
+          broker.address,
+          affiliate.address
+        ],
+        { kind: "uups" }
       )) as Lootbox;
       await lootbox.deployed();
 
@@ -1046,7 +1080,7 @@ describe("📦 Lootbox smart contract", async function () {
           depositAmountInUSDCB2.div(2).toString()
         )
       })
-      it.only("can read all deposits for a ticket", async () => {
+      it("can read all deposits for a ticket", async () => {
         await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA1.toString() })
         await lootbox.connect(purchaser).purchaseTicket({ value: buyAmountInEtherA2.toString() })
         await lootbox.connect(purchaser2).purchaseTicket({ value: buyAmountInEtherB.toString() })
@@ -1325,6 +1359,7 @@ describe("📦 Lootbox smart contract", async function () {
           )
         });
       })
+      
     })
 
     describe("burn", async () => {
