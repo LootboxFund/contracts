@@ -12,7 +12,9 @@ import "./Lootbox.sol";
 
 contract LootboxFactory is Pausable, AccessControl {
 
-    address internal immutable lootboxImplementation;
+    using EnumerableSet for EnumerableSet.AddressSet;
+
+    address public immutable lootboxImplementation;
 
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE"); // Lootbox Ltd
 
@@ -24,10 +26,17 @@ contract LootboxFactory is Pausable, AccessControl {
     mapping(address => uint256) internal affiliateFees;
     // lootbox => affiliate
     mapping(address => address) internal lootboxAffiliates;
+    EnumerableSet.AddressSet private AFFILIATES;
 
     // Points to the Lootboxes deployed by this factory
-    using EnumerableSet for EnumerableSet.AddressSet;
     EnumerableSet.AddressSet private LOOTBOXES;
+
+    event AffiliateWhitelisted(
+        address indexed affiliate,
+        address indexed whitelistedBy,
+        uint256 ticketAffiliateFee,
+        uint256 timestamp
+    );
 
     event LootboxCreated(
       string lootboxName,
@@ -71,10 +80,25 @@ contract LootboxFactory is Pausable, AccessControl {
     function addAffiliate (address affiliate, uint256 ticketAffiliateFee) public onlyRole(DAO_ROLE) {
       require(ticketAffiliateFee <= ticketPurchaseFee , "Affiliate ticket fee must be less than or equal to purchase ticket fee");
       affiliateFees[affiliate] = ticketAffiliateFee;
+      AFFILIATES.add(affiliate);
+      emit AffiliateWhitelisted(
+        affiliate,
+        msg.sender,
+        ticketAffiliateFee,
+        block.timestamp
+      );
     }
 
-    function checkLootboxAffiliate(address lootbox) public view returns (address) {
+    function listAffiliates() public view onlyRole(DAO_ROLE) returns (bytes32[] memory _affiliates) {
+      return AFFILIATES._inner._values;
+    }
+
+    function checkLootboxAffiliate(address lootbox) public view onlyRole(DAO_ROLE) returns (address) {
       return lootboxAffiliates[lootbox];
+    }
+
+    function checkFactoryPrivateDetails() public view onlyRole(DAO_ROLE) returns (address _brokerAddress, uint256 _ticketPurchaseFee) {
+      return (brokerAddress, ticketPurchaseFee);
     }
 
     function createLootbox(
@@ -89,6 +113,8 @@ contract LootboxFactory is Pausable, AccessControl {
         require(bytes(_lootboxName).length != 0, "Lootbox name cannot be empty");
         require(bytes(_lootboxSymbol).length != 0, "Lootbox symbol cannot be empty");
         require(_issuingEntity != address(0), "Issuer address cannot be zero");
+        require(_treasury != address(0), "Treasury address cannot be zero");
+        require(_affiliate != address(0), "Affiliate address cannot be zero");
         require(_maxSharesSold > 0, "Max shares sold must be greater than zero");
         require(_sharePriceUSD > 0, "Share price must be greater than zero");
  
@@ -113,25 +139,6 @@ contract LootboxFactory is Pausable, AccessControl {
         LOOTBOXES.add(address(proxy));
         lootboxAffiliates[address(proxy)] = _affiliate;
 
-        /**
-          // Lootbox lootbox = new Lootbox(
-          //   _lootboxName,
-          //   _lootboxSymbol,
-          //   _maxSharesSold,
-          //   _sharePriceUSD,
-          //   _treasury,
-          //   msg.sender,
-          //   nativeTokenPriceFeed,
-          //   ticketPurchaseFee,
-          //   affiliateFees[_affiliate],
-          //   brokerAddress,
-          //   _affiliate
-          // );
-          // LOOTBOXES.add(address(lootbox));
-          // lootboxAffiliates[address(lootbox)] = _affiliate;
-         */
-       
-
         emit LootboxCreated(
             _lootboxName,
             address(proxy),
@@ -152,7 +159,6 @@ contract LootboxFactory is Pausable, AccessControl {
     }
 
     function viewLootboxes() public view returns (bytes32[] memory) {
-        // TODO investigate memory usage if LOOTBOXES can be huge
         return LOOTBOXES._inner._values;
     }
 

@@ -167,7 +167,7 @@ describe("📦 Lootbox smart contract", async function () {
           entityTreasury.address,
           issuingEntity.address,
           bnb_pricefeed,
-          "1000000000",
+          "100000001",
           "1000000",
           broker.address,
           affiliate.address
@@ -1358,6 +1358,93 @@ describe("📦 Lootbox smart contract", async function () {
             SHARE_PRICE_USD
           )
         });
+      })
+      
+    })
+
+    describe("zero affiliate fee is handled gracefully", async () => {
+      beforeEach(async () => {
+        await usdc_stablecoin.mint(issuingEntity.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
+        await usdc_stablecoin.connect(issuingEntity).approve(lootbox.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
+        
+        await usdt_stablecoin.mint(issuingEntity.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
+        await usdt_stablecoin.connect(issuingEntity).approve(lootbox.address, ethers.BigNumber.from(USDC_STARTING_BALANCE));
+      })
+
+      describe("all fee goes to broker if no affiliate", async () => {
+        const zeroAffiliateFee = "0";
+        const [
+          _deployer,
+          _treasury,
+          _dao,
+          _developer,
+          _purchaser,
+          _gfxStaff,
+          _guildDao,
+          _guildDev,
+          _guildTreasury,
+        ] = await ethers.getSigners();
+        const noAffiliate = _gfxStaff;
+        const lootboxWithAffiliate = (await upgrades.deployProxy(
+          Lootbox,
+          [
+            LOOTBOX_NAME,
+            LOOTBOX_SYMBOL,
+            ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, 18), // 50k shares, 18 decimals
+            ethers.BigNumber.from(SHARE_PRICE_USD),
+            _guildTreasury.address,
+            _dao.address,
+            bnb_pricefeed,
+            TICKET_PURCHASE_FEE,
+            zeroAffiliateFee,
+            _treasury.address,
+            noAffiliate
+          ],
+          { kind: "uups" }
+        )) as Lootbox;
+        await lootboxWithAffiliate.deployed();
+        const startPurchaserBalance = await provider.getBalance(_purchaser.address)
+        const startTreasuryBalance = await provider.getBalance(_guildTreasury.address)
+        const startBrokerBalance = await provider.getBalance(_treasury.address)
+        const startAffiliateBalance = await provider.getBalance(affiliate.address)
+        expect(await lootboxWithAffiliate.ticketIdCounter()).to.eq("0");
+  
+        const buyAmountInEtherD = ethers.BigNumber.from(1);
+        const tx = await lootboxWithAffiliate.connect(_purchaser).purchaseTicket({ value: buyAmountInEtherD.toString() }) 
+        const receipt = await tx.wait();
+        const gasUsed = receipt.cumulativeGasUsed.mul(receipt.effectiveGasPrice)
+  
+        const endPurchaserBalance = await provider.getBalance(_purchaser.address)
+        const endTreasuryBalance = await provider.getBalance(_guildTreasury.address)
+        const endBrokerBalance = await provider.getBalance(_treasury.address)
+        const endAffiliateBalance = await provider.getBalance(noAffiliate.address)
+  
+        expect(endPurchaserBalance).to.eq(startPurchaserBalance.sub(buyAmountInEtherD).sub(gasUsed))
+  
+        const ticketPurchaseFee = ethers.BigNumber.from(TICKET_PURCHASE_FEE);
+        const ticketPurchaseFeeAmount = buyAmountInEtherD.mul(
+          ticketPurchaseFee
+        ).div(
+          ethers.BigNumber.from("10").pow(ethers.BigNumber.from(FEE_DECIMALS))
+        )
+        const ticketSalesAfterPurchaseFee = buyAmountInEtherD.sub(ticketPurchaseFeeAmount)
+        expect(endTreasuryBalance.toString()).to.eq(startTreasuryBalance.add(ticketSalesAfterPurchaseFee))
+  
+        const affiliateFee = ethers.BigNumber.from(zeroAffiliateFee)
+        const affiliateFeeAmount = buyAmountInEtherD.mul(
+          affiliateFee
+        ).div(
+          ethers.BigNumber.from("10").pow(ethers.BigNumber.from(FEE_DECIMALS))
+        )
+        expect(endAffiliateBalance.toString()).to.eq(startAffiliateBalance.toString())
+  
+        const brokerFee = ticketPurchaseFee.sub(affiliateFee)
+        const brokerFeeAmount = buyAmountInEtherD.mul(
+          brokerFee
+        ).div(
+          ethers.BigNumber.from("10").pow(ethers.BigNumber.from(FEE_DECIMALS))
+        )
+        expect(endBrokerBalance.toString()).to.eq(startBrokerBalance.add(brokerFeeAmount))
       })
     })
 
