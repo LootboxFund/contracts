@@ -1,4 +1,4 @@
-import { SemanticVersion } from "@guildfx/helpers";
+import { SemanticVersion } from "@lootboxfund/helpers";
 
 interface IAddressesByChain {
   /** Created as gnosis multi-sig in Defender */
@@ -48,7 +48,7 @@ interface IStableCoins {
   [key: string]: IStableCoinAddressesByChain;
 }
 
-export const CURRENT_SEMVER = "0.1.0-demo" as SemanticVersion;
+export const CURRENT_SEMVER = "0.2.0-sandbox" as SemanticVersion;
 
 // TODO: Probably put this in @guildfx/helpers
 export const addresses: IAddresses = {

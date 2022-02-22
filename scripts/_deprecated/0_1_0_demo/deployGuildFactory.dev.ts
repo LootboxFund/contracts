@@ -27,13 +27,13 @@
  */
 
 import { ethers, upgrades, network } from "hardhat";
-import { Constants, ETH, USDC, USDT } from "../typechain";
-import { logToFile } from "./helpers/logger";
+import { Constants, ETH, USDC, USDT } from "../../../typechain";
+import { logToFile } from "../../helpers/logger";
 import {
   uploadTokenDataToCDN,
   uploadTokenIndexToCDN,
-} from "./helpers/tokenlist";
-import { Address } from "@guildfx/helpers";
+} from "../../helpers/tokenlist";
+import { Address } from "@lootboxfund/helpers";
 import { addresses, STABLECOINS, CURRENT_SEMVER } from "./constants";
 
 const chainIdHex = `0x${network.config.chainId?.toString(16)}`;
@@ -149,12 +149,12 @@ async function main() {
   await ethStablecoin.mint(mklion, stableCoinInitialMintAmount);
   await sleep();
   await uploadTokenDataToCDN({
-    tokenFrag: { symbol: "ETH", address: ethStablecoin.address },
+    tokenFrag: { symbol: "ETH", address: ethStablecoin.address as Address },
     chainIdHex,
     semver: CURRENT_SEMVER,
     loggerPath: LOG_FILE_PATH,
   });
-  tokenAddresses.push(ethStablecoin.address);
+  tokenAddresses.push(ethStablecoin.address as Address);
   logToFile(
     `ETH Stablecoin Address = ${ethStablecoin.address} \n`,
     LOG_FILE_PATH
@@ -182,12 +182,12 @@ async function main() {
   await usdcStablecoin.mint(mklion, stableCoinInitialMintAmount);
   await sleep();
   await uploadTokenDataToCDN({
-    tokenFrag: { symbol: "USDC", address: usdcStablecoin.address },
+    tokenFrag: { symbol: "USDC", address: usdcStablecoin.address as Address },
     chainIdHex,
     semver: CURRENT_SEMVER,
     loggerPath: LOG_FILE_PATH,
   });
-  tokenAddresses.push(usdcStablecoin.address);
+  tokenAddresses.push(usdcStablecoin.address as Address);
   logToFile(
     `USDC Stablecoin Address = ${usdcStablecoin.address} \n`,
     LOG_FILE_PATH
@@ -212,12 +212,12 @@ async function main() {
   await usdtStablecoin.mint(mklion, stableCoinInitialMintAmount);
   await sleep();
   await uploadTokenDataToCDN({
-    tokenFrag: { symbol: "USDT", address: usdtStablecoin.address },
+    tokenFrag: { symbol: "USDT", address: usdtStablecoin.address as Address },
     chainIdHex,
     semver: CURRENT_SEMVER,
     loggerPath: LOG_FILE_PATH,
   });
-  tokenAddresses.push(usdtStablecoin.address);
+  tokenAddresses.push(usdtStablecoin.address as Address);
   logToFile(
     `USDT Stablecoin Address = ${usdtStablecoin.address} \n`,
     LOG_FILE_PATH

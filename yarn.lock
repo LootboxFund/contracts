@@ -646,14 +646,6 @@
     stream-events "^1.0.4"
     xdg-basedir "^4.0.0"
 
-"@guildfx/helpers@^0.0.34":
-  version "0.0.34"
-  resolved "https://registry.yarnpkg.com/@guildfx/helpers/-/helpers-0.0.34.tgz#740c019c75ebfa066f6c8f4ddbb1aae4446614f9"
-  integrity sha512-nl8Q87fDdb66jdoc06KruhsAhdIZ9MytR/B7MfOQu6ViSy4j+yDbr/VZCozct8c3boo6OLO9YUd0N7NbpE9YJQ==
-  dependencies:
-    axios "^0.25.0"
-    lodash "^4.17.21"
-
 "@humanwhocodes/config-array@^0.5.0":
   version "0.5.0"
   resolved "https://registry.yarnpkg.com/@humanwhocodes/config-array/-/config-array-0.5.0.tgz#1407967d4c6eecd7388f83acf1eaf4d0c6e58ef9"
@@ -667,6 +659,21 @@
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-1.2.1.tgz#b520529ec21d8e5945a1851dfd1c32e94e39ff45"
   integrity sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==
+
+"@lootboxfund/helpers@0.0.12":
+  version "0.0.12"
+  resolved "https://registry.yarnpkg.com/@lootboxfund/helpers/-/helpers-0.0.12.tgz#64a845aa86271310a5b5ca5ffd24002cd0c4c04d"
+  integrity sha512-lmawAQdIpAwkOcgQh2wpXIZZON8nbD25c8yxA1ttlf+UfwJ5bQRIF/VLx6wf4sCcIjkpD8aw7LHve/kJEXVZfg==
+  dependencies:
+    axios "0.25.0"
+    lodash "4.17.21"
+
+"@lootboxfund/manifest@0.2.23":
+  version "0.2.23"
+  resolved "https://registry.yarnpkg.com/@lootboxfund/manifest/-/manifest-0.2.23.tgz#5ba33dfac2043eb00588231a133b7a185ff63c3a"
+  integrity sha512-FUCdVWgtUlnqpextFrr92UG5owdrrPCFAnfKe6Xqi7YNR6i3wEly+aQ9Xe1vtQlQR6Q2BJ+uC1hP9LwFKj2MwQ==
+  dependencies:
+    "@lootboxfund/helpers" "0.0.12"
 
 "@metamask/detect-provider@^1.2.0":
   version "1.2.0"
@@ -1675,7 +1682,7 @@ axios@0.24.0:
   dependencies:
     follow-redirects "^1.14.4"
 
-axios@^0.25.0:
+axios@0.25.0:
   version "0.25.0"
   resolved "https://registry.yarnpkg.com/axios/-/axios-0.25.0.tgz#349cfbb31331a9b4453190791760a8d35b093e0a"
   integrity sha512-cD8FOb0tRH3uuEe6+evtAbgJtfxr7ly3fQjYcMcuPlgkwVS9xboaVIpcDV+cYQe+yGykgwZCs1pzjntcGa6l5g==
@@ -6624,7 +6631,7 @@ lodash@4.17.20:
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.20.tgz#b44a9b6297bcb698f1c51a3545a2b3b368d59c52"
   integrity sha512-PlhdFcillOINfeV7Ni6oF1TAEayyZBoZ8bcshTHqOYJYlrqzRK5hagpagky5o4HfCzzd1TRkXPMFq6cKk9rGmA==
 
-lodash@^4.17.11, lodash@^4.17.12, lodash@^4.17.14, lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.21, lodash@^4.17.4:
+lodash@4.17.21, lodash@^4.17.11, lodash@^4.17.12, lodash@^4.17.14, lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.21, lodash@^4.17.4:
   version "4.17.21"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
   integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==

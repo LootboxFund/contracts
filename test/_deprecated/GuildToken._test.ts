@@ -23,13 +23,13 @@ import {
   generatePermissionRevokeMessage,
   MINTER_ROLE,
   padAddressTo32Bytes,
-} from "./helpers/test-helpers";
+} from "../helpers/test-helpers";
 import {
   GuildToken,
   GuildToken__factory,
   Constants,
   Constants__factory,
-} from "../typechain";
+} from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 describe("📦 GUILD token", async () => {

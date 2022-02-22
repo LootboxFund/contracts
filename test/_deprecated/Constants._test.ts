@@ -1,5 +1,5 @@
 import { ethers, upgrades } from "hardhat";
-import { Constants, Constants__factory } from "../typechain";
+import { Constants, Constants__factory } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import {
@@ -8,7 +8,7 @@ import {
   generatePermissionRevokeMessage,
   generateMockAddress,
   DEFAULT_ADMIN_ROLE
-} from "./helpers/test-helpers";
+} from "../helpers/test-helpers";
 
 describe("📦 Constants", async function () {
   let Constants: Constants__factory;

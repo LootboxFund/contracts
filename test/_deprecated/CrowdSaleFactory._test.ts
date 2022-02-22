@@ -4,7 +4,7 @@ import {
   CrowdSaleFactory__factory,
   Constants,
   Constants__factory,
-} from "../typechain";
+} from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ContractTransaction } from "ethers";
@@ -13,7 +13,7 @@ import {
   GFX_STAFF_ROLE,
   GUILD_OWNER_ROLE,
   generatePermissionRevokeMessage,
-} from "./helpers/test-helpers";
+} from "../helpers/test-helpers";
 
 describe("📦 CrowdSaleFactory", () => {
   let deployer: SignerWithAddress;

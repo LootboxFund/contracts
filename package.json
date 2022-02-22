@@ -7,10 +7,7 @@
     "test": "npx hardhat test",
     "abi:publish": "ts-node ./scripts/helpers/uploadABIs.ts",
     "geth-local": "npx hardhat node",
-    "deploy-local": "npx hardhat compile && npx hardhat run scripts/deploy.ts --network localhost",
-    "deploy:testnet:crowdsale-factory": "npx hardhat compile && yarn abi:publish && npx hardhat run scripts/deployCrowdSaleFactory.dev.ts --network binance_testnet",
-    "deploy:testnet:guild-factory": "npx hardhat compile && yarn abi:publish && npx hardhat run scripts/deployGuildFactory.dev.ts --network binance_testnet",
-    "deploy:testnet:lootbox": "npx hardhat compile && yarn abi:publish && npx hardhat run scripts/deployLootboxFactory.dev.ts --network binance_testnet"
+    "deploy": "npx hardhat compile && yarn abi:publish && npx hardhat run scripts/lootbox-factory.deploy.ts --network binance_testnet"
   },
   "author": "",
   "license": "ISC",
@@ -55,6 +52,8 @@
   "dependencies": {
     "@chainlink/contracts": "^0.2.2",
     "@google-cloud/storage": "^5.18.1",
+    "@lootboxfund/helpers": "0.0.12",
+    "@lootboxfund/manifest": "0.2.23",
     "@openzeppelin/contracts": "^4.4.2",
     "@openzeppelin/contracts-upgradeable": "^4.4.2",
     "@openzeppelin/hardhat-upgrades": "^1.12.0",

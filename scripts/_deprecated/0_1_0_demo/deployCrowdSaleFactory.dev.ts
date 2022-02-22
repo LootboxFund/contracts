@@ -27,8 +27,8 @@
  */
 
 import { ethers, network } from "hardhat";
-import { sleep } from "@guildfx/helpers";
-import { logToFile } from "./helpers/logger";
+import { sleep } from "@lootboxfund/helpers";
+import { logToFile } from "../../helpers/logger";
 import { addresses } from "./constants";
 
 const chainIdHex = `0x${network.config.chainId?.toString(16)}`;
