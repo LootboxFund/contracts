@@ -5,8 +5,7 @@ import axios from "axios";
 import fs from "fs";
 import { encodeURISafe } from "./logger";
 import { SemanticVersion } from "@lootboxfund/helpers";
-import { Manifest_v0_2_0_sandbox as Manifest } from '@lootboxfund/manifest'
-const manifest = Manifest.default
+import { manifest } from '../manifest'
 
 const CONSTANTS = {
   webhookEndpoint: manifest.pipedream.sources.onLootboxURI.webhookEndpoint,

@@ -29,8 +29,7 @@
 import { ethers, network } from "hardhat";
 import { sleep } from "@lootboxfund/helpers";
 import { logToFile } from "./helpers/logger";
-import { Manifest_v0_2_0_sandbox as Manifest } from '@lootboxfund/manifest'
-const manifest = Manifest.default
+import { manifest } from "./manifest"
 
 const LOG_FILE_PATH = `${__dirname}/logs/deployLootboxFactory_log_${Date.now()}_${network.name}_${
   network.config.chainId
