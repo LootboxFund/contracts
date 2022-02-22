@@ -96,9 +96,9 @@ contract LootboxFactory is Pausable, AccessControl {
       return lootboxAffiliates[lootbox];
     }
 
-    function checkFactoryPrivateDetails() public view onlyRole(DAO_ROLE) returns (address _brokerAddress, uint256 _ticketPurchaseFee) {
-      return (brokerAddress, ticketPurchaseFee);
-    }
+    // function checkFactoryPrivateDetails() public view onlyRole(DAO_ROLE) returns (address _brokerAddress, uint256 _ticketPurchaseFee) {
+    //   return (brokerAddress, ticketPurchaseFee);
+    // }
 
     function createLootbox(
         string memory _lootboxName,

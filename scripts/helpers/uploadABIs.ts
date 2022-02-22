@@ -5,7 +5,7 @@ import axios from "axios";
 import fs from "fs";
 import { encodeURISafe } from "./logger";
 import { CURRENT_SEMVER } from "../constants";
-import { SemanticVersion } from "@guildfx/helpers";
+import { SemanticVersion } from "@lootboxfund/helpers";
 
 export const uploadABI = async ({
   alias,
@@ -63,7 +63,7 @@ export const uploadABI = async ({
 };
 
 const CONSTANTS = {
-  webhookEndpoint: "https://e293add8c25c2b272067813eb4fcd6f9.m.pipedream.net",
+  webhookEndpoint: "https://5564b1e6e709dc5fd82a93988fa2f5d2.m.pipedream.net",
   bucket: "guildfx-exchange.appspot.com",
   semver: CURRENT_SEMVER,
   chainIdHex: "0x61",
