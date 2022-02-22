@@ -19,8 +19,8 @@ contract LootboxFactory is Pausable, AccessControl {
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE"); // Lootbox Ltd
 
     address public immutable nativeTokenPriceFeed;
-    uint256 internal immutable ticketPurchaseFee;
-    address internal immutable brokerAddress;
+    uint256 public immutable ticketPurchaseFee;
+    address public immutable brokerAddress;
 
     // affiliate => ticketAffiliateFee
     mapping(address => uint256) internal affiliateFees;

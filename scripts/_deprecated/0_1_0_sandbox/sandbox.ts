@@ -15,7 +15,7 @@ async function main() {
 	const Crowdsale = await ethers.getContractFactory("CrowdSale");
 	const crowdsale = await Crowdsale.attach(CROWDSALE_ADDRESS);
 
-	await crowdsale.connect(purchaser).testEventLogging();
+	// await crowdsale.connect(purchaser).testEventLogging();
 }
 
 main().catch((error) => {

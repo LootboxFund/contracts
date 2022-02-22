@@ -660,28 +660,20 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-1.2.1.tgz#b520529ec21d8e5945a1851dfd1c32e94e39ff45"
   integrity sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==
 
-"@lootboxfund/helpers@0.0.9":
-  version "0.0.9"
-  resolved "https://registry.yarnpkg.com/@lootboxfund/helpers/-/helpers-0.0.9.tgz#949537a80b5cc2eafbb919149404ca49ff1c58f9"
-  integrity sha512-8jrZBgZ1tzX3iG2o7CHYjB7e+bZK7vqBhGQtsmza7Esllbd11tBzZ+Qyincs8foVGuziBqHDhgb1x+iDaUtgMQ==
+"@lootboxfund/helpers@0.0.12":
+  version "0.0.12"
+  resolved "https://registry.yarnpkg.com/@lootboxfund/helpers/-/helpers-0.0.12.tgz#64a845aa86271310a5b5ca5ffd24002cd0c4c04d"
+  integrity sha512-lmawAQdIpAwkOcgQh2wpXIZZON8nbD25c8yxA1ttlf+UfwJ5bQRIF/VLx6wf4sCcIjkpD8aw7LHve/kJEXVZfg==
   dependencies:
     axios "0.25.0"
     lodash "4.17.21"
 
-"@lootboxfund/helpers@^0.0.10":
-  version "0.0.10"
-  resolved "https://registry.yarnpkg.com/@lootboxfund/helpers/-/helpers-0.0.10.tgz#44a0ff84bdb441544d1e26f8bfc431f9c43cf24c"
-  integrity sha512-5FB0+cZJdx4Va8TcfvWYwll4A8UZWKmOn/BtLgGTDxQar/k2bYPmL9rOzoKAjaOQV9vTp+BmcZXm+Q5Q8etYHQ==
+"@lootboxfund/manifest@0.2.23":
+  version "0.2.23"
+  resolved "https://registry.yarnpkg.com/@lootboxfund/manifest/-/manifest-0.2.23.tgz#5ba33dfac2043eb00588231a133b7a185ff63c3a"
+  integrity sha512-FUCdVWgtUlnqpextFrr92UG5owdrrPCFAnfKe6Xqi7YNR6i3wEly+aQ9Xe1vtQlQR6Q2BJ+uC1hP9LwFKj2MwQ==
   dependencies:
-    axios "0.25.0"
-    lodash "4.17.21"
-
-"@lootboxfund/manifest@^0.2.20":
-  version "0.2.20"
-  resolved "https://registry.yarnpkg.com/@lootboxfund/manifest/-/manifest-0.2.20.tgz#79d0edcfbe6c04961748cb5b98b9efbedd6d58de"
-  integrity sha512-Phu6IlYW9TUum3HAWqjtRt2nOldWDii3grHgqAZsQT2RgUAKmL4whxx48O0kESWuB2ax5XDqwJywq5sK0GeUdQ==
-  dependencies:
-    "@lootboxfund/helpers" "0.0.9"
+    "@lootboxfund/helpers" "0.0.12"
 
 "@metamask/detect-provider@^1.2.0":
   version "1.2.0"

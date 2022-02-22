@@ -6,7 +6,7 @@ import {
   GuildToken__factory,
   Constants,
   Constants__factory,
-} from "../typechain";
+} from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ContractTransaction } from "ethers";
@@ -18,7 +18,7 @@ import {
   generatePermissionRevokeMessage,
   stripZeros,
   GOVERNOR_ROLE,
-} from "./helpers/test-helpers";
+} from "../helpers/test-helpers";
 
 describe("📦 GuildFactory", () => {
   let deployer: SignerWithAddress;

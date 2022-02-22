@@ -138,16 +138,16 @@ describe("📦 LootboxFactory", () => {
       it("the Lootbox Implementation is public, anyone can see it", async () => {
         expect(lootboxFactory.lootboxImplementation()).to.not.be.reverted;;
       });
-      it("the Broker address is hidden from public, only Lootbox DAO can see it", async () => {
-        expect("brokerAddress" in lootboxFactory).to.be.false;
-        const [brokerAddress, fee] = await lootboxFactory.connect(dao).checkFactoryPrivateDetails();
-        expect(brokerAddress).to.eq(treasury.address);
-      });
-      it("the Purchase ticket fee is hidden from public, only Lootbox DAO can see it", async () => {
-        expect("ticketPurchaseFee" in lootboxFactory).to.be.false;
-        const [brokerAddress, fee] = await lootboxFactory.connect(dao).checkFactoryPrivateDetails();
-        expect(fee.toString()).to.eq(ticketPurchaseFee);
-      });
+      // it("the Broker address is hidden from public, only Lootbox DAO can see it", async () => {
+      //   expect("brokerAddress" in lootboxFactory).to.be.false;
+      //   const [brokerAddress, fee] = await lootboxFactory.connect(dao).checkFactoryPrivateDetails();
+      //   expect(brokerAddress).to.eq(treasury.address);
+      // });
+      // it("the Purchase ticket fee is hidden from public, only Lootbox DAO can see it", async () => {
+      //   expect("ticketPurchaseFee" in lootboxFactory).to.be.false;
+      //   const [brokerAddress, fee] = await lootboxFactory.connect(dao).checkFactoryPrivateDetails();
+      //   expect(fee.toString()).to.eq(ticketPurchaseFee);
+      // });
     })
   })
 
@@ -167,10 +167,10 @@ describe("📦 LootboxFactory", () => {
       await lootboxFactory.deployed();
     })
     describe("Actions only permitted for Lootbox DAO", async () => {
-      it("checkFactoryPrivateDetails() => only Lootbox DAO can see the private details", async () => {
-        expect(lootboxFactory.connect(deployer).checkFactoryPrivateDetails()).to.be.revertedWith(generatePermissionRevokeMessage(deployer.address, DAO_ROLE))
-        expect(lootboxFactory.connect(dao).checkFactoryPrivateDetails()).to.not.be.reverted;
-      })
+      // it("checkFactoryPrivateDetails() => only Lootbox DAO can see the private details", async () => {
+      //   expect(lootboxFactory.connect(deployer).checkFactoryPrivateDetails()).to.be.revertedWith(generatePermissionRevokeMessage(deployer.address, DAO_ROLE))
+      //   expect(lootboxFactory.connect(dao).checkFactoryPrivateDetails()).to.not.be.reverted;
+      // })
       it("addAffiliate()", async () => {
         expect(lootboxFactory.connect(deployer).addAffiliate(affiliate.address, ticketAffiliateFee)).to.be.revertedWith(generatePermissionRevokeMessage(deployer.address, DAO_ROLE));
         const tx = lootboxFactory.connect(dao).addAffiliate(affiliate.address, ticketAffiliateFee)

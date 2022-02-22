@@ -4,8 +4,16 @@ dotenv.config();
 import axios from "axios";
 import fs from "fs";
 import { encodeURISafe } from "./logger";
-import { CURRENT_SEMVER } from "../constants";
 import { SemanticVersion } from "@lootboxfund/helpers";
+import { Manifest_v0_2_0_sandbox as Manifest } from '@lootboxfund/manifest'
+const manifest = Manifest.default
+
+const CONSTANTS = {
+  webhookEndpoint: manifest.pipedream.sources.onLootboxURI.webhookEndpoint,
+  bucket: manifest.googleCloud.bucket.id,
+  semver: manifest.semver.id,
+  chainIdHex: manifest.chain.chainIDHex,
+};
 
 export const uploadABI = async ({
   alias,
@@ -62,19 +70,8 @@ export const uploadABI = async ({
   });
 };
 
-const CONSTANTS = {
-  webhookEndpoint: "https://5564b1e6e709dc5fd82a93988fa2f5d2.m.pipedream.net",
-  bucket: "guildfx-exchange.appspot.com",
-  semver: CURRENT_SEMVER,
-  chainIdHex: "0x61",
-};
 
 const ABI_FILES = [
-  "artifacts/contracts/Constants.sol/Constants.json",
-  "artifacts/contracts/CrowdSale.sol/CrowdSale.json",
-  "artifacts/contracts/CrowdSaleFactory.sol/CrowdSaleFactory.json",
-  "artifacts/contracts/GuildFactory.sol/GuildFactory.json",
-  "artifacts/contracts/GuildToken.sol/GuildToken.json",
   "artifacts/contracts/LootboxFactory.sol/LootboxFactory.json",
   "artifacts/contracts/Lootbox.sol/Lootbox.json",
 ];

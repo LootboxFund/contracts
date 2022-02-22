@@ -5,7 +5,7 @@ import {
   generatePermissionRevokeMessage,
   GOVERNOR_ROLE,
   MINTER_ROLE,
-} from "./helpers/test-helpers";
+} from "../helpers/test-helpers";
 
 /* eslint-disable */
 import {
@@ -23,7 +23,7 @@ import {
   USDC__factory,
   USDT,
   USDT__factory,
-} from "../typechain";
+} from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 
