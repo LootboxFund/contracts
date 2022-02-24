@@ -53,7 +53,7 @@
     "@chainlink/contracts": "^0.2.2",
     "@google-cloud/storage": "^5.18.1",
     "@lootboxfund/helpers": "0.0.12",
-    "@lootboxfund/manifest": "0.2.23",
+    "@lootboxfund/manifest": "0.2.26",
     "@openzeppelin/contracts": "^4.4.2",
     "@openzeppelin/contracts-upgradeable": "^4.4.2",
     "@openzeppelin/hardhat-upgrades": "^1.12.0",

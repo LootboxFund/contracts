@@ -1,0 +1,15 @@
+2022-02-24T01:21:35.341Z -  
+  
+---------- DEPLOY LOOTBOX FACTORY (development) ----------
+  
+---- Script starting...
+
+---- Network:                             binance_testnet (Hex ID = 0x61)
+---- Lootbox DAO (multisig):              0xE0395596D59e97E50F46c481E6BB81Bb070371F8
+---- Lootbox Grand Treasury (multisig):   0xa156467205Ea16a5c2Acd05BA32CD4cfe437A758
+---- Native Token Price Feed:             0x2514895c72f50D8bd4B4F9b1110F0D6bD2c97526
+---- Default Fee:                         2000000
+---- Deployer (UNTRUSTED):                0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A
+
+  
+2022-02-24T01:21:45.952Z - ---- 0x1A74D7d1705437DA695A9182256677eE56842d65 ---> Lootbox Factory 
