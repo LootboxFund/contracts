@@ -5,10 +5,10 @@ import axios from "axios";
 import fs from "fs";
 import { encodeURISafe } from "./logger";
 import { SemanticVersion } from "@lootboxfund/helpers";
-import { manifest } from '../manifest'
+import { manifest } from "../manifest";
 
 const CONSTANTS = {
-  webhookEndpoint: manifest.pipedream.sources.onLootboxURI.webhookEndpoint,
+  webhookEndpoint: manifest.pipedream.sources.onUploadABI.webhookEndpoint,
   bucket: manifest.googleCloud.bucket.id,
   semver: manifest.semver.id,
   chainIdHex: manifest.chain.chainIDHex,
@@ -29,6 +29,7 @@ export const uploadABI = async ({
   semver: SemanticVersion;
   chainIdHex: string;
 }) => {
+  console.log(`Uploading ABIs to ${CONSTANTS.webhookEndpoint}...`);
   const secret = process.env.WEBHOOK_ABI_UPLOADER_SECRET || "mysecret";
   const metadata = {
     alias,
@@ -68,7 +69,6 @@ export const uploadABI = async ({
       });
   });
 };
-
 
 const ABI_FILES = [
   "artifacts/contracts/LootboxFactory.sol/LootboxFactory.json",
