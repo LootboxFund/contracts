@@ -1,8 +1,8 @@
-# GuildFX Decentralized Exchange
+# Lootbox Decentralized Exchange
 
 <img width="1783" alt="Screen Shot 2022-01-29 at 11 49 32 PM" src="https://user-images.githubusercontent.com/97712061/151687043-7b6cd279-f086-487e-86d7-1af3f8c5983e.png">
 
-👋 Welcome to GuildFX. 🏝️Cayman Islands, Dione.
+👋 Welcome to Lootbox. 🏝️Cayman Islands, Dione.
 
 ## Getting started
 
@@ -37,11 +37,11 @@
 
 ###  Guild FX Admin ⚙️  
 
-> 💡 This only needs setup **once** by a GuildFX admin.
+> 💡 This only needs setup **once** by a Lootbox admin.
 
-1.  Setup [Openzeppelin Defender Account](https://defender.openzeppelin.com/) for GuildFX Admins
+1.  Setup [Openzeppelin Defender Account](https://defender.openzeppelin.com/) for Lootbox Admins
 
-    - Follow the steps in [Guild FX Defender Setup README](./readme/DEFENDER_SETUP_FOR_GUILDFX_ADMIN.md)
+    - Follow the steps in [Guild FX Defender Setup README](./readme/DEFENDER_SETUP_FOR_Lootbox_ADMIN.md)
 
 2.  Deploy **🚜 Guild Factory 🚜**
 
@@ -49,9 +49,9 @@
 
     1. This will output a [log file](.scripts/logs/binance_testnet_97-deployGuildFactory_log_1643510668040.dev) with important addresses etc.
 
-3.  **Manually** add the 📜 **GuildFX Constants** 📜 address & the **🚜 Guild Factory 🚜** address from the log file to variable `addresses.gfxConstants` & `address.gfxGuildFactory` in [constants.ts](./scripts/constants.ts).
+3.  **Manually** add the 📜 **Lootbox Constants** 📜 address & the **🚜 Guild Factory 🚜** address from the log file to variable `addresses.gfxConstants` & `address.gfxGuildFactory` in [constants.ts](./scripts/constants.ts).
 
-    > 💡 You can find the 📜 **GuildFX "Constants"** 📜 from the log files from step 2.1.
+    > 💡 You can find the 📜 **Lootbox "Constants"** 📜 from the log files from step 2.1.
 
 4.  Deploy **🚜 Crowdsale Factory 🚜**
 
@@ -66,9 +66,9 @@
 
 6. Import the `GuildFactory` and `CrowdSaleFactory` addresses into OpenZeppelin Defender as an imported contract. 
 
-7.  🕰 _Optional_: As the 👨‍👩‍👦‍👦 **GuildFX DAO** 👨‍👩‍👦‍👦, we can grant a GuildFX Staff Member 🔐 **GFX_STAFF_ROLE** 🔐 priviledges to the factories.
+7.  🕰 _Optional_: As the 👨‍👩‍👦‍👦 **Lootbox DAO** 👨‍👩‍👦‍👦, we can grant a Lootbox Staff Member 🔐 **GFX_STAFF_ROLE** 🔐 priviledges to the factories.
 
-    > 💡 In the deployment scripts, the GuildFX DAO has already given 🔐 **GFX_STAFF_ROLE** 🔐 priviledges - hence the immediate use of this function is not needed.
+    > 💡 In the deployment scripts, the Lootbox DAO has already given 🔐 **GFX_STAFF_ROLE** 🔐 priviledges - hence the immediate use of this function is not needed.
 
     > 📆 TODO: Add Documentation about this process
 
@@ -80,7 +80,7 @@
 
 2. Set up the Guild's [Defender](https://Defender.openzeppelin.com/) account by following the [Guild Defender Setup](./readme/DEFENDER_SETUP_FOR_GUILDS.md) steps
 
-3. Create your first guild token! Follow [the docs here](./readme/GUILD_CREATE_TOKEN.md). Note, your multisig must be whitelisted by GuildFX in order to create a Guild.
+3. Create your first guild token! Follow [the docs here](./readme/GUILD_CREATE_TOKEN.md). Note, your multisig must be whitelisted by Lootbox in order to create a Guild.
 
 4. Create a crowdsale and hook it up to your guild token! Follow [the docs here](./readme/GUILD_CREATE_CROWDSALE.md)
 
@@ -96,10 +96,10 @@
 
 | Contract                     | Address                                    |
 | ---------------------------- | ------------------------------------------ |
-| GuildFX Treasury (multi sig) | 0xFec4243C1934907CF41298F868FdcCDfca9D7484 |
-| GuildFX DAO (multi sig)      | 0x6A721843BAf298D49C709D0d77D23aDDE650AE44 |
-| GuildFX DEV (multi sig)      | 0x6A721843BAf298D49C709D0d77D23aDDE650AE44 |
-| GuildFX Constants            | 0x5523D8c92CE44f11b66607899415381eeBef1324 |
+| Lootbox Treasury (multi sig) | 0xFec4243C1934907CF41298F868FdcCDfca9D7484 |
+| Lootbox DAO (multi sig)      | 0x6A721843BAf298D49C709D0d77D23aDDE650AE44 |
+| Lootbox DEV (multi sig)      | 0x6A721843BAf298D49C709D0d77D23aDDE650AE44 |
+| Lootbox Constants            | 0x5523D8c92CE44f11b66607899415381eeBef1324 |
 | Guild Factory                | 0x3A416836Ea500fe18838Bd67BAF15A8606b25ACc |
 | Crowdsale Factory            | 0x5cCA43369cFd4743F45d1c7379Df0fd53563bCEA |
 

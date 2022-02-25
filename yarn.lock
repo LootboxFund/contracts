@@ -660,20 +660,20 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-1.2.1.tgz#b520529ec21d8e5945a1851dfd1c32e94e39ff45"
   integrity sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==
 
-"@lootboxfund/helpers@0.0.12":
-  version "0.0.12"
-  resolved "https://registry.yarnpkg.com/@lootboxfund/helpers/-/helpers-0.0.12.tgz#64a845aa86271310a5b5ca5ffd24002cd0c4c04d"
-  integrity sha512-lmawAQdIpAwkOcgQh2wpXIZZON8nbD25c8yxA1ttlf+UfwJ5bQRIF/VLx6wf4sCcIjkpD8aw7LHve/kJEXVZfg==
+"@lootboxfund/helpers@0.0.15":
+  version "0.0.15"
+  resolved "https://registry.yarnpkg.com/@lootboxfund/helpers/-/helpers-0.0.15.tgz#f3e96bad78e43a84448b401496bff1ff2602820f"
+  integrity sha512-Sm7pN8nRk1Ja7beln5DbpKluhoUXZLpURXU4sNLn3tNOCkwiSlsDSlAoajY9BXgh+lDUfEKNXMtJn66KMSnWig==
   dependencies:
     axios "0.25.0"
     lodash "4.17.21"
 
-"@lootboxfund/manifest@0.2.26":
-  version "0.2.26"
-  resolved "https://registry.yarnpkg.com/@lootboxfund/manifest/-/manifest-0.2.26.tgz#13f7d9605b8c6cd1b42ad144e664d4ddfda9f6ce"
-  integrity sha512-6tOGFEwhmvLfr3ANi2TIEkOmW6unDix9RXniyIXZ6TRZgDOiSIsQJp8/f3N6Rct8RBJPFudZ/b2GmcjyDsGZjg==
+"@lootboxfund/manifest@0.2.31":
+  version "0.2.31"
+  resolved "https://registry.yarnpkg.com/@lootboxfund/manifest/-/manifest-0.2.31.tgz#54c484196aa6ec1d078de3471de690aa0c5da908"
+  integrity sha512-KFPwXBYnVRlfWp99HFCVacK6IvYJiM04xLsd3+JSn6MCf/GqyGjV8CoGTT0Yy+Vn1GxwoSt0jkWkqD331S2DRw==
   dependencies:
-    "@lootboxfund/helpers" "0.0.12"
+    "@lootboxfund/helpers" "0.0.15"
 
 "@metamask/detect-provider@^1.2.0":
   version "1.2.0"
@@ -4743,10 +4743,15 @@ flow-stoplight@^1.0.0:
   resolved "https://registry.yarnpkg.com/flow-stoplight/-/flow-stoplight-1.0.0.tgz#4a292c5bcff8b39fa6cc0cb1a853d86f27eeff7b"
   integrity sha1-SiksW8/4s5+mzAyxqFPYbyfu/3s=
 
-follow-redirects@^1.12.1, follow-redirects@^1.14.4, follow-redirects@^1.14.7:
+follow-redirects@^1.12.1, follow-redirects@^1.14.4:
   version "1.14.7"
   resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.14.7.tgz#2004c02eb9436eee9a21446a6477debf17e81685"
   integrity sha512-+hbxoLbFMbRKDwohX8GkTataGqO6Jb7jGwpAlwgy2bIz25XtRm7KEzJM76R1WiNT5SwZkX4Y75SwBolkpmE7iQ==
+
+follow-redirects@^1.14.7:
+  version "1.14.9"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.14.9.tgz#dd4ea157de7bfaf9ea9b3fbd85aa16951f78d8d7"
+  integrity sha512-MQDfihBQYMcyy5dhRDJUHcw7lb2Pv/TuE6xP1vyraLukNDHKbDxDNaOE3NbCAdKQApno+GPRyo1YAp89yCjK4w==
 
 for-each@^0.3.3, for-each@~0.3.3:
   version "0.3.3"

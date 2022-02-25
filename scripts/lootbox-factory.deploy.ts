@@ -1,14 +1,14 @@
 /**
- * Script to deploy the a GuildFX's CrowdsaleFactory contract
+ * Script to deploy the a Lootbox's CrowdsaleFactory contract
  *
  * Run this script as:
  * npm run deploy:testnet:crowdsale-factory
  * OR
  * npm run deploy:rinkeby:guild-factory (not yet configured)
  *
- * After running this script, there are a few steps the GuildFX admins need to do in order to get Guilds onboarded:
- * 1. GuildFX DAO to call .crowdsaleFactory.sol `.whitelistGFXStaff()` function [OPTIONAL as the DAO should already have GFX_STAFF permissions and can whitelist themselves]
- *    to enable a GuildFX staff to manage the guilds.
+ * After running this script, there are a few steps the Lootbox admins need to do in order to get Guilds onboarded:
+ * 1. Lootbox DAO to call .crowdsaleFactory.sol `.whitelistGFXStaff()` function [OPTIONAL as the DAO should already have GFX_STAFF permissions and can whitelist themselves]
+ *    to enable a Lootbox staff to manage the guilds.
  *      - Do this in Openzeppelin Defender
  * 2. The GFX Staff needs to then call crowdsaleFactory `.whitelistGuildOwner()`, function to enable a guild to create a token.
  *      - Do this Openzeppelin Defender
@@ -29,19 +29,20 @@
 import { ethers, network } from "hardhat";
 import { sleep } from "@lootboxfund/helpers";
 import { logToFile } from "./helpers/logger";
-import { manifest } from "./manifest"
+import { manifest } from "./manifest";
 
-const LOG_FILE_PATH = `${__dirname}/logs/deployLootboxFactory_log_${Date.now()}_${network.name}_${
-  network.config.chainId
-  }.dev.txt`;
+const LOG_FILE_PATH = `${__dirname}/logs/deployLootboxFactory_log_${Date.now()}_${
+  network.name
+}_${network.config.chainId}.dev.txt`;
 
 /**
  * -------------------- INITIALIZATION --------------------
  */
 const defaultFee = ethers.utils.parseUnits("0.02", 8 /* fee decimals */);
-const LootboxDAO = manifest.openZeppelin.multiSigs.LootboxDAO.address
-const LootboxGrandTreasury = manifest.openZeppelin.multiSigs.LootboxDAO_Treasury.address
-const nativeTokenPriceFeed = manifest.chain.priceFeedUSD
+const LootboxDAO = manifest.openZeppelin.multiSigs.LootboxDAO.address;
+const LootboxGrandTreasury =
+  manifest.openZeppelin.multiSigs.LootboxDAO_Treasury.address;
+const nativeTokenPriceFeed = manifest.chain.priceFeedUSD;
 
 // const LootboxDAO = "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F"
 // const LootboxGrandTreasury = "0x3D18304497e214F7F4760756D9F20061DC0699b3"
@@ -51,7 +52,6 @@ const nativeTokenPriceFeed = manifest.chain.priceFeedUSD
  * -------------------- DEPLOY SCRIPT --------------------
  */
 async function main() {
-
   const chainIdHex = `0x${network.config.chainId?.toString(16)}`;
 
   /**
@@ -61,7 +61,6 @@ async function main() {
    *            configured in { addresses } from ./constants. Please read the ../README.md for more details.
    */
   const [__untrustedDeployer] = await ethers.getSigners();
-
 
   logToFile(
     ` 
@@ -90,7 +89,10 @@ async function main() {
     LootboxGrandTreasury
   );
   await lootboxFactory.deployed();
-  logToFile(`---- ${lootboxFactory.address} ---> Lootbox Factory \n`, LOG_FILE_PATH);
+  logToFile(
+    `---- ${lootboxFactory.address} ---> Lootbox Factory \n`,
+    LOG_FILE_PATH
+  );
 }
 
 // We recommend this pattern to be able to use async/await everywhere
