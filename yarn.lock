@@ -668,10 +668,10 @@
     axios "0.25.0"
     lodash "4.17.21"
 
-"@lootboxfund/manifest@0.2.31":
-  version "0.2.31"
-  resolved "https://registry.yarnpkg.com/@lootboxfund/manifest/-/manifest-0.2.31.tgz#54c484196aa6ec1d078de3471de690aa0c5da908"
-  integrity sha512-KFPwXBYnVRlfWp99HFCVacK6IvYJiM04xLsd3+JSn6MCf/GqyGjV8CoGTT0Yy+Vn1GxwoSt0jkWkqD331S2DRw==
+"@lootboxfund/manifest@0.2.32":
+  version "0.2.32"
+  resolved "https://registry.yarnpkg.com/@lootboxfund/manifest/-/manifest-0.2.32.tgz#e24eb4e78530669e0d389a0efbf73a04f56bdbd9"
+  integrity sha512-Pxg/xnIYy1P5B/PsbPgjOAXTO9CWdjDn/X6hzXEb7PIylQWMqFJUuwxSxhWdglBXm1+/SQGN6idGsmY8AGq1tQ==
   dependencies:
     "@lootboxfund/helpers" "0.0.15"
 
