@@ -4,7 +4,7 @@ dotenv.config();
 import axios from "axios";
 import fs from "fs";
 import { encodeURISafe } from "./logger";
-import { SemanticVersion } from "@lootboxfund/helpers";
+import { SemanticVersion } from "@lootboxfund/manifest";
 import { manifest } from "../manifest";
 
 const CONSTANTS = {
@@ -46,7 +46,7 @@ export const uploadABI = async ({
       metadata,
       abi,
     };
-    const filePath = `v/${semver}/${chainIdHex}/abi/${alias}.json`;
+    const filePath = `v/${chainIdHex}/abi/${alias}.json`;
     const downloadablePath = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURISafe(
       filePath
     )}?alt=media \n`;
