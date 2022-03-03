@@ -6,9 +6,9 @@ import {
   TokenData,
   buildTokenIndexCDNRoutes,
   Address,
-  SemanticVersion,
 } from "@lootboxfund/helpers";
-import { manifest } from '../manifest'
+import { manifest } from "../manifest";
+import { SemanticVersion } from "@lootboxfund/manifest";
 
 const BUCKET_NAME = manifest.googleCloud.bucket.id;
 
@@ -106,12 +106,10 @@ export const uploadTokenDataToCDN = async ({
     .bucket(BUCKET_NAME)
     .file(tokenData.cdnFilePath)
     .save(
-      JSON.stringify(
-        {
-          ...tokenData,
-          cdnFilePath: undefined,
-        }
-      )
+      JSON.stringify({
+        ...tokenData,
+        cdnFilePath: undefined,
+      })
     );
   await storage.bucket(BUCKET_NAME).file(tokenData.cdnFilePath).makePublic();
 };

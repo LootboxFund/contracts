@@ -660,20 +660,36 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-1.2.1.tgz#b520529ec21d8e5945a1851dfd1c32e94e39ff45"
   integrity sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==
 
-"@lootboxfund/helpers@0.0.15":
-  version "0.0.15"
-  resolved "https://registry.yarnpkg.com/@lootboxfund/helpers/-/helpers-0.0.15.tgz#f3e96bad78e43a84448b401496bff1ff2602820f"
-  integrity sha512-Sm7pN8nRk1Ja7beln5DbpKluhoUXZLpURXU4sNLn3tNOCkwiSlsDSlAoajY9BXgh+lDUfEKNXMtJn66KMSnWig==
+"@lootboxfund/helpers@0.0.20":
+  version "0.0.20"
+  resolved "https://registry.yarnpkg.com/@lootboxfund/helpers/-/helpers-0.0.20.tgz#ae3d2c869c0e7b0e50e48eac69e5e76f42f490fc"
+  integrity sha512-5ExsiJi9+27wQ4jzYz/9cZlEQ/CYSjfGwd/8kSgVS06Z+zli7VsyNms69VPrIfvRvUnkrokkOG+ssIL2+KhyMg==
   dependencies:
     axios "0.25.0"
     lodash "4.17.21"
 
-"@lootboxfund/manifest@0.2.32":
-  version "0.2.32"
-  resolved "https://registry.yarnpkg.com/@lootboxfund/manifest/-/manifest-0.2.32.tgz#e24eb4e78530669e0d389a0efbf73a04f56bdbd9"
-  integrity sha512-Pxg/xnIYy1P5B/PsbPgjOAXTO9CWdjDn/X6hzXEb7PIylQWMqFJUuwxSxhWdglBXm1+/SQGN6idGsmY8AGq1tQ==
+"@lootboxfund/helpers@0.0.25":
+  version "0.0.25"
+  resolved "https://registry.yarnpkg.com/@lootboxfund/helpers/-/helpers-0.0.25.tgz#3c6743da616f2d8ff5aaccf8584339b3cbcf78f0"
+  integrity sha512-o/GonTET0Uzk8+/g1AGxseK15uVIieFlSvc/scC38MM0Wu89p/0PSCluY24xyMHWDcZyeuYvpx0CEUMgISe+6g==
   dependencies:
-    "@lootboxfund/helpers" "0.0.15"
+    "@lootboxfund/manifest" "0.2.38"
+    axios "0.25.0"
+    lodash "4.17.21"
+
+"@lootboxfund/manifest@0.2.38":
+  version "0.2.38"
+  resolved "https://registry.yarnpkg.com/@lootboxfund/manifest/-/manifest-0.2.38.tgz#4753adbe4f46f00cf8e63e73cccf75a379e14b94"
+  integrity sha512-Ps2Ah0UKrq3H3aMLFNuFt4gLCvFXKuffngT7AeN/uJE1GqxM6CvOFAVA9v3nMWlIkVQpS/dP7mLcvoPs4J9ctw==
+  dependencies:
+    "@lootboxfund/helpers" "0.0.20"
+
+"@lootboxfund/manifest@0.2.40":
+  version "0.2.40"
+  resolved "https://registry.yarnpkg.com/@lootboxfund/manifest/-/manifest-0.2.40.tgz#390a08b5a7fd25be252558fa269d51c61d18fd5d"
+  integrity sha512-jDLrKKx0M9ix4E4ixCB5Bv06pdnxlsrJqoNFdqmsOlv00I0JOWjlaeACidd4u3XSHQ71xL73JNULe5irUZvKbQ==
+  dependencies:
+    "@lootboxfund/helpers" "0.0.25"
 
 "@metamask/detect-provider@^1.2.0":
   version "1.2.0"
