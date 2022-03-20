@@ -4,7 +4,7 @@ dotenv.config();
 import axios from "axios";
 import fs from "fs";
 import { encodeURISafe } from "./logger";
-import { SemanticVersion } from "@lootboxfund/manifest";
+import { SemanticVersion } from "@wormgraph/manifest";
 import { manifest } from "../manifest";
 
 const CONSTANTS = {

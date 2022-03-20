@@ -27,7 +27,7 @@
  */
 
 import { ethers, network } from "hardhat";
-import { sleep } from "@lootboxfund/helpers";
+import { sleep } from "@wormgraph/helpers";
 import { logToFile } from "./helpers/logger";
 import { manifest } from "./manifest";
 
