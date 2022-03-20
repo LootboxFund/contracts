@@ -1,2 +1,2 @@
-import { latest } from "@lootboxfund/manifest";
+import { latest } from "@wormgraph/manifest";
 export const manifest = latest.default;

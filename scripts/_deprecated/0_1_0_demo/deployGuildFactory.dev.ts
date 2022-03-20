@@ -33,7 +33,7 @@ import {
   uploadTokenDataToCDN,
   uploadTokenIndexToCDN,
 } from "../../helpers/tokenlist";
-import { Address } from "@lootboxfund/helpers";
+import { Address } from "@wormgraph/helpers";
 import { addresses, STABLECOINS, CURRENT_SEMVER } from "./constants";
 
 const chainIdHex = `0x${network.config.chainId?.toString(16)}`;

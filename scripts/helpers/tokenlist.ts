@@ -6,9 +6,9 @@ import {
   TokenData,
   buildTokenIndexCDNRoutes,
   Address,
-} from "@lootboxfund/helpers";
+} from "@wormgraph/helpers";
 import { manifest } from "../manifest";
-import { SemanticVersion } from "@lootboxfund/manifest";
+import { SemanticVersion } from "@wormgraph/manifest";
 
 const BUCKET_NAME = manifest.googleCloud.bucket.id;
 

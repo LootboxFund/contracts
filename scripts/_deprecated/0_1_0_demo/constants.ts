@@ -1,4 +1,4 @@
-import { SemanticVersion } from "@lootboxfund/helpers";
+import { SemanticVersion } from "@wormgraph/helpers";
 
 interface IAddressesByChain {
   /** Created as gnosis multi-sig in Defender */
