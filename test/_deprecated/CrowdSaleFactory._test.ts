@@ -15,7 +15,7 @@ import {
   generatePermissionRevokeMessage,
 } from "../helpers/test-helpers";
 
-describe("📦 CrowdSaleFactory", () => {
+describe.skip("📦 CrowdSaleFactory", () => {
   let deployer: SignerWithAddress;
   let treasury: SignerWithAddress;
   let dao: SignerWithAddress;

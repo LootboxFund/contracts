@@ -20,7 +20,7 @@ import {
   GOVERNOR_ROLE,
 } from "../helpers/test-helpers";
 
-describe("📦 GuildFactory", () => {
+describe.skip("📦 GuildFactory", () => {
   let deployer: SignerWithAddress;
   let treasury: SignerWithAddress;
   let dao: SignerWithAddress;
