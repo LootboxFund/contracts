@@ -151,7 +151,7 @@ describe("📦 LootboxFactory", () => {
     })
   })
 
-  describe.only("main functionality after constructor", async () => {
+  describe("main functionality after constructor", async () => {
     const LOOTBOX_NAME = "Lootbox Name";
     const LOOTBOX_SYMBOL = "LOOTBOX";
     const SHARE_PRICE_USD = "7000000";

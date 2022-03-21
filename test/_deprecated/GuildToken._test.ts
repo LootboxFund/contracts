@@ -32,7 +32,7 @@ import {
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-describe("📦 GUILD token", async () => {
+describe.skip("📦 GUILD token", async () => {
   let deployer: SignerWithAddress;
   let treasury: SignerWithAddress;
   let dao: SignerWithAddress;

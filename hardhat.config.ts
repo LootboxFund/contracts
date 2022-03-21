@@ -39,7 +39,7 @@ const config: HardhatUserConfig = {
     },
     binance_testnet: {
       chainId: 97,
-      url: `https://speedy-nodes-nyc.moralis.io/f111521389b4b4a5701c6b0b/bsc/testnet`,
+      url: `https://speedy-nodes-nyc.moralis.io/cfd85a5f6e8635607e954ada/bsc/testnet`,
       accounts: [
         `${process.env.DEV_DEPLOYER_PRIVATE_KEY}`,
         `${process.env.DEV_TREASURY_PRIVATE_KEY}`,
@@ -69,7 +69,7 @@ const config: HardhatUserConfig = {
     },
     hardhat: {
       forking: {
-        url: "https://speedy-nodes-nyc.moralis.io/27a1e291c662f960ae4245da/bsc/mainnet/archive",
+        url: "https://speedy-nodes-nyc.moralis.io/cfd85a5f6e8635607e954ada/bsc/mainnet/archive",
         blockNumber: 13913313,
       },
     },

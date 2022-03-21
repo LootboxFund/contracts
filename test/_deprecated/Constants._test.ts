@@ -10,7 +10,7 @@ import {
   DEFAULT_ADMIN_ROLE
 } from "../helpers/test-helpers";
 
-describe("📦 Constants", async function () {
+describe.skip("📦 Constants", async function () {
   let Constants: Constants__factory;
   let constants: Constants;
   let deployer: SignerWithAddress;

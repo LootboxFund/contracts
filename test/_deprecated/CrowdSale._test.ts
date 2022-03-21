@@ -32,7 +32,7 @@ const USDC_ARCHIVED_PRICE = "100005159";
 const USDT_ARCHIVED_PRICE = "100018962";
 const ETH_ARCHIVED_PRICE = "365993550000";
 
-describe("📦 CrowdSale of GUILD token", async function () {
+describe.skip("📦 CrowdSale of GUILD token", async function () {
   let deployer: SignerWithAddress;
   let treasury: SignerWithAddress;
   let purchaser: SignerWithAddress;
