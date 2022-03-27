@@ -87,7 +87,7 @@ const config: HardhatUserConfig = {
         `${process.env.DEV_GUILD_DEV_PRIVATE_KEY}`,
         `${process.env.DEV_GUILD_TREASURY_PRIVATE_KEY}`,
       ],
-    }
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,

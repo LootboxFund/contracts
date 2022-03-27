@@ -65,6 +65,8 @@ contract Lootbox is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeabl
   // references
   uint256 public deploymentStartTime;
   AggregatorV3Interface internal nativeTokenPriceFeed;
+  // users
+  address public issuer;
 
   /** ------------------ FUNDRAISING STATE ------------------
    * 
@@ -227,6 +229,8 @@ contract Lootbox is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeabl
 
     // we can set the broker to a designated smart contract that handles splitting with affiliate fees
     affiliate = _affiliate;
+
+    issuer = _issuingEntity;
 
     _grantRole(DAO_ROLE, _issuingEntity);
   }
