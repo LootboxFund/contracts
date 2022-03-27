@@ -69,8 +69,8 @@ const config: HardhatUserConfig = {
     },
     hardhat: {
       forking: {
-        url: "https://speedy-nodes-nyc.moralis.io/cfd85a5f6e8635607e954ada/bsc/mainnet/archive",
-        blockNumber: 13913313,
+        url: "https://bscrpc.com",
+        blockNumber: 16411419,
       },
     },
     mumbai_testnet: {
@@ -87,7 +87,7 @@ const config: HardhatUserConfig = {
         `${process.env.DEV_GUILD_DEV_PRIVATE_KEY}`,
         `${process.env.DEV_GUILD_TREASURY_PRIVATE_KEY}`,
       ],
-    }
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
