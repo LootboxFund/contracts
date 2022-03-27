@@ -510,7 +510,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         [sharesOwnedB, percentageOwnedB, sharePriceUSDB] =
           await lootbox.viewTicketInfo(ticketsB[0]);
       });
-      it("treasury receives the money & reduces the purchasers native token balance accordingly", async () => {
+      it.only("treasury receives the money & reduces the purchasers native token balance accordingly", async () => {
         const startTreasuryBalance = await provider.getBalance(
           entityTreasury.address
         );
@@ -536,12 +536,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         const endPurchaserBalance = await provider.getBalance(
           purchaser2.address
         );
-        expect(endTreasuryBalance.toString()).to.eq(
-          startTreasuryBalance
-            .add(buyAmountInEtherC)
-            .sub(ticketPurchaseFee)
-            .toString()
-        );
+        expect(endTreasuryBalance.toString()).to.eq(startTreasuryBalance);
         expect(endPurchaserBalance.toString()).to.eq(
           startPurchaserBalance.sub(buyAmountInEtherC).sub(gasUsed).toString()
         );
