@@ -74,6 +74,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   
   uint256 public sharePriceUSD; // THIS SHOULD NOT BE MODIFIED (8 decimals)
   uint256 public sharesSoldCount;
+  uint256 public sharesSoldTarget;
   uint256 public sharesSoldMax;
   uint256 public nativeTokenRaisedTotal;
   uint256 public escrowNativeAmount;
@@ -193,6 +194,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   function initialize(
     string memory _name,
     string memory _symbol,
+    uint256 _targetSharesSold,
     uint256 _maxSharesSold,
     uint256 _sharePriceUSD,
     address _treasury,
@@ -234,6 +236,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
 
     nativeTokenRaisedTotal = 0;
     sharePriceUSD = _sharePriceUSD;
+    sharesSoldTarget = _targetSharesSold;
     sharesSoldMax = _maxSharesSold;
 
     issuer = _issuingEntity;
@@ -365,8 +368,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   */
   function endFundraisingPeriod () public onlyRole(DAO_ROLE) {
     require(isFundraising == true, "Fundraising period has already ended");
-    uint256 sharesSoldMinReq = sharesSoldMax * 90 / 100;
-    require(sharesSoldCount > sharesSoldMinReq, "Fundraising period can only end if >90% of the sharesSoldMax are sold");
+    require(sharesSoldCount > sharesSoldTarget, "Fundraising period can only end if >50% of the sharesSoldMax are sold");
     isFundraising = false;
     uint256 finalEscrowedAmount = escrowNativeAmount;
     escrowNativeAmount = 0;

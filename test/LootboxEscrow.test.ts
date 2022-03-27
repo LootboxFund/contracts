@@ -70,6 +70,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
   const USDC_STARTING_BALANCE = "10000000000000000000000";
   const USDT_STARTING_BALANCE = "10000000000000000000000";
 
+  const TARGET_SHARES_AVAILABLE_FOR_SALE = "500";
   const MAX_SHARES_AVAILABLE_FOR_SALE = "50000"; //
 
   const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
@@ -124,16 +125,6 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
   const triggerLimitEtherSharesSoldCount = triggerLimitEtherPurchaseable
     .mul(BNB_ARCHIVED_PRICE)
     .div(SHARE_PRICE_USD);
-
-  console.log(`
-  
-  📦 LootboxEscrow smart contract
-  triggerLimitEtherPurchaseable         = ${triggerLimitEtherPurchaseable.toString()}
-  triggerLimitEtherAffiliateReceived    = ${triggerLimitEtherAffiliateReceived.toString()}
-  triggerLimitEtherBrokerReceived       = ${triggerLimitEtherBrokerReceived.toString()}
-  triggerLimitEtherTreasuryReceived     = ${triggerLimitEtherTreasuryReceived.toString()}
-  triggerLimitEtherSharesSoldCount      = ${triggerLimitEtherSharesSoldCount.toString()}
-  `);
 
   describe("Before constructor & deployment", async () => {
     const bnb_pricefeed = "0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE";
@@ -407,6 +398,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         [
           LOOTBOX_NAME,
           LOOTBOX_SYMBOL,
+          ethers.utils.parseUnits(TARGET_SHARES_AVAILABLE_FOR_SALE, 18), // 1k shares, 18 decimals
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, 18), // 50k shares, 18 decimals
           ethers.BigNumber.from(SHARE_PRICE_USD),
           entityTreasury.address,
@@ -510,7 +502,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         [sharesOwnedB, percentageOwnedB, sharePriceUSDB] =
           await lootbox.viewTicketInfo(ticketsB[0]);
       });
-      it.only("treasury receives the money & reduces the purchasers native token balance accordingly", async () => {
+      it("treasury receives the money & reduces the purchasers native token balance accordingly", async () => {
         const startTreasuryBalance = await provider.getBalance(
           entityTreasury.address
         );
@@ -727,11 +719,11 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
     });
 
     describe("Fundraising targets", async () => {
-      it("Can only end the fundraising period if less than 90% of sharesSoldMax are sold", async () => {
+      it("Can only complete the fundraising period if more than 50% of sharesSoldMax are sold", async () => {
         await expect(
           lootbox.connect(issuingEntity).endFundraisingPeriod()
         ).to.be.revertedWith(
-          "Fundraising period can only end if >90% of the sharesSoldMax are sold"
+          "Fundraising period can only end if >50% of the sharesSoldMax are sold"
         );
         await lootbox.connect(purchaser).purchaseTicket({
           value: maxEtherPurchaseable.toString(),
@@ -739,7 +731,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         await expect(lootbox.connect(issuingEntity).endFundraisingPeriod()).to
           .not.be.reverted;
       });
-      it("only allows the DAO_ROLE to end the fundraising period", async () => {
+      it("only allows the DAO_ROLE to complete the fundraising period", async () => {
         await lootbox.connect(purchaser).purchaseTicket({
           value: maxEtherPurchaseable.toString(),
         });
@@ -749,6 +741,24 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           generatePermissionRevokeMessage(deployer.address, DAO_ROLE)
         );
       });
+      it("holds funds in escrow during the fundraising period", async () => {
+        const preNativeTreasuryBalance = await provider.getBalance(
+          entityTreasury.address
+        );
+        await lootbox.connect(purchaser).purchaseTicket({
+          value: triggerLimitEtherPurchaseable.toString(),
+        });
+        const escrowNativeAmount = await provider.getBalance(lootbox.address);
+        await expect(escrowNativeAmount).to.eq(
+          triggerLimitEtherTreasuryReceived
+        );
+        const midNativeTreasuryBalance = await provider.getBalance(
+          entityTreasury.address
+        );
+        await expect(midNativeTreasuryBalance).to.equal(
+          preNativeTreasuryBalance
+        );
+      });
       it("sends the fundraised amount to the treasury wallet", async () => {
         const preNativeTreasuryBalance = await provider.getBalance(
           entityTreasury.address
@@ -756,11 +766,21 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         await lootbox.connect(purchaser).purchaseTicket({
           value: triggerLimitEtherPurchaseable.toString(),
         });
-        await expect(lootbox.connect(issuingEntity).endFundraisingPeriod());
+        const escrowNativeAmount = await provider.getBalance(lootbox.address);
+        await expect(escrowNativeAmount).to.eq(
+          triggerLimitEtherTreasuryReceived
+        );
+        const midNativeTreasuryBalance = await provider.getBalance(
+          entityTreasury.address
+        );
+        await expect(midNativeTreasuryBalance).to.equal(
+          preNativeTreasuryBalance
+        );
+        await lootbox.connect(issuingEntity).endFundraisingPeriod();
         const postNativeTreasuryBalance = await provider.getBalance(
           entityTreasury.address
         );
-        expect(postNativeTreasuryBalance).to.equal(
+        await expect(postNativeTreasuryBalance).to.equal(
           preNativeTreasuryBalance.add(triggerLimitEtherTreasuryReceived)
         );
       });
@@ -768,13 +788,6 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         await lootbox.connect(purchaser).purchaseTicket({
           value: triggerLimitEtherPurchaseable.toString(),
         });
-        console.log(`
-        
-        triggerLimitEtherPurchaseable = ${triggerLimitEtherPurchaseable}
-        triggerLimitEtherTreasuryReceived = ${triggerLimitEtherTreasuryReceived}
-        triggerLimitEtherSharesSoldCount = ${triggerLimitEtherSharesSoldCount}
-        
-        `);
         await expect(lootbox.connect(issuingEntity).endFundraisingPeriod())
           .to.emit(lootbox, "CompleteFundraiser")
           .withArgs(
@@ -787,13 +800,42 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           );
       });
       it("refunds the sponsors if fundraising target is not hit", async () => {
+        const preNativeTreasuryBalance = await provider.getBalance(
+          entityTreasury.address
+        );
         const ticketId = "0";
         await lootbox.connect(purchaser).purchaseTicket({
           value: triggerLimitEtherPurchaseable.toString(),
         });
+        const midNativeTreasuryBalance = await provider.getBalance(
+          entityTreasury.address
+        );
+        expect(midNativeTreasuryBalance).to.equal(preNativeTreasuryBalance);
+        const midPurchaserBalance = await provider.getBalance(
+          purchaser.address
+        );
         await lootbox.connect(issuingEntity).cancelFundraiser();
+        const postNativeTreasuryBalance = await provider.getBalance(
+          entityTreasury.address
+        );
+        expect(postNativeTreasuryBalance).to.equal(preNativeTreasuryBalance);
         const depositId = "0";
-        await expect(lootbox.connect(purchaser).withdrawEarnings(ticketId))
+        const tx = await lootbox.connect(purchaser).withdrawEarnings(ticketId);
+        const receipt = await tx.wait();
+        const gasUsed = receipt.cumulativeGasUsed.mul(
+          receipt.effectiveGasPrice
+        );
+
+        const postPurchaserBalance = await provider.getBalance(
+          purchaser.address
+        );
+        expect(postPurchaserBalance).to.equal(
+          midPurchaserBalance
+            .sub(gasUsed)
+            .add(triggerLimitEtherTreasuryReceived)
+        );
+
+        await expect(tx)
           .to.emit(lootbox, "WithdrawEarnings")
           .withArgs(
             purchaser.address,
@@ -858,13 +900,13 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         await expect(
           lootbox.connect(issuingEntity).endFundraisingPeriod()
         ).to.be.revertedWith(
-          "Fundraising period can only end if >90% of the sharesSoldMax are sold"
+          "Fundraising period can only end if >50% of the sharesSoldMax are sold"
         );
       });
       it("anyone can deposit into a Lootbox", async () => {
         await lootbox
           .connect(purchaser)
-          .purchaseTicket({ value: buyAmountInEtherA1.toString() });
+          .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
         await lootbox.connect(issuingEntity).endFundraisingPeriod();
         await expect(
           lootbox
@@ -883,7 +925,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
       it("depositEarningsNative() => can deposit native token into Lootbox and emits a Deposit event", async () => {
         await lootbox
           .connect(purchaser)
-          .purchaseTicket({ value: buyAmountInEtherA1.toString() });
+          .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
         await lootbox.connect(issuingEntity).endFundraisingPeriod();
         const expectedDepositId = "0";
         // native token
@@ -905,7 +947,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
       it("depositEarningsErc20() => can deposit erc20 token into Lootbox and emits a Deposit event", async () => {
         await lootbox
           .connect(purchaser)
-          .purchaseTicket({ value: buyAmountInEtherA1.toString() });
+          .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
         await lootbox.connect(issuingEntity).endFundraisingPeriod();
         const expectedDepositId = "0";
         // erc20 token
@@ -930,7 +972,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
       it("not possible to deposit both native tokens & erc20 in the same transaction", async () => {
         await lootbox
           .connect(purchaser)
-          .purchaseTicket({ value: buyAmountInEtherA1.toString() });
+          .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
         await lootbox.connect(issuingEntity).endFundraisingPeriod();
         await expect(
           lootbox
@@ -954,7 +996,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
       it("deposits will increment the depositId", async () => {
         await lootbox
           .connect(purchaser)
-          .purchaseTicket({ value: buyAmountInEtherA1.toString() });
+          .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
         await lootbox.connect(issuingEntity).endFundraisingPeriod();
         await lootbox
           .connect(issuingEntity)
@@ -968,7 +1010,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
       it("viewDepositedTokens() => tracks an EnumerableSet of all erc20 tokens paid out", async () => {
         await lootbox
           .connect(purchaser)
-          .purchaseTicket({ value: buyAmountInEtherA1.toString() });
+          .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
         await lootbox.connect(issuingEntity).endFundraisingPeriod();
         await lootbox
           .connect(issuingEntity)
@@ -1015,7 +1057,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
       it("sending native tokens directly to lootbox will result in them being trapped", async () => {
         await lootbox
           .connect(purchaser)
-          .purchaseTicket({ value: buyAmountInEtherA1.toString() });
+          .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
         await lootbox.connect(issuingEntity).endFundraisingPeriod();
         const depositAmount = ethers.utils.parseEther("1");
         await issuingEntity.sendTransaction({
@@ -1031,7 +1073,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
       it("sending erc20 tokens directly to lootbox will result in them being trapped", async () => {
         await lootbox
           .connect(purchaser)
-          .purchaseTicket({ value: buyAmountInEtherA1.toString() });
+          .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
         await lootbox.connect(issuingEntity).endFundraisingPeriod();
         const depositAmount = ethers.utils.parseEther("1");
         await usdc_stablecoin
@@ -1049,7 +1091,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
       it("only the issuingEntity can rescue trapped tokens", async () => {
         await lootbox
           .connect(purchaser)
-          .purchaseTicket({ value: buyAmountInEtherA1.toString() });
+          .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
         await lootbox.connect(issuingEntity).endFundraisingPeriod();
         const depositAmount = ethers.utils.parseEther("1");
         await usdc_stablecoin
@@ -1082,7 +1124,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
       it("trapped tokens can be rescued by the issuingEntity and flush them to treasury", async () => {
         await lootbox
           .connect(purchaser)
-          .purchaseTicket({ value: buyAmountInEtherA1.toString() });
+          .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
         await lootbox.connect(issuingEntity).endFundraisingPeriod();
         const depositAmount = ethers.utils.parseEther("1");
         await usdc_stablecoin
@@ -1375,6 +1417,9 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         ).to.not.be.reverted;
       });
       it("purchase fails if outside fundraising period", async () => {
+        await lootbox
+          .connect(purchaser)
+          .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
         await lootbox.connect(issuingEntity).endFundraisingPeriod();
         await expect(
           lootbox
@@ -1387,7 +1432,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
       it("deposit succeeds if outside fundraising period", async () => {
         await lootbox
           .connect(purchaser)
-          .purchaseTicket({ value: buyAmountInEtherA1.toString() });
+          .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
         await lootbox.connect(issuingEntity).endFundraisingPeriod();
         await expect(
           lootbox
@@ -1435,7 +1480,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         const ticketId = "0";
         await lootbox
           .connect(purchaser)
-          .purchaseTicket({ value: buyAmountInEtherA1.toString() });
+          .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
         await lootbox.connect(issuingEntity).endFundraisingPeriod();
         await lootbox
           .connect(issuingEntity)
@@ -1444,6 +1489,9 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           .not.be.reverted;
       });
       it("endFundraisingPeriod() => only allows the issuingEntity to end the fundraising period", async () => {
+        await lootbox
+          .connect(purchaser)
+          .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
         await expect(
           lootbox.connect(deployer).endFundraisingPeriod()
         ).to.be.revertedWith(
@@ -1453,6 +1501,9 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           .not.be.reverted;
       });
       it("endFundraisingPeriod() => cannot be called twice", async () => {
+        await lootbox
+          .connect(purchaser)
+          .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
         await lootbox.connect(issuingEntity).endFundraisingPeriod();
         await expect(
           lootbox.connect(issuingEntity).endFundraisingPeriod()
@@ -1961,10 +2012,9 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           );
           expect(await lootbox.ticketIdCounter()).to.eq("0");
 
-          const buyAmountInEtherD = ethers.BigNumber.from(1);
-          const tx = await lootbox
-            .connect(purchaser)
-            .purchaseTicket({ value: buyAmountInEtherD.toString() });
+          const tx = await lootbox.connect(purchaser).purchaseTicket({
+            value: triggerLimitEtherPurchaseable.toString(),
+          });
           const receipt = await tx.wait();
           const gasUsed = receipt.cumulativeGasUsed.mul(
             receipt.effectiveGasPrice
@@ -1982,26 +2032,26 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           );
 
           expect(endPurchaserBalance).to.eq(
-            startPurchaserBalance.sub(buyAmountInEtherD).sub(gasUsed)
+            startPurchaserBalance
+              .sub(triggerLimitEtherPurchaseable)
+              .sub(gasUsed)
           );
 
           const ticketPurchaseFee = ethers.BigNumber.from(TICKET_PURCHASE_FEE);
-          const ticketPurchaseFeeAmount = buyAmountInEtherD
+          const ticketPurchaseFeeAmount = triggerLimitEtherPurchaseable
             .mul(ticketPurchaseFee)
             .div(
               ethers.BigNumber.from("10").pow(
                 ethers.BigNumber.from(FEE_DECIMALS)
               )
             );
-          const ticketSalesAfterPurchaseFee = buyAmountInEtherD.sub(
+          const ticketSalesAfterPurchaseFee = triggerLimitEtherPurchaseable.sub(
             ticketPurchaseFeeAmount
           );
-          expect(endTreasuryBalance.toString()).to.eq(
-            startTreasuryBalance.add(ticketSalesAfterPurchaseFee)
-          );
+          expect(endTreasuryBalance.toString()).to.eq(startTreasuryBalance);
 
           const affiliateFee = ethers.BigNumber.from(AFFILIATE_FEE);
-          const affiliateFeeAmount = buyAmountInEtherD
+          const affiliateFeeAmount = triggerLimitEtherPurchaseable
             .mul(affiliateFee)
             .div(
               ethers.BigNumber.from("10").pow(
@@ -2013,7 +2063,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           );
 
           const brokerFee = ticketPurchaseFee.sub(affiliateFee);
-          const brokerFeeAmount = buyAmountInEtherD
+          const brokerFeeAmount = triggerLimitEtherPurchaseable
             .mul(brokerFee)
             .div(
               ethers.BigNumber.from("10").pow(
