@@ -8,7 +8,9 @@
     "abi:publish": "ts-node ./scripts/helpers/uploadABIs.ts",
     "size": "npx hardhat size-contracts",
     "geth-local": "npx hardhat node",
-    "deploy": "npx hardhat compile && yarn abi:publish && npx hardhat run scripts/lootbox-factory.deploy.ts --network binance_testnet"
+    "build": "yarn install && npx hardhat compile",
+    "deploy": "npx hardhat compile && yarn abi:publish && npx hardhat run scripts/lootbox-factory.deploy.ts --network binance_testnet",
+    "clean": "rm -rf artifacts cache node_modules typechain"
   },
   "author": "",
   "license": "ISC",
@@ -52,6 +54,7 @@
   },
   "dependencies": {
     "@chainlink/contracts": "^0.2.2",
+    "@google-cloud/secret-manager": "^3.11.0",
     "@google-cloud/storage": "^5.18.1",
     "@openzeppelin/contracts": "^4.4.2",
     "@openzeppelin/contracts-upgradeable": "^4.4.2",
