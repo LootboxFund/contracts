@@ -731,7 +731,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
       });
     });
 
-    describe.only("Fundraising targets", async () => {
+    describe("Fundraising targets", async () => {
       it("Can only end the fundraising period if less than 90% of sharesSoldMax are sold", async () => {
         await expect(
           lootbox.connect(issuingEntity).endFundraisingPeriod()
@@ -754,13 +754,32 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           generatePermissionRevokeMessage(deployer.address, DAO_ROLE)
         );
       });
-      it("Emits an CompleteFundraiser event", async () => {
-        console.log(
-          `triggerLimitEtherPurchaseable: ${triggerLimitEtherPurchaseable.toString()}`
+      it("sends the fundraised amount to the treasury wallet", async () => {
+        const preNativeTreasuryBalance = await provider.getBalance(
+          entityTreasury.address
         );
         await lootbox.connect(purchaser).purchaseTicket({
           value: triggerLimitEtherPurchaseable.toString(),
         });
+        await expect(lootbox.connect(issuingEntity).endFundraisingPeriod());
+        const postNativeTreasuryBalance = await provider.getBalance(
+          entityTreasury.address
+        );
+        expect(postNativeTreasuryBalance).to.equal(
+          preNativeTreasuryBalance.add(triggerLimitEtherTreasuryReceived)
+        );
+      });
+      it("Emits an CompleteFundraiser event", async () => {
+        await lootbox.connect(purchaser).purchaseTicket({
+          value: triggerLimitEtherPurchaseable.toString(),
+        });
+        console.log(`
+        
+        triggerLimitEtherPurchaseable = ${triggerLimitEtherPurchaseable}
+        triggerLimitEtherTreasuryReceived = ${triggerLimitEtherTreasuryReceived}
+        triggerLimitEtherSharesSoldCount = ${triggerLimitEtherSharesSoldCount}
+        
+        `);
         await expect(lootbox.connect(issuingEntity).endFundraisingPeriod())
           .to.emit(lootbox, "CompleteFundraiser")
           .withArgs(
@@ -772,7 +791,25 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
             triggerLimitEtherSharesSoldCount
           );
       });
-      it("refunds the sponsors if fundraising target is not hit", async () => {});
+      it("refunds the sponsors if fundraising target is not hit", async () => {
+        const ticketId = "0";
+        await lootbox.connect(purchaser).purchaseTicket({
+          value: triggerLimitEtherPurchaseable.toString(),
+        });
+        await lootbox.connect(issuingEntity).cancelFundraiser();
+        const depositId = "0";
+        await expect(lootbox.connect(purchaser).withdrawEarnings(ticketId))
+          .to.emit(lootbox, "WithdrawEarnings")
+          .withArgs(
+            purchaser.address,
+            lootbox.address,
+            ticketId,
+            depositId,
+            triggerLimitEtherTreasuryReceived.toString(),
+            ethers.constants.AddressZero,
+            "0"
+          );
+      });
       it("only allows the DAO_ROLE to cancel the fundraiser", async () => {
         await expect(
           lootbox.connect(deployer).cancelFundraiser()
@@ -782,16 +819,19 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         await expect(lootbox.connect(issuingEntity).cancelFundraiser()).to.not
           .be.reverted;
       });
-      it.only("Emits a CancelFundraiser event", async () => {
-        // expect(lootbox.connect(issuingEntity).endFundraisingPeriod())
-        //   .to.emit(lootbox, "EndFundraising")
-        //   .withArgs(
-        //     issuingEntity.address,
-        //     lootbox.address,
-        //     nativeTokenRaisedTotal,
-        //     refundAmount,
-        //     sharesSoldCount
-        //   );
+      it("Emits a CancelFundraiser event", async () => {
+        await lootbox.connect(purchaser).purchaseTicket({
+          value: triggerLimitEtherPurchaseable.toString(),
+        });
+        await expect(lootbox.connect(issuingEntity).cancelFundraiser())
+          .to.emit(lootbox, "CancelFundraiser")
+          .withArgs(
+            issuingEntity.address,
+            lootbox.address,
+            triggerLimitEtherPurchaseable,
+            triggerLimitEtherTreasuryReceived,
+            triggerLimitEtherSharesSoldCount
+          );
       });
     });
 

@@ -370,7 +370,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     isFundraising = false;
     uint256 finalEscrowedAmount = escrowNativeAmount;
     escrowNativeAmount = 0;
-    payable(treasury).transfer(escrowNativeAmount);
+    payable(treasury).transfer(finalEscrowedAmount);
     // emit CompleteFundraiser event
     emit CompleteFundraiser(
       issuer,
@@ -380,7 +380,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
       finalEscrowedAmount,
       sharesSoldCount
     );
-  }
+  } 
   function cancelFundraiser() public onlyRole(DAO_ROLE) {
     require(isFundraising == true, "Fundraising period has already ended");
     isFundraising = false;
