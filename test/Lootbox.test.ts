@@ -465,13 +465,13 @@ describe("📦 Lootbox smart contract", async function () {
           await lootbox.viewTicketInfo(ticketsB[0]);
       });
       it("reflects the expected BNB price", async () => {
-        const ChainLinkPriceFeed = new ethers.Contract(
+        const priceFeed = new ethers.Contract(
           bnb_pricefeed,
           ChainlinkABI,
           deployer
         );
         const [roundID, price, startedAt, timeStamp, answeredInRound] =
-          await ChainLinkPriceFeed.callStatic.latestRoundData();
+          await priceFeed.callStatic.latestRoundData();
         console.log(price);
         expect(price).to.eq(BNB_ARCHIVED_PRICE);
       });
