@@ -7,7 +7,7 @@ import {
   Constants,
   Constants__factory,
   LootboxInstantFactory__factory,
-  LootboxFactory,
+  LootboxInstantFactory,
 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
@@ -38,7 +38,7 @@ describe("📦 LootboxInstantFactory", () => {
   let affiliate: SignerWithAddress;
 
   let LootboxFactory: LootboxInstantFactory__factory;
-  let lootboxFactory: LootboxFactory;
+  let lootboxFactory: LootboxInstantFactory;
 
   const mockNativeTokenPriceFeed = "0x2514895c72f50D8bd4B4F9b1110F0D6bD2c97526";
   const ticketPurchaseFee = "2000000";
