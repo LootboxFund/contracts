@@ -30,7 +30,7 @@ import {
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 
-const BNB_ARCHIVED_PRICE = "51618873955";   // $516.18873955 USD per BNB
+const BNB_ARCHIVED_PRICE = "41771363251"; // $417.36614642 USD per BNB
 
 describe("📦 Lootbox smart contract", async function () {
   let deployer: SignerWithAddress;

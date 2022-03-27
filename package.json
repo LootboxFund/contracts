@@ -6,6 +6,7 @@
   "scripts": {
     "test": "npx hardhat test",
     "abi:publish": "ts-node ./scripts/helpers/uploadABIs.ts",
+    "size": "npx hardhat size-contracts",
     "geth-local": "npx hardhat node",
     "deploy": "npx hardhat compile && yarn abi:publish && npx hardhat run scripts/lootbox-factory.deploy.ts --network binance_testnet"
   },
@@ -52,12 +53,12 @@
   "dependencies": {
     "@chainlink/contracts": "^0.2.2",
     "@google-cloud/storage": "^5.18.1",
-    "@wormgraph/helpers": "0.0.30",
-    "@wormgraph/manifest": "0.2.58",
     "@openzeppelin/contracts": "^4.4.2",
     "@openzeppelin/contracts-upgradeable": "^4.4.2",
     "@openzeppelin/hardhat-upgrades": "^1.12.0",
-    "hardhat-contract-sizer": "^2.1.1",
+    "@wormgraph/helpers": "0.0.30",
+    "@wormgraph/manifest": "0.2.58",
+    "hardhat-contract-sizer": "^2.5.1",
     "lodash": "^4.17.21",
     "moralis": "^1.2.1"
   }
