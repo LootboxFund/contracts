@@ -5375,10 +5375,10 @@ hardhat-console@^1.0.0:
   resolved "https://registry.yarnpkg.com/hardhat-console/-/hardhat-console-1.0.0.tgz#1f9804c118cc1d017d0aaa6346400482a2c191b5"
   integrity sha512-xGgx11Kq3U9ewblTF4jYVHebZa5L89WxogsWXEwcH6b8ncfJKJ9IZD0jmZYgd/LVk7zbUMoMQbNWzWLCdcSHNA==
 
-hardhat-contract-sizer@^2.1.1:
-  version "2.5.0"
-  resolved "https://registry.yarnpkg.com/hardhat-contract-sizer/-/hardhat-contract-sizer-2.5.0.tgz#ae0ef708efbc433a129f655827478741cba84606"
-  integrity sha512-579Bm3QjrGyInL4RuPFPV/2jLDekw+fGmeLQ85GeiBciIKPHVS3ZYuZJDrp7E9J6A4Czk+QVCRA9YPT2Svn7lQ==
+hardhat-contract-sizer@^2.5.1:
+  version "2.5.1"
+  resolved "https://registry.yarnpkg.com/hardhat-contract-sizer/-/hardhat-contract-sizer-2.5.1.tgz#cb0b8dd32593b7a28c8d96ecde04841292bbd603"
+  integrity sha512-28yRb73e30aBVaZOOHTlHZFIdIasA/iFunIehrUviIJTubvdQjtSiQUo2wexHFtt71mQeMPP8qjw2sdbgatDnQ==
   dependencies:
     chalk "^4.0.0"
     cli-table3 "^0.6.0"
