@@ -50,7 +50,7 @@ interface IERC20 {
 }
 
 // solhint-disable-next-line max-states-count
-contract Lootbox is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, ERC721URIStorageUpgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
+contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, ERC721URIStorageUpgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
   using CountersUpgradeable for CountersUpgradeable.Counter;
   using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
   
@@ -69,12 +69,17 @@ contract Lootbox is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeabl
   /** ------------------ FUNDRAISING STATE ------------------
    * 
    */
+  
+  
+  
   uint256 public sharePriceUSD; // THIS SHOULD NOT BE MODIFIED (8 decimals)
   uint256 public sharesSoldCount;
   uint256 public sharesSoldMax;
   uint256 public nativeTokenRaisedTotal;
+  uint256 public escrowNativeAmount;
   EnumerableSetUpgradeable.AddressSet private purchasers;
   bool public isFundraising;
+  address public issuer;
   address public treasury;
   // ticketId => numShares
   mapping(uint256 => uint256) public sharesInTicket;
@@ -86,6 +91,21 @@ contract Lootbox is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeabl
     uint256 ticketId,
     uint256 sharesPurchased,
     uint256 sharePriceUSD
+  );
+  event EndFundraiser(
+    address indexed issuer,
+    address indexed treasury,
+    address lootbox,
+    uint256 totalAmountRaised,
+    uint256 totalAmountReceived,
+    uint256 sharesSold
+  );
+  event CancelFundraiser(
+    address indexed issuer,
+    address lootbox,
+    uint256 totalAmountRaised,
+    uint256 totalAmountRefunded,
+    uint256 sharesSold
   );
 
   /** ------------------ FEES STATE ------------------
@@ -197,7 +217,7 @@ contract Lootbox is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeabl
     require(_nativeTokenPriceFeed != address(0), "Native token price feed is required");
     require(_maxSharesSold > 0, "Max shares sold must be greater than zero");
     require(_sharePriceUSD > 0, "Share price must be greater than zero");
-    require(_broker != address(0), "Broker cannot be the zero address");        // the broker is Lootbox Ltd.
+    require(_broker != address(0), "Broker cannot be the zero address");        // the broker is LootboxEscrow Ltd.
     require(_affiliate != address(0), "Affiliate cannot be the zero address");  // if there is no affiliate, set affiliate to the broker
 
     __ERC721_init(_name, _symbol);
@@ -216,6 +236,7 @@ contract Lootbox is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeabl
     sharePriceUSD = _sharePriceUSD;
     sharesSoldMax = _maxSharesSold;
 
+    issuer = _issuingEntity;
     nativeTokenPriceFeed = AggregatorV3Interface(_nativeTokenPriceFeed);
 
     isFundraising = true;
@@ -286,10 +307,12 @@ contract Lootbox is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeabl
       sharesPurchased,
       sharePriceUSD
     );
-    // collect the payment and send to treasury (should be a multisig)
-    payable(treasury).transfer(treasuryReceived);
+    // broker & affiliate get their cut
     payable(broker).transfer(brokerReceived);
     payable(affiliate).transfer(affiliateReceived);
+    // the rest stays in the contract for escrow
+    // end the fundraising period to send the escrow tokens to the treasury
+    escrowNativeAmount = escrowNativeAmount + treasuryReceived;
     // mint the NFT ticket
     _safeMint(msg.sender, ticketId);
     // return the ticket ID & sharesPurchased
@@ -338,12 +361,63 @@ contract Lootbox is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeabl
   * ------------------ END FUNDRAISING PERIOD ------------------
   *
   *   endFundraising()
+  *   cancelFundraising()
   */
   function endFundraisingPeriod () public onlyRole(DAO_ROLE) {
     require(isFundraising == true, "Fundraising period has already ended");
+    uint256 sharesSoldMinReq = sharesSoldMax * 90 / 100;
+    require(sharesSoldCount > sharesSoldMinReq, "Fundraising period can only end if >90% of the sharesSoldMax are sold");
     isFundraising = false;
+    escrowNativeAmount = 0;
+    payable(treasury).transfer(escrowNativeAmount);
+    // emit end fundraising event
+    emit EndFundraiser(
+      issuer,
+      treasury,
+      address(this),
+      nativeTokenRaisedTotal,
+      escrowNativeAmount,
+      sharesSoldCount
+    );
   }
-
+  function cancelFundraising() public onlyRole(DAO_ROLE) {
+    require(isFundraising == true, "Fundraising period has already ended");
+    isFundraising = false;
+    uint256 refundAmount = escrowNativeAmount;
+    escrowNativeAmount = 0;
+    // log this payout in sum
+    nativeTokenDeposited = nativeTokenDeposited + refundAmount;
+    // create the deposit receipt
+    uint256 depositId = depositIdCounter.current();
+    Deposit memory deposit = Deposit ({
+      depositId: depositId,
+      blockNumber: block.number,
+      nativeTokenAmount: refundAmount,
+      erc20Token: address(0),
+      erc20TokenAmount: 0,
+      timestamp: block.timestamp
+    });
+    // save deposit receipt to mapping, increment ID
+    depositReciepts[depositId] = deposit;
+    // emit the DepositEarnings event
+    emit DepositEarnings(
+      msg.sender,
+      address(this),
+      depositId,
+      refundAmount,
+      address(0),
+      0
+    );
+    depositIdCounter.increment();
+    // emit cancel event
+    emit CancelFundraiser(
+      issuer,
+      address(this),
+      nativeTokenRaisedTotal,
+      refundAmount,
+      sharesSoldCount
+    );
+  }
 
 
   /**
@@ -387,7 +461,7 @@ contract Lootbox is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeabl
       0
     );
     depositIdCounter.increment();
-    // transfer the native tokens to this Lootbox contract
+    // transfer the native tokens to this LootboxEscrow contract
     address payable lootbox = payable(address(this));
     lootbox.transfer(msg.value);
   }
@@ -423,7 +497,7 @@ contract Lootbox is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeabl
     );
     depositIdCounter.increment();
     
-    // transfer the erc20 tokens to this Lootbox contract
+    // transfer the erc20 tokens to this LootboxEscrow contract
     IERC20 token = IERC20(erc20Token);
     token.approve(address(this), erc20Amount);
     token.transferFrom(msg.sender, address(this), erc20Amount);
