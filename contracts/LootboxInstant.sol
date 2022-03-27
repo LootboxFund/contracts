@@ -54,6 +54,8 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   using CountersUpgradeable for CountersUpgradeable.Counter;
   using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
   
+  string public variant;
+
   /** ------------------ SETUP & AUTH ------------------
    * 
    */
@@ -184,6 +186,8 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     address _broker,
     address _affiliate
   ) initializer public {
+    
+    variant = "Instant";
 
     bytes memory tempEmptyNameTest = bytes(_name);
     bytes memory tempEmptySymbolTest = bytes(_symbol);

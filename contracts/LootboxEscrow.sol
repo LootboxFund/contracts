@@ -54,6 +54,9 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   using CountersUpgradeable for CountersUpgradeable.Counter;
   using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
   
+  // string public variant;
+  address public templateFactory;
+
   /** ------------------ SETUP & AUTH ------------------
    * 
    */
@@ -196,15 +199,17 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     string memory _symbol,
     uint256 _targetSharesSold,
     uint256 _maxSharesSold,
-    uint256 _sharePriceUSD,
     address _treasury,
     address _issuingEntity,
     address _nativeTokenPriceFeed,
     uint256 _ticketPurchaseFee,
     uint256 _ticketAffiliateFee,
     address _broker,
-    address _affiliate
+    address _affiliate,
+    address _templateFactory
   ) initializer public {
+
+    // variant = "Escrow";
 
     bytes memory tempEmptyNameTest = bytes(_name);
     bytes memory tempEmptySymbolTest = bytes(_symbol);
@@ -218,7 +223,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     require(_issuingEntity != address(0), "Issuer cannot be the zero address");
     require(_nativeTokenPriceFeed != address(0), "Native token price feed is required");
     require(_maxSharesSold > 0, "Max shares sold must be greater than zero");
-    require(_sharePriceUSD > 0, "Share price must be greater than zero");
     require(_broker != address(0), "Broker cannot be the zero address");        // the broker is LootboxEscrow Ltd.
     require(_affiliate != address(0), "Affiliate cannot be the zero address");  // if there is no affiliate, set affiliate to the broker
 
@@ -233,14 +237,16 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     deploymentStartTime = block.timestamp;
     shareDecimals = 18;
     feeDecimals = 8;
+    sharePriceUSD = 5000000;
 
     nativeTokenRaisedTotal = 0;
-    sharePriceUSD = _sharePriceUSD;
     sharesSoldTarget = _targetSharesSold;
     sharesSoldMax = _maxSharesSold;
 
     issuer = _issuingEntity;
     nativeTokenPriceFeed = AggregatorV3Interface(_nativeTokenPriceFeed);
+
+    templateFactory = _templateFactory;
 
     isFundraising = true;
     treasury = _treasury;
