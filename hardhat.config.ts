@@ -70,7 +70,7 @@ const config: HardhatUserConfig = {
     hardhat: {
       forking: {
         url: "https://bscrpc.com",
-        blockNumber: 16411419,
+        blockNumber: 16411871,
       },
     },
     mumbai_testnet: {
