@@ -31,7 +31,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import ChainlinkABI from "@chainlink/contracts/abi/v0.8/AggregatorV3Interface.json";
 
-const BNB_ARCHIVED_PRICE = "51618873955"; // $516.18873955 USD per BNB
+const BNB_ARCHIVED_PRICE = "41736614642"; // $417.36614642 USD per BNB
 
 describe("📦 Lootbox smart contract", async function () {
   let deployer: SignerWithAddress;

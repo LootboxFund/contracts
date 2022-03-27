@@ -69,8 +69,8 @@ const config: HardhatUserConfig = {
     },
     hardhat: {
       forking: {
-        url: "https://speedy-nodes-nyc.moralis.io/cfd85a5f6e8635607e954ada/bsc/mainnet/archive",
-        blockNumber: 13913313,
+        url: "https://bscrpc.com",
+        blockNumber: 16411419,
       },
     },
     mumbai_testnet: {
