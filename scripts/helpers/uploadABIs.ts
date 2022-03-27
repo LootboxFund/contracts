@@ -1,11 +1,13 @@
 // ts-node ./scripts/helpers/uploadABIs.ts
 import * as dotenv from "dotenv";
 dotenv.config();
+
+import { SemanticVersion } from "@wormgraph/manifest";
 import axios from "axios";
 import fs from "fs";
 import { encodeURISafe } from "./logger";
-import { SemanticVersion } from "@wormgraph/manifest";
 import { manifest } from "../manifest";
+import { getSecret } from "./secrets";
 
 const CONSTANTS = {
   webhookEndpoint: manifest.pipedream.sources.onUploadABI.webhookEndpoint,
@@ -30,7 +32,12 @@ export const uploadABI = async ({
   chainIdHex: string;
 }) => {
   console.log(`Uploading ABIs to ${CONSTANTS.webhookEndpoint}...`);
-  const secret = process.env.WEBHOOK_ABI_UPLOADER_SECRET || "mysecret";
+  const secret = await getSecret({ name: "PD_ABI_UPLOADER_SECRET" });
+
+  if (!secret) {
+    return;
+  }
+
   const metadata = {
     alias,
     bucket,
@@ -46,8 +53,9 @@ export const uploadABI = async ({
       metadata,
       abi,
     };
-    const filePath = `v/${chainIdHex}/abi/${alias}.json`;
-    const downloadablePath = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURISafe(
+    const filePath = `abi/${chainIdHex}/${alias}.json`;
+    // This dosent look like it actually gets used, just logged
+    const downloadablePath = `https://storage.cloud.google.com/${bucket}/${encodeURISafe(
       filePath
     )}?alt=media \n`;
     console.log(`
@@ -71,8 +79,8 @@ export const uploadABI = async ({
 };
 
 const ABI_FILES = [
-  "artifacts/contracts/LootboxFactory.sol/LootboxFactory.json",
-  "artifacts/contracts/Lootbox.sol/Lootbox.json",
+  "artifacts/contracts/LootboxInstantFactory.sol/LootboxInstantFactory.json",
+  // "artifacts/contracts/LootboxInstant.sol/LootboxInstant.json",
 ];
 
 ABI_FILES.forEach(async (filePath) => {
