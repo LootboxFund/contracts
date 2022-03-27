@@ -696,6 +696,47 @@ describe("📦 Lootbox smart contract", async function () {
       });
     });
 
+    describe("depositing payout without approval", async () => {
+      it("depositing native tokens without explict approval is fine", async () => {
+        await lootbox
+          .connect(purchaser)
+          .purchaseTicket({ value: buyAmountInEtherA1.toString() });
+        await lootbox.connect(issuingEntity).endFundraisingPeriod();
+        const expectedDepositId = "0";
+        // native token
+        await expect(
+          lootbox
+            .connect(issuingEntity)
+            .depositEarningsNative({ value: depositAmountInEtherA1.toString() })
+        )
+          .to.emit(lootbox, "DepositEarnings")
+          .withArgs(
+            issuingEntity.address,
+            lootbox.address,
+            expectedDepositId,
+            depositAmountInEtherA1.toString(),
+            ethers.constants.AddressZero,
+            "0"
+          );
+      });
+      it("depositing erc20 tokens without explict approval will not work", async () => {
+        await lootbox
+          .connect(purchaser)
+          .purchaseTicket({ value: buyAmountInEtherA1.toString() });
+        await lootbox.connect(issuingEntity).endFundraisingPeriod();
+        const expectedDepositId = "0";
+        // erc20 tokenTODO
+        await expect(
+          lootbox
+            .connect(issuingEntity)
+            .depositEarningsErc20(
+              usdc_stablecoin.address,
+              depositAmountInUSDCB1.toString()
+            )
+        ).to.be.revertedWith("Dai/insufficient-balance");
+      });
+    });
+
     describe("depositing payout", async () => {
       beforeEach(async () => {
         await usdc_stablecoin.mint(

@@ -67,6 +67,11 @@ contract Lootbox is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeabl
   AggregatorV3Interface internal nativeTokenPriceFeed;
   // users
   address public issuer;
+  // type
+  // Instant = money goes to the user right away
+  // Escrow = money stays in the contract until fundraising period over, and gets send to the user wallet
+  // Tournament = money stays in the contract until fundraising period over, and gets sent to tournament wallet
+  string public constant VARIANT = "Instant";
 
   /** ------------------ FUNDRAISING STATE ------------------
    * 
@@ -367,6 +372,16 @@ contract Lootbox is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeabl
   function depositEarningsNative () public payable {
     require(isFundraising == false, "Deposits cannot be made during fundraising period");
     require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
+    
+    // Reverse Re-entrancy Attack Guard
+    // we first transfer the tokens from the sender to the lootbox contract
+    // that way the history of deposits cant be pumped up in an illusion
+    // if the history of deposit is pumped up, then the attacker can withdraw excessive tokens
+
+    // transfer the native tokens to this Lootbox contract
+    address payable lootbox = payable(address(this));
+    lootbox.transfer(msg.value);
+
     // log this payout in sum
     nativeTokenDeposited = nativeTokenDeposited + msg.value;
     // create the deposit receipt
@@ -391,15 +406,23 @@ contract Lootbox is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeabl
       0
     );
     depositIdCounter.increment();
-    // transfer the native tokens to this Lootbox contract
-    address payable lootbox = payable(address(this));
-    lootbox.transfer(msg.value);
   }
   // do not send erc20 direct to lootbox or it will get stuck. use depositEarningsErc20()
   function depositEarningsErc20 (address erc20Token, uint256 erc20Amount) public payable { 
     require(isFundraising == false, "Deposits cannot be made during fundraising period");
     require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
     require(msg.value == 0, "Deposits of erc20 cannot also include native tokens in the same transaction");
+    
+    // transfer the erc20 tokens to this Lootbox contract
+    IERC20 token = IERC20(erc20Token);
+    // token.approve(address(this), erc20Amount);
+    token.transferFrom(msg.sender, address(this), erc20Amount);
+
+    // Reverse Re-entrancy Attack Guard
+    // we first transfer the tokens from the sender to the lootbox contract
+    // that way the history of deposits cant be pumped up in an illusion
+    // if the history of deposit is pumped up, then the attacker can withdraw excessive tokens
+
     // log this to our list of erc20 tokens
     erc20TokensDeposited.add(erc20Token);
     erc20Deposited[erc20Token] = erc20Deposited[erc20Token] + erc20Amount;
@@ -427,10 +450,6 @@ contract Lootbox is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeabl
     );
     depositIdCounter.increment();
     
-    // transfer the erc20 tokens to this Lootbox contract
-    IERC20 token = IERC20(erc20Token);
-    token.approve(address(this), erc20Amount);
-    token.transferFrom(msg.sender, address(this), erc20Amount);
   }
   function viewDeposit(uint depositId) public view returns (Deposit memory _deposit) {
     return depositReciepts[depositId];
