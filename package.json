@@ -59,8 +59,8 @@
     "@openzeppelin/contracts": "^4.4.2",
     "@openzeppelin/contracts-upgradeable": "^4.4.2",
     "@openzeppelin/hardhat-upgrades": "^1.12.0",
-    "@wormgraph/helpers": "0.0.30",
-    "@wormgraph/manifest": "0.2.73",
+    "@wormgraph/helpers": "0.0.31",
+    "@wormgraph/manifest": "0.2.81",
     "hardhat-contract-sizer": "^2.5.1",
     "lodash": "^4.17.21",
     "moralis": "^1.2.1"
