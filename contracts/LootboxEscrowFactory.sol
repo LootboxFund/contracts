@@ -4,23 +4,25 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.4;
 
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "./LootboxEscrow.sol";
 
-contract LootboxEscrowFactory is Pausable, AccessControl {
+contract LootboxEscrowFactory is Initializable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
 
-    using EnumerableSet for EnumerableSet.AddressSet;
+    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
-    address public immutable lootboxImplementation;
+    address public lootboxImplementation;
 
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE"); // Lootbox Ltd
 
-    address public immutable nativeTokenPriceFeed;
-    uint256 public immutable ticketPurchaseFee;
-    address public immutable brokerAddress;
+    address public nativeTokenPriceFeed;
+    uint256 public ticketPurchaseFee;
+    address public brokerAddress;
 
     address public treasury;
 
@@ -28,10 +30,10 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
     mapping(address => uint256) internal affiliateFees;
     // lootbox => affiliate
     mapping(address => address) internal lootboxAffiliates;
-    EnumerableSet.AddressSet private AFFILIATES;
+    EnumerableSetUpgradeable.AddressSet private AFFILIATES;
 
     // Points to the Lootboxes deployed by this factory
-    EnumerableSet.AddressSet private LOOTBOXES;
+    EnumerableSetUpgradeable.AddressSet private LOOTBOXES;
 
     event AffiliateWhitelisted(
         address indexed affiliate,
@@ -58,27 +60,32 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
       address lootboxTreasury
     );
 
-    constructor(
+    constructor() initializer {}
+    function initialize(
       address _lootboxDao,
       address _nativeTokenPriceFeed,
       uint256 _ticketPurchaseFee,
       address _brokerAddress,
       address _treasuryAddress
-    ) {
-        require(_lootboxDao != address(0), "DAO Lootbox address cannot be zero");
-        require(_brokerAddress != address(0), "Broker address cannot be zero");
-        require(_nativeTokenPriceFeed != address(0), "nativeTokenPriceFeed address cannot be zero");
-        require(_ticketPurchaseFee < 100000000, "Purchase ticket fee must be less than 100000000 (100%)");
+    ) initializer public {
+      require(_lootboxDao != address(0), "DAO Lootbox address cannot be zero");
+      require(_brokerAddress != address(0), "Broker address cannot be zero");
+      require(_nativeTokenPriceFeed != address(0), "nativeTokenPriceFeed address cannot be zero");
+      require(_ticketPurchaseFee < 100000000, "Purchase ticket fee must be less than 100000000 (100%)");
         
-        lootboxImplementation = address(new LootboxEscrow());
+      __Pausable_init();
+      __AccessControl_init();
+      __UUPSUpgradeable_init();
+        
+      lootboxImplementation = address(new LootboxEscrow());
 
-        _grantRole(DAO_ROLE, _lootboxDao);
+      _grantRole(DAO_ROLE, _lootboxDao);
 
-        nativeTokenPriceFeed = _nativeTokenPriceFeed;
-        ticketPurchaseFee = _ticketPurchaseFee;
-        brokerAddress = _brokerAddress;
+      nativeTokenPriceFeed = _nativeTokenPriceFeed;
+      ticketPurchaseFee = _ticketPurchaseFee;
+      brokerAddress = _brokerAddress;
 
-        treasury = _treasuryAddress;
+      treasury = _treasuryAddress;
     }
 
     function addAffiliate (address affiliate, uint256 ticketAffiliateFee) public onlyRole(DAO_ROLE) {
@@ -169,6 +176,21 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
         return LOOTBOXES._inner._values;
     }
 
+    // --------- Mandatory Overrides ---------
+    function supportsInterface(bytes4 interfaceId)
+    public
+    view
+    override(AccessControlUpgradeable)
+    returns (bool)
+    {
+      return super.supportsInterface(interfaceId);
+    }
+    function _authorizeUpgrade(address newImplementation)
+      internal
+      onlyRole(DAO_ROLE)
+      override
+  {}
+
     // --------- Managing the Token ---------
     function pause() public onlyRole(DAO_ROLE) {
         _pause();
@@ -177,4 +199,5 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
     function unpause() public onlyRole(DAO_ROLE) {
         _unpause();
     }
+    
 }

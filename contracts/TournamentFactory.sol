@@ -60,24 +60,26 @@ contract TournamentFactory is Pausable, AccessControl {
         require(bytes(_tournamentName).length != 0, "Tournament name cannot be empty");
         require(_tournamentTreasury != address(0), "Treasury address cannot be zero");
 
-        LootboxEscrowFactory tournament = new LootboxEscrowFactory(
-          lootboxDao,
-          nativeTokenPriceFeed,
-          ticketPurchaseFee,
-          brokerAddress,
-          _tournamentTreasury
-        );
-        _tournaments.push(tournament);
-        TOURNAMENTS.add(address(tournament));
+        // LootboxEscrowFactory tournament = new LootboxEscrowFactory(
+        //   lootboxDao,
+        //   nativeTokenPriceFeed,
+        //   ticketPurchaseFee,
+        //   brokerAddress,
+        //   _tournamentTreasury
+        // );
+        // _tournaments.push(tournament);
+        // TOURNAMENTS.add(address(tournament));
 
-        emit TournamentCreated(
-          _tournamentName,
-          address(tournament),
-          msg.sender,
-          _tournamentTreasury,
-          lootboxDao
-        );
-        return address(tournament);
+        
+
+        // emit TournamentCreated(
+        //   _tournamentName,
+        //   address(tournament),
+        //   msg.sender,
+        //   _tournamentTreasury,
+        //   lootboxDao
+        // );
+        // return address(tournament);
     }
 
     function viewTournaments() public view returns (bytes32[] memory) {

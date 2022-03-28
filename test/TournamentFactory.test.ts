@@ -13,7 +13,7 @@ import {
   GOVERNOR_ROLE,
 } from "./helpers/test-helpers";
 
-describe.only("📦 LootboxInstantFactory", () => {
+describe.skip("📦 LootboxInstantFactory", () => {
   const provider = waffle.provider;
 
   let deployer: SignerWithAddress;

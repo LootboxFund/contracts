@@ -73,65 +73,85 @@ describe("📦 LootboxEscrowFactory", () => {
     affiliate = _gfxStaff;
   });
 
-  describe("initialization => constructor()", async () => {
+  describe.only("initialization => constructor()", async () => {
     describe("constructor args", async () => {
       it("DAO Lootbox address cannot be zero", async () => {
-        await expect(
-          LootboxFactory.deploy(
+        const factory = upgrades.deployProxy(
+          LootboxFactory,
+          [
             ethers.constants.AddressZero,
             mockNativeTokenPriceFeed,
             ticketPurchaseFee,
             treasury.address,
-            guildTreasury.address
-          )
-        ).to.be.revertedWith("DAO Lootbox address cannot be zero");
+            guildTreasury.address,
+          ],
+          { kind: "uups" }
+        );
+        expect(factory).to.be.revertedWith(
+          "DAO Lootbox address canndot be zero"
+        );
       });
       it("Broker address cannot be zero", async () => {
-        await expect(
-          LootboxFactory.deploy(
+        const factory = upgrades.deployProxy(
+          LootboxFactory,
+          [
             dao.address,
             mockNativeTokenPriceFeed,
             ticketPurchaseFee,
             ethers.constants.AddressZero,
-            guildTreasury.address
-          )
-        ).to.be.revertedWith("Broker address cannot be zero");
+            guildTreasury.address,
+          ],
+          { kind: "uups" }
+        );
+        expect(factory).to.be.revertedWith("Broker address cannot be zero");
       });
       it("nativeTokenPriceFeed address cannot be zero", async () => {
-        await expect(
-          LootboxFactory.deploy(
+        const factory = upgrades.deployProxy(
+          LootboxFactory,
+          [
             dao.address,
             ethers.constants.AddressZero,
             ticketPurchaseFee,
             treasury.address,
-            guildTreasury.address
-          )
-        ).to.be.revertedWith("nativeTokenPriceFeed address cannot be zero");
+            guildTreasury.address,
+          ],
+          { kind: "uups" }
+        );
+        expect(factory).to.be.revertedWith(
+          "nativeTokenPriceFeed address cannot be zero"
+        );
       });
       it("Purchase ticket fee must be less than 100000000 (100%)", async () => {
-        await expect(
-          LootboxFactory.deploy(
+        const factory = upgrades.deployProxy(
+          LootboxFactory,
+          [
             dao.address,
             mockNativeTokenPriceFeed,
             "100000001",
             treasury.address,
-            guildTreasury.address
-          )
-        ).to.be.revertedWith(
+            guildTreasury.address,
+          ],
+          { kind: "uups" }
+        );
+        expect(factory).to.be.revertedWith(
           "Purchase ticket fee must be less than 100000000 (100%)"
         );
       });
     });
     describe("constructor setup", async () => {
       beforeEach(async () => {
-        lootboxFactory = await LootboxFactory.deploy(
-          dao.address,
-          mockNativeTokenPriceFeed,
-          ticketPurchaseFee,
-          treasury.address,
-          ethers.constants.AddressZero
-        );
-        await lootboxFactory.deployed();
+        lootboxFactory = (await upgrades.deployProxy(
+          LootboxFactory,
+          [
+            dao.address,
+            mockNativeTokenPriceFeed,
+            ticketPurchaseFee,
+            treasury.address,
+            ethers.constants.AddressZero,
+          ],
+          { kind: "uups" }
+        )) as LootboxEscrowFactory;
+        // await lootboxFactory.deployed();
       });
       it("should assign Lootbox DAO the DAO role", async () => {
         expect(await lootboxFactory.hasRole(DAO_ROLE, dao.address)).to.be.true;
@@ -156,13 +176,17 @@ describe("📦 LootboxEscrowFactory", () => {
       // });
     });
     describe("able to create an escrow factory with pre-set broker treasury", async () => {
-      lootboxFactory = await LootboxFactory.deploy(
-        dao.address,
-        mockNativeTokenPriceFeed,
-        ticketPurchaseFee,
-        treasury.address,
-        guildTreasury.address
-      );
+      lootboxFactory = (await upgrades.deployProxy(
+        LootboxFactory,
+        [
+          dao.address,
+          mockNativeTokenPriceFeed,
+          ticketPurchaseFee,
+          treasury.address,
+          guildTreasury.address,
+        ],
+        { kind: "uups" }
+      )) as LootboxEscrowFactory;
       await lootboxFactory.deployed();
     });
   });
@@ -174,13 +198,17 @@ describe("📦 LootboxEscrowFactory", () => {
     const MAX_SHARES_BUY = ethers.utils.parseUnits("50000", "18").toString();
     const TICKET_PURCHASE_FEE = "2000000";
     beforeEach(async () => {
-      lootboxFactory = await LootboxFactory.deploy(
-        dao.address,
-        mockNativeTokenPriceFeed,
-        ticketPurchaseFee,
-        treasury.address,
-        ethers.constants.AddressZero
-      );
+      lootboxFactory = (await upgrades.deployProxy(
+        LootboxFactory,
+        [
+          dao.address,
+          mockNativeTokenPriceFeed,
+          ticketPurchaseFee,
+          treasury.address,
+          ethers.constants.AddressZero,
+        ],
+        { kind: "uups" }
+      )) as LootboxEscrowFactory;
       await lootboxFactory.deployed();
     });
     describe("Actions only permitted for Lootbox DAO", async () => {
@@ -440,15 +468,18 @@ describe("📦 LootboxEscrowFactory", () => {
     const LOOTBOX_SYMBOL = "LOOTBOXT";
     const SHARE_PRICE_USD = "7000000";
     const MAX_SHARES_BUY = ethers.utils.parseUnits("50000", "18").toString();
-    const TICKET_PURCHASE_FEE = "2000000";
     beforeEach(async () => {
-      lootboxFactory = await LootboxFactory.deploy(
-        dao.address,
-        mockNativeTokenPriceFeed,
-        ticketPurchaseFee,
-        treasury.address,
-        guildTreasury.address
-      );
+      lootboxFactory = (await upgrades.deployProxy(
+        LootboxFactory,
+        [
+          dao.address,
+          mockNativeTokenPriceFeed,
+          ticketPurchaseFee,
+          treasury.address,
+          guildTreasury.address,
+        ],
+        { kind: "uups" }
+      )) as LootboxEscrowFactory;
       await lootboxFactory.deployed();
     });
     describe("createLootbox()", async () => {
