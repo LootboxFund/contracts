@@ -341,7 +341,7 @@ describe("📦 LootboxEscrowFactory", () => {
             affiliate.address
           );
         const receipt = await (await tx).wait();
-        const event = receipt.events?.filter((x) => {
+        const event = receipt.events?.filter((x: any) => {
           return x.event == "LootboxCreated";
         })[0];
         const emittedLootboxAddress =
@@ -372,7 +372,7 @@ describe("📦 LootboxEscrowFactory", () => {
             affiliate.address
           );
         const receipt = await (await tx).wait();
-        const event = receipt.events?.filter((x) => {
+        const event = receipt.events?.filter((x: any) => {
           return x.event == "AffiliateReceipt";
         })[0];
         const emittedLootboxAddress =
@@ -402,7 +402,7 @@ describe("📦 LootboxEscrowFactory", () => {
             deployer.address
           );
         const receipt = await (await tx).wait();
-        const event = receipt.events?.filter((x) => {
+        const event = receipt.events?.filter((x: any) => {
           return x.event == "AffiliateReceipt";
         })[0];
         const emittedLootboxAddress =
@@ -476,7 +476,7 @@ describe("📦 LootboxEscrowFactory", () => {
             affiliate.address
           );
         const receipt = await (await tx).wait();
-        const event = receipt.events?.filter((x) => {
+        const event = receipt.events?.filter((x: any) => {
           return x.event == "LootboxCreated";
         })[0];
         const emittedLootboxAddress =
@@ -504,7 +504,7 @@ describe("📦 LootboxEscrowFactory", () => {
             affiliate.address
           );
         const receipt = await (await tx).wait();
-        const event = receipt.events?.filter((x) => {
+        const event = receipt.events?.filter((x: any) => {
           return x.event == "LootboxCreated";
         })[0];
         const emittedLootboxAddress =
