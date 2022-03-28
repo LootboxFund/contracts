@@ -32,7 +32,7 @@ import { BigNumber } from "ethers";
 
 const BNB_ARCHIVED_PRICE = "41771363251"; // $417.36614642 USD per BNB
 
-describe.only("📦 LootboxEscrow smart contract", async function () {
+describe("📦 LootboxEscrow smart contract", async function () {
   let deployer: SignerWithAddress;
   let purchaser: SignerWithAddress;
   let issuingEntity: SignerWithAddress;
@@ -60,7 +60,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
   const LOOTBOX_NAME = "Pinata Lootbox";
   const LOOTBOX_SYMBOL = "PINATA";
 
-  const SHARE_PRICE_USD = "7000000"; // $0.07 usd per share
+  const SHARE_PRICE_USD = "5000000"; // $0.07 usd per share
 
   const TICKET_PURCHASE_FEE = "2000000"; // 2%
   const AFFILIATE_FEE = "500000"; // 1%
@@ -105,7 +105,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
   // ether spent
   // more than min ether necessary to be accepted
   const triggerLimitEtherPurchaseable = maxEtherPurchaseable
-    .mul(ethers.utils.parseUnits("0.99", 8))
+    .mul(ethers.utils.parseUnits("0.90", 8))
     .div(priceFeedDecimals);
 
   // ether received by affiliate
@@ -159,8 +159,8 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         [
           "",
           "SYMBOL",
-          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           entityTreasury.address,
           issuingEntity.address,
           bnb_pricefeed,
@@ -168,6 +168,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           "1000000",
           broker.address,
           affiliate.address,
+          ethers.constants.AddressZero,
         ],
         { kind: "uups" }
       );
@@ -179,8 +180,8 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         [
           "Name",
           "",
-          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           entityTreasury.address,
           issuingEntity.address,
           bnb_pricefeed,
@@ -188,6 +189,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           "1000000",
           broker.address,
           affiliate.address,
+          ethers.constants.AddressZero,
         ],
         { kind: "uups" }
       );
@@ -199,8 +201,8 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         [
           "Name",
           "Symbol",
-          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           entityTreasury.address,
           issuingEntity.address,
           bnb_pricefeed,
@@ -208,6 +210,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           "1000000",
           broker.address,
           affiliate.address,
+          ethers.constants.AddressZero,
         ],
         { kind: "uups" }
       );
@@ -221,8 +224,9 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         [
           "Name",
           "SYMBOL",
-          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
+
           entityTreasury.address,
           issuingEntity.address,
           bnb_pricefeed,
@@ -230,6 +234,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           "3000000",
           broker.address,
           affiliate.address,
+          ethers.constants.AddressZero,
         ],
         { kind: "uups" }
       );
@@ -243,8 +248,8 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         [
           "Name",
           "SYMBOL",
-          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           ethers.constants.AddressZero,
           issuingEntity.address,
           bnb_pricefeed,
@@ -252,6 +257,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           "1000000",
           broker.address,
           affiliate.address,
+          ethers.constants.AddressZero,
         ],
         { kind: "uups" }
       );
@@ -263,8 +269,8 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         [
           "Name",
           "SYMBOL",
-          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           entityTreasury.address,
           ethers.constants.AddressZero,
           bnb_pricefeed,
@@ -272,6 +278,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           "1000000",
           broker.address,
           affiliate.address,
+          ethers.constants.AddressZero,
         ],
         { kind: "uups" }
       );
@@ -292,6 +299,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           "1000000",
           broker.address,
           affiliate.address,
+          ethers.constants.AddressZero,
         ],
         { kind: "uups" }
       );
@@ -312,6 +320,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           "1000000",
           ethers.constants.AddressZero,
           affiliate.address,
+          ethers.constants.AddressZero,
         ],
         { kind: "uups" }
       );
@@ -345,8 +354,8 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         [
           "Name",
           "SYMBOL",
-          "0",
           ethers.BigNumber.from("100000"),
+          "0",
           entityTreasury.address,
           issuingEntity.address,
           bnb_pricefeed,
@@ -354,6 +363,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           "1000000",
           broker.address,
           affiliate.address,
+          ethers.constants.AddressZero,
         ],
         { kind: "uups" }
       );
@@ -400,7 +410,6 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           LOOTBOX_SYMBOL,
           ethers.utils.parseUnits(TARGET_SHARES_AVAILABLE_FOR_SALE, 18), // 1k shares, 18 decimals
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, 18), // 50k shares, 18 decimals
-          ethers.BigNumber.from(SHARE_PRICE_USD),
           entityTreasury.address,
           issuingEntity.address,
           bnb_pricefeed,
@@ -408,6 +417,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           AFFILIATE_FEE,
           broker.address,
           affiliate.address,
+          ethers.constants.AddressZero,
         ],
         { kind: "uups" }
       )) as LootboxEscrow;
