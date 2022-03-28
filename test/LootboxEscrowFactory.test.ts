@@ -192,7 +192,7 @@ describe.only("📦 LootboxEscrowFactory", () => {
           mockNativeTokenPriceFeed
         );
       });
-      it("the Lootbox Implementation is public, anyone can see it", async () => {
+      it.only("the Lootbox Implementation is public, anyone can see it", async () => {
         expect(await lootboxFactory.lootboxImplementation()).to.equal(
           lootbox.address
         );
