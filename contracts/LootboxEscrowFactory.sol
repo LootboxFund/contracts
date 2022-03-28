@@ -60,13 +60,15 @@ contract LootboxEscrowFactory is Initializable, PausableUpgradeable, AccessContr
       address lootboxTreasury
     );
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {}
     function initialize(
       address _lootboxDao,
       address _nativeTokenPriceFeed,
       uint256 _ticketPurchaseFee,
       address _brokerAddress,
-      address _treasuryAddress
+      address _treasuryAddress,
+      address _escrowLootboxImplementation
     ) initializer public {
       require(_lootboxDao != address(0), "DAO Lootbox address cannot be zero");
       require(_brokerAddress != address(0), "Broker address cannot be zero");
@@ -77,7 +79,7 @@ contract LootboxEscrowFactory is Initializable, PausableUpgradeable, AccessContr
       __AccessControl_init();
       __UUPSUpgradeable_init();
         
-      lootboxImplementation = address(new LootboxEscrow());
+      lootboxImplementation = _escrowLootboxImplementation;
 
       _grantRole(DAO_ROLE, _lootboxDao);
 

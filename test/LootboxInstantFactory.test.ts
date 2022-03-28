@@ -390,6 +390,11 @@ describe("📦 LootboxInstantFactory", () => {
             treasury.address
           );
       });
+      it("the Lootbox Implementation is set & publicily visible", async () => {
+        expect(await lootboxFactory.lootboxImplementation()).to.not.equal(
+          ethers.constants.AddressZero
+        );
+      });
     });
     it("viewLootboxes()", async () => {
       const beforeLootboxes = await lootboxFactory.connect(dao).viewLootboxes();
