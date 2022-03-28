@@ -492,7 +492,7 @@ describe("📦 LootboxEscrowFactory", () => {
             SHARE_PRICE_USD
           );
       });
-      it("providing a treasury address to a pre-set factory will not overwrite the preset", async () => {
+      it("cannot override the preset treasury", async () => {
         const tx = lootboxFactory
           .connect(deployer)
           .createLootbox(

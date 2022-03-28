@@ -32,7 +32,7 @@ import { BigNumber } from "ethers";
 
 const BNB_ARCHIVED_PRICE = "41771363251"; // $417.36614642 USD per BNB
 
-describe.only("📦 LootboxEscrow smart contract", async function () {
+describe("📦 LootboxEscrow smart contract", async function () {
   let deployer: SignerWithAddress;
   let purchaser: SignerWithAddress;
   let issuingEntity: SignerWithAddress;
@@ -60,7 +60,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
   const LOOTBOX_NAME = "Pinata Lootbox";
   const LOOTBOX_SYMBOL = "PINATA";
 
-  const SHARE_PRICE_USD = "7000000"; // $0.07 usd per share
+  const SHARE_PRICE_USD = "5000000"; // $0.07 usd per share
 
   const TICKET_PURCHASE_FEE = "2000000"; // 2%
   const AFFILIATE_FEE = "500000"; // 1%
@@ -105,7 +105,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
   // ether spent
   // more than min ether necessary to be accepted
   const triggerLimitEtherPurchaseable = maxEtherPurchaseable
-    .mul(ethers.utils.parseUnits("0.99", 8))
+    .mul(ethers.utils.parseUnits("0.90", 8))
     .div(priceFeedDecimals);
 
   // ether received by affiliate
