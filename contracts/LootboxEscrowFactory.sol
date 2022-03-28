@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import "./LootboxInstant.sol";
+import "./LootboxEscrow.sol";
 
 contract LootboxEscrowFactory is Pausable, AccessControl {
 
@@ -70,7 +70,7 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
         require(_nativeTokenPriceFeed != address(0), "nativeTokenPriceFeed address cannot be zero");
         require(_ticketPurchaseFee < 100000000, "Purchase ticket fee must be less than 100000000 (100%)");
         
-        lootboxImplementation = address(new LootboxInstant());
+        lootboxImplementation = address(new LootboxEscrow());
 
         _grantRole(DAO_ROLE, _lootboxDao);
 
@@ -129,7 +129,7 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
         ERC1967Proxy proxy = new ERC1967Proxy(
             lootboxImplementation,
             abi.encodeWithSelector(
-                LootboxInstant(payable(address(0))).initialize.selector,
+                LootboxEscrow(payable(address(0))).initialize.selector,
                 _lootboxName,
                 _lootboxSymbol,
                 _maxSharesSold,
