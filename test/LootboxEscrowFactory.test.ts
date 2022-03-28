@@ -192,7 +192,7 @@ describe.only("📦 LootboxEscrowFactory", () => {
           mockNativeTokenPriceFeed
         );
       });
-      it.only("the Lootbox Implementation is public, anyone can see it", async () => {
+      it("the Lootbox Implementation is public, anyone can see it", async () => {
         expect(await lootboxFactory.lootboxImplementation()).to.equal(
           lootbox.address
         );
@@ -361,7 +361,7 @@ describe.only("📦 LootboxEscrowFactory", () => {
     describe("createLootbox()", async () => {
       it("anyone can create a lootbox with custom treasury", async () => {
         expect(
-          lootboxFactory.createLootbox(
+          await lootboxFactory.createLootbox(
             LOOTBOX_NAME,
             LOOTBOX_SYMBOL,
             MAX_SHARES_BUY,
@@ -373,7 +373,7 @@ describe.only("📦 LootboxEscrowFactory", () => {
       });
       it("a custom treasury must be provided if there is no pre-set treasury", async () => {
         expect(
-          lootboxFactory.createLootbox(
+          await lootboxFactory.createLootbox(
             LOOTBOX_NAME,
             LOOTBOX_SYMBOL,
             MAX_SHARES_BUY,
@@ -512,7 +512,7 @@ describe.only("📦 LootboxEscrowFactory", () => {
     describe("createLootbox()", async () => {
       it("anyone can create a lootbox without a specified treasury", async () => {
         expect(
-          lootboxFactory.createLootbox(
+          await lootboxFactory.createLootbox(
             LOOTBOX_NAME,
             LOOTBOX_SYMBOL,
             MAX_SHARES_BUY,

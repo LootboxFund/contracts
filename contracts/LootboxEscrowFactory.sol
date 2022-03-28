@@ -74,12 +74,13 @@ contract LootboxEscrowFactory is Initializable, PausableUpgradeable, AccessContr
       require(_brokerAddress != address(0), "Broker address cannot be zero");
       require(_nativeTokenPriceFeed != address(0), "nativeTokenPriceFeed address cannot be zero");
       require(_ticketPurchaseFee < 100000000, "Purchase ticket fee must be less than 100000000 (100%)");
-        
+      
       __Pausable_init();
       __AccessControl_init();
       __UUPSUpgradeable_init();
-        
-      lootboxImplementation = _escrowLootboxImplementation;
+      
+      // lootboxImplementation = _escrowLootboxImplementation;
+      lootboxImplementation = address(new LootboxEscrow());
 
       _grantRole(DAO_ROLE, _lootboxDao);
 
@@ -133,10 +134,11 @@ contract LootboxEscrowFactory is Initializable, PausableUpgradeable, AccessContr
         if (_treasury != address(0)) {
           treasury = _treasury;
         }
-
+        // address booty = address(new LootboxEscrow());
         // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
         ERC1967Proxy proxy = new ERC1967Proxy(
-            lootboxImplementation,
+            address(LootboxEscrow(payable(lootboxImplementation))),
+            // booty,
             abi.encodeWithSelector(
                 LootboxEscrow(payable(address(0))).initialize.selector,
                 _lootboxName,
