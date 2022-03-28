@@ -81,8 +81,7 @@ describe("📦 LootboxEscrowFactory", () => {
             ethers.constants.AddressZero,
             mockNativeTokenPriceFeed,
             ticketPurchaseFee,
-            treasury.address,
-            guildTreasury.address
+            treasury.address
           )
         ).to.be.revertedWith("DAO Lootbox address cannot be zero");
       });
@@ -92,8 +91,7 @@ describe("📦 LootboxEscrowFactory", () => {
             dao.address,
             mockNativeTokenPriceFeed,
             ticketPurchaseFee,
-            ethers.constants.AddressZero,
-            guildTreasury.address
+            ethers.constants.AddressZero
           )
         ).to.be.revertedWith("Broker address cannot be zero");
       });
@@ -103,8 +101,7 @@ describe("📦 LootboxEscrowFactory", () => {
             dao.address,
             ethers.constants.AddressZero,
             ticketPurchaseFee,
-            treasury.address,
-            guildTreasury.address
+            treasury.address
           )
         ).to.be.revertedWith("nativeTokenPriceFeed address cannot be zero");
       });
@@ -114,8 +111,7 @@ describe("📦 LootboxEscrowFactory", () => {
             dao.address,
             mockNativeTokenPriceFeed,
             "100000001",
-            treasury.address,
-            guildTreasury.address
+            treasury.address
           )
         ).to.be.revertedWith(
           "Purchase ticket fee must be less than 100000000 (100%)"
@@ -128,8 +124,7 @@ describe("📦 LootboxEscrowFactory", () => {
           dao.address,
           mockNativeTokenPriceFeed,
           ticketPurchaseFee,
-          treasury.address,
-          ethers.constants.AddressZero
+          treasury.address
         );
         await lootboxFactory.deployed();
       });
@@ -160,8 +155,7 @@ describe("📦 LootboxEscrowFactory", () => {
         dao.address,
         mockNativeTokenPriceFeed,
         ticketPurchaseFee,
-        treasury.address,
-        guildTreasury.address
+        treasury.address
       );
       await lootboxFactory.deployed();
     });
@@ -178,8 +172,7 @@ describe("📦 LootboxEscrowFactory", () => {
         dao.address,
         mockNativeTokenPriceFeed,
         ticketPurchaseFee,
-        treasury.address,
-        ethers.constants.AddressZero
+        treasury.address
       );
       await lootboxFactory.deployed();
     });
@@ -305,7 +298,7 @@ describe("📦 LootboxEscrowFactory", () => {
       });
     });
     describe("createLootbox()", async () => {
-      it("anyone can create a lootbox with custom treasury", async () => {
+      it("anyone can create a lootbox", async () => {
         expect(
           lootboxFactory.createLootbox(
             LOOTBOX_NAME,
@@ -317,18 +310,7 @@ describe("📦 LootboxEscrowFactory", () => {
           )
         ).to.not.be.reverted;
       });
-      it("a custom treasury must be provided if there is no pre-set treasury", async () => {
-        expect(
-          lootboxFactory.createLootbox(
-            LOOTBOX_NAME,
-            LOOTBOX_SYMBOL,
-            MAX_SHARES_BUY,
-            SHARE_PRICE_USD,
-            ethers.constants.AddressZero,
-            affiliate.address
-          )
-        ).to.be.revertedWith("Treasury address must be provided or pre-set");
-      });
+
       it("emits a LootboxCreated event", async () => {
         const tx = lootboxFactory
           .connect(deployer)
@@ -432,94 +414,6 @@ describe("📦 LootboxEscrowFactory", () => {
       );
       const afterLootboxes = await lootboxFactory.connect(dao).viewLootboxes();
       expect(afterLootboxes.length).to.eq(1);
-    });
-  });
-
-  describe("tournament mode with preset treasury", async () => {
-    const LOOTBOX_NAME = "Tournament Lootbox";
-    const LOOTBOX_SYMBOL = "LOOTBOXT";
-    const SHARE_PRICE_USD = "7000000";
-    const MAX_SHARES_BUY = ethers.utils.parseUnits("50000", "18").toString();
-    const TICKET_PURCHASE_FEE = "2000000";
-    beforeEach(async () => {
-      lootboxFactory = await LootboxFactory.deploy(
-        dao.address,
-        mockNativeTokenPriceFeed,
-        ticketPurchaseFee,
-        treasury.address,
-        guildTreasury.address
-      );
-      await lootboxFactory.deployed();
-    });
-    describe("createLootbox()", async () => {
-      it("anyone can create a lootbox without a specified treasury", async () => {
-        expect(
-          lootboxFactory.createLootbox(
-            LOOTBOX_NAME,
-            LOOTBOX_SYMBOL,
-            MAX_SHARES_BUY,
-            SHARE_PRICE_USD,
-            ethers.constants.AddressZero,
-            affiliate.address
-          )
-        ).to.not.be.reverted;
-      });
-      it("emits a LootboxCreated event even when giving unspecified treasury", async () => {
-        const tx = lootboxFactory
-          .connect(deployer)
-          .createLootbox(
-            LOOTBOX_NAME,
-            LOOTBOX_SYMBOL,
-            MAX_SHARES_BUY,
-            SHARE_PRICE_USD,
-            ethers.constants.AddressZero,
-            affiliate.address
-          );
-        const receipt = await (await tx).wait();
-        const event = receipt.events?.filter((x: any) => {
-          return x.event == "LootboxCreated";
-        })[0];
-        const emittedLootboxAddress =
-          event?.args?.lootbox || ethers.constants.AddressZero;
-        expect(tx)
-          .to.emit(lootboxFactory, "LootboxCreated")
-          .withArgs(
-            LOOTBOX_NAME,
-            emittedLootboxAddress,
-            deployer.address,
-            guildTreasury.address,
-            MAX_SHARES_BUY,
-            SHARE_PRICE_USD
-          );
-      });
-      it("cannot override the preset treasury", async () => {
-        const tx = lootboxFactory
-          .connect(deployer)
-          .createLootbox(
-            LOOTBOX_NAME,
-            LOOTBOX_SYMBOL,
-            MAX_SHARES_BUY,
-            SHARE_PRICE_USD,
-            deployer.address,
-            affiliate.address
-          );
-        const receipt = await (await tx).wait();
-        const event = receipt.events?.filter((x: any) => {
-          return x.event == "LootboxCreated";
-        })[0];
-        const emittedLootboxAddress =
-          event?.args?.lootbox || ethers.constants.AddressZero;
-        expect(tx)
-          .to.emit(lootboxFactory, "LootboxCreated")
-          .withArgs(
-            LOOTBOX_NAME,
-            emittedLootboxAddress,
-            deployer.address,
-            guildTreasury.address,
-            MAX_SHARES_BUY,
-            SHARE_PRICE_USD
-          );
-      });
     });
   });
 });

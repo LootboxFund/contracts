@@ -22,8 +22,6 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
     uint256 public immutable ticketPurchaseFee;
     address public immutable brokerAddress;
 
-    address public treasury;
-
     // affiliate => ticketAffiliateFee
     mapping(address => uint256) internal affiliateFees;
     // lootbox => affiliate
@@ -62,8 +60,7 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
       address _lootboxDao,
       address _nativeTokenPriceFeed,
       uint256 _ticketPurchaseFee,
-      address _brokerAddress,
-      address _treasuryAddress
+      address _brokerAddress
     ) {
         require(_lootboxDao != address(0), "DAO Lootbox address cannot be zero");
         require(_brokerAddress != address(0), "Broker address cannot be zero");
@@ -77,8 +74,6 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
         nativeTokenPriceFeed = _nativeTokenPriceFeed;
         ticketPurchaseFee = _ticketPurchaseFee;
         brokerAddress = _brokerAddress;
-
-        treasury = _treasuryAddress;
     }
 
     function addAffiliate (address affiliate, uint256 ticketAffiliateFee) public onlyRole(DAO_ROLE) {
@@ -118,12 +113,7 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
         require(_affiliate != address(0), "Affiliate address cannot be zero");
         require(_maxSharesSold > 0, "Max shares sold must be greater than zero");
         require(_sharePriceUSD > 0, "Share price must be greater than zero");
-        if (_treasury == address(0)) {
-          require(treasury != address(0), "Treasury address must be provided or pre-set");
-        }
-        if (_treasury != address(0)) {
-          treasury = _treasury;
-        }
+        require(_treasury != address(0), "Treasury address must be provided");
 
         // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
         ERC1967Proxy proxy = new ERC1967Proxy(
@@ -134,7 +124,7 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
                 _lootboxSymbol,
                 _maxSharesSold,
                 _sharePriceUSD,
-                treasury,
+                _treasury,
                 msg.sender,
                 nativeTokenPriceFeed,
                 ticketPurchaseFee,
@@ -150,7 +140,7 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
             _lootboxName,
             address(proxy),
             msg.sender,
-            treasury,
+            _treasury,
             _maxSharesSold,
             _sharePriceUSD
         );
@@ -160,7 +150,7 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
             affiliateFees[_affiliate],
             ticketPurchaseFee,
             msg.sender,
-            treasury
+            _treasury
         );
         return address(proxy);
     }
