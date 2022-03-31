@@ -9,7 +9,7 @@
     "size": "npx hardhat size-contracts",
     "geth-local": "npx hardhat node",
     "build": "yarn install && npx hardhat compile && npx hardhat typechain",
-    "deploy": "npx hardhat compile && yarn abi:publish && npx hardhat run scripts/lootbox-factory.deploy.ts --network binance_testnet",
+    "deploy": "npx hardhat compile && yarn abi:publish && npx hardhat run scripts/lootbox-instant-factory.deploy.ts --network binance_testnet",
     "clean": "rm -rf artifacts cache node_modules typechain"
   },
   "author": "",

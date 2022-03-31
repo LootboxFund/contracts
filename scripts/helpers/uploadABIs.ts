@@ -46,11 +46,12 @@ export const uploadABI = async ({
       metadata,
       abi,
     };
-    const filePath = `abi/${chainIdHex}/${alias}.json`;
+    const filePath = `${chainIdHex}/${alias}.json`;
     // This dosent look like it actually gets used, just logged
-    const downloadablePath = `https://storage.cloud.google.com/${bucket}/${encodeURISafe(
+    const downloadablePath = `https://storage.googleapis.com/${bucket}/${encodeURISafe(
       filePath
-    )}?alt=media \n`;
+    )}`;
+
     console.log(`
     
     Uploading ABI to ${downloadablePath}
