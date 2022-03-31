@@ -76,26 +76,20 @@ const ABI_FILES = [
   // "artifacts/contracts/LootboxInstant.sol/LootboxInstant.json",
 ];
 
-const appspotBucket = manifest.storage.buckets.find(
-  (bucket) => bucket.bucketType === "appspot"
-);
+const abiBucket = manifest.storage.buckets.abi;
 
-if (!appspotBucket) {
-  console.log("App bucket not configured");
-} else {
-  const CONSTANTS = {
-    webhookEndpoint: manifest.pipedream.sources.onUploadABI.webhookEndpoint,
-    bucket: appspotBucket.id,
-    semver: manifest.semver.id,
-    chainIdHex: manifest.chain.chainIDHex,
-  };
+const CONSTANTS = {
+  webhookEndpoint: manifest.pipedream.sources.onUploadABI.webhookEndpoint,
+  bucket: abiBucket.id,
+  semver: manifest.semver.id,
+  chainIdHex: manifest.chain.chainIDHex,
+};
 
-  ABI_FILES.forEach(async (filePath) => {
-    const alias = filePath.split("/").pop()!.split(".")[0];
-    await uploadABI({
-      ...CONSTANTS,
-      alias,
-      pathToFile: `${__dirname}/../../${filePath}`,
-    });
+ABI_FILES.forEach(async (filePath) => {
+  const alias = filePath.split("/").pop()!.split(".")[0];
+  await uploadABI({
+    ...CONSTANTS,
+    alias,
+    pathToFile: `${__dirname}/../../${filePath}`,
   });
-}
+});

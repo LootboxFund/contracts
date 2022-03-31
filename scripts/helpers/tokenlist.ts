@@ -1,18 +1,6 @@
-import { logToFile } from "./logger";
 import { Storage } from "@google-cloud/storage";
-import {
-  ChainIDHex,
-  buildTokenCDNRoute,
-  TokenData,
-  buildTokenIndexCDNRoutes,
-  Address,
-} from "@wormgraph/helpers";
-import { manifest } from "../manifest";
+import { ChainIDHex, TokenData, Address } from "@wormgraph/helpers";
 import { SemanticVersion } from "@wormgraph/manifest";
-
-const BUCKET_NAME = manifest.googleCloud.bucket.id;
-
-const storage = new Storage();
 
 export type TokenFragment = {
   symbol: string;
@@ -64,80 +52,4 @@ export type TokenFragsWithCDN = {
   chainIdHex: ChainIDHex;
   semver: SemanticVersion;
   loggerPath: string;
-};
-
-export const uploadTokenDataToCDN = async ({
-  tokenFrag,
-  chainIdHex,
-  semver,
-  loggerPath,
-}: TokenFragsWithCDN) => {
-  const filePath = buildTokenCDNRoute({
-    chainIdHex: chainIdHex,
-    semver,
-    address: tokenFrag.address,
-  });
-  logToFile(
-    `Uploading ${
-      tokenFrag.symbol
-    } to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/${BUCKET_NAME}/o/${encodeURISafe(
-      filePath
-    )}?alt=media \n`,
-    loggerPath
-  );
-  const tokenMold = tokenMolds.find(
-    (tokenMold) => tokenMold.symbol === tokenFrag.symbol
-  );
-  if (!tokenMold) {
-    throw new Error(`Could not find a stablecoin mold for ${tokenFrag.symbol}`);
-  }
-  const tokenData: TokenDataWithCDN = {
-    address: tokenFrag.address,
-    chainIdHex: chainIdHex,
-    chainIdDecimal: parseInt(chainIdHex, 16).toString(),
-    decimals: tokenMold.decimals,
-    logoURI: tokenMold.logoURI,
-    name: tokenMold.name,
-    priceOracle: tokenMold.priceOracle,
-    symbol: tokenMold.symbol,
-    cdnFilePath: filePath,
-  };
-  await storage
-    .bucket(BUCKET_NAME)
-    .file(tokenData.cdnFilePath)
-    .save(
-      JSON.stringify({
-        ...tokenData,
-        cdnFilePath: undefined,
-      })
-    );
-  await storage.bucket(BUCKET_NAME).file(tokenData.cdnFilePath).makePublic();
-};
-
-export const uploadTokenIndexToCDN = async ({
-  semver,
-  chainIdHex,
-  addresses,
-  loggerPath,
-}: {
-  semver: SemanticVersion;
-  chainIdHex: ChainIDHex;
-  addresses: Address[];
-  loggerPath: string;
-}) => {
-  const filePath = buildTokenIndexCDNRoutes({
-    semver,
-    chainIdHex,
-  });
-  await storage
-    .bucket(BUCKET_NAME)
-    .file(filePath)
-    .save(JSON.stringify(addresses));
-  await storage.bucket(BUCKET_NAME).file(filePath).makePublic();
-  logToFile(
-    `Uploading index to Cloud Storage Bucket as https://firebasestorage.googleapis.com/v0/b/${BUCKET_NAME}/o/${encodeURISafe(
-      filePath
-    )}?alt=media \n`,
-    loggerPath
-  );
 };
