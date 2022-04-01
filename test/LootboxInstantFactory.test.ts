@@ -218,7 +218,6 @@ describe("📦 LootboxInstantFactory", () => {
           LOOTBOX_NAME,
           LOOTBOX_SYMBOL,
           MAX_SHARES_BUY,
-          SHARE_PRICE_USD,
           treasury.address,
           affiliate.address
         );
@@ -295,7 +294,6 @@ describe("📦 LootboxInstantFactory", () => {
             LOOTBOX_NAME,
             LOOTBOX_SYMBOL,
             MAX_SHARES_BUY,
-            SHARE_PRICE_USD,
             treasury.address,
             affiliate.address
           )
@@ -308,7 +306,6 @@ describe("📦 LootboxInstantFactory", () => {
             LOOTBOX_NAME,
             LOOTBOX_SYMBOL,
             MAX_SHARES_BUY,
-            SHARE_PRICE_USD,
             treasury.address,
             affiliate.address
           );
@@ -339,7 +336,6 @@ describe("📦 LootboxInstantFactory", () => {
             LOOTBOX_NAME,
             LOOTBOX_SYMBOL,
             MAX_SHARES_BUY,
-            SHARE_PRICE_USD,
             treasury.address,
             affiliate.address
           );
@@ -369,7 +365,6 @@ describe("📦 LootboxInstantFactory", () => {
             LOOTBOX_NAME,
             LOOTBOX_SYMBOL,
             MAX_SHARES_BUY,
-            SHARE_PRICE_USD,
             treasury.address,
             deployer.address
           );
@@ -398,7 +393,6 @@ describe("📦 LootboxInstantFactory", () => {
         LOOTBOX_NAME,
         LOOTBOX_SYMBOL,
         MAX_SHARES_BUY,
-        SHARE_PRICE_USD,
         treasury.address,
         affiliate.address
       );

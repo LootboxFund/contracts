@@ -54,8 +54,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   using CountersUpgradeable for CountersUpgradeable.Counter;
   using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
   
-  // string public variant;
-  address public templateFactory;
 
   /** ------------------ SETUP & AUTH ------------------
    * 
@@ -205,8 +203,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     uint256 _ticketPurchaseFee,
     uint256 _ticketAffiliateFee,
     address _broker,
-    address _affiliate,
-    address _templateFactory
+    address _affiliate
   ) initializer public {
 
     // variant = "Escrow";
@@ -245,8 +242,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
 
     issuer = _issuingEntity;
     nativeTokenPriceFeed = AggregatorV3Interface(_nativeTokenPriceFeed);
-
-    templateFactory = _templateFactory;
 
     isFundraising = true;
     treasury = _treasury;

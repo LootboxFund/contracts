@@ -1,0 +1,15 @@
+2022-03-31T23:58:09.208Z -  
+  
+---------- DEPLOY LOOTBOX ESCROW FACTORY (development) ----------
+  
+---- Script starting...
+
+---- Network:                             binance_testnet (Hex ID = 0x61)
+---- Lootbox DAO (multisig):              0x148F507Ca903fb322DaA9Ad420537F689973e99A
+---- Lootbox Grand Treasury (multisig):   0x148F507Ca903fb322DaA9Ad420537F689973e99A
+---- Native Token Price Feed:             0x2514895c72f50D8bd4B4F9b1110F0D6bD2c97526
+---- Default Fee:                         2000000
+---- Deployer (UNTRUSTED):                0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A
+
+  
+2022-03-31T23:58:19.746Z - ---- 0x8F09827d21b3a4be56C1a374DDFd202a9D056256 ---> Lootbox Escrow Factory 
