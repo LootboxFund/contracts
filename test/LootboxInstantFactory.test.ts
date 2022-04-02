@@ -21,9 +21,10 @@ import {
   generatePermissionRevokeMessage,
   stripZeros,
   GOVERNOR_ROLE,
+  testLootboxURI
 } from "./helpers/test-helpers";
 
-describe("📦 LootboxInstantFactory", () => {
+describe.only("📦 LootboxInstantFactory", () => {
   const provider = waffle.provider;
 
   let deployer: SignerWithAddress;
@@ -219,7 +220,8 @@ describe("📦 LootboxInstantFactory", () => {
           LOOTBOX_SYMBOL,
           MAX_SHARES_BUY,
           treasury.address,
-          affiliate.address
+          affiliate.address,
+          JSON.stringify(testLootboxURI)
         );
         const PLUG_LOOTBOX_ADDR = deployer.address; // we dont know the actual lootbox addr unless we check the logs
         expect(
@@ -295,7 +297,8 @@ describe("📦 LootboxInstantFactory", () => {
             LOOTBOX_SYMBOL,
             MAX_SHARES_BUY,
             treasury.address,
-            affiliate.address
+            affiliate.address,
+            JSON.stringify(testLootboxURI)
           )
         ).to.not.be.reverted;
       });
@@ -307,7 +310,8 @@ describe("📦 LootboxInstantFactory", () => {
             LOOTBOX_SYMBOL,
             MAX_SHARES_BUY,
             treasury.address,
-            affiliate.address
+            affiliate.address,
+            JSON.stringify(testLootboxURI)
           );
         const receipt = await (await tx).wait();
         const event = receipt.events?.filter((x) => {
@@ -323,7 +327,8 @@ describe("📦 LootboxInstantFactory", () => {
             deployer.address,
             treasury.address,
             MAX_SHARES_BUY,
-            SHARE_PRICE_USD
+            SHARE_PRICE_USD, 
+            JSON.stringify(testLootboxURI)
           );
       });
       it("properly tracks affiliates and emits an AffiliateReceipt event", async () => {
@@ -337,7 +342,8 @@ describe("📦 LootboxInstantFactory", () => {
             LOOTBOX_SYMBOL,
             MAX_SHARES_BUY,
             treasury.address,
-            affiliate.address
+            affiliate.address,
+            JSON.stringify(testLootboxURI)
           );
         const receipt = await (await tx).wait();
         const event = receipt.events?.filter((x) => {
@@ -366,7 +372,8 @@ describe("📦 LootboxInstantFactory", () => {
             LOOTBOX_SYMBOL,
             MAX_SHARES_BUY,
             treasury.address,
-            deployer.address
+            deployer.address,
+            JSON.stringify(testLootboxURI)
           );
         const receipt = await (await tx).wait();
         const event = receipt.events?.filter((x) => {
@@ -394,7 +401,8 @@ describe("📦 LootboxInstantFactory", () => {
         LOOTBOX_SYMBOL,
         MAX_SHARES_BUY,
         treasury.address,
-        affiliate.address
+        affiliate.address,
+        ''
       );
       const afterLootboxes = await lootboxFactory.connect(dao).viewLootboxes();
       expect(afterLootboxes.length).to.eq(1);

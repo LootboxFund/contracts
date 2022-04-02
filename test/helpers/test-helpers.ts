@@ -58,3 +58,38 @@ export const stripZeros = (address: string) => {
 
 export const generateMockAddress = (value: string) =>
   ethers.utils.keccak256(ethers.utils.toUtf8Bytes(value)).slice(0, 42);
+
+export const testLootboxURI = {
+  address: "lootbox",
+  name: "lootboxName",
+  description: "sick ass motherfucking lootbox",
+  image: "https://ychef.files.bbci.co.uk/1600x900/p07ryyyj.webp",
+  backgroundColor: "#000000",
+  backgroundImage: "https://ychef.files.bbci.co.uk/1600x900/p07ryyyj.webp",
+  lootbox: {
+    address: "0x2j34bl12kj3b1l2kj3b1l2",
+    chainIdHex: "0x35",
+    chainIdDecimal: "BSC",
+    chainName: "Binance Sex Cootie",
+    targetPaybackDate: new Date(),
+    fundraisingTarget: "1000000x",
+    basisPointsReturnTarget: "5000000",
+    returnAmountTarget: "12312312312312",
+    pricePerShare: "4323423423423",
+    lootboxThemeColor: "#000000",
+    transactionHash: "0x234lk1j23nl12kjn3",
+    blockNumber: 12312312312,
+  },
+  socials: {
+    twitter: "socialState.twitter",
+    email: "socialState.email",
+    instagram: "socialState.instagram",
+    tiktok: "socialState.tiktok",
+    facebook: "socialState.facebook",
+    discord: "socialState.discord",
+    youtube: "socialState.youtube",
+    snapchat: "socialState.snapchat",
+    twitch: "socialState.twitch",
+    web: "socialState.web",
+  },
+}
