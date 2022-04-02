@@ -8,7 +8,7 @@
     "abi:publish": "ts-node ./scripts/helpers/uploadABIs.ts",
     "size": "npx hardhat size-contracts",
     "geth-local": "npx hardhat node",
-    "build": "yarn install && npx hardhat compile",
+    "build": "yarn install && npx hardhat compile && npx hardhat typechain",
     "deploy": "npx hardhat compile && yarn abi:publish && npx hardhat run scripts/lootbox-factory.deploy.ts --network binance_testnet",
     "clean": "rm -rf artifacts cache node_modules typechain"
   },
