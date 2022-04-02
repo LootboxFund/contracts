@@ -47,7 +47,7 @@ contract LootboxInstantFactory is Pausable, AccessControl {
       address indexed treasury,
       uint256 maxSharesSold,
       uint256 sharePriceUSD,
-      bytes _data
+      string _data
     );
 
     event AffiliateReceipt(
@@ -111,7 +111,7 @@ contract LootboxInstantFactory is Pausable, AccessControl {
         uint256 _maxSharesSold,
         address _treasury,
         address _affiliate,
-        bytes memory _data
+        string memory _data
     ) public whenNotPaused returns (address _lootbox) {
         require(bytes(_lootboxName).length != 0, "Lootbox name cannot be empty");
         require(bytes(_lootboxSymbol).length != 0, "Lootbox symbol cannot be empty");
