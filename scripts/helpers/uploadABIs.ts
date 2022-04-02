@@ -72,6 +72,8 @@ export const uploadABI = async ({
   });
 };
 
+console.log('\n\n🚨 Make sure the ABI files do not exist in the GBucket already. Otherwise, the pipedream webhook might fail with "Missing delete permission error" which is not properly reported in this script. 🚨')
+
 const ABI_FILES = [
   "artifacts/contracts/LootboxInstantFactory.sol/LootboxInstantFactory.json",
   // "artifacts/contracts/LootboxInstant.sol/LootboxInstant.json",
