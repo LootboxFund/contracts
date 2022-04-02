@@ -22,6 +22,8 @@ contract LootboxInstantFactory is Pausable, AccessControl {
     uint256 public immutable ticketPurchaseFee;
     address public immutable brokerAddress;
 
+    uint256 public sharePriceUSD;
+
     // affiliate => ticketAffiliateFee
     mapping(address => uint256) internal affiliateFees;
     // lootbox => affiliate
@@ -56,7 +58,7 @@ contract LootboxInstantFactory is Pausable, AccessControl {
       address lootboxTreasury
     );
 
-    constructor(
+    constructor( 
       address _lootboxDao,
       address _nativeTokenPriceFeed,
       uint256 _ticketPurchaseFee,
@@ -70,6 +72,8 @@ contract LootboxInstantFactory is Pausable, AccessControl {
         lootboxImplementation = address(new LootboxInstant());
 
         _grantRole(DAO_ROLE, _lootboxDao);
+
+        sharePriceUSD = 5000000;
 
         nativeTokenPriceFeed = _nativeTokenPriceFeed;
         ticketPurchaseFee = _ticketPurchaseFee;
@@ -104,7 +108,6 @@ contract LootboxInstantFactory is Pausable, AccessControl {
         string memory _lootboxName,
         string memory _lootboxSymbol,
         uint256 _maxSharesSold,
-        uint256 _sharePriceUSD,
         address _treasury,
         address _affiliate
     ) public whenNotPaused returns (address _lootbox) {
@@ -113,24 +116,23 @@ contract LootboxInstantFactory is Pausable, AccessControl {
         require(_treasury != address(0), "Treasury address cannot be zero");
         require(_affiliate != address(0), "Affiliate address cannot be zero");
         require(_maxSharesSold > 0, "Max shares sold must be greater than zero");
-        require(_sharePriceUSD > 0, "Share price must be greater than zero");
 
         // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
         ERC1967Proxy proxy = new ERC1967Proxy(
             lootboxImplementation,
             abi.encodeWithSelector(
                 LootboxInstant(payable(address(0))).initialize.selector,
-                _lootboxName,
-                _lootboxSymbol,
-                _maxSharesSold,
-                _sharePriceUSD,
-                _treasury,
-                msg.sender,
-                nativeTokenPriceFeed,
-                ticketPurchaseFee,
-                affiliateFees[_affiliate],
-                brokerAddress,
-                _affiliate
+                _lootboxName, // string memory _name,
+                _lootboxSymbol, // string memory _symbol,
+                _maxSharesSold, // uint256 _maxSharesSold,
+                sharePriceUSD, // uint256 _sharePriceUSD,
+                _treasury,  // address _treasury,
+                msg.sender, // address _issuingEntity,
+                nativeTokenPriceFeed, // address _nativeTokenPriceFeed,
+                ticketPurchaseFee, // uint256 _ticketPurchaseFee,
+                affiliateFees[_affiliate], // uint256 _ticketAffiliateFee,
+                brokerAddress, // address _broker,
+                _affiliate // address _affiliate
             )
         );
         LOOTBOXES.add(address(proxy));
@@ -142,7 +144,7 @@ contract LootboxInstantFactory is Pausable, AccessControl {
             msg.sender,
             _treasury,
             _maxSharesSold,
-            _sharePriceUSD
+            sharePriceUSD
         );
         emit AffiliateReceipt(
             address(proxy),

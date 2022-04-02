@@ -164,7 +164,8 @@ describe("📦 LootboxEscrowFactory", () => {
   describe("main functionality after constructor", async () => {
     const LOOTBOX_NAME = "Lootbox Name";
     const LOOTBOX_SYMBOL = "LOOTBOX";
-    const SHARE_PRICE_USD = "7000000";
+    const SHARE_PRICE_USD = "5000000";
+    const TARGET_SHARES_BUY = ethers.utils.parseUnits("45000", "18").toString();
     const MAX_SHARES_BUY = ethers.utils.parseUnits("50000", "18").toString();
     const TICKET_PURCHASE_FEE = "2000000";
     beforeEach(async () => {
@@ -226,8 +227,8 @@ describe("📦 LootboxEscrowFactory", () => {
         await lootboxFactory.createLootbox(
           LOOTBOX_NAME,
           LOOTBOX_SYMBOL,
+          TARGET_SHARES_BUY,
           MAX_SHARES_BUY,
-          SHARE_PRICE_USD,
           treasury.address,
           affiliate.address
         );
@@ -303,8 +304,8 @@ describe("📦 LootboxEscrowFactory", () => {
           lootboxFactory.createLootbox(
             LOOTBOX_NAME,
             LOOTBOX_SYMBOL,
+            TARGET_SHARES_BUY,
             MAX_SHARES_BUY,
-            SHARE_PRICE_USD,
             guildTreasury.address,
             affiliate.address
           )
@@ -317,8 +318,8 @@ describe("📦 LootboxEscrowFactory", () => {
           .createLootbox(
             LOOTBOX_NAME,
             LOOTBOX_SYMBOL,
+            TARGET_SHARES_BUY,
             MAX_SHARES_BUY,
-            SHARE_PRICE_USD,
             guildTreasury.address,
             affiliate.address
           );
@@ -335,6 +336,7 @@ describe("📦 LootboxEscrowFactory", () => {
             emittedLootboxAddress,
             deployer.address,
             guildTreasury.address,
+            TARGET_SHARES_BUY,
             MAX_SHARES_BUY,
             SHARE_PRICE_USD
           );
@@ -348,8 +350,8 @@ describe("📦 LootboxEscrowFactory", () => {
           .createLootbox(
             LOOTBOX_NAME,
             LOOTBOX_SYMBOL,
+            TARGET_SHARES_BUY,
             MAX_SHARES_BUY,
-            SHARE_PRICE_USD,
             guildTreasury.address,
             affiliate.address
           );
@@ -378,8 +380,8 @@ describe("📦 LootboxEscrowFactory", () => {
           .createLootbox(
             LOOTBOX_NAME,
             LOOTBOX_SYMBOL,
+            TARGET_SHARES_BUY,
             MAX_SHARES_BUY,
-            SHARE_PRICE_USD,
             guildTreasury.address,
             deployer.address
           );
@@ -407,8 +409,8 @@ describe("📦 LootboxEscrowFactory", () => {
       await lootboxFactory.createLootbox(
         LOOTBOX_NAME,
         LOOTBOX_SYMBOL,
+        TARGET_SHARES_BUY,
         MAX_SHARES_BUY,
-        SHARE_PRICE_USD,
         guildTreasury.address,
         affiliate.address
       );

@@ -22,6 +22,8 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
     uint256 public immutable ticketPurchaseFee;
     address public immutable brokerAddress;
 
+    uint256 public sharePriceUSD;
+
     // affiliate => ticketAffiliateFee
     mapping(address => uint256) internal affiliateFees;
     // lootbox => affiliate
@@ -43,6 +45,7 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
       address indexed lootbox,
       address indexed issuer,
       address indexed treasury,
+      uint256 targetSharesSold,
       uint256 maxSharesSold,
       uint256 sharePriceUSD
     );
@@ -55,7 +58,7 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
       address lootboxIssuer,
       address lootboxTreasury
     );
-
+ 
     constructor(
       address _lootboxDao,
       address _nativeTokenPriceFeed,
@@ -70,6 +73,8 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
         lootboxImplementation = address(new LootboxEscrow());
 
         _grantRole(DAO_ROLE, _lootboxDao);
+
+        sharePriceUSD = 5000000;
 
         nativeTokenPriceFeed = _nativeTokenPriceFeed;
         ticketPurchaseFee = _ticketPurchaseFee;
@@ -100,19 +105,21 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
     //   return (brokerAddress, ticketPurchaseFee);
     // }
 
+
     function createLootbox(
         string memory _lootboxName,
         string memory _lootboxSymbol,
+        uint256 _targetSharesSold,
         uint256 _maxSharesSold,
-        uint256 _sharePriceUSD,
         address _treasury,
         address _affiliate
     ) public whenNotPaused returns (address _lootbox) {
         require(bytes(_lootboxName).length != 0, "Lootbox name cannot be empty");
         require(bytes(_lootboxSymbol).length != 0, "Lootbox symbol cannot be empty");
         require(_affiliate != address(0), "Affiliate address cannot be zero");
+        require(_targetSharesSold > 0, "Target shares sold must be greater than zero");
         require(_maxSharesSold > 0, "Max shares sold must be greater than zero");
-        require(_sharePriceUSD > 0, "Share price must be greater than zero");
+        require(_maxSharesSold >= _targetSharesSold, "Max shares sold must be greater than or equal to target shares sold");
         require(_treasury != address(0), "Treasury address must be provided");
 
         // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
@@ -120,17 +127,17 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
             lootboxImplementation,
             abi.encodeWithSelector(
                 LootboxEscrow(payable(address(0))).initialize.selector,
-                _lootboxName,
-                _lootboxSymbol,
-                _maxSharesSold,
-                _sharePriceUSD,
-                _treasury,
-                msg.sender,
-                nativeTokenPriceFeed,
-                ticketPurchaseFee,
-                affiliateFees[_affiliate],
-                brokerAddress,
-                _affiliate
+                _lootboxName,  // string memory _name,
+                _lootboxSymbol, // string memory _symbol,
+                _targetSharesSold, // uint256 _targetSharesSold,
+                _maxSharesSold, // uint256 _maxSharesSold,
+                _treasury,      // address _treasury,
+                msg.sender,     // address _issuingEntity,
+                nativeTokenPriceFeed, // address _nativeTokenPriceFeed,
+                ticketPurchaseFee, // uint256 _ticketPurchaseFee,
+                affiliateFees[_affiliate], // uint256 _ticketAffiliateFee,
+                brokerAddress, // address _broker,
+                _affiliate // address _affiliate,
             )
         );
         LOOTBOXES.add(address(proxy));
@@ -141,8 +148,9 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
             address(proxy),
             msg.sender,
             _treasury,
+            _targetSharesSold,
             _maxSharesSold,
-            _sharePriceUSD
+            sharePriceUSD
         );
         emit AffiliateReceipt(
             address(proxy),
