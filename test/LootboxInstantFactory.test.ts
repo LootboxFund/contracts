@@ -24,7 +24,7 @@ import {
   testLootboxURI
 } from "./helpers/test-helpers";
 
-describe.only("📦 LootboxInstantFactory", () => {
+describe("📦 LootboxInstantFactory", () => {
   const provider = waffle.provider;
 
   let deployer: SignerWithAddress;
@@ -319,6 +319,7 @@ describe.only("📦 LootboxInstantFactory", () => {
         })[0];
         const emittedLootboxAddress =
           event?.args?.lootbox || ethers.constants.AddressZero;
+
         expect(tx)
           .to.emit(lootboxFactory, "LootboxCreated")
           .withArgs(
@@ -402,7 +403,7 @@ describe.only("📦 LootboxInstantFactory", () => {
         MAX_SHARES_BUY,
         treasury.address,
         affiliate.address,
-        ''
+        JSON.stringify(testLootboxURI)
       );
       const afterLootboxes = await lootboxFactory.connect(dao).viewLootboxes();
       expect(afterLootboxes.length).to.eq(1);
