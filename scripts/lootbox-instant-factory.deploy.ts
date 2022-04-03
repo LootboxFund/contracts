@@ -39,10 +39,10 @@ const LOG_FILE_PATH = `${__dirname}/logs/deployLootboxFactory_log_${Date.now()}_
  * -------------------- INITIALIZATION --------------------
  */
 const defaultFee = ethers.utils.parseUnits("0.02", 8 /* fee decimals */);
-const LootboxDAO = "0x148F507Ca903fb322DaA9Ad420537F689973e99A"; // manifest.openZeppelin.multiSigs.LootboxDAO.address;
-const LootboxGrandTreasury = "0x148F507Ca903fb322DaA9Ad420537F689973e99A";
-// manifest.openZeppelin.multiSigs.LootboxDAO_Treasury.address;
-const nativeTokenPriceFeed = "0x2514895c72f50D8bd4B4F9b1110F0D6bD2c97526"; // manifest.chain.priceFeedUSD;
+const LootboxDAO = manifest.openZeppelin.multiSigs.LootboxDAO.address;
+const LootboxGrandTreasury =
+  manifest.openZeppelin.multiSigs.LootboxDAO_Treasury.address;
+const nativeTokenPriceFeed = manifest.chain.priceFeedUSD;
 
 // const LootboxDAO = "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F"
 // const LootboxGrandTreasury = "0x3D18304497e214F7F4760756D9F20061DC0699b3"
