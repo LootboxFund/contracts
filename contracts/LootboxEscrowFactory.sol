@@ -47,7 +47,8 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
       address indexed treasury,
       uint256 targetSharesSold,
       uint256 maxSharesSold,
-      uint256 sharePriceUSD
+      uint256 sharePriceUSD,
+      string _data
     );
 
     event AffiliateReceipt(
@@ -112,7 +113,8 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
         uint256 _targetSharesSold,
         uint256 _maxSharesSold,
         address _treasury,
-        address _affiliate
+        address _affiliate,
+        string memory _data
     ) public whenNotPaused returns (address _lootbox) {
         require(bytes(_lootboxName).length != 0, "Lootbox name cannot be empty");
         require(bytes(_lootboxSymbol).length != 0, "Lootbox symbol cannot be empty");
@@ -150,7 +152,8 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
             _treasury,
             _targetSharesSold,
             _maxSharesSold,
-            sharePriceUSD
+            sharePriceUSD,
+            _data
         );
         emit AffiliateReceipt(
             address(proxy),

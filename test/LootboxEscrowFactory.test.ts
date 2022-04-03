@@ -1,29 +1,18 @@
 import { ethers, upgrades, waffle } from "hardhat";
 import {
-  GuildFactory,
-  GuildFactory__factory,
-  GuildToken,
-  GuildToken__factory,
-  Constants,
-  Constants__factory,
   LootboxEscrowFactory__factory,
   LootboxEscrowFactory,
 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import { ContractTransaction } from "ethers";
 import { padAddressTo32Bytes } from "./helpers/test-helpers";
 import {
   DAO_ROLE,
-  DEVELOPER_ROLE,
-  GFX_STAFF_ROLE,
-  GUILD_OWNER_ROLE,
   generatePermissionRevokeMessage,
-  stripZeros,
-  GOVERNOR_ROLE,
+  testLootboxURI
 } from "./helpers/test-helpers";
 
-describe("📦 LootboxEscrowFactory", () => {
+describe.only("📦 LootboxEscrowFactory", () => {
   const provider = waffle.provider;
 
   let deployer: SignerWithAddress;
@@ -230,7 +219,8 @@ describe("📦 LootboxEscrowFactory", () => {
           TARGET_SHARES_BUY,
           MAX_SHARES_BUY,
           treasury.address,
-          affiliate.address
+          affiliate.address,
+          JSON.stringify(testLootboxURI)
         );
         const PLUG_LOOTBOX_ADDR = deployer.address; // we dont know the actual lootbox addr unless we check the logs
         expect(
@@ -307,7 +297,8 @@ describe("📦 LootboxEscrowFactory", () => {
             TARGET_SHARES_BUY,
             MAX_SHARES_BUY,
             guildTreasury.address,
-            affiliate.address
+            affiliate.address,
+            JSON.stringify(testLootboxURI)
           )
         ).to.not.be.reverted;
       });
@@ -321,7 +312,8 @@ describe("📦 LootboxEscrowFactory", () => {
             TARGET_SHARES_BUY,
             MAX_SHARES_BUY,
             guildTreasury.address,
-            affiliate.address
+            affiliate.address,
+            JSON.stringify(testLootboxURI)
           );
         const receipt = await (await tx).wait();
         const event = receipt.events?.filter((x: any) => {
@@ -338,7 +330,8 @@ describe("📦 LootboxEscrowFactory", () => {
             guildTreasury.address,
             TARGET_SHARES_BUY,
             MAX_SHARES_BUY,
-            SHARE_PRICE_USD
+            SHARE_PRICE_USD,
+            JSON.stringify(testLootboxURI)
           );
       });
       it("properly tracks affiliates and emits an AffiliateReceipt event", async () => {
@@ -353,7 +346,8 @@ describe("📦 LootboxEscrowFactory", () => {
             TARGET_SHARES_BUY,
             MAX_SHARES_BUY,
             guildTreasury.address,
-            affiliate.address
+            affiliate.address,
+            JSON.stringify(testLootboxURI)
           );
         const receipt = await (await tx).wait();
         const event = receipt.events?.filter((x: any) => {
@@ -383,7 +377,8 @@ describe("📦 LootboxEscrowFactory", () => {
             TARGET_SHARES_BUY,
             MAX_SHARES_BUY,
             guildTreasury.address,
-            deployer.address
+            deployer.address,
+            JSON.stringify(testLootboxURI)
           );
         const receipt = await (await tx).wait();
         const event = receipt.events?.filter((x: any) => {
@@ -412,7 +407,8 @@ describe("📦 LootboxEscrowFactory", () => {
         TARGET_SHARES_BUY,
         MAX_SHARES_BUY,
         guildTreasury.address,
-        affiliate.address
+        affiliate.address,
+        JSON.stringify(testLootboxURI)
       );
       const afterLootboxes = await lootboxFactory.connect(dao).viewLootboxes();
       expect(afterLootboxes.length).to.eq(1);
