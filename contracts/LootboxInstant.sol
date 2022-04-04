@@ -53,7 +53,7 @@ interface IERC20 {
 contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, ERC721URIStorageUpgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
   using CountersUpgradeable for CountersUpgradeable.Counter;
   using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
-  
+
   string public variant;
 
   /** ------------------ SETUP & AUTH ------------------
