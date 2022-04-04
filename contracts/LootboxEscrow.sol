@@ -54,6 +54,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   using CountersUpgradeable for CountersUpgradeable.Counter;
   using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
   
+  string public variant;
 
   /** ------------------ SETUP & AUTH ------------------
    * 
@@ -206,7 +207,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     address _affiliate
   ) initializer public {
 
-    // variant = "Escrow";
+    variant = "Escrow";
 
     bytes memory tempEmptyNameTest = bytes(_name);
     bytes memory tempEmptySymbolTest = bytes(_symbol);
