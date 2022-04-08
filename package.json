@@ -11,6 +11,8 @@
     "build": "yarn install && npx hardhat compile && npx hardhat typechain && yarn abi:publish",
     "deploy:instantfactory": "npx hardhat run scripts/lootbox-instant-factory.deploy.ts --network binance_testnet",
     "deploy:escrowfactory": "npx hardhat run scripts/lootbox-escrow-factory.deploy.ts --network binance_testnet",
+    "deploy:instantfactory:production": "npx hardhat run scripts/lootbox-instant-factory.deploy.ts --network binance_mainnet",
+    "deploy:escrowfactory:production": "npx hardhat run scripts/lootbox-escrow-factory.deploy.ts --network binance_mainnet",
     "clean": "rm -rf artifacts cache node_modules typechain"
   },
   "author": "",
@@ -60,8 +62,8 @@
     "@openzeppelin/contracts": "^4.4.2",
     "@openzeppelin/contracts-upgradeable": "^4.4.2",
     "@openzeppelin/hardhat-upgrades": "^1.12.0",
-    "@wormgraph/helpers": "0.0.36",
-    "@wormgraph/manifest": "0.3.6",
+    "@wormgraph/helpers": "0.0.37",
+    "@wormgraph/manifest": "0.3.9",
     "hardhat-contract-sizer": "^2.5.1",
     "lodash": "^4.17.21",
     "moralis": "^1.2.1"

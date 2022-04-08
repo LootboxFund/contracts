@@ -35,7 +35,9 @@ const config: HardhatUserConfig = {
     binance_mainnet: {
       chainId: 56,
       url: `https://bsc-dataseed.binance.org`,
-      accounts: [],
+      accounts: [
+        `${process.env.PROD_DEPLOYER_PRIVATE_KEY}`
+      ],
     },
     binance_testnet: {
       chainId: 97,
