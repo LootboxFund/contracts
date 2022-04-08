@@ -1333,14 +1333,6 @@
   resolved "https://registry.yarnpkg.com/@ungap/promise-all-settled/-/promise-all-settled-1.1.2.tgz#aa58042711d6e3275dd37dc597e5d31e8c290a44"
   integrity sha512-sL/cEvJWAnClXw0wHk85/2L0G6Sj8UB0Ctc1TEMbKSsmpRosqhwj9gWgFRZSrBr2f9tiXISwNhCPmlfqUqyb9Q==
 
-"@wormgraph/helpers@0.0.31":
-  version "0.0.31"
-  resolved "https://registry.yarnpkg.com/@wormgraph/helpers/-/helpers-0.0.31.tgz#230b5c3f4f27fd3c4a471098ee0cf110da8e362b"
-  integrity sha512-2x9pAxVPX6LTA17U+6PaCCh8gcHrl+4YeuZWBq2McjJH7HGqDOBTl0KfAVqb5wayrW/zm1MYyEbL12VcC2JKtA==
-  dependencies:
-    axios "0.25.0"
-    lodash "4.17.21"
-
 "@wormgraph/helpers@0.0.33":
   version "0.0.33"
   resolved "https://registry.yarnpkg.com/@wormgraph/helpers/-/helpers-0.0.33.tgz#68b0aad4472ea0198d25a424d1b8040d102deea6"
@@ -1349,10 +1341,18 @@
     axios "0.25.0"
     lodash "4.17.21"
 
-"@wormgraph/manifest@0.2.120":
-  version "0.2.120"
-  resolved "https://registry.yarnpkg.com/@wormgraph/manifest/-/manifest-0.2.120.tgz#a3cfcd56e3d97064aaf07ea1486d97ae5b821115"
-  integrity sha512-3Ev4dsdjVMVUA9DlRlQmzkVAGl00lJsQjjWxVcmLu1SwAC5fDjmlR3i3dX7bSjrCt84bG2msyUyJ9AL97vR92A==
+"@wormgraph/helpers@0.0.36":
+  version "0.0.36"
+  resolved "https://registry.yarnpkg.com/@wormgraph/helpers/-/helpers-0.0.36.tgz#62a571356f932060453de4917be942eecedee549"
+  integrity sha512-iKXpV/OAxjaqkUpyeD4Tpr5PXpcLW31jURoUJnGLWYzwg2wh1dKEqa8rCj1ja3pLGp0hCbdilySUqtu55+MOwA==
+  dependencies:
+    axios "0.25.0"
+    lodash "4.17.21"
+
+"@wormgraph/manifest@0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@wormgraph/manifest/-/manifest-0.3.1.tgz#d1af61a3dd7c773dc0762b342eb3427992671e04"
+  integrity sha512-banZuJ3hv2MBXxfjpG65SfIf5vxIRioun3OBGUXN9E9RfBux7Twnd+lV3xacYGrGWwBZgA+pGh7Z45hgMhHaLw==
   dependencies:
     "@wormgraph/helpers" "0.0.33"
 
