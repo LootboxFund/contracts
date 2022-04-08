@@ -76,7 +76,7 @@ console.log('\n\n🚨 Make sure the ABI files do not exist in the GBucket alread
 
 const ABI_FILES = [
   "artifacts/contracts/LootboxInstantFactory.sol/LootboxInstantFactory.json",
-  "artifacts/contracts/LootboxInstantFactory.sol/LootboxEscrowFactory.json",
+  "artifacts/contracts/LootboxEscrowFactory.sol/LootboxEscrowFactory.json",
 ];
 
 const abiBucket = manifest.storage.buckets.abi;
