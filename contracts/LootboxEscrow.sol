@@ -370,7 +370,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   */
   function endFundraisingPeriod () public onlyRole(DAO_ROLE) {
     require(isFundraising == true, "Fundraising period has already ended");
-    require(sharesSoldCount > sharesSoldTarget, "Fundraising period can only end if >50% of the sharesSoldMax are sold");
+    require(sharesSoldCount >= sharesSoldTarget, "Fundraising period can only end if the fundraising target has been hit");
     isFundraising = false;
     uint256 finalEscrowedAmount = escrowNativeAmount;
     escrowNativeAmount = 0;
