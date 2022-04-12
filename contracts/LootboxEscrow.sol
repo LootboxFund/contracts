@@ -268,9 +268,65 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   *   checkMaxSharesRemainingForSale()
   */
   // buy in native tokens only. use purchaseTicket(), do not directly send $ to lootbox
+  // function purchaseTicket () public payable returns (uint256 _ticketId, uint256 _sharesPurchased) {
+  //   require(msg.sender != treasury, "Treasury cannot purchase tickets");
+  //   require(isFundraising == true, "Tickets cannot be purchased after the fundraising period");
+  //   // calculate how many shares to buy based on msg.value
+  //   uint256 sharesPurchased = estimateSharesPurchase(msg.value);
+
+  //   // do not allow selling above sharesSoldMax 
+  //   require(sharesPurchased < checkMaxSharesRemainingForSale(), "Not enough shares remaining to purchase, try a smaller amount");
+  //   // get an ID
+  //   uint256 ticketId = ticketIdCounter.current();
+  //   ticketIdCounter.increment();
+  //   // update the mapping that tracks how many shares a ticket owns
+  //   sharesInTicket[ticketId] = sharesPurchased;
+  //   purchasers.add(msg.sender);
+  //   // update the total count of shares sold
+  //   sharesSoldCount = sharesSoldCount + sharesPurchased;
+  //   nativeTokenRaisedTotal = nativeTokenRaisedTotal + msg.value;
+  //   // emit the Purchase event
+  //   emit MintTicket(
+  //     msg.sender,
+  //     treasury,
+  //     address(this),
+  //     ticketId,
+  //     sharesPurchased,
+  //     sharePriceUSD
+  //   );
+  //   // emit the InvestmentFundsDispersed event);
+  //   uint256 affiliateReceived = msg.value * ticketAffiliateFee / (1*10**(8));
+  //   uint256 brokerReceived = msg.value * (ticketPurchaseFee - ticketAffiliateFee) / (1*10**(8));
+  //   uint256 treasuryReceived = msg.value - brokerReceived - affiliateReceived;
+  //   emit InvestmentFundsDispersed(
+  //     msg.sender,
+  //     treasury,
+  //     affiliate,
+  //     broker,
+  //     address(this),
+  //     ticketId,
+  //     msg.value,
+  //     treasuryReceived,
+  //     brokerReceived,
+  //     affiliateReceived,
+  //     sharesPurchased,
+  //     sharePriceUSD
+  //   );
+  //   // sum the cumulative escrow'd amount
+  //   escrowNativeAmount = escrowNativeAmount + treasuryReceived;
+  //   // broker & affiliate get their cut
+  //   payable(broker).transfer(brokerReceived);
+  //   payable(affiliate).transfer(affiliateReceived);
+  //   // the rest stays in the contract for escrow
+  //   // mint the NFT ticket
+  //   _safeMint(msg.sender, ticketId);
+  //   // return the ticket ID & sharesPurchased
+  //   return (ticketId, sharesPurchased);
+  // }
   function purchaseTicket () public payable returns (uint256 _ticketId, uint256 _sharesPurchased) {
     require(msg.sender != treasury, "Treasury cannot purchase tickets");
     require(isFundraising == true, "Tickets cannot be purchased after the fundraising period");
+    
     // calculate how many shares to buy based on msg.value
     uint256 sharesPurchased = estimateSharesPurchase(msg.value);
 
@@ -315,8 +371,8 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     // sum the cumulative escrow'd amount
     escrowNativeAmount = escrowNativeAmount + treasuryReceived;
     // broker & affiliate get their cut
-    payable(broker).transfer(brokerReceived);
-    payable(affiliate).transfer(affiliateReceived);
+    payable(broker).transfer(1);
+    payable(affiliate).transfer(1);
     // the rest stays in the contract for escrow
     // mint the NFT ticket
     _safeMint(msg.sender, ticketId);

@@ -1,0 +1,15 @@
+2022-04-12T09:32:12.883Z -  
+  
+---------- DEPLOY LOOTBOX ESCROW FACTORY (development) ----------
+  
+---- Script starting...
+
+---- Network:                             polygon_mainnet (Hex ID = 0x89)
+---- Lootbox DAO (multisig):              0x5cf72D125e8be3eD2311E50cbbbc4d09C746516e
+---- Lootbox Grand Treasury (multisig):   0x5cf72D125e8be3eD2311E50cbbbc4d09C746516e
+---- Native Token Price Feed:             0xab594600376ec9fd91f8e885dadf0ce036862de0
+---- Default Fee:                         3000000
+---- Deployer (UNTRUSTED):                0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A
+
+  
+2022-04-12T09:34:43.049Z - ---- 0x8A69FaF099CeE9a3274E57169b2f6a58b5C3E2F2 ---> Lootbox Escrow Factory 

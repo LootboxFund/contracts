@@ -73,6 +73,22 @@ const config: HardhatUserConfig = {
         blockNumber: 16411871,
       },
     },
+    polygon_mainnet: {
+      chainId: 137,
+      url: `https://speedy-nodes-nyc.moralis.io/cfd85a5f6e8635607e954ada/polygon/mainnet`,
+      accounts: [
+        `${process.env.DEV_DEPLOYER_PRIVATE_KEY}`,
+        `${process.env.DEV_TREASURY_PRIVATE_KEY}`,
+        `${process.env.DEV_DAO_PRIVATE_KEY}`,
+        `${process.env.DEV_DEVELOPER_PRIVATE_KEY}`,
+        `${process.env.DEV_PURCHASER_PRIVATE_KEY}`,
+        `${process.env.DEV_GFX_STAFF_PRIVATE_KEY}`,
+        `${process.env.DEV_GUILD_DAO_PRIVATE_KEY}`,
+        `${process.env.DEV_GUILD_DEV_PRIVATE_KEY}`,
+        `${process.env.DEV_GUILD_TREASURY_PRIVATE_KEY}`,
+      ],
+      gasPrice: 50000000000,
+    },
     mumbai_testnet: {
       chainId: 80001,
       url: `https://speedy-nodes-nyc.moralis.io/cfd85a5f6e8635607e954ada/polygon/mumbai`,

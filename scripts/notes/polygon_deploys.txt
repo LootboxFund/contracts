@@ -1,0 +1,167 @@
+
+
+
+# Success ✅ Barebanes v1
+0xC08C690963A81097A769049858A832b4db310a8A
+𐄂 Variables
+𐄂 Mint
+𐄂 Require
+𐄂 Events
+𐄂 Chainlink
+𐄂 Payable
+
+# Fails ⛔️ Barebanes v2
+0x8A69FaF099CeE9a3274E57169b2f6a58b5C3E2F2
+✓ Variables
+✓ Mint
+𐄂 Require
+𐄂 Events
+𐄂 Chainlink
+𐄂 Payable
+
+# Success ✅ Barebanes v3
+0xA1E0F31e037DCB577756A85930c8822B3bfa1Be7
+𐄂 Variables
+✓ Mint
+𐄂 Require
+𐄂 Events
+𐄂 Chainlink
+𐄂 Payable
+
+# Fails ⛔️ Barebanes v4
+0xa6210E95867F007eBE60dC5Ed32f776758740898
+✓ Variables
+✓ Mint
+✓ Require
+𐄂 Events
+𐄂 Chainlink
+𐄂 Payable
+
+# Success ✅ Barebanes v4
+0xba0bF6C93AdED14c19Fe13F39e2b67A6070121F2
+✓ Variables
+✓ Mint
+𐄂 Require
+𐄂 Events
+𐄂 Chainlink
+𐄂 Payable
+
+# Success ✅ Barebanes v4
+0x309CC071d4f99a301CeBed7F3F5995f406aA4d9a
+𐄂 Variables
+✓ Mint
+𐄂 Require
+𐄂 Events
+✓ Chainlink
+𐄂 Payable
+
+# Fails ⛔️ Barebanes v4
+0x7C1BB09Ae1c48Bdad6c6329e9Ce7F8Daf61748C4
+✓ Variables
+✓ Mint
+𐄂 Require
+𐄂 Events
+✓ Chainlink
+𐄂 Payable
+
+# Success ✅ Barebanes v4
+0x3add9bed721F064bE223B4f09494d390c3c8BE32
+𐄂 Variables
+✓ Mint
+✓ Require
+𐄂 Events
+✓ Chainlink
+𐄂 Payable
+
+# Success ✅ Barebanes v4
+0x9D66d9B2Ef0e32FcF382776D35Eb8f1be6389644
+𐄂 Variables
+✓ Mint
+✓ Require
+𐄂 Events
+✓ Chainlink
+𐄂 Payable
+
+# Fails ⛔️ Barebanes v4
+0x2f0EA0b9c0b42F4e6a1755177880005B223F4F51
+✓ Variables Partial
+𐄂 Variables Full
+✓ Mint
+✓ Require
+𐄂 Events
+✓ Chainlink
+𐄂 Payable
+
+# Fails ⛔️ Barebanes v4
+0x4615c2776A45f2016B776dA03075aA5658718860
+✓ Variables Partial
+𐄂 Variables Full
+✓ Mint
+✓ Require
+𐄂 Events
+✓ Chainlink
+𐄂 Payable
+
+# Success ✅ Barebanes v4
+0xA86708747f3357f39C186cF7E16aDEaB03752c0b
+𐄂 Variables Partial
+𐄂 Variables Full
+✓ Mint
+✓ Require
+✓ Events
+✓ Chainlink
+𐄂 Payable
+
+# Fails ⛔️ Barebanes v4
+0x18e4DeD83c6AaB6dCfD85e9467119AB11B1928a1
+𐄂 Variables Partial
+𐄂 Variables Full
+✓ Mint
+✓ Require
+✓ Events
+✓ Chainlink
+✓ Payable
+
+# Success ✅ Barebanes v4 (increase max gas limit)
+0x5B93E2ECd9C830389fE353a562422381581cba09
+𐄂 Variables Partial
+𐄂 Variables Full
+✓ Mint
+✓ Require
+✓ Events
+✓ Chainlink
+✓ Payable Partial
+𐄂 Payable Full
+
+# Success ✅ Barebanes v4 (increase max gas limit)
+0x26e091fe6eFDE6C4ecC8b39231Dd7E39fa96ccF4
+𐄂 Variables Partial
+𐄂 Variables Full
+✓ Mint
+✓ Require
+✓ Events
+✓ Chainlink
+✓ Payable Partial
+✓ Payable Full
+
+# Success ✅ Barebanes v4
+0x4fEcF2CA1ec7d20D5a76298C8F7813DaAD54800e
+✓ Variables Partial
+𐄂 Variables Full
+✓ Mint
+✓ Require
+✓ Events
+✓ Chainlink
+✓ Payable Partial
+✓ Payable Full
+
+# Success ✅ Full
+0xd907b3b186B8692803F21907557411E5023F9B4F
+✓ Variables Partial
+✓ Variables Full
+✓ Mint
+✓ Require
+✓ Events
+✓ Chainlink
+✓ Payable Partial
+✓ Payable Full
