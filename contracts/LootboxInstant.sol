@@ -248,7 +248,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   *   checkMaxSharesRemainingForSale()
   */
   // buy in native tokens only. use purchaseTicket(), do not directly send $ to lootbox
-  function purchaseTicket () public payable nonReentrant returns (uint256 _ticketId, uint256 _sharesPurchased) {
+  function purchaseTicket () public payable nonReentrant whenNotPaused returns (uint256 _ticketId, uint256 _sharesPurchased) {
     require(msg.sender != treasury, "Treasury cannot purchase tickets");
     require(isFundraising == true, "Tickets cannot be purchased after the fundraising period");
     // calculate how many shares to buy based on msg.value
@@ -348,7 +348,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   *
   *   endFundraising()
   */
-  function endFundraisingPeriod () public onlyRole(DAO_ROLE) nonReentrant {
+  function endFundraisingPeriod () public onlyRole(DAO_ROLE) nonReentrant whenNotPaused {
     require(isFundraising == true, "Fundraising period has already ended");
     isFundraising = false;
   }
@@ -369,7 +369,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   *   rescueTrappedErc20Tokens(address)
   */
   // do not send native tokens direct to lootbox or it will get stuck. use depositEarningsNative()
-  function depositEarningsNative () public payable nonReentrant {
+  function depositEarningsNative () public payable nonReentrant whenNotPaused {
     require(isFundraising == false, "Deposits cannot be made during fundraising period");
     require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
     // log this payout in sum
@@ -401,7 +401,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     require(success, "Lootbox could not receive payment");
   }
   // do not send erc20 direct to lootbox or it will get stuck. use depositEarningsErc20()
-  function depositEarningsErc20 (address erc20Token, uint256 erc20Amount) public payable nonReentrant { 
+  function depositEarningsErc20 (address erc20Token, uint256 erc20Amount) public payable nonReentrant whenNotPaused { 
     require(isFundraising == false, "Deposits cannot be made during fundraising period");
     require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
     require(msg.value == 0, "Deposits of erc20 cannot also include native tokens in the same transaction");
@@ -451,7 +451,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     uint256 trappedTokens = address(this).balance - depositedTokens;
     return trappedTokens;
   }
-  function rescueTrappedNativeTokens() public onlyRole(DAO_ROLE) nonReentrant {
+  function rescueTrappedNativeTokens() public onlyRole(DAO_ROLE) nonReentrant whenNotPaused {
     require(isFundraising == false, "Rescue cannot be made during fundraising period");
     uint256 trappedTokens = checkForTrappedNativeTokens();
     if (trappedTokens > 0) {
@@ -471,7 +471,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     uint256 trappedTokens = token.balanceOf(address(this)) - depositedTokens;
     return trappedTokens;
   }
-  function rescueTrappedErc20Tokens(address erc20Token) public onlyRole(DAO_ROLE) nonReentrant {
+  function rescueTrappedErc20Tokens(address erc20Token) public onlyRole(DAO_ROLE) nonReentrant whenNotPaused {
     require(isFundraising == false, "Rescue cannot be made during fundraising period");
     uint256 trappedTokens = checkForTrappedErc20Tokens(erc20Token);
     IERC20 token = IERC20(erc20Token);
@@ -571,7 +571,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   * 
   *  withdrawEarnings(ticketId)
   */
-  function withdrawEarnings (uint256 ticketId) public nonReentrant {
+  function withdrawEarnings (uint256 ticketId) public nonReentrant whenNotPaused {
     require(isFundraising == false, "Withdrawals cannot be made during fundraising period");
     require(ownerOf(ticketId) == msg.sender, "You do not own this ticket");
     uint sharesOwned = sharesInTicket[ticketId]; 
