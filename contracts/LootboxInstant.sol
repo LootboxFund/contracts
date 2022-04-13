@@ -294,9 +294,12 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
       sharePriceUSD
     );
     // collect the payment and send to treasury (should be a multisig)
-    payable(treasury).transfer(treasuryReceived);
-    payable(broker).transfer(brokerReceived);
-    payable(affiliate).transfer(affiliateReceived);
+    (bool tsuccess,) = address(treasury).call{value: treasuryReceived}("");
+    require(tsuccess, "Treasury could not receive payment");
+    (bool bsuccess,) = address(broker).call{value: brokerReceived}("");
+    require(bsuccess, "Broker could not receive payment");
+    (bool asuccess,) = address(affiliate).call{value: affiliateReceived}("");
+    require(asuccess, "Affiliate could not receive payment");
     // mint the NFT ticket
     _safeMint(msg.sender, ticketId);
     // return the ticket ID & sharesPurchased
