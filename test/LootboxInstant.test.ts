@@ -3,8 +3,6 @@ import { ethers, waffle, upgrades } from "hardhat";
 import {
   DAO_ROLE,
   generatePermissionRevokeMessage,
-  GOVERNOR_ROLE,
-  MINTER_ROLE,
   padAddressTo32Bytes,
 } from "./helpers/test-helpers";
 
@@ -12,14 +10,6 @@ import {
 import {
   BNB,
   BNB__factory,
-  Constants,
-  Constants__factory,
-  CrowdSale,
-  CrowdSale__factory,
-  ETH,
-  ETH__factory,
-  GuildToken,
-  GuildToken__factory,
   USDC,
   USDC__factory,
   USDT,
