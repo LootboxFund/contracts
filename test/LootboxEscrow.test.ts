@@ -483,13 +483,17 @@ describe("📦 LootboxEscrow smart contract", async function () {
         ticketsA = await lootbox.viewAllTicketsOfHolder(purchaser.address);
         ticketsB = await lootbox.viewAllTicketsOfHolder(purchaser2.address);
 
-        [sharesOwnedA1, percentageOwnedA1, sharePriceUSDA] =
-          await lootbox.viewTicketInfo(ticketsA[0]);
-        [sharesOwnedA2, percentageOwnedA2] = await lootbox.viewTicketInfo(
-          ticketsA[1]
-        );
-        [sharesOwnedB, percentageOwnedB, sharePriceUSDB] =
-          await lootbox.viewTicketInfo(ticketsB[0]);
+        sharesOwnedA1 = await lootbox.sharesInTicket(ticketsA[0]);
+        sharesOwnedA2 = await lootbox.sharesInTicket(ticketsA[1]);
+        sharesOwnedB = await lootbox.sharesInTicket(ticketsB[0]);
+
+        // [sharesOwnedA1, percentageOwnedA1, sharePriceUSDA] =
+        //   await lootbox.viewTicketInfo(ticketsA[0]);
+        // [sharesOwnedA2, percentageOwnedA2] = await lootbox.viewTicketInfo(
+        //   ticketsA[1]
+        // );
+        // [sharesOwnedB, percentageOwnedB, sharePriceUSDB] =
+        //   await lootbox.viewTicketInfo(ticketsB[0]);
       });
       it("treasury receives the money & reduces the purchasers native token balance accordingly", async () => {
         const startTreasuryBalance = await provider.getBalance(
@@ -541,12 +545,12 @@ describe("📦 LootboxEscrow smart contract", async function () {
           buyAmountInEtherB.mul(BNB_ARCHIVED_PRICE).div(SHARE_PRICE_USD)
         );
       });
-      it("tracks the proper percentage of total shares owned by each NFT ticket", async () => {
+      it.skip("tracks the proper percentage of total shares owned by each NFT ticket", async () => {
         expect(percentageOwnedA1.toString()).to.eq("49932287");
         expect(percentageOwnedA2.toString()).to.eq("67712");
         expect(percentageOwnedB.toString()).to.eq("50000000");
       });
-      it("has a consistent share price per ticket", async () => {
+      it.skip("has a consistent share price per ticket", async () => {
         expect(sharePriceUSDA.toString()).to.eq(SHARE_PRICE_USD);
         expect(sharePriceUSDB.toString()).to.eq(SHARE_PRICE_USD);
         expect(sharePriceUSDA.toString()).to.eq(sharePriceUSDB.toString());
@@ -1524,40 +1528,40 @@ describe("📦 LootboxEscrow smart contract", async function () {
             ethers.BigNumber.from(USDC_STARTING_BALANCE)
           );
       });
-      it("can read info about a specific Ticket", async () => {
-        const ticketId = "0";
-        const shareOwnershipPercentageDecimals = "8";
-        const estimatedSharesReceived = await lootbox.estimateSharesPurchase(
-          buyAmountInEtherA1.toString()
-        );
-        await lootbox
-          .connect(purchaser)
-          .purchaseTicket({ value: buyAmountInEtherA1.toString() });
-        const [sharesReceived, percentageSharesOwned] =
-          await lootbox.viewTicketInfo(ticketId);
+      // it("can read info about a specific Ticket", async () => {
+      //   const ticketId = "0";
+      //   const shareOwnershipPercentageDecimals = "8";
+      //   const estimatedSharesReceived = await lootbox.estimateSharesPurchase(
+      //     buyAmountInEtherA1.toString()
+      //   );
+      //   await lootbox
+      //     .connect(purchaser)
+      //     .purchaseTicket({ value: buyAmountInEtherA1.toString() });
+      //   const [sharesReceived, percentageSharesOwned] =
+      //     await lootbox.viewTicketInfo(ticketId);
 
-        expect(sharesReceived.toString()).to.eq(
-          estimatedSharesReceived.toString()
-        );
-        expect(percentageSharesOwned.toString()).to.eq(
-          ethers.utils.parseUnits("1", shareOwnershipPercentageDecimals)
-        );
+      //   expect(sharesReceived.toString()).to.eq(
+      //     estimatedSharesReceived.toString()
+      //   );
+      //   expect(percentageSharesOwned.toString()).to.eq(
+      //     ethers.utils.parseUnits("1", shareOwnershipPercentageDecimals)
+      //   );
 
-        await lootbox
-          .connect(purchaser)
-          .purchaseTicket({ value: buyAmountInEtherA2.toString() });
-        const est3 = await lootbox.estimateSharesPurchase(
-          buyAmountInEtherB.toString()
-        );
-        await lootbox
-          .connect(purchaser2)
-          .purchaseTicket({ value: buyAmountInEtherB.toString() });
-        const [rec3, per3] = await lootbox.viewTicketInfo("2");
-        expect(est3.toString()).to.eq(rec3.toString());
-        expect(per3.toString()).to.eq(
-          ethers.utils.parseUnits("0.5", shareOwnershipPercentageDecimals)
-        );
-      });
+      //   await lootbox
+      //     .connect(purchaser)
+      //     .purchaseTicket({ value: buyAmountInEtherA2.toString() });
+      //   const est3 = await lootbox.estimateSharesPurchase(
+      //     buyAmountInEtherB.toString()
+      //   );
+      //   await lootbox
+      //     .connect(purchaser2)
+      //     .purchaseTicket({ value: buyAmountInEtherB.toString() });
+      //   const [rec3, per3] = await lootbox.viewTicketInfo("2");
+      //   expect(est3.toString()).to.eq(rec3.toString());
+      //   expect(per3.toString()).to.eq(
+      //     ethers.utils.parseUnits("0.5", shareOwnershipPercentageDecimals)
+      //   );
+      // });
       it("retrieve tokenURI will return just the ticketId, without an https url", async () => {
         const ticketId = "0";
         await lootbox
@@ -1695,13 +1699,15 @@ describe("📦 LootboxEscrow smart contract", async function () {
         await lootbox
           .connect(issuingEntity)
           .depositEarningsNative({ value: depositAmountInEtherA1.toString() });
-        const owed1 = await lootbox.viewOwedOfNativeTokenToTicket(ticketId);
+        const deposits1 = await lootbox.viewProratedDepositsForTicket(ticketId);
+        const owed1 = deposits1[0].nativeTokenAmount;
         expect(owed1).to.eq(depositAmountInEtherA1.div(2).toString());
         await lootbox.connect(purchaser2).withdrawEarnings(ticketId);
         await lootbox
           .connect(issuingEntity)
           .depositEarningsNative({ value: depositAmountInEtherA2.toString() });
-        const owed2 = await lootbox.viewOwedOfNativeTokenToTicket(ticketId);
+        const deposits2 = await lootbox.viewProratedDepositsForTicket(ticketId);
+        const owed2 = deposits2[1].nativeTokenAmount;
         expect(owed2).to.eq(depositAmountInEtherA2.div(2).toString());
       });
       it("can get the unredeemed sum of a specific erc20 token still owing", async () => {
@@ -1724,10 +1730,8 @@ describe("📦 LootboxEscrow smart contract", async function () {
             usdc_stablecoin.address,
             depositAmountInUSDCB1.toString()
           );
-        const owed1 = await lootbox.viewOwedErc20TokensToTicket(
-          ticketId,
-          usdc_stablecoin.address
-        );
+        const deposits1 = await lootbox.viewProratedDepositsForTicket(ticketId);
+        const owed1 = deposits1[0].erc20TokenAmount;
         expect(owed1).to.eq(depositAmountInUSDCB1.div(2).toString());
         await lootbox.connect(purchaser2).withdrawEarnings(ticketId);
         await lootbox
@@ -1736,10 +1740,8 @@ describe("📦 LootboxEscrow smart contract", async function () {
             usdc_stablecoin.address,
             depositAmountInUSDCB2.toString()
           );
-        const owed2 = await lootbox.viewOwedErc20TokensToTicket(
-          ticketId,
-          usdc_stablecoin.address
-        );
+        const deposits2 = await lootbox.viewProratedDepositsForTicket(ticketId);
+        const owed2 = deposits2[1].erc20TokenAmount;
         expect(owed2).to.eq(depositAmountInUSDCB2.div(2).toString());
       });
       it("can read all deposits for a ticket", async () => {
