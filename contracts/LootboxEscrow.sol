@@ -360,8 +360,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
           sharePriceUSD;
   }
 
-
-
   /**
   * ------------------ END FUNDRAISING PERIOD ------------------
   *
@@ -555,10 +553,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   * ------------------ TICKET INFO ------------------
   *  
   *  tokenURI(ticketId)
-  *  viewTicketInfo(ticketId)
   *  viewProratedDepositsForTicket(ticketId)
-  *  viewOwedOfNativeTokenToTicket(ticketId)
-  *  viewOwedErc20TokensToTicket(ticketId, erc20address)
   *  viewAllTicketsOfHolder(address)
   */
   // metadata about token. returns only the ticketId. the url is built by frontend & actual data is stored off-chain on GBucket
@@ -589,43 +584,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     }
     return _depositsMetadatas;
   }
-  // info about the ticket shares owned, % owned, and share price
-  function viewTicketInfo(uint256 ticketId) public view returns (uint256 _sharesOwned, uint256 _percentageOwned, uint256 _sharePriceUSD) {
-    uint256 sharesOwned = sharesInTicket[ticketId];
-    uint256 percentageDecimals = 8;
-    uint256 percentageOwned = sharesOwned * 1*(10**percentageDecimals) / sharesSoldCount;
-    return (
-      sharesOwned,
-      percentageOwned,
-      sharePriceUSD
-    );
-  }
-  function viewOwedOfNativeTokenToTicket (uint256 ticketId) public view returns (uint256 _owed) {
-    uint sharesOwned = sharesInTicket[ticketId]; 
-    uint256 owed = 0;
-    for(uint256 i=0; i < depositIdCounter.current(); i++){
-      Deposit memory deposit = depositReciepts[i];
-      if (depositRedemptions[ticketId][deposit.depositId] != true) {
-        if (deposit.erc20Token == address(0)) {
-          owed = owed + (deposit.nativeTokenAmount * sharesOwned / sharesSoldCount);
-        }
-      }
-    }
-    return owed;
-  }
-  function viewOwedErc20TokensToTicket (uint256 ticketId, address erc20Token) public view returns (uint256 _owed) {
-    uint sharesOwned = sharesInTicket[ticketId]; 
-    uint256 owed = 0;
-    for(uint256 i=0; i < depositIdCounter.current(); i++){
-      Deposit memory deposit = depositReciepts[i];
-      if (depositRedemptions[ticketId][deposit.depositId] != true) {
-        if (deposit.erc20Token == erc20Token) {
-          owed = owed + (deposit.erc20TokenAmount * sharesOwned / sharesSoldCount);
-        }
-      }
-    }
-    return owed;
-  }
+  
   function viewAllTicketsOfHolder(address holder) public view returns (uint256[] memory _tickets) {
     uint256 ownedByHolder = balanceOf(holder);
     uint256[] memory ticketsOwned = new uint256[](ownedByHolder);
@@ -634,8 +593,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     }
     return ticketsOwned;
   }
-
-
 
   /**
   * ------------------ WITHDRAW EARNINGS ------------------
