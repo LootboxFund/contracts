@@ -6,7 +6,6 @@ pragma solidity 0.8.4;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -50,7 +49,7 @@ interface IERC20 {
 }
 
 // solhint-disable-next-line max-states-count
-contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, ERC721URIStorageUpgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
+contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
   using CountersUpgradeable for CountersUpgradeable.Counter;
   using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
@@ -207,7 +206,6 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
 
     __ERC721_init(_name, _symbol);
     __ERC721Enumerable_init();
-    __ERC721URIStorage_init();
     __Pausable_init();
     __AccessControl_init();
     __UUPSUpgradeable_init();
@@ -493,11 +491,11 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   // metadata about token. returns only the ticketId. the url is built by frontend & actual data is stored off-chain on GBucket
   function tokenURI(uint256 ticketId)
     public
-    pure
-    override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
+    view
+    override(ERC721Upgradeable)
     returns (string memory)
   {
-    return uint2str(ticketId);
+    return super.tokenURI(ticketId);
   }
   function viewProratedDepositsForTicket(uint256 ticketId) public view returns (DepositMetadata[] memory _depositsMetadatas) {
     uint sharesOwned = sharesInTicket[ticketId]; 
@@ -679,10 +677,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     super._beforeTokenTransfer(from, to, tokenId);
   }
   // disable burns
-  function _burn(uint256 tokenId) internal pure override(ERC721Upgradeable, ERC721URIStorageUpgradeable) {}
-  function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal override(ERC721URIStorageUpgradeable) {
-    super._setTokenURI(tokenId, _tokenURI);
-  }
+  function _burn(uint256 tokenId) internal pure override(ERC721Upgradeable) {}
   function supportsInterface(bytes4 interfaceId)
     public
     view
@@ -704,26 +699,4 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
       override
   {}
   receive() external payable {}
-  // --------- Misc Helpers ---------
-  function uint2str(uint _i) internal pure returns (string memory _uintAsString) {
-    if (_i == 0) {
-        return "0";
-    }
-    uint j = _i;
-    uint len;
-    while (j != 0) {
-        len++;
-        j /= 10;
-    }
-    bytes memory bstr = new bytes(len);
-    uint k = len;
-    while (_i != 0) {
-        k = k-1;
-        uint8 temp = (48 + uint8(_i - _i / 10 * 10));
-        bytes1 b1 = bytes1(temp);
-        bstr[k] = b1;
-        _i /= 10;
-    }
-    return string(bstr);
-  }
 }
