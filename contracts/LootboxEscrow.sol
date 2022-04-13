@@ -14,6 +14,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 interface IERC20 {
     function decimals() external view returns (uint8);
@@ -49,7 +50,7 @@ interface IERC20 {
 }
 
 // solhint-disable-next-line max-states-count
-contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, ERC721URIStorageUpgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
+contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, ERC721URIStorageUpgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
   using CountersUpgradeable for CountersUpgradeable.Counter;
   using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
   
@@ -267,7 +268,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   *   checkMaxSharesRemainingForSale()
   */
   // buy in native tokens only. use purchaseTicket(), do not directly send $ to lootbox
-  function purchaseTicket () public payable returns (uint256 _ticketId, uint256 _sharesPurchased) {
+  function purchaseTicket () public payable nonReentrant returns (uint256 _ticketId, uint256 _sharesPurchased) {
     require(msg.sender != treasury, "Treasury cannot purchase tickets");
     require(isFundraising == true, "Tickets cannot be purchased after the fundraising period");
     // calculate how many shares to buy based on msg.value
@@ -367,7 +368,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   *   endFundraising()
   *   cancelFundraising()
   */
-  function endFundraisingPeriod () public onlyRole(DAO_ROLE) {
+  function endFundraisingPeriod () public onlyRole(DAO_ROLE) nonReentrant {
     require(isFundraising == true, "Fundraising period has already ended");
     require(sharesSoldCount > sharesSoldTarget, "Fundraising period can only end if >50% of the sharesSoldMax are sold");
     isFundraising = false;
@@ -384,7 +385,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
       sharesSoldCount
     );
   } 
-  function cancelFundraiser() public onlyRole(DAO_ROLE) {
+  function cancelFundraiser() public onlyRole(DAO_ROLE) nonReentrant{
     require(isFundraising == true, "Fundraising period has already ended");
     isFundraising = false;
     uint256 refundAmount = escrowNativeAmount;
@@ -438,7 +439,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   *   rescueTrappedErc20Tokens(address)
   */
   // do not send native tokens direct to lootbox or it will get stuck. use depositEarningsNative()
-  function depositEarningsNative () public payable {
+  function depositEarningsNative () public payable nonReentrant {
     require(isFundraising == false, "Deposits cannot be made during fundraising period");
     require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
     // log this payout in sum
@@ -470,7 +471,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     lootbox.transfer(msg.value);
   }
   // do not send erc20 direct to lootbox or it will get stuck. use depositEarningsErc20()
-  function depositEarningsErc20 (address erc20Token, uint256 erc20Amount) public payable { 
+  function depositEarningsErc20 (address erc20Token, uint256 erc20Amount) public payable nonReentrant { 
     require(isFundraising == false, "Deposits cannot be made during fundraising period");
     require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
     require(msg.value == 0, "Deposits of erc20 cannot also include native tokens in the same transaction");
@@ -520,7 +521,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     uint256 trappedTokens = address(this).balance - depositedTokens;
     return trappedTokens;
   }
-  function rescueTrappedNativeTokens() public onlyRole(DAO_ROLE) {
+  function rescueTrappedNativeTokens() public onlyRole(DAO_ROLE) nonReentrant {
     require(isFundraising == false, "Rescue cannot be made during fundraising period");
     uint256 trappedTokens = checkForTrappedNativeTokens();
     if (trappedTokens > 0) {
@@ -539,7 +540,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     uint256 trappedTokens = token.balanceOf(address(this)) - depositedTokens;
     return trappedTokens;
   }
-  function rescueTrappedErc20Tokens(address erc20Token) public onlyRole(DAO_ROLE) {
+  function rescueTrappedErc20Tokens(address erc20Token) public onlyRole(DAO_ROLE) nonReentrant {
     require(isFundraising == false, "Rescue cannot be made during fundraising period");
     uint256 trappedTokens = checkForTrappedErc20Tokens(erc20Token);
     IERC20 token = IERC20(erc20Token);
@@ -641,7 +642,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   * 
   *  withdrawEarnings(ticketId)
   */
-  function withdrawEarnings (uint256 ticketId) public {
+  function withdrawEarnings (uint256 ticketId) public nonReentrant {
     require(isFundraising == false, "Withdrawals cannot be made during fundraising period");
     require(ownerOf(ticketId) == msg.sender, "You do not own this ticket");
     uint sharesOwned = sharesInTicket[ticketId]; 
