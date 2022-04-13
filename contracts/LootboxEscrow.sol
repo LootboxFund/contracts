@@ -315,8 +315,10 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     // sum the cumulative escrow'd amount
     escrowNativeAmount = escrowNativeAmount + treasuryReceived;
     // broker & affiliate get their cut
-    payable(broker).transfer(brokerReceived);
-    payable(affiliate).transfer(affiliateReceived);
+    (bool bsuccess,) = address(broker).call{value: brokerReceived}("");
+    require(bsuccess, "Broker could not receive payment");
+    (bool asuccess,) = address(affiliate).call{value: affiliateReceived}("");
+    require(asuccess, "Affiliate could not receive payment");
     // the rest stays in the contract for escrow
     // mint the NFT ticket
     _safeMint(msg.sender, ticketId);
@@ -374,7 +376,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     isFundraising = false;
     uint256 finalEscrowedAmount = escrowNativeAmount;
     escrowNativeAmount = 0;
-    payable(treasury).transfer(finalEscrowedAmount);
     // emit CompleteFundraiser event
     emit CompleteFundraiser(
       issuer,
@@ -384,6 +385,8 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
       finalEscrowedAmount,
       sharesSoldCount
     );
+    (bool tsuccess,) = address(treasury).call{value: finalEscrowedAmount}("");
+    require(tsuccess, "Treasury could not receive payment");
   } 
   function cancelFundraiser() public onlyRole(DAO_ROLE) nonReentrant{
     require(isFundraising == true, "Fundraising period has already ended");
@@ -467,8 +470,8 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     );
     depositIdCounter.increment();
     // transfer the native tokens to this LootboxEscrow contract
-    address payable lootbox = payable(address(this));
-    lootbox.transfer(msg.value);
+    (bool success,) = address(this).call{value: msg.value}("");
+    require(success, "Lootbox could not receive payment");
   }
   // do not send erc20 direct to lootbox or it will get stuck. use depositEarningsErc20()
   function depositEarningsErc20 (address erc20Token, uint256 erc20Amount) public payable nonReentrant { 
@@ -525,7 +528,8 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     require(isFundraising == false, "Rescue cannot be made during fundraising period");
     uint256 trappedTokens = checkForTrappedNativeTokens();
     if (trappedTokens > 0) {
-      payable(treasury).transfer(trappedTokens);
+      (bool success,) = address(treasury).call{value: trappedTokens}("");
+      require(success, "Trasury could not receive trapped tokens");
     }
   }
   function checkForTrappedErc20Tokens(address erc20Token) public view returns (uint256 _trappedTokens) {
@@ -548,8 +552,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
       token.transfer(treasury, trappedTokens);
     }
   }
-
-
 
   /**
   * ------------------ TICKET INFO ------------------
@@ -682,7 +684,8 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
             address(0),
             0
           );
-          payable(ownerOf(ticketId)).transfer(owedNative);
+          (bool success,) = address(ownerOf(ticketId)).call{value: owedNative}("");
+          require(success, "Ticket holder could not receive earnings");
         }
       }
     }
@@ -732,8 +735,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     }
     return totalDeposit;
   }
-
-
 
   /**
   * ------------------ CLASS INHERITANCE OVERHEAD ------------------
