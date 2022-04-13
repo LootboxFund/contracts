@@ -1341,12 +1341,20 @@
     axios "0.25.0"
     lodash "4.17.21"
 
-"@wormgraph/manifest@0.3.11":
-  version "0.3.11"
-  resolved "https://registry.yarnpkg.com/@wormgraph/manifest/-/manifest-0.3.11.tgz#48fbcedded6dae9093122637b533eec5668bceba"
-  integrity sha512-FqWfTiQZeATgqRnflDi1f9ik+cY0YBATjtUxq009Fxm63SXQK11X2UThxDXlMMDNWCzHek2+RV93PM5pFyi4tA==
+"@wormgraph/helpers@0.1.2":
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/@wormgraph/helpers/-/helpers-0.1.2.tgz#d3bf884961e787625222db9a0dae0ea1a92420d3"
+  integrity sha512-SU7nbVK8/QBkjr2IX5Y/IfROlSeiNnkx+5GXGyn3zh0YTxhAv8rFgkksWyEFKXOT/rGqufucFRyxxAmycQhSGA==
   dependencies:
-    "@wormgraph/helpers" "0.1.1"
+    axios "0.25.0"
+    lodash "4.17.21"
+
+"@wormgraph/manifest@0.3.20":
+  version "0.3.20"
+  resolved "https://registry.yarnpkg.com/@wormgraph/manifest/-/manifest-0.3.20.tgz#fecc2d7f17ef423d32c57f14a95af3f82363918f"
+  integrity sha512-QotrpYOg+hq/Oy6WpP5s9pIzCKZ6VOkYYepigtzFLlmyTOvHDrk8/gvGreEEykrBVMqtFYsQKB5gh8j1XL9Meg==
+  dependencies:
+    "@wormgraph/helpers" "0.1.2"
 
 "@yarnpkg/lockfile@^1.1.0":
   version "1.1.0"
