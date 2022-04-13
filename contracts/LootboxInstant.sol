@@ -397,8 +397,8 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     );
     depositIdCounter.increment();
     // transfer the native tokens to this LootboxInstant contract
-    address payable lootbox = payable(address(this));
-    lootbox.transfer(msg.value);
+    (bool success,) = address(this).call{value: msg.value}("");
+    require(success, "Lootbox could not receive payment");
   }
   // do not send erc20 direct to lootbox or it will get stuck. use depositEarningsErc20()
   function depositEarningsErc20 (address erc20Token, uint256 erc20Amount) public payable nonReentrant { 
@@ -455,7 +455,8 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     require(isFundraising == false, "Rescue cannot be made during fundraising period");
     uint256 trappedTokens = checkForTrappedNativeTokens();
     if (trappedTokens > 0) {
-      payable(treasury).transfer(trappedTokens);
+      (bool success,) = address(treasury).call{value: trappedTokens}("");
+      require(success, "Trasury could not receive trapped tokens");
     }
   }
   function checkForTrappedErc20Tokens(address erc20Token) public view returns (uint256 _trappedTokens) {
@@ -610,7 +611,8 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
             address(0),
             0
           );
-          payable(ownerOf(ticketId)).transfer(owedNative);
+          (bool success,) = address(ownerOf(ticketId)).call{value: owedNative}("");
+          require(success, "Ticket holder could not receive earnings");
         }
       }
     }
