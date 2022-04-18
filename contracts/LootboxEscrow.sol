@@ -54,6 +54,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
   
   string public variant;
+  string public semver;
 
   /** ------------------ SETUP & AUTH ------------------
    * 
@@ -207,6 +208,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   ) initializer public {
 
     variant = "Escrow";
+    semver = "0.3.0-prod";
 
     bytes memory tempEmptyNameTest = bytes(_name);
     bytes memory tempEmptySymbolTest = bytes(_symbol);
@@ -368,7 +370,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   */
   function endFundraisingPeriod () public onlyRole(DAO_ROLE) nonReentrant whenNotPaused {
     require(isFundraising == true, "Fundraising period has already ended");
-    require(sharesSoldCount > sharesSoldTarget, "Fundraising period can only end if >50% of the sharesSoldMax are sold");
+    require(sharesSoldCount >= sharesSoldTarget, "Fundraising period can only end if the fundraising target has been hit");
     isFundraising = false;
     uint256 finalEscrowedAmount = escrowNativeAmount;
     escrowNativeAmount = 0;

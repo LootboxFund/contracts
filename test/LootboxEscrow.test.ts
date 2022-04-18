@@ -22,7 +22,7 @@ import { BigNumber } from "ethers";
 
 const BNB_ARCHIVED_PRICE = "41771363251"; // $417.36614642 USD per BNB
 
-describe("📦 LootboxEscrow smart contract", async function () {
+describe.only("📦 LootboxEscrow smart contract", async function () {
   let deployer: SignerWithAddress;
   let purchaser: SignerWithAddress;
   let issuingEntity: SignerWithAddress;
@@ -407,6 +407,9 @@ describe("📦 LootboxEscrow smart contract", async function () {
     });
 
     describe("basic details", async () => {
+      it("has the expected semver", async () => {
+        expect(await lootbox.semver()).to.eq("0.3.0-prod");
+      });
       it("sets the player treasury address correctly", async () => {
         expect(await lootbox.treasury()).to.eq(entityTreasury.address);
       });
@@ -545,12 +548,12 @@ describe("📦 LootboxEscrow smart contract", async function () {
           buyAmountInEtherB.mul(BNB_ARCHIVED_PRICE).div(SHARE_PRICE_USD)
         );
       });
-      it.skip("tracks the proper percentage of total shares owned by each NFT ticket", async () => {
+      it("tracks the proper percentage of total shares owned by each NFT ticket", async () => {
         expect(percentageOwnedA1.toString()).to.eq("49932287");
         expect(percentageOwnedA2.toString()).to.eq("67712");
         expect(percentageOwnedB.toString()).to.eq("50000000");
       });
-      it.skip("has a consistent share price per ticket", async () => {
+      it("has a consistent share price per ticket", async () => {
         expect(sharePriceUSDA.toString()).to.eq(SHARE_PRICE_USD);
         expect(sharePriceUSDB.toString()).to.eq(SHARE_PRICE_USD);
         expect(sharePriceUSDA.toString()).to.eq(sharePriceUSDB.toString());
@@ -751,6 +754,9 @@ describe("📦 LootboxEscrow smart contract", async function () {
         await expect(midNativeTreasuryBalance).to.equal(
           preNativeTreasuryBalance
         );
+      });
+      it("can only end the fundraising period if the target amount or more is raised", async () => {
+        expect(true).to.equal(false);
       });
       it("sends the fundraised amount to the treasury wallet", async () => {
         const preNativeTreasuryBalance = await provider.getBalance(

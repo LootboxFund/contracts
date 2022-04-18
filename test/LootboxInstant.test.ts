@@ -369,6 +369,9 @@ describe("📦 LootboxInstant smart contract", async function () {
     });
 
     describe("basic details", async () => {
+      it("has the expected semver", async () => {
+        expect(await lootbox.semver()).to.eq("0.3.0-prod");
+      });
       it("sets the player treasury address correctly", async () => {
         expect(await lootbox.treasury()).to.eq(entityTreasury.address);
       });
@@ -512,12 +515,12 @@ describe("📦 LootboxInstant smart contract", async function () {
           buyAmountInEtherB.mul(BNB_ARCHIVED_PRICE).div(SHARE_PRICE_USD)
         );
       });
-      it.skip("tracks the proper percentage of total shares owned by each NFT ticket", async () => {
+      it("tracks the proper percentage of total shares owned by each NFT ticket", async () => {
         expect(percentageOwnedA1.toString()).to.eq("49932287");
         expect(percentageOwnedA2.toString()).to.eq("67712");
         expect(percentageOwnedB.toString()).to.eq("50000000");
       });
-      it.skip("has a consistent share price per ticket", async () => {
+      it("has a consistent share price per ticket", async () => {
         expect(sharePriceUSDA.toString()).to.eq(SHARE_PRICE_USD);
         expect(sharePriceUSDB.toString()).to.eq(SHARE_PRICE_USD);
         expect(sharePriceUSDA.toString()).to.eq(sharePriceUSDB.toString());
