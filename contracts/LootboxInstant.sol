@@ -177,7 +177,6 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     string memory _name,
     string memory _symbol,
     uint256 _maxSharesSold,
-    uint256 _sharePriceUSD,
     address _treasury,
     address _issuingEntity,
     address _nativeTokenPriceFeed,
@@ -202,7 +201,6 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     require(_issuingEntity != address(0), "Issuer cannot be the zero address");
     require(_nativeTokenPriceFeed != address(0), "Native token price feed is required");
     require(_maxSharesSold > 0, "Max shares sold must be greater than zero");
-    require(_sharePriceUSD > 0, "Share price must be greater than zero");
     require(_broker != address(0), "Broker cannot be the zero address");        // the broker is LootboxInstant Ltd.
     require(_affiliate != address(0), "Affiliate cannot be the zero address");  // if there is no affiliate, set affiliate to the broker
 
@@ -218,7 +216,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     feeDecimals = 8;
 
     nativeTokenRaisedTotal = 0;
-    sharePriceUSD = _sharePriceUSD;
+    sharePriceUSD = 5000000;
     sharesSoldMax = _maxSharesSold;
 
     issuer = _issuingEntity;

@@ -22,7 +22,7 @@ import { BigNumber } from "ethers";
 
 const BNB_ARCHIVED_PRICE = "41771363251"; // $417.36614642 USD per BNB
 
-describe.only("📦 LootboxEscrow smart contract", async function () {
+describe("📦 LootboxEscrow smart contract", async function () {
   let deployer: SignerWithAddress;
   let purchaser: SignerWithAddress;
   let issuingEntity: SignerWithAddress;
@@ -88,13 +88,13 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
     .div(priceFeedDecimals);
 
   // max ether spent
-  const maxEtherPurchaseable = targetFundingUSD
+  const etherEquivalentOfTargetShares = targetFundingUSD
     .mul(priceFeedDecimals)
     .div(BNB_ARCHIVED_PRICE);
 
   // ether spent
   // more than min ether necessary to be accepted
-  const triggerLimitEtherPurchaseable = maxEtherPurchaseable
+  const triggerLimitEtherPurchaseable = etherEquivalentOfTargetShares
     .mul(ethers.utils.parseUnits("0.90", 8))
     .div(priceFeedDecimals);
 
@@ -459,14 +459,12 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
 
       let sharesOwnedA1: BigNumber;
       let percentageOwnedA1: BigNumber;
-      let sharePriceUSDA: BigNumber;
 
       let sharesOwnedA2: BigNumber;
       let percentageOwnedA2: BigNumber;
 
       let sharesOwnedB: BigNumber;
       let percentageOwnedB: BigNumber;
-      let sharePriceUSDB: BigNumber;
 
       const buyAmountInEtherA3 = ethers.utils.parseUnits("0.2", "ether");
 
@@ -489,14 +487,6 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         sharesOwnedA1 = await lootbox.sharesInTicket(ticketsA[0]);
         sharesOwnedA2 = await lootbox.sharesInTicket(ticketsA[1]);
         sharesOwnedB = await lootbox.sharesInTicket(ticketsB[0]);
-
-        // [sharesOwnedA1, percentageOwnedA1, sharePriceUSDA] =
-        //   await lootbox.viewTicketInfo(ticketsA[0]);
-        // [sharesOwnedA2, percentageOwnedA2] = await lootbox.viewTicketInfo(
-        //   ticketsA[1]
-        // );
-        // [sharesOwnedB, percentageOwnedB, sharePriceUSDB] =
-        //   await lootbox.viewTicketInfo(ticketsB[0]);
       });
       it("treasury receives the money & reduces the purchasers native token balance accordingly", async () => {
         const startTreasuryBalance = await provider.getBalance(
@@ -548,15 +538,16 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           buyAmountInEtherB.mul(BNB_ARCHIVED_PRICE).div(SHARE_PRICE_USD)
         );
       });
-      it("tracks the proper percentage of total shares owned by each NFT ticket", async () => {
-        expect(percentageOwnedA1.toString()).to.eq("49932287");
-        expect(percentageOwnedA2.toString()).to.eq("67712");
-        expect(percentageOwnedB.toString()).to.eq("50000000");
-      });
+      // it("tracks the proper percentage of total shares owned by each NFT ticket", async () => {
+      //   // this is by association tracked by "viewProratedDepositsForTicket()"
+      //   // we should replace this with a dedicated test later, as we do very much want to know the % of shares owned by an NFT ticket
+      //
+      //   expect(percentageOwnedA1.toString()).to.eq("49932287");
+      //   expect(percentageOwnedA2.toString()).to.eq("67712");
+      //   expect(percentageOwnedB.toString()).to.eq("50000000");
+      // });
       it("has a consistent share price per ticket", async () => {
-        expect(sharePriceUSDA.toString()).to.eq(SHARE_PRICE_USD);
-        expect(sharePriceUSDB.toString()).to.eq(SHARE_PRICE_USD);
-        expect(sharePriceUSDA.toString()).to.eq(sharePriceUSDB.toString());
+        expect(await lootbox.sharePriceUSD()).to.eq("5000000");
       });
       it("ticketId is incremented", async () => {
         expect(await lootbox.ticketIdCounter()).to.eq("3");
@@ -715,21 +706,21 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
     });
 
     describe("Fundraising targets", async () => {
-      it("Can only complete the fundraising period if more than 50% of sharesSoldMax are sold", async () => {
+      it("Fundraising period can only end if the fundraising target has been hit", async () => {
         await expect(
           lootbox.connect(issuingEntity).endFundraisingPeriod()
         ).to.be.revertedWith(
-          "Fundraising period can only end if >50% of the sharesSoldMax are sold"
+          "Fundraising period can only end if the fundraising target has been hit"
         );
         await lootbox.connect(purchaser).purchaseTicket({
-          value: maxEtherPurchaseable.toString(),
+          value: etherEquivalentOfTargetShares.toString(),
         });
         await expect(lootbox.connect(issuingEntity).endFundraisingPeriod()).to
           .not.be.reverted;
       });
       it("only allows the DAO_ROLE to complete the fundraising period", async () => {
         await lootbox.connect(purchaser).purchaseTicket({
-          value: maxEtherPurchaseable.toString(),
+          value: etherEquivalentOfTargetShares.toString(),
         });
         await expect(
           lootbox.connect(deployer).endFundraisingPeriod()
@@ -754,9 +745,6 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         await expect(midNativeTreasuryBalance).to.equal(
           preNativeTreasuryBalance
         );
-      });
-      it("can only end the fundraising period if the target amount or more is raised", async () => {
-        expect(true).to.equal(false);
       });
       it("sends the fundraised amount to the treasury wallet", async () => {
         const preNativeTreasuryBalance = await provider.getBalance(
@@ -899,7 +887,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         await expect(
           lootbox.connect(issuingEntity).endFundraisingPeriod()
         ).to.be.revertedWith(
-          "Fundraising period can only end if >50% of the sharesSoldMax are sold"
+          "Fundraising period can only end if the fundraising target has been hit"
         );
       });
       it("anyone can deposit into a Lootbox", async () => {

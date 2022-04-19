@@ -9,7 +9,7 @@ import { padAddressTo32Bytes } from "./helpers/test-helpers";
 import {
   DAO_ROLE,
   generatePermissionRevokeMessage,
-  testLootboxURI
+  testLootboxURI,
 } from "./helpers/test-helpers";
 
 describe("📦 LootboxEscrowFactory", () => {
