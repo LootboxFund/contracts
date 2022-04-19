@@ -12,7 +12,7 @@ import {
   testLootboxURI,
 } from "./helpers/test-helpers";
 
-describe.only("📦 LootboxInstantFactory", () => {
+describe("📦 LootboxInstantFactory", () => {
   const provider = waffle.provider;
 
   let deployer: SignerWithAddress;
