@@ -127,7 +127,6 @@ contract LootboxInstantFactory is Pausable, AccessControl {
                 _lootboxName, // string memory _name,
                 _lootboxSymbol, // string memory _symbol,
                 _maxSharesSold, // uint256 _maxSharesSold,
-                sharePriceUSD, // uint256 _sharePriceUSD,
                 _treasury,  // address _treasury,
                 msg.sender, // address _issuingEntity,
                 nativeTokenPriceFeed, // address _nativeTokenPriceFeed,
