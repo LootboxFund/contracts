@@ -151,7 +151,7 @@ describe.only("📦 LootboxInstantFactory", () => {
       lootboxFactory = await LootboxFactory.deploy(
         dao.address,
         mockNativeTokenPriceFeed,
-        ticketPurchaseFee,
+        TICKET_PURCHASE_FEE,
         treasury.address
       );
       await lootboxFactory.deployed();
@@ -347,7 +347,7 @@ describe.only("📦 LootboxInstantFactory", () => {
             emittedLootboxAddress,
             affiliate.address,
             ticketAffiliateFee,
-            ticketPurchaseFee,
+            TICKET_PURCHASE_FEE,
             deployer.address,
             treasury.address
           );
@@ -376,7 +376,7 @@ describe.only("📦 LootboxInstantFactory", () => {
             emittedLootboxAddress,
             deployer.address,
             affiliateFeeUnknownAffiliate,
-            ticketPurchaseFee,
+            TICKET_PURCHASE_FEE,
             deployer.address,
             treasury.address
           );
