@@ -31,7 +31,7 @@ import { sleep } from "@wormgraph/helpers";
 import { logToFile } from "./helpers/logger";
 import { manifest } from "./manifest";
 
-const LOG_FILE_PATH = `${__dirname}/logs/deployLootboxFactory_log_${Date.now()}_${
+const LOG_FILE_PATH = `${__dirname}/logs/deployLootboxInstantFactory_log_${Date.now()}_${
   network.name
 }_${network.config.chainId}.dev.txt`;
 
@@ -53,6 +53,12 @@ const nativeTokenPriceFeed = manifest.chain.priceFeedUSD;
  */
 async function main() {
   const chainIdHex = `0x${network.config.chainId?.toString(16)}`;
+
+  if (chainIdHex !== manifest.chain.chainIDHex) {
+    throw new Error(
+      `Chain ID mismatch. Expected ${manifest.chain.chainIDHex} but got ${chainIdHex}`
+    );
+  }
 
   /**
    * IMPORTANT: Our hardhat config uses "untrusted" signers with a single private key.

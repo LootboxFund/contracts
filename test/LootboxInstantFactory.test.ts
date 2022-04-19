@@ -1,27 +1,15 @@
-import { ethers, upgrades, waffle } from "hardhat";
+import { ethers, waffle } from "hardhat";
 import {
-  GuildFactory,
-  GuildFactory__factory,
-  GuildToken,
-  GuildToken__factory,
-  Constants,
-  Constants__factory,
   LootboxInstantFactory__factory,
   LootboxInstantFactory,
 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import { ContractTransaction } from "ethers";
 import { padAddressTo32Bytes } from "./helpers/test-helpers";
 import {
   DAO_ROLE,
-  DEVELOPER_ROLE,
-  GFX_STAFF_ROLE,
-  GUILD_OWNER_ROLE,
   generatePermissionRevokeMessage,
-  stripZeros,
-  GOVERNOR_ROLE,
-  testLootboxURI
+  testLootboxURI,
 } from "./helpers/test-helpers";
 
 describe("📦 LootboxInstantFactory", () => {
@@ -163,7 +151,7 @@ describe("📦 LootboxInstantFactory", () => {
       lootboxFactory = await LootboxFactory.deploy(
         dao.address,
         mockNativeTokenPriceFeed,
-        ticketPurchaseFee,
+        TICKET_PURCHASE_FEE,
         treasury.address
       );
       await lootboxFactory.deployed();
@@ -328,7 +316,7 @@ describe("📦 LootboxInstantFactory", () => {
             deployer.address,
             treasury.address,
             MAX_SHARES_BUY,
-            SHARE_PRICE_USD, 
+            SHARE_PRICE_USD,
             JSON.stringify(testLootboxURI)
           );
       });
@@ -359,7 +347,7 @@ describe("📦 LootboxInstantFactory", () => {
             emittedLootboxAddress,
             affiliate.address,
             ticketAffiliateFee,
-            ticketPurchaseFee,
+            TICKET_PURCHASE_FEE,
             deployer.address,
             treasury.address
           );
@@ -388,7 +376,7 @@ describe("📦 LootboxInstantFactory", () => {
             emittedLootboxAddress,
             deployer.address,
             affiliateFeeUnknownAffiliate,
-            ticketPurchaseFee,
+            TICKET_PURCHASE_FEE,
             deployer.address,
             treasury.address
           );

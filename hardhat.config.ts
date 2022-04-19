@@ -32,11 +32,13 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
-    binance_mainnet: {
-      chainId: 56,
-      url: `https://bsc-dataseed.binance.org`,
-      accounts: [],
-    },
+    // binance_mainnet: {
+    //   chainId: 56,
+    //   url: `https://bsc-dataseed.binance.org`,
+    //   accounts: [
+    //     `${process.env.PROD_DEPLOYER_PRIVATE_KEY}`
+    //   ],
+    // },
     binance_testnet: {
       chainId: 97,
       url: `https://speedy-nodes-nyc.moralis.io/cfd85a5f6e8635607e954ada/bsc/testnet`,

@@ -1,0 +1,15 @@
+2022-04-13T16:01:08.105Z -  
+  
+---------- DEPLOY LOOTBOX ESCROW FACTORY (development) ----------
+  
+---- Script starting...
+
+---- Network:                             binance_mainnet (Hex ID = 0x38)
+---- Lootbox DAO (multisig):              0x0a284530Eb51033D363648281BDe68F581188Df1
+---- Lootbox Grand Treasury (multisig):   0x96779B26982bcB9684fA2ec2Ae53585266733A03
+---- Native Token Price Feed:             0x0567f2323251f0aab15c8dfb1967e4e8a7d42aee
+---- Default Fee:                         2000000
+---- Deployer (UNTRUSTED):                0x88c501B30E1A57f13Be608c596c04CB472e50458
+
+  
+2022-04-13T16:01:08.678Z - insufficient funds for intrinsic transaction cost [ See: https://links.ethers.org/v5-errors-INSUFFICIENT_FUNDS ] (error={"name":"ProviderError","code":-32000,"_isProviderError":true}, method="sendTransaction", transaction=undefined, code=INSUFFICIENT_FUNDS, version=providers/5.6.1)

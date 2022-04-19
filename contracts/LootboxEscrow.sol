@@ -4,10 +4,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.4;
 
-import "hardhat/console.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -15,6 +13,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 interface IERC20 {
     function decimals() external view returns (uint8);
@@ -50,11 +49,12 @@ interface IERC20 {
 }
 
 // solhint-disable-next-line max-states-count
-contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, ERC721URIStorageUpgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
+contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
   using CountersUpgradeable for CountersUpgradeable.Counter;
   using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
   
   string public variant;
+  string public semver;
 
   /** ------------------ SETUP & AUTH ------------------
    * 
@@ -208,6 +208,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   ) initializer public {
 
     variant = "Escrow";
+    semver = "0.3.0-prod";
 
     bytes memory tempEmptyNameTest = bytes(_name);
     bytes memory tempEmptySymbolTest = bytes(_symbol);
@@ -226,7 +227,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
 
     __ERC721_init(_name, _symbol);
     __ERC721Enumerable_init();
-    __ERC721URIStorage_init();
     __Pausable_init();
     __AccessControl_init();
     __UUPSUpgradeable_init();
@@ -268,7 +268,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   *   checkMaxSharesRemainingForSale()
   */
   // buy in native tokens only. use purchaseTicket(), do not directly send $ to lootbox
-  function purchaseTicket () public payable returns (uint256 _ticketId, uint256 _sharesPurchased) {
+  function purchaseTicket () public payable nonReentrant whenNotPaused returns (uint256 _ticketId, uint256 _sharesPurchased) {
     require(msg.sender != treasury, "Treasury cannot purchase tickets");
     require(isFundraising == true, "Tickets cannot be purchased after the fundraising period");
     // calculate how many shares to buy based on msg.value
@@ -315,8 +315,10 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     // sum the cumulative escrow'd amount
     escrowNativeAmount = escrowNativeAmount + treasuryReceived;
     // broker & affiliate get their cut
-    payable(broker).transfer(brokerReceived);
-    payable(affiliate).transfer(affiliateReceived);
+    (bool bsuccess,) = address(broker).call{value: brokerReceived}("");
+    require(bsuccess, "Broker could not receive payment");
+    (bool asuccess,) = address(affiliate).call{value: affiliateReceived}("");
+    require(asuccess, "Affiliate could not receive payment");
     // the rest stays in the contract for escrow
     // mint the NFT ticket
     _safeMint(msg.sender, ticketId);
@@ -360,21 +362,18 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
           sharePriceUSD;
   }
 
-
-
   /**
   * ------------------ END FUNDRAISING PERIOD ------------------
   *
   *   endFundraising()
   *   cancelFundraising()
   */
-  function endFundraisingPeriod () public onlyRole(DAO_ROLE) {
+  function endFundraisingPeriod () public onlyRole(DAO_ROLE) nonReentrant whenNotPaused {
     require(isFundraising == true, "Fundraising period has already ended");
-    require(sharesSoldCount > sharesSoldTarget, "Fundraising period can only end if >50% of the sharesSoldMax are sold");
+    require(sharesSoldCount >= sharesSoldTarget, "Fundraising period can only end if the fundraising target has been hit");
     isFundraising = false;
     uint256 finalEscrowedAmount = escrowNativeAmount;
     escrowNativeAmount = 0;
-    payable(treasury).transfer(finalEscrowedAmount);
     // emit CompleteFundraiser event
     emit CompleteFundraiser(
       issuer,
@@ -384,8 +383,10 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
       finalEscrowedAmount,
       sharesSoldCount
     );
+    (bool tsuccess,) = address(treasury).call{value: finalEscrowedAmount}("");
+    require(tsuccess, "Treasury could not receive payment");
   } 
-  function cancelFundraiser() public onlyRole(DAO_ROLE) {
+  function cancelFundraiser() public onlyRole(DAO_ROLE) nonReentrant whenNotPaused{
     require(isFundraising == true, "Fundraising period has already ended");
     isFundraising = false;
     uint256 refundAmount = escrowNativeAmount;
@@ -439,7 +440,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   *   rescueTrappedErc20Tokens(address)
   */
   // do not send native tokens direct to lootbox or it will get stuck. use depositEarningsNative()
-  function depositEarningsNative () public payable {
+  function depositEarningsNative () public payable nonReentrant whenNotPaused {
     require(isFundraising == false, "Deposits cannot be made during fundraising period");
     require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
     // log this payout in sum
@@ -467,11 +468,11 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     );
     depositIdCounter.increment();
     // transfer the native tokens to this LootboxEscrow contract
-    address payable lootbox = payable(address(this));
-    lootbox.transfer(msg.value);
+    (bool success,) = address(this).call{value: msg.value}("");
+    require(success, "Lootbox could not receive payment");
   }
   // do not send erc20 direct to lootbox or it will get stuck. use depositEarningsErc20()
-  function depositEarningsErc20 (address erc20Token, uint256 erc20Amount) public payable { 
+  function depositEarningsErc20 (address erc20Token, uint256 erc20Amount) public payable nonReentrant whenNotPaused { 
     require(isFundraising == false, "Deposits cannot be made during fundraising period");
     require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
     require(msg.value == 0, "Deposits of erc20 cannot also include native tokens in the same transaction");
@@ -521,11 +522,12 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     uint256 trappedTokens = address(this).balance - depositedTokens;
     return trappedTokens;
   }
-  function rescueTrappedNativeTokens() public onlyRole(DAO_ROLE) {
+  function rescueTrappedNativeTokens() public onlyRole(DAO_ROLE) nonReentrant whenNotPaused {
     require(isFundraising == false, "Rescue cannot be made during fundraising period");
     uint256 trappedTokens = checkForTrappedNativeTokens();
     if (trappedTokens > 0) {
-      payable(treasury).transfer(trappedTokens);
+      (bool success,) = address(treasury).call{value: trappedTokens}("");
+      require(success, "Trasury could not receive trapped tokens");
     }
   }
   function checkForTrappedErc20Tokens(address erc20Token) public view returns (uint256 _trappedTokens) {
@@ -540,7 +542,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     uint256 trappedTokens = token.balanceOf(address(this)) - depositedTokens;
     return trappedTokens;
   }
-  function rescueTrappedErc20Tokens(address erc20Token) public onlyRole(DAO_ROLE) {
+  function rescueTrappedErc20Tokens(address erc20Token) public onlyRole(DAO_ROLE) nonReentrant whenNotPaused {
     require(isFundraising == false, "Rescue cannot be made during fundraising period");
     uint256 trappedTokens = checkForTrappedErc20Tokens(erc20Token);
     IERC20 token = IERC20(erc20Token);
@@ -549,23 +551,18 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     }
   }
 
-
-
   /**
   * ------------------ TICKET INFO ------------------
   *  
   *  tokenURI(ticketId)
-  *  viewTicketInfo(ticketId)
   *  viewProratedDepositsForTicket(ticketId)
-  *  viewOwedOfNativeTokenToTicket(ticketId)
-  *  viewOwedErc20TokensToTicket(ticketId, erc20address)
   *  viewAllTicketsOfHolder(address)
   */
   // metadata about token. returns only the ticketId. the url is built by frontend & actual data is stored off-chain on GBucket
   function tokenURI(uint256 ticketId)
     public
     pure
-    override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
+    override(ERC721Upgradeable)
     returns (string memory)
   {
     return uint2str(ticketId);
@@ -589,43 +586,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     }
     return _depositsMetadatas;
   }
-  // info about the ticket shares owned, % owned, and share price
-  function viewTicketInfo(uint256 ticketId) public view returns (uint256 _sharesOwned, uint256 _percentageOwned, uint256 _sharePriceUSD) {
-    uint256 sharesOwned = sharesInTicket[ticketId];
-    uint256 percentageDecimals = 8;
-    uint256 percentageOwned = sharesOwned * 1*(10**percentageDecimals) / sharesSoldCount;
-    return (
-      sharesOwned,
-      percentageOwned,
-      sharePriceUSD
-    );
-  }
-  function viewOwedOfNativeTokenToTicket (uint256 ticketId) public view returns (uint256 _owed) {
-    uint sharesOwned = sharesInTicket[ticketId]; 
-    uint256 owed = 0;
-    for(uint256 i=0; i < depositIdCounter.current(); i++){
-      Deposit memory deposit = depositReciepts[i];
-      if (depositRedemptions[ticketId][deposit.depositId] != true) {
-        if (deposit.erc20Token == address(0)) {
-          owed = owed + (deposit.nativeTokenAmount * sharesOwned / sharesSoldCount);
-        }
-      }
-    }
-    return owed;
-  }
-  function viewOwedErc20TokensToTicket (uint256 ticketId, address erc20Token) public view returns (uint256 _owed) {
-    uint sharesOwned = sharesInTicket[ticketId]; 
-    uint256 owed = 0;
-    for(uint256 i=0; i < depositIdCounter.current(); i++){
-      Deposit memory deposit = depositReciepts[i];
-      if (depositRedemptions[ticketId][deposit.depositId] != true) {
-        if (deposit.erc20Token == erc20Token) {
-          owed = owed + (deposit.erc20TokenAmount * sharesOwned / sharesSoldCount);
-        }
-      }
-    }
-    return owed;
-  }
+  
   function viewAllTicketsOfHolder(address holder) public view returns (uint256[] memory _tickets) {
     uint256 ownedByHolder = balanceOf(holder);
     uint256[] memory ticketsOwned = new uint256[](ownedByHolder);
@@ -635,14 +596,12 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     return ticketsOwned;
   }
 
-
-
   /**
   * ------------------ WITHDRAW EARNINGS ------------------
   * 
   *  withdrawEarnings(ticketId)
   */
-  function withdrawEarnings (uint256 ticketId) public {
+  function withdrawEarnings (uint256 ticketId) public nonReentrant whenNotPaused {
     require(isFundraising == false, "Withdrawals cannot be made during fundraising period");
     require(ownerOf(ticketId) == msg.sender, "You do not own this ticket");
     uint sharesOwned = sharesInTicket[ticketId]; 
@@ -682,7 +641,8 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
             address(0),
             0
           );
-          payable(ownerOf(ticketId)).transfer(owedNative);
+          (bool success,) = address(ownerOf(ticketId)).call{value: owedNative}("");
+          require(success, "Ticket holder could not receive earnings");
         }
       }
     }
@@ -733,8 +693,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     return totalDeposit;
   }
 
-
-
   /**
   * ------------------ CLASS INHERITANCE OVERHEAD ------------------
   *  
@@ -749,10 +707,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     super._beforeTokenTransfer(from, to, tokenId);
   }
   // disable burns
-  function _burn(uint256 tokenId) internal pure override(ERC721Upgradeable, ERC721URIStorageUpgradeable) {}
-  function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal override(ERC721URIStorageUpgradeable) {
-    super._setTokenURI(tokenId, _tokenURI);
-  }
+  function _burn(uint256 tokenId) internal pure override(ERC721Upgradeable) {}
   function supportsInterface(bytes4 interfaceId)
     public
     view

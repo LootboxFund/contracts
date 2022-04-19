@@ -1333,28 +1333,28 @@
   resolved "https://registry.yarnpkg.com/@ungap/promise-all-settled/-/promise-all-settled-1.1.2.tgz#aa58042711d6e3275dd37dc597e5d31e8c290a44"
   integrity sha512-sL/cEvJWAnClXw0wHk85/2L0G6Sj8UB0Ctc1TEMbKSsmpRosqhwj9gWgFRZSrBr2f9tiXISwNhCPmlfqUqyb9Q==
 
-"@wormgraph/helpers@0.0.31":
-  version "0.0.31"
-  resolved "https://registry.yarnpkg.com/@wormgraph/helpers/-/helpers-0.0.31.tgz#230b5c3f4f27fd3c4a471098ee0cf110da8e362b"
-  integrity sha512-2x9pAxVPX6LTA17U+6PaCCh8gcHrl+4YeuZWBq2McjJH7HGqDOBTl0KfAVqb5wayrW/zm1MYyEbL12VcC2JKtA==
+"@wormgraph/helpers@0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@wormgraph/helpers/-/helpers-0.1.1.tgz#ce3864a245def07c6f088dde85ff8db59774af0d"
+  integrity sha512-p8n7U63C+JZVe/hw7q2x8JwXRYedTGOR2IrKqxHaXtz1k5pSDHA9ObxuyYEQLUmFnsMiQidXnRIRR3mGDD/BFQ==
   dependencies:
     axios "0.25.0"
     lodash "4.17.21"
 
-"@wormgraph/helpers@0.0.33":
-  version "0.0.33"
-  resolved "https://registry.yarnpkg.com/@wormgraph/helpers/-/helpers-0.0.33.tgz#68b0aad4472ea0198d25a424d1b8040d102deea6"
-  integrity sha512-JQB7YC8ZLpPam13UNNeP24wq0PxxgiXFP07c+BBY7oD2g+GDIaJMl7pTDCcOPx1gW0V85b19xCYiaxjerjWRLA==
+"@wormgraph/helpers@0.1.2":
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/@wormgraph/helpers/-/helpers-0.1.2.tgz#d3bf884961e787625222db9a0dae0ea1a92420d3"
+  integrity sha512-SU7nbVK8/QBkjr2IX5Y/IfROlSeiNnkx+5GXGyn3zh0YTxhAv8rFgkksWyEFKXOT/rGqufucFRyxxAmycQhSGA==
   dependencies:
     axios "0.25.0"
     lodash "4.17.21"
 
-"@wormgraph/manifest@0.2.120":
-  version "0.2.120"
-  resolved "https://registry.yarnpkg.com/@wormgraph/manifest/-/manifest-0.2.120.tgz#a3cfcd56e3d97064aaf07ea1486d97ae5b821115"
-  integrity sha512-3Ev4dsdjVMVUA9DlRlQmzkVAGl00lJsQjjWxVcmLu1SwAC5fDjmlR3i3dX7bSjrCt84bG2msyUyJ9AL97vR92A==
+"@wormgraph/manifest@0.3.20":
+  version "0.3.20"
+  resolved "https://registry.yarnpkg.com/@wormgraph/manifest/-/manifest-0.3.20.tgz#fecc2d7f17ef423d32c57f14a95af3f82363918f"
+  integrity sha512-QotrpYOg+hq/Oy6WpP5s9pIzCKZ6VOkYYepigtzFLlmyTOvHDrk8/gvGreEEykrBVMqtFYsQKB5gh8j1XL9Meg==
   dependencies:
-    "@wormgraph/helpers" "0.0.33"
+    "@wormgraph/helpers" "0.1.2"
 
 "@yarnpkg/lockfile@^1.1.0":
   version "1.1.0"
