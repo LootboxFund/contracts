@@ -9,7 +9,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721Enumer
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -66,13 +65,13 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   uint256 public feeDecimals;
   // references
   uint256 public deploymentStartTime;
-  AggregatorV3Interface internal nativeTokenPriceFeed;
 
   /** ------------------ FUNDRAISING STATE ------------------
    * 
    */
   address public issuer;
-  uint256 public sharePriceUSD; // THIS SHOULD NOT BE MODIFIED (8 decimals)
+    uint256 public sharePriceWei;  // THIS SHOULD NOT BE MODIFIED (should be equal to 1 gwei, i.e. 1000000000)
+  uint256 public sharePriceWeiDecimals; // THIS SHOULD NOT BE MODIFIED (should be equal to 9)
   uint256 public sharesSoldCount;
   uint256 public sharesSoldMax;
   uint256 public nativeTokenRaisedTotal;
@@ -88,7 +87,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     address lootbox,
     uint256 ticketId,
     uint256 sharesPurchased,
-    uint256 sharePriceUSD
+    uint256 sharePriceWei
   );
 
   /** ------------------ FEES STATE ------------------
@@ -152,7 +151,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     uint256 nativeTokensSentToBroker,
     uint256 nativeTokensSentToAffiliate,
     uint256 sharesPurchased,
-    uint256 sharePriceUSD
+    uint256 sharePriceWei
   );
   event WithdrawEarnings(
     address indexed withdrawer,
@@ -179,7 +178,6 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     uint256 _maxSharesSold,
     address _treasury,
     address _issuingEntity,
-    address _nativeTokenPriceFeed,
     uint256 _ticketPurchaseFee,
     uint256 _ticketAffiliateFee,
     address _broker,
@@ -199,7 +197,6 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     require(_ticketAffiliateFee <= _ticketPurchaseFee , "Affiliate ticket fee must be less than or equal to purchase ticket fee");
     require(_treasury != address(0), "Treasury cannot be the zero address");
     require(_issuingEntity != address(0), "Issuer cannot be the zero address");
-    require(_nativeTokenPriceFeed != address(0), "Native token price feed is required");
     require(_maxSharesSold > 0, "Max shares sold must be greater than zero");
     require(_broker != address(0), "Broker cannot be the zero address");        // the broker is LootboxInstant Ltd.
     require(_affiliate != address(0), "Affiliate cannot be the zero address");  // if there is no affiliate, set affiliate to the broker
@@ -214,13 +211,13 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     deploymentStartTime = block.timestamp;
     shareDecimals = 18;
     feeDecimals = 8;
+    sharePriceWei = 1000000000;
+    sharePriceWeiDecimals = 9;
 
     nativeTokenRaisedTotal = 0;
-    sharePriceUSD = 5000000;
     sharesSoldMax = _maxSharesSold;
 
     issuer = _issuingEntity;
-    nativeTokenPriceFeed = AggregatorV3Interface(_nativeTokenPriceFeed);
 
     isFundraising = true;
     treasury = _treasury;
@@ -270,7 +267,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
       address(this),
       ticketId,
       sharesPurchased,
-      sharePriceUSD
+      sharePriceWei
     );
     // emit the InvestmentFundsDispersed event);
     uint256 affiliateReceived = msg.value * ticketAffiliateFee / (1*10**(8));
@@ -288,7 +285,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
       brokerReceived,
       affiliateReceived,
       sharesPurchased,
-      sharePriceUSD
+      sharePriceWei
     );
     // collect the payment and send to treasury (should be a multisig)
     (bool tsuccess,) = address(treasury).call{value: treasuryReceived}("");
@@ -304,21 +301,8 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   }
   // external function to estimate how much guild tokens a user will receive
   function estimateSharesPurchase (uint256 nativeTokenAmount) public view returns (uint256) {
-    // get price feed of native token
-    (
-      uint80 roundID,
-      int256 price,
-      uint256 startedAt,
-      uint256 timeStamp,
-      uint80 answeredInRound
-    ) = nativeTokenPriceFeed.latestRoundData();
-    uint256 nativeTokenDecimals = 18;
-    // If the round is not complete yet, timestamp is 0
-    require(timeStamp > 0, "Round not complete");
     uint256 sharesPurchased = convertInputTokenToShares(
-      nativeTokenAmount,
-      nativeTokenDecimals,
-      uint256(price)
+      nativeTokenAmount
     );
     return sharesPurchased;
   }
@@ -328,18 +312,10 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   }
   // internal helper function that converts stablecoin amount to guild token amount
   function convertInputTokenToShares(
-      uint256 amountOfStableCoin,
-      uint256 stablecoinDecimals,
-      uint256 stableCoinPrice
+      uint256 amountOfStableCoin
   ) internal view returns (uint256 guildTokenAmount) {
-      return
-          (amountOfStableCoin *
-              stableCoinPrice *
-              10**(shareDecimals - stablecoinDecimals)) /
-          sharePriceUSD;
+      return amountOfStableCoin * 10 ** (shareDecimals) / sharePriceWei;
   }
-
-
 
   /**
   * ------------------ END FUNDRAISING PERIOD ------------------
