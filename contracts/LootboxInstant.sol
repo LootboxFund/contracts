@@ -70,8 +70,8 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
    * 
    */
   address public issuer;
-    uint256 public sharePriceWei;  // THIS SHOULD NOT BE MODIFIED (should be equal to 1 gwei, i.e. 1000000000)
-  uint256 public sharePriceWeiDecimals; // THIS SHOULD NOT BE MODIFIED (should be equal to 9)
+  uint256 public sharePriceWei;  // THIS SHOULD NOT BE MODIFIED (should be equal to 1 gwei, i.e. 1000000000)
+  uint256 public sharePriceWeiDecimals; // THIS SHOULD NOT BE MODIFIED (should be equal to 18)
   uint256 public sharesSoldCount;
   uint256 public sharesSoldMax;
   uint256 public nativeTokenRaisedTotal;
@@ -212,7 +212,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     shareDecimals = 18;
     feeDecimals = 8;
     sharePriceWei = 1000000000;
-    sharePriceWeiDecimals = 9;
+    sharePriceWeiDecimals = 18;
 
     nativeTokenRaisedTotal = 0;
     sharesSoldMax = _maxSharesSold;
@@ -250,7 +250,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     uint256 sharesPurchased = estimateSharesPurchase(msg.value);
 
     // do not allow selling above sharesSoldMax 
-    require(sharesPurchased < checkMaxSharesRemainingForSale(), "Not enough shares remaining to purchase, try a smaller amount");
+    require(sharesPurchased <= checkMaxSharesRemainingForSale(), "Not enough shares remaining to purchase, try a smaller amount");
     // get an ID
     uint256 ticketId = ticketIdCounter.current();
     ticketIdCounter.increment();

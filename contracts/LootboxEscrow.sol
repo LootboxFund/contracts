@@ -72,6 +72,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   
   
   uint256 public sharePriceWei;  // THIS SHOULD NOT BE MODIFIED (should be equal to 1 gwei, i.e. 1000000000 wei)
+  uint256 public sharePriceWeiDecimals;  // THIS SHOULD NOT BE MODIFIED (should be equal to 18)
   uint256 public sharesSoldCount;
   uint256 public sharesSoldTarget;
   uint256 public sharesSoldMax;
@@ -231,6 +232,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     shareDecimals = 18;
     feeDecimals = 8;
     sharePriceWei = 1000000000;
+    sharePriceWeiDecimals = 18;
 
     nativeTokenRaisedTotal = 0;
     sharesSoldTarget = _targetSharesSold;
@@ -269,7 +271,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     uint256 sharesPurchased = estimateSharesPurchase(msg.value);
 
     // do not allow selling above sharesSoldMax 
-    require(sharesPurchased < checkMaxSharesRemainingForSale(), "Not enough shares remaining to purchase, try a smaller amount");
+    require(sharesPurchased <= checkMaxSharesRemainingForSale(), "Not enough shares remaining to purchase, try a smaller amount");
     // get an ID
     uint256 ticketId = ticketIdCounter.current();
     ticketIdCounter.increment();
@@ -321,8 +323,10 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   }
   // external function to estimate how much guild tokens a user will receive
   function estimateSharesPurchase (uint256 nativeTokenAmount) public view returns (uint256) {
+    uint256 nativeTokenDecimals = 18;
     uint256 sharesPurchased = convertInputTokenToShares(
-      nativeTokenAmount
+      nativeTokenAmount,
+      nativeTokenDecimals
     );
     return sharesPurchased;
   }
@@ -332,9 +336,10 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   }
   // internal helper function that converts stablecoin amount to guild token amount
   function convertInputTokenToShares(
-      uint256 amountOfStableCoin
+      uint256 amountOfStableCoin,
+      uint256 stablecoinDecimals
   ) internal view returns (uint256 guildTokenAmount) {
-      return amountOfStableCoin * 10 ** (shareDecimals) / sharePriceWei;
+      return amountOfStableCoin * 10 ** (shareDecimals + sharePriceWeiDecimals - stablecoinDecimals) / sharePriceWei;
   }
 
   /**
