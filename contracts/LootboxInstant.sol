@@ -306,8 +306,10 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   }
   // external function to estimate how much guild tokens a user will receive
   function estimateSharesPurchase (uint256 nativeTokenAmount) public view returns (uint256) {
+    uint256 nativeTokenDecimals = 18;
     uint256 sharesPurchased = convertInputTokenToShares(
-      nativeTokenAmount
+      nativeTokenAmount,
+      nativeTokenDecimals
     );
     return sharesPurchased;
   }
@@ -317,9 +319,10 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   }
   // internal helper function that converts stablecoin amount to guild token amount
   function convertInputTokenToShares(
-      uint256 amountOfStableCoin
+      uint256 amountOfStableCoin, 
+      uint256 stablecoinDecimals
   ) internal view returns (uint256 guildTokenAmount) {
-      return amountOfStableCoin * 10 ** (shareDecimals) / sharePriceWei;
+      return amountOfStableCoin * 10 ** (shareDecimals + sharePriceWeiDecimals - stablecoinDecimals) / sharePriceWei;
   }
 
   /**
