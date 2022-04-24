@@ -20,7 +20,7 @@ import {
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 
-const BNB_ARCHIVED_PRICE = "41771363251"; // $417.36614642 USD per BNB
+// const BNB_ARCHIVED_PRICE = "41771363251"; // $417.36614642 USD per BNB
 
 describe("📦 LootboxInstant smart contract", async function () {
   let deployer: SignerWithAddress;
@@ -37,7 +37,6 @@ describe("📦 LootboxInstant smart contract", async function () {
 
   let Bnb: BNB__factory;
   let bnb_stablecoin: BNB;
-  const bnb_pricefeed = "0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE";
 
   let Usdc: USDC__factory;
   let usdc_stablecoin: USDC;
@@ -50,7 +49,8 @@ describe("📦 LootboxInstant smart contract", async function () {
   const LOOTBOX_NAME = "Pinata Lootbox";
   const LOOTBOX_SYMBOL = "PINATA";
 
-  const SHARE_PRICE_USD = "5000000"; // $0.07 usd per share
+  const SHARE_PRICE_WEI = "1000000000"; // $0.07 usd per share
+  const SHARE_PRICE_WEI_DECIMALS = 18;
 
   const TICKET_PURCHASE_FEE = "2000000"; // 2%
   const AFFILIATE_FEE = "500000"; // 1%
@@ -60,12 +60,27 @@ describe("📦 LootboxInstant smart contract", async function () {
   const USDC_STARTING_BALANCE = "10000000000000000000000";
   const USDT_STARTING_BALANCE = "10000000000000000000000";
 
-  const MAX_SHARES_AVAILABLE_FOR_SALE = "50000"; //
+  const TARGET_SHARES_AVAILABLE_FOR_SALE = "500000000";
+  const MAX_SHARES_AVAILABLE_FOR_SALE = "500000000";
 
   const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
   const buyAmountInEtherA2 = ethers.utils.parseUnits("0.00013560931", "ether");
+  const buyAmountInEtherA3 = ethers.utils.parseUnits("0.2", "ether");
   const buyAmountInEtherB = ethers.utils.parseUnits("0.10013560931", "ether"); // equal to 50% if (A1+A2+B). becomes 25% when (A1+A2+B+C)
   const buyAmountInEtherC = ethers.utils.parseUnits("0.20027121862", "ether"); // equal to 50% if (A1+A2+B+C)
+
+  const buyAmountInSharesA1 = buyAmountInEtherA1
+    .mul(ethers.utils.parseUnits("1", 18))
+    .div(SHARE_PRICE_WEI);
+  const buyAmountInSharesA2 = buyAmountInEtherA2
+    .mul(ethers.utils.parseUnits("1", 18))
+    .div(SHARE_PRICE_WEI);
+  const buyAmountInSharesA3 = buyAmountInEtherA3
+    .mul(ethers.utils.parseUnits("1", 18))
+    .div(SHARE_PRICE_WEI);
+  const buyAmountInSharesB = buyAmountInEtherB
+    .mul(ethers.utils.parseUnits("1", 18))
+    .div(SHARE_PRICE_WEI);
 
   const depositAmountInEtherA1 = ethers.utils.parseUnits("1", "ether");
   const depositAmountInEtherA2 = ethers.utils.parseUnits("0.5", "ether");
@@ -79,8 +94,6 @@ describe("📦 LootboxInstant smart contract", async function () {
   const provider = waffle.provider;
 
   describe("Before constructor & deployment", async () => {
-    const bnb_pricefeed = "0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE";
-
     let entityTreasury: SignerWithAddress;
     let issuingEntity: SignerWithAddress;
     let broker: SignerWithAddress;
@@ -111,11 +124,10 @@ describe("📦 LootboxInstant smart contract", async function () {
         [
           "",
           "SYMBOL",
-          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           ethers.BigNumber.from("100000"),
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           entityTreasury.address,
           issuingEntity.address,
-          bnb_pricefeed,
           "2000000",
           "1000000",
           broker.address,
@@ -123,7 +135,7 @@ describe("📦 LootboxInstant smart contract", async function () {
         ],
         { kind: "uups" }
       );
-      expect(lootbox).to.be.revertedWith("Name cannot be empty");
+      await expect(lootbox).to.be.revertedWith("Name cannot be empty");
     });
     it("Symbol cannot be empty", async () => {
       const lootbox = upgrades.deployProxy(
@@ -135,7 +147,6 @@ describe("📦 LootboxInstant smart contract", async function () {
           ethers.BigNumber.from("100000"),
           entityTreasury.address,
           issuingEntity.address,
-          bnb_pricefeed,
           "2000000",
           "1000000",
           broker.address,
@@ -143,7 +154,7 @@ describe("📦 LootboxInstant smart contract", async function () {
         ],
         { kind: "uups" }
       );
-      expect(lootbox).to.be.revertedWith("Symbol cannot be empty");
+      await expect(lootbox).to.be.revertedWith("Symbol cannot be empty");
     });
     it("Purchase ticket fee must be less than 100000000 (100%)", async () => {
       const lootbox = upgrades.deployProxy(
@@ -155,7 +166,6 @@ describe("📦 LootboxInstant smart contract", async function () {
           ethers.BigNumber.from("100000"),
           entityTreasury.address,
           issuingEntity.address,
-          bnb_pricefeed,
           "100000001",
           "1000000",
           broker.address,
@@ -163,7 +173,7 @@ describe("📦 LootboxInstant smart contract", async function () {
         ],
         { kind: "uups" }
       );
-      expect(lootbox).to.be.revertedWith(
+      await expect(lootbox).to.be.revertedWith(
         "Purchase ticket fee must be less than 100000000 (100%)"
       );
     });
@@ -177,7 +187,6 @@ describe("📦 LootboxInstant smart contract", async function () {
           ethers.BigNumber.from("100000"),
           entityTreasury.address,
           issuingEntity.address,
-          bnb_pricefeed,
           "2000000",
           "3000000",
           broker.address,
@@ -185,7 +194,7 @@ describe("📦 LootboxInstant smart contract", async function () {
         ],
         { kind: "uups" }
       );
-      expect(lootbox).to.be.revertedWith(
+      await expect(lootbox).to.be.revertedWith(
         "Affiliate ticket fee must be less than or equal to purchase ticket fee"
       );
     });
@@ -199,7 +208,6 @@ describe("📦 LootboxInstant smart contract", async function () {
           ethers.BigNumber.from("100000"),
           ethers.constants.AddressZero,
           issuingEntity.address,
-          bnb_pricefeed,
           "2000000",
           "1000000",
           broker.address,
@@ -207,7 +215,9 @@ describe("📦 LootboxInstant smart contract", async function () {
         ],
         { kind: "uups" }
       );
-      expect(lootbox).to.be.revertedWith("Treasury cannot be the zero address");
+      await expect(lootbox).to.be.revertedWith(
+        "Treasury cannot be the zero address"
+      );
     });
     it("Issuer cannot be the zero address", async () => {
       const lootbox = upgrades.deployProxy(
@@ -219,7 +229,6 @@ describe("📦 LootboxInstant smart contract", async function () {
           ethers.BigNumber.from("100000"),
           entityTreasury.address,
           ethers.constants.AddressZero,
-          bnb_pricefeed,
           "2000000",
           "1000000",
           broker.address,
@@ -227,27 +236,9 @@ describe("📦 LootboxInstant smart contract", async function () {
         ],
         { kind: "uups" }
       );
-      expect(lootbox).to.be.revertedWith("Issuer cannot be the zero address");
-    });
-    it("Native token price feed is required", async () => {
-      const lootbox = upgrades.deployProxy(
-        Lootbox,
-        [
-          "Name",
-          "SYMBOL",
-          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
-          ethers.BigNumber.from("100000"),
-          entityTreasury.address,
-          issuingEntity.address,
-          ethers.constants.AddressZero,
-          "2000000",
-          "1000000",
-          broker.address,
-          affiliate.address,
-        ],
-        { kind: "uups" }
+      await expect(lootbox).to.be.revertedWith(
+        "Issuer cannot be the zero address"
       );
-      expect(lootbox).to.be.revertedWith("Native token price feed is required");
     });
     it("Broker cannot be the zero address", async () => {
       const lootbox = upgrades.deployProxy(
@@ -256,10 +247,9 @@ describe("📦 LootboxInstant smart contract", async function () {
           "Name",
           "SYMBOL",
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
-          ethers.BigNumber.from("100000"),
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           entityTreasury.address,
           issuingEntity.address,
-          bnb_pricefeed,
           "2000000",
           "1000000",
           ethers.constants.AddressZero,
@@ -267,7 +257,9 @@ describe("📦 LootboxInstant smart contract", async function () {
         ],
         { kind: "uups" }
       );
-      expect(lootbox).to.be.revertedWith("Broker cannot be the zero address");
+      await expect(lootbox).to.be.revertedWith(
+        "Broker cannot be the zero address"
+      );
     });
     it("Affiliate cannot be the zero address", async () => {
       const lootbox = upgrades.deployProxy(
@@ -276,10 +268,9 @@ describe("📦 LootboxInstant smart contract", async function () {
           "Name",
           "SYMBOL",
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
-          ethers.BigNumber.from("100000"),
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           entityTreasury.address,
           issuingEntity.address,
-          bnb_pricefeed,
           "2000000",
           "1000000",
           broker.address,
@@ -287,7 +278,7 @@ describe("📦 LootboxInstant smart contract", async function () {
         ],
         { kind: "uups" }
       );
-      expect(lootbox).to.be.revertedWith(
+      await expect(lootbox).to.be.revertedWith(
         "Affiliate cannot be the zero address"
       );
     });
@@ -297,11 +288,10 @@ describe("📦 LootboxInstant smart contract", async function () {
         [
           "Name",
           "SYMBOL",
-          "0",
           ethers.BigNumber.from("100000"),
+          "0",
           entityTreasury.address,
           issuingEntity.address,
-          bnb_pricefeed,
           "2000000",
           "1000000",
           broker.address,
@@ -309,8 +299,50 @@ describe("📦 LootboxInstant smart contract", async function () {
         ],
         { kind: "uups" }
       );
-      expect(lootbox).to.be.revertedWith(
+      await expect(lootbox).to.be.revertedWith(
         "Max shares sold must be greater than zero"
+      );
+    });
+    it("Target shares sold must be greater than zero", async () => {
+      const lootbox = upgrades.deployProxy(
+        Lootbox,
+        [
+          "Name",
+          "SYMBOL",
+          "0",
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
+          entityTreasury.address,
+          issuingEntity.address,
+          "2000000",
+          "1000000",
+          broker.address,
+          affiliate.address,
+        ],
+        { kind: "uups" }
+      );
+      await expect(lootbox).to.be.revertedWith(
+        "Target shares sold must be greater than zero"
+      );
+    });
+    it("Max shares must be greater than or equal to target shares sold", async () => {
+      const lootbox = upgrades.deployProxy(
+        Lootbox,
+        [
+          "Name",
+          "SYMBOL",
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals,
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18").sub("1"), // 50k shares, 18 decimals
+          entityTreasury.address,
+          issuingEntity.address,
+          "2000000",
+          "1000000",
+          broker.address,
+          affiliate.address,
+        ],
+        { kind: "uups" }
+      );
+      await expect(lootbox).to.be.revertedWith(
+        "Target shares sold must be less than or equal to max shares sold"
       );
     });
   });
@@ -350,10 +382,10 @@ describe("📦 LootboxInstant smart contract", async function () {
         [
           LOOTBOX_NAME,
           LOOTBOX_SYMBOL,
+          ethers.utils.parseUnits(TARGET_SHARES_AVAILABLE_FOR_SALE, 18), // uint256 _targetSharesSold, // 1k shares, 18 decimals
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, 18), // 50k shares, 18 decimals
           entityTreasury.address,
           issuingEntity.address,
-          bnb_pricefeed,
           TICKET_PURCHASE_FEE,
           AFFILIATE_FEE,
           broker.address,
@@ -374,10 +406,15 @@ describe("📦 LootboxInstant smart contract", async function () {
       it("sets the player treasury address correctly", async () => {
         expect(await lootbox.treasury()).to.eq(entityTreasury.address);
       });
-      it("sets the sharePriceUSD correctly", async () => {
-        expect(await lootbox.sharePriceUSD()).to.eq(SHARE_PRICE_USD);
+      it("sets the sharePriceWei correctly", async () => {
+        expect(await lootbox.sharePriceWei()).to.eq(SHARE_PRICE_WEI);
       });
-      it("has a native token oracle price feed", async () => {
+      it("sets the sharePriceWeiDecimals correctly", async () => {
+        expect(await lootbox.sharePriceWeiDecimals()).to.eq(
+          SHARE_PRICE_WEI_DECIMALS
+        );
+      });
+      it("estimateSharesPurchase yields greater than zero value", async () => {
         const weiPaid = 1000;
         const sharesEstimated = await lootbox.estimateSharesPurchase(weiPaid);
         expect(sharesEstimated.toNumber()).gt(0);
@@ -412,6 +449,30 @@ describe("📦 LootboxInstant smart contract", async function () {
       });
     });
 
+    it("estimateSharesPurchase() yields correct results", async () => {
+      const vals = [
+        // [stableCoinValue, expectedShares]
+        [0, 0],
+        [ethers.utils.parseUnits("1", 4), ethers.utils.parseUnits("1", 13)],
+        [ethers.utils.parseUnits("0.5", 9), ethers.utils.parseUnits("0.5", 18)],
+        [ethers.utils.parseUnits("1", 9), ethers.utils.parseUnits("1", 18)],
+        [ethers.utils.parseUnits("1.5", 9), ethers.utils.parseUnits("1.5", 18)],
+        [ethers.utils.parseUnits("2", 9), ethers.utils.parseUnits("2", 18)],
+        [ethers.utils.parseUnits("10", 9), ethers.utils.parseUnits("10", 18)],
+        [ethers.utils.parseUnits("15", 9), ethers.utils.parseUnits("15", 18)],
+        [ethers.utils.parseUnits("1", 18), ethers.utils.parseUnits("1", 27)],
+        [
+          ethers.utils.parseUnits("1.0000000005", 18),
+          ethers.utils.parseUnits("1.0000000005", 27),
+        ],
+      ];
+
+      for (let [stableCoinValue, expectedShares] of vals) {
+        const res = await lootbox.estimateSharesPurchase(stableCoinValue);
+        expect(res.toString()).to.eq(expectedShares.toString());
+      }
+    });
+
     describe("purchaseTicket() => 'purchasing lootbox tickets'", async () => {
       let purchasers: string[] = [];
 
@@ -419,15 +480,8 @@ describe("📦 LootboxInstant smart contract", async function () {
       let ticketsB: BigNumber[] = [];
 
       let sharesOwnedA1: BigNumber;
-      let percentageOwnedA1: BigNumber;
-      let sharePriceUSDA: BigNumber;
-
       let sharesOwnedA2: BigNumber;
-      let percentageOwnedA2: BigNumber;
-
       let sharesOwnedB: BigNumber;
-      let percentageOwnedB: BigNumber;
-      let sharePriceUSDB: BigNumber;
 
       const buyAmountInEtherA3 = ethers.utils.parseUnits("0.2", "ether");
 
@@ -450,14 +504,6 @@ describe("📦 LootboxInstant smart contract", async function () {
         sharesOwnedA1 = await lootbox.sharesInTicket(ticketsA[0]);
         sharesOwnedA2 = await lootbox.sharesInTicket(ticketsA[1]);
         sharesOwnedB = await lootbox.sharesInTicket(ticketsB[0]);
-
-        // [sharesOwnedA1, percentageOwnedA1, sharePriceUSDA] =
-        //   await lootbox.viewTicketInfo(ticketsA[0]);
-        // [sharesOwnedA2, percentageOwnedA2] = await lootbox.viewTicketInfo(
-        //   ticketsA[1]
-        // );
-        // [sharesOwnedB, percentageOwnedB, sharePriceUSDB] =
-        //   await lootbox.viewTicketInfo(ticketsB[0]);
       });
       it("treasury receives the money & reduces the purchasers native token balance accordingly", async () => {
         const startTreasuryBalance = await provider.getBalance(
@@ -504,15 +550,9 @@ describe("📦 LootboxInstant smart contract", async function () {
         expect(ticketsB.length).to.eq(1);
       });
       it("tracks the proper amount of shares owned by each NFT ticket", async () => {
-        expect(sharesOwnedA1.toString()).to.eq(
-          buyAmountInEtherA1.mul(BNB_ARCHIVED_PRICE).div(SHARE_PRICE_USD)
-        );
-        expect(sharesOwnedA2.toString()).to.eq(
-          buyAmountInEtherA2.mul(BNB_ARCHIVED_PRICE).div(SHARE_PRICE_USD)
-        );
-        expect(sharesOwnedB.toString()).to.eq(
-          buyAmountInEtherB.mul(BNB_ARCHIVED_PRICE).div(SHARE_PRICE_USD)
-        );
+        expect(sharesOwnedA1.toString()).to.eq(buyAmountInSharesA1.toString());
+        expect(sharesOwnedA2.toString()).to.eq(buyAmountInSharesA2.toString());
+        expect(sharesOwnedB.toString()).to.eq(buyAmountInSharesB.toString());
       });
       // it("tracks the proper percentage of total shares owned by each NFT ticket", async () => {
       //    // this is by association tracked by "viewProratedDepositsForTicket()"
@@ -521,8 +561,8 @@ describe("📦 LootboxInstant smart contract", async function () {
       //   expect(percentageOwnedA2.toString()).to.eq("67712");
       //   expect(percentageOwnedB.toString()).to.eq("50000000");
       // });
-      it("has a consistent share price per ticket", async () => {
-        expect(await lootbox.sharePriceUSD()).to.eq(SHARE_PRICE_USD);
+      it(`has a consistent share price per ticket of ${SHARE_PRICE_WEI} gwei`, async () => {
+        expect(await lootbox.sharePriceWei()).to.eq(SHARE_PRICE_WEI);
       });
       it("ticketId is incremented", async () => {
         expect(await lootbox.ticketIdCounter()).to.eq("3");
@@ -532,17 +572,8 @@ describe("📦 LootboxInstant smart contract", async function () {
         expect(await lootbox.ticketIdCounter()).to.eq("4");
       });
       it("increments the sharesSoldCount", async () => {
-        const a1 = buyAmountInEtherA1
-          .mul(BNB_ARCHIVED_PRICE)
-          .div(SHARE_PRICE_USD);
-        const a2 = buyAmountInEtherA2
-          .mul(BNB_ARCHIVED_PRICE)
-          .div(SHARE_PRICE_USD);
-        const b = buyAmountInEtherB
-          .mul(BNB_ARCHIVED_PRICE)
-          .div(SHARE_PRICE_USD);
         expect((await lootbox.sharesSoldCount()).toString()).to.eq(
-          a1.add(a2).add(b)
+          buyAmountInSharesA1.add(buyAmountInSharesA2).add(buyAmountInSharesB)
         );
       });
       it("increments the nativeTokenRaisedTotal", async () => {
@@ -562,8 +593,8 @@ describe("📦 LootboxInstant smart contract", async function () {
             entityTreasury.address,
             lootbox.address,
             "3",
-            buyAmountInEtherA3.mul(BNB_ARCHIVED_PRICE).div(SHARE_PRICE_USD),
-            SHARE_PRICE_USD
+            buyAmountInSharesA3,
+            SHARE_PRICE_WEI
           );
       });
       it("viewPurchasers() => tracks an EnumerableSet of addresses of purchasers", async () => {
@@ -638,23 +669,17 @@ describe("📦 LootboxInstant smart contract", async function () {
       });
       it("rejects purchase attempts exceeding the max shares remaining for sale", async () => {
         const priceFeedDecimalsUSD = ethers.utils.parseUnits("1", 8);
-        const sharePriceUSD = await lootbox.sharePriceUSD();
+        const sharePriceWei = await lootbox.sharePriceWei();
 
         const remainingShares = await lootbox.checkMaxSharesRemainingForSale();
-        const remainingSharesValueUSD = remainingShares
-          .mul(sharePriceUSD)
-          .div(priceFeedDecimalsUSD);
 
         const excessSharesPurchase = remainingShares.add(
           ethers.utils.parseUnits("1", 18)
         );
-        const excessSharesValueUSD = excessSharesPurchase
-          .mul(sharePriceUSD)
-          .div(priceFeedDecimalsUSD);
 
-        const buyExcessWithNativeToken = excessSharesValueUSD
-          .div(BNB_ARCHIVED_PRICE)
-          .mul(priceFeedDecimalsUSD);
+        const buyExcessWithNativeToken = excessSharesPurchase
+          .mul(sharePriceWei)
+          .div(ethers.utils.parseUnits("1", 18));
 
         await expect(
           lootbox
@@ -664,9 +689,9 @@ describe("📦 LootboxInstant smart contract", async function () {
           "Not enough shares remaining to purchase, try a smaller amount"
         );
 
-        const buyExactWithNativeToken = remainingSharesValueUSD
-          .mul(priceFeedDecimalsUSD)
-          .div(BNB_ARCHIVED_PRICE);
+        const buyExactWithNativeToken = remainingShares
+          .mul(sharePriceWei)
+          .div(ethers.utils.parseUnits("1", 18));
 
         await expect(
           lootbox
@@ -1749,8 +1774,6 @@ describe("📦 LootboxInstant smart contract", async function () {
           .timestamp;
 
         const [deposit1, deposit2] = await lootbox.viewAllDeposits();
-        console.log(deposit1);
-        console.log(deposit2);
         expect({
           depositId: deposit1[0].toString(),
           blockNumber: deposit1[1].toNumber(),
@@ -1936,7 +1959,7 @@ describe("📦 LootboxInstant smart contract", async function () {
               brokerFeeAmount,
               affiliateFeeAmount,
               estimatedSharesReceived,
-              SHARE_PRICE_USD
+              SHARE_PRICE_WEI
             );
         });
       });
