@@ -12,7 +12,7 @@ import {
   testLootboxURI,
 } from "./helpers/test-helpers";
 
-describe.only("📦 LootboxEscrowFactory", () => {
+describe("📦 LootboxEscrowFactory", () => {
   const provider = waffle.provider;
 
   let deployer: SignerWithAddress;
@@ -102,7 +102,7 @@ describe.only("📦 LootboxEscrowFactory", () => {
         expect(await lootboxFactory.hasRole(DAO_ROLE, dao.address)).to.be.true;
       });
       it("the Lootbox Implementation is public, anyone can see it", async () => {
-        expect(lootboxFactory.lootboxImplementation()).to.not.be.reverted;
+        await expect(lootboxFactory.lootboxImplementation()).to.not.be.reverted;
       });
       // it("the Broker address is hidden from public, only Lootbox DAO can see it", async () => {
       //   expect("brokerAddress" in lootboxFactory).to.be.false;
@@ -146,7 +146,7 @@ describe.only("📦 LootboxEscrowFactory", () => {
       //   expect(lootboxFactory.connect(dao).checkFactoryPrivateDetails()).to.not.be.reverted;
       // })
       it("addAffiliate()", async () => {
-        expect(
+        await expect(
           lootboxFactory
             .connect(deployer)
             .addAffiliate(affiliate.address, ticketAffiliateFee)
@@ -159,8 +159,8 @@ describe.only("📦 LootboxEscrowFactory", () => {
         const receipt = await (await tx).wait();
         const timestamp = (await provider.getBlock(receipt.blockNumber))
           .timestamp;
-        expect(tx).to.not.be.reverted;
-        expect(tx)
+        await expect(tx).to.not.be.reverted;
+        await expect(tx)
           .to.emit(lootboxFactory, "AffiliateWhitelisted")
           .withArgs(
             affiliate.address,
@@ -170,7 +170,7 @@ describe.only("📦 LootboxEscrowFactory", () => {
           );
       });
       it("listAffiliates()", async () => {
-        expect(
+        await expect(
           lootboxFactory.connect(deployer).listAffiliates()
         ).to.be.revertedWith(
           generatePermissionRevokeMessage(deployer.address, DAO_ROLE)
@@ -197,14 +197,14 @@ describe.only("📦 LootboxEscrowFactory", () => {
           JSON.stringify(testLootboxURI)
         );
         const PLUG_LOOTBOX_ADDR = deployer.address; // we dont know the actual lootbox addr unless we check the logs
-        expect(
+        await expect(
           lootboxFactory
             .connect(deployer)
             .checkLootboxAffiliate(PLUG_LOOTBOX_ADDR)
         ).to.be.revertedWith(
           generatePermissionRevokeMessage(deployer.address, DAO_ROLE)
         );
-        expect(
+        await expect(
           lootboxFactory.connect(dao).checkLootboxAffiliate(PLUG_LOOTBOX_ADDR)
         ).to.not.be.reverted;
       });
@@ -264,7 +264,7 @@ describe.only("📦 LootboxEscrowFactory", () => {
     });
     describe("createLootbox()", async () => {
       it("anyone can create a lootbox", async () => {
-        expect(
+        await expect(
           lootboxFactory.createLootbox(
             LOOTBOX_NAME,
             LOOTBOX_SYMBOL,
@@ -295,7 +295,7 @@ describe.only("📦 LootboxEscrowFactory", () => {
         })[0];
         const emittedLootboxAddress =
           event?.args?.lootbox || ethers.constants.AddressZero;
-        expect(tx)
+        await expect(tx)
           .to.emit(lootboxFactory, "LootboxCreated")
           .withArgs(
             LOOTBOX_NAME,
@@ -304,7 +304,6 @@ describe.only("📦 LootboxEscrowFactory", () => {
             guildTreasury.address,
             TARGET_SHARES_BUY,
             MAX_SHARES_BUY,
-            SHARE_PRICE_USD,
             JSON.stringify(testLootboxURI)
           );
       });
@@ -330,7 +329,7 @@ describe.only("📦 LootboxEscrowFactory", () => {
         const emittedLootboxAddress =
           event?.args?.lootbox || ethers.constants.AddressZero;
 
-        expect(tx)
+        await expect(tx)
           .to.emit(lootboxFactory, "AffiliateReceipt")
           .withArgs(
             emittedLootboxAddress,
@@ -338,7 +337,7 @@ describe.only("📦 LootboxEscrowFactory", () => {
             ticketAffiliateFee,
             ticketPurchaseFee,
             deployer.address,
-            treasury.address
+            guildTreasury.address
           );
       });
       it("safely sets the affiliate fee to zero if no affiliate was found in mapping", async () => {
@@ -360,7 +359,7 @@ describe.only("📦 LootboxEscrowFactory", () => {
         })[0];
         const emittedLootboxAddress =
           event?.args?.lootbox || ethers.constants.AddressZero;
-        expect(tx)
+        await expect(tx)
           .to.emit(lootboxFactory, "AffiliateReceipt")
           .withArgs(
             emittedLootboxAddress,
@@ -368,7 +367,7 @@ describe.only("📦 LootboxEscrowFactory", () => {
             affiliateFeeUnknownAffiliate,
             ticketPurchaseFee,
             deployer.address,
-            treasury.address
+            guildTreasury.address
           );
       });
     });
