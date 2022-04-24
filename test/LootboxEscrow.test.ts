@@ -2111,7 +2111,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
                 ethers.BigNumber.from(FEE_DECIMALS)
               )
             );
-          expect(
+          await expect(
             lootbox
               .connect(purchaser)
               .purchaseTicket({ value: buyAmountInEtherD.toString() })
