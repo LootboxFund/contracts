@@ -126,7 +126,7 @@ describe("📦 LootboxInstantFactory", () => {
         );
       });
       it("the Lootbox Implementation is public, anyone can see it", async () => {
-        expect(lootboxFactory.lootboxImplementation()).to.not.be.reverted;
+        await expect(lootboxFactory.lootboxImplementation()).to.not.be.reverted;
       });
       // it("the Broker address is hidden from public, only Lootbox DAO can see it", async () => {
       //   expect("brokerAddress" in lootboxFactory).to.be.false;
@@ -162,7 +162,7 @@ describe("📦 LootboxInstantFactory", () => {
       //   expect(lootboxFactory.connect(dao).checkFactoryPrivateDetails()).to.not.be.reverted;
       // })
       it("addAffiliate()", async () => {
-        expect(
+        await expect(
           lootboxFactory
             .connect(deployer)
             .addAffiliate(affiliate.address, ticketAffiliateFee)
@@ -175,8 +175,8 @@ describe("📦 LootboxInstantFactory", () => {
         const receipt = await (await tx).wait();
         const timestamp = (await provider.getBlock(receipt.blockNumber))
           .timestamp;
-        expect(tx).to.not.be.reverted;
-        expect(tx)
+        await expect(tx).to.not.be.reverted;
+        await expect(tx)
           .to.emit(lootboxFactory, "AffiliateWhitelisted")
           .withArgs(
             affiliate.address,
@@ -186,12 +186,13 @@ describe("📦 LootboxInstantFactory", () => {
           );
       });
       it("listAffiliates()", async () => {
-        expect(
+        await expect(
           lootboxFactory.connect(deployer).listAffiliates()
         ).to.be.revertedWith(
           generatePermissionRevokeMessage(deployer.address, DAO_ROLE)
         );
-        expect(lootboxFactory.connect(dao).listAffiliates()).to.not.be.reverted;
+        await expect(lootboxFactory.connect(dao).listAffiliates()).to.not.be
+          .reverted;
         expect(await lootboxFactory.connect(dao).listAffiliates()).to.deep.eq(
           []
         );
@@ -212,14 +213,14 @@ describe("📦 LootboxInstantFactory", () => {
           JSON.stringify(testLootboxURI)
         );
         const PLUG_LOOTBOX_ADDR = deployer.address; // we dont know the actual lootbox addr unless we check the logs
-        expect(
+        await expect(
           lootboxFactory
             .connect(deployer)
             .checkLootboxAffiliate(PLUG_LOOTBOX_ADDR)
         ).to.be.revertedWith(
           generatePermissionRevokeMessage(deployer.address, DAO_ROLE)
         );
-        expect(
+        await expect(
           lootboxFactory.connect(dao).checkLootboxAffiliate(PLUG_LOOTBOX_ADDR)
         ).to.not.be.reverted;
       });
@@ -279,7 +280,7 @@ describe("📦 LootboxInstantFactory", () => {
     });
     describe("createLootbox()", async () => {
       it("anyone can create a lootbox", async () => {
-        expect(
+        await expect(
           lootboxFactory.createLootbox(
             LOOTBOX_NAME,
             LOOTBOX_SYMBOL,
@@ -308,7 +309,7 @@ describe("📦 LootboxInstantFactory", () => {
         const emittedLootboxAddress =
           event?.args?.lootbox || ethers.constants.AddressZero;
 
-        expect(tx)
+        await expect(tx)
           .to.emit(lootboxFactory, "LootboxCreated")
           .withArgs(
             LOOTBOX_NAME,
@@ -316,7 +317,6 @@ describe("📦 LootboxInstantFactory", () => {
             deployer.address,
             treasury.address,
             MAX_SHARES_BUY,
-            SHARE_PRICE_USD,
             JSON.stringify(testLootboxURI)
           );
       });
@@ -341,7 +341,7 @@ describe("📦 LootboxInstantFactory", () => {
         const emittedLootboxAddress =
           event?.args?.lootbox || ethers.constants.AddressZero;
 
-        expect(tx)
+        await expect(tx)
           .to.emit(lootboxFactory, "AffiliateReceipt")
           .withArgs(
             emittedLootboxAddress,
@@ -370,7 +370,7 @@ describe("📦 LootboxInstantFactory", () => {
         })[0];
         const emittedLootboxAddress =
           event?.args?.lootbox || ethers.constants.AddressZero;
-        expect(tx)
+        await expect(tx)
           .to.emit(lootboxFactory, "AffiliateReceipt")
           .withArgs(
             emittedLootboxAddress,
