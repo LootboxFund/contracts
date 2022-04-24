@@ -257,6 +257,114 @@ describe("📦 LootboxInstantFactory", () => {
       });
     });
     describe("createLootbox()", async () => {
+      it("Name cannot be empty", async () => {
+        const lootbox = lootboxFactory.createLootbox(
+          "",
+          LOOTBOX_SYMBOL,
+          TARGET_SHARES_BUY,
+          MAX_SHARES_BUY,
+          guildTreasury.address,
+          affiliate.address,
+          JSON.stringify(testLootboxURI)
+        );
+        await expect(lootbox).to.be.revertedWith(
+          "Lootbox name cannot be empty"
+        );
+      });
+      it("Symbol cannot be empty", async () => {
+        const lootbox = lootboxFactory.createLootbox(
+          LOOTBOX_NAME,
+          "",
+          TARGET_SHARES_BUY,
+          MAX_SHARES_BUY,
+          guildTreasury.address,
+          affiliate.address,
+          JSON.stringify(testLootboxURI)
+        );
+        await expect(lootbox).to.be.revertedWith(
+          "Lootbox symbol cannot be empty"
+        );
+      });
+      it("Treasury cannot be the zero address", async () => {
+        const lootbox = lootboxFactory.createLootbox(
+          LOOTBOX_NAME,
+          LOOTBOX_SYMBOL,
+          TARGET_SHARES_BUY,
+          MAX_SHARES_BUY,
+          ethers.constants.AddressZero,
+          affiliate.address,
+          JSON.stringify(testLootboxURI)
+        );
+        await expect(lootbox).to.be.revertedWith(
+          "Treasury address cannot be zero"
+        );
+      });
+      it("Affiliate cannot be the zero address", async () => {
+        const lootbox = lootboxFactory.createLootbox(
+          LOOTBOX_NAME,
+          LOOTBOX_SYMBOL,
+          TARGET_SHARES_BUY,
+          MAX_SHARES_BUY,
+          guildTreasury.address,
+          ethers.constants.AddressZero,
+          JSON.stringify(testLootboxURI)
+        );
+        await expect(lootbox).to.be.revertedWith(
+          "Affiliate address cannot be zero"
+        );
+      });
+      it("Max shares sold must be greater than zero", async () => {
+        const lootbox = lootboxFactory.createLootbox(
+          LOOTBOX_NAME,
+          LOOTBOX_SYMBOL,
+          TARGET_SHARES_BUY,
+          "0",
+          guildTreasury.address,
+          affiliate.address,
+          JSON.stringify(testLootboxURI)
+        );
+        await expect(lootbox).to.be.revertedWith(
+          "Max shares sold must be greater than zero"
+        );
+      });
+      it("Target shares sold must be greater than zero", async () => {
+        const lootbox = lootboxFactory.createLootbox(
+          LOOTBOX_NAME,
+          LOOTBOX_SYMBOL,
+          "0",
+          MAX_SHARES_BUY,
+          guildTreasury.address,
+          affiliate.address,
+          JSON.stringify(testLootboxURI)
+        );
+        await expect(lootbox).to.be.revertedWith(
+          "Target shares sold must be greater than zero"
+        );
+      });
+      it("Max shares must be greater than or equal to target shares sold", async () => {
+        const lootbox1 = lootboxFactory.createLootbox(
+          LOOTBOX_NAME,
+          LOOTBOX_SYMBOL,
+          "2",
+          "1",
+          guildTreasury.address,
+          affiliate.address,
+          JSON.stringify(testLootboxURI)
+        );
+        const lootbox2 = lootboxFactory.createLootbox(
+          LOOTBOX_NAME,
+          LOOTBOX_SYMBOL,
+          "1",
+          "1",
+          guildTreasury.address,
+          affiliate.address,
+          JSON.stringify(testLootboxURI)
+        );
+        await expect(lootbox1).to.be.revertedWith(
+          "Max shares sold must be greater than or equal to target shares sold"
+        );
+        await expect(lootbox2).to.not.be.reverted;
+      });
       it("anyone can create a lootbox", async () => {
         await expect(
           lootboxFactory.createLootbox(
