@@ -127,6 +127,7 @@ contract LootboxInstantFactory is Pausable, AccessControl {
     function createLootbox(
         string memory _lootboxName,
         string memory _lootboxSymbol,
+        uint256 _targetSharesSold,
         uint256 _maxSharesSold,
         address _treasury,
         address _affiliate,
@@ -143,8 +144,16 @@ contract LootboxInstantFactory is Pausable, AccessControl {
         require(_treasury != address(0), "Treasury address cannot be zero");
         require(_affiliate != address(0), "Affiliate address cannot be zero");
         require(
+            _targetSharesSold > 0,
+            "Target shares sold must be greater than zero"
+        );
+        require(
             _maxSharesSold > 0,
             "Max shares sold must be greater than zero"
+        );
+        require(
+            _maxSharesSold >= _targetSharesSold,
+            "Max shares sold must be greater than or equal to target shares sold"
         );
 
         // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
@@ -154,6 +163,7 @@ contract LootboxInstantFactory is Pausable, AccessControl {
                 LootboxInstant(payable(address(0))).initialize.selector,
                 _lootboxName, // string memory _name,
                 _lootboxSymbol, // string memory _symbol,
+                _targetSharesSold,
                 _maxSharesSold, // uint256 _maxSharesSold,
                 _treasury, // address _treasury,
                 msg.sender, // address _issuingEntity,
