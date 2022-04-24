@@ -321,7 +321,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   function convertInputTokenToShares(
       uint256 amountOfStableCoin, 
       uint256 stablecoinDecimals
-  ) internal view returns (uint256 guildTokenAmount) {
+  ) internal view returns (uint256 sharesAmount) {
       return amountOfStableCoin * 10 ** (shareDecimals + sharePriceWeiDecimals - stablecoinDecimals) / sharePriceWei;
   }
 
