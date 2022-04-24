@@ -11,18 +11,14 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "./LootboxEscrow.sol";
 
 contract LootboxEscrowFactory is Pausable, AccessControl {
-
     using EnumerableSet for EnumerableSet.AddressSet;
 
     address public immutable lootboxImplementation;
 
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE"); // Lootbox Ltd
 
-    address public immutable nativeTokenPriceFeed;
     uint256 public immutable ticketPurchaseFee;
     address public immutable brokerAddress;
-
-    uint256 public sharePriceUSD;
 
     // affiliate => ticketAffiliateFee
     mapping(address => uint256) internal affiliateFees;
@@ -41,71 +37,86 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
     );
 
     event LootboxCreated(
-      string lootboxName,
-      address indexed lootbox,
-      address indexed issuer,
-      address indexed treasury,
-      uint256 targetSharesSold,
-      uint256 maxSharesSold,
-      uint256 sharePriceUSD,
-      string _data
+        string lootboxName,
+        address indexed lootbox,
+        address indexed issuer,
+        address indexed treasury,
+        uint256 targetSharesSold,
+        uint256 maxSharesSold,
+        string _data
     );
 
     event AffiliateReceipt(
-      address indexed lootbox,
-      address indexed affiliate,
-      uint256 affiliateFee,
-      uint256 ticketPurchaseFee,
-      address lootboxIssuer,
-      address lootboxTreasury
+        address indexed lootbox,
+        address indexed affiliate,
+        uint256 affiliateFee,
+        uint256 ticketPurchaseFee,
+        address lootboxIssuer,
+        address lootboxTreasury
     );
- 
+
     constructor(
-      address _lootboxDao,
-      address _nativeTokenPriceFeed,
-      uint256 _ticketPurchaseFee,
-      address _brokerAddress
+        address _lootboxDao,
+        uint256 _ticketPurchaseFee,
+        address _brokerAddress
     ) {
-        require(_lootboxDao != address(0), "DAO Lootbox address cannot be zero");
+        require(
+            _lootboxDao != address(0),
+            "DAO Lootbox address cannot be zero"
+        );
         require(_brokerAddress != address(0), "Broker address cannot be zero");
-        require(_nativeTokenPriceFeed != address(0), "nativeTokenPriceFeed address cannot be zero");
-        require(_ticketPurchaseFee < 100000000, "Purchase ticket fee must be less than 100000000 (100%)");
-        
+        require(
+            _ticketPurchaseFee < 100000000,
+            "Purchase ticket fee must be less than 100000000 (100%)"
+        );
+
         lootboxImplementation = address(new LootboxEscrow());
 
         _grantRole(DAO_ROLE, _lootboxDao);
 
-        sharePriceUSD = 5000000;
-
-        nativeTokenPriceFeed = _nativeTokenPriceFeed;
         ticketPurchaseFee = _ticketPurchaseFee;
         brokerAddress = _brokerAddress;
     }
 
-    function addAffiliate (address affiliate, uint256 ticketAffiliateFee) public onlyRole(DAO_ROLE) {
-      require(ticketAffiliateFee <= ticketPurchaseFee , "Affiliate ticket fee must be less than or equal to purchase ticket fee");
-      affiliateFees[affiliate] = ticketAffiliateFee;
-      AFFILIATES.add(affiliate);
-      emit AffiliateWhitelisted(
-        affiliate,
-        msg.sender,
-        ticketAffiliateFee,
-        block.timestamp
-      );
+    function addAffiliate(address affiliate, uint256 ticketAffiliateFee)
+        public
+        onlyRole(DAO_ROLE)
+    {
+        require(
+            ticketAffiliateFee <= ticketPurchaseFee,
+            "Affiliate ticket fee must be less than or equal to purchase ticket fee"
+        );
+        affiliateFees[affiliate] = ticketAffiliateFee;
+        AFFILIATES.add(affiliate);
+        emit AffiliateWhitelisted(
+            affiliate,
+            msg.sender,
+            ticketAffiliateFee,
+            block.timestamp
+        );
     }
 
-    function listAffiliates() public view onlyRole(DAO_ROLE) returns (bytes32[] memory _affiliates) {
-      return AFFILIATES._inner._values;
+    function listAffiliates()
+        public
+        view
+        onlyRole(DAO_ROLE)
+        returns (bytes32[] memory _affiliates)
+    {
+        return AFFILIATES._inner._values;
     }
 
-    function checkLootboxAffiliate(address lootbox) public view onlyRole(DAO_ROLE) returns (address) {
-      return lootboxAffiliates[lootbox];
+    function checkLootboxAffiliate(address lootbox)
+        public
+        view
+        onlyRole(DAO_ROLE)
+        returns (address)
+    {
+        return lootboxAffiliates[lootbox];
     }
 
     // function checkFactoryPrivateDetails() public view onlyRole(DAO_ROLE) returns (address _brokerAddress, uint256 _ticketPurchaseFee) {
     //   return (brokerAddress, ticketPurchaseFee);
     // }
-
 
     function createLootbox(
         string memory _lootboxName,
@@ -116,12 +127,27 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
         address _affiliate,
         string memory _data
     ) public whenNotPaused returns (address _lootbox) {
-        require(bytes(_lootboxName).length != 0, "Lootbox name cannot be empty");
-        require(bytes(_lootboxSymbol).length != 0, "Lootbox symbol cannot be empty");
+        require(
+            bytes(_lootboxName).length != 0,
+            "Lootbox name cannot be empty"
+        );
+        require(
+            bytes(_lootboxSymbol).length != 0,
+            "Lootbox symbol cannot be empty"
+        );
         require(_affiliate != address(0), "Affiliate address cannot be zero");
-        require(_targetSharesSold > 0, "Target shares sold must be greater than zero");
-        require(_maxSharesSold > 0, "Max shares sold must be greater than zero");
-        require(_maxSharesSold >= _targetSharesSold, "Max shares sold must be greater than or equal to target shares sold");
+        require(
+            _targetSharesSold > 0,
+            "Target shares sold must be greater than zero"
+        );
+        require(
+            _maxSharesSold > 0,
+            "Max shares sold must be greater than zero"
+        );
+        require(
+            _maxSharesSold >= _targetSharesSold,
+            "Max shares sold must be greater than or equal to target shares sold"
+        );
         require(_treasury != address(0), "Treasury address must be provided");
 
         // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
@@ -129,13 +155,12 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
             lootboxImplementation,
             abi.encodeWithSelector(
                 LootboxEscrow(payable(address(0))).initialize.selector,
-                _lootboxName,  // string memory _name,
+                _lootboxName, // string memory _name,
                 _lootboxSymbol, // string memory _symbol,
                 _targetSharesSold, // uint256 _targetSharesSold,
                 _maxSharesSold, // uint256 _maxSharesSold,
-                _treasury,      // address _treasury,
-                msg.sender,     // address _issuingEntity,
-                nativeTokenPriceFeed, // address _nativeTokenPriceFeed,
+                _treasury, // address _treasury,
+                msg.sender, // address _issuingEntity,
                 ticketPurchaseFee, // uint256 _ticketPurchaseFee,
                 affiliateFees[_affiliate], // uint256 _ticketAffiliateFee,
                 brokerAddress, // address _broker,
@@ -152,7 +177,6 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
             _treasury,
             _targetSharesSold,
             _maxSharesSold,
-            sharePriceUSD,
             _data
         );
         emit AffiliateReceipt(
