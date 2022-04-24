@@ -218,6 +218,8 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     require(_treasury != address(0), "Treasury cannot be the zero address");
     require(_issuingEntity != address(0), "Issuer cannot be the zero address");
     require(_maxSharesSold > 0, "Max shares sold must be greater than zero");
+    require(_targetSharesSold > 0, "Target shares sold must be greater than zero");
+    require(_targetSharesSold <= _maxSharesSold, "Target shares sold must be less than or equal to max shares sold");
     require(_broker != address(0), "Broker cannot be the zero address");        // the broker is LootboxEscrow Ltd.
     require(_affiliate != address(0), "Affiliate cannot be the zero address");  // if there is no affiliate, set affiliate to the broker
 
