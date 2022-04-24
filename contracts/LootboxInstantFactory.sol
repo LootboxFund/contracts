@@ -17,7 +17,6 @@ contract LootboxInstantFactory is Pausable, AccessControl {
 
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE"); // Lootbox Ltd
 
-    address public immutable nativeTokenPriceFeed;
     uint256 public immutable ticketPurchaseFee;
     address public immutable brokerAddress;
 
@@ -57,7 +56,6 @@ contract LootboxInstantFactory is Pausable, AccessControl {
 
     constructor(
         address _lootboxDao,
-        address _nativeTokenPriceFeed,
         uint256 _ticketPurchaseFee,
         address _brokerAddress
     ) {
@@ -67,10 +65,6 @@ contract LootboxInstantFactory is Pausable, AccessControl {
         );
         require(_brokerAddress != address(0), "Broker address cannot be zero");
         require(
-            _nativeTokenPriceFeed != address(0),
-            "nativeTokenPriceFeed address cannot be zero"
-        );
-        require(
             _ticketPurchaseFee < 100000000,
             "Purchase ticket fee must be less than 100000000 (100%)"
         );
@@ -79,7 +73,6 @@ contract LootboxInstantFactory is Pausable, AccessControl {
 
         _grantRole(DAO_ROLE, _lootboxDao);
 
-        nativeTokenPriceFeed = _nativeTokenPriceFeed;
         ticketPurchaseFee = _ticketPurchaseFee;
         brokerAddress = _brokerAddress;
     }
@@ -167,7 +160,6 @@ contract LootboxInstantFactory is Pausable, AccessControl {
                 _maxSharesSold, // uint256 _maxSharesSold,
                 _treasury, // address _treasury,
                 msg.sender, // address _issuingEntity,
-                nativeTokenPriceFeed, // address _nativeTokenPriceFeed,
                 ticketPurchaseFee, // uint256 _ticketPurchaseFee,
                 affiliateFees[_affiliate], // uint256 _ticketAffiliateFee,
                 brokerAddress, // address _broker,
