@@ -68,7 +68,6 @@ describe("📦 LootboxInstantFactory", () => {
         await expect(
           LootboxFactory.deploy(
             ethers.constants.AddressZero,
-            mockNativeTokenPriceFeed,
             ticketPurchaseFee,
             treasury.address
           )
@@ -78,30 +77,14 @@ describe("📦 LootboxInstantFactory", () => {
         await expect(
           LootboxFactory.deploy(
             dao.address,
-            mockNativeTokenPriceFeed,
             ticketPurchaseFee,
             ethers.constants.AddressZero
           )
         ).to.be.revertedWith("Broker address cannot be zero");
       });
-      it("nativeTokenPriceFeed address cannot be zero", async () => {
-        await expect(
-          LootboxFactory.deploy(
-            dao.address,
-            ethers.constants.AddressZero,
-            ticketPurchaseFee,
-            treasury.address
-          )
-        ).to.be.revertedWith("nativeTokenPriceFeed address cannot be zero");
-      });
       it("Purchase ticket fee must be less than 100000000 (100%)", async () => {
         await expect(
-          LootboxFactory.deploy(
-            dao.address,
-            mockNativeTokenPriceFeed,
-            "100000001",
-            treasury.address
-          )
+          LootboxFactory.deploy(dao.address, "100000001", treasury.address)
         ).to.be.revertedWith(
           "Purchase ticket fee must be less than 100000000 (100%)"
         );
@@ -111,7 +94,6 @@ describe("📦 LootboxInstantFactory", () => {
       beforeEach(async () => {
         lootboxFactory = await LootboxFactory.deploy(
           dao.address,
-          mockNativeTokenPriceFeed,
           ticketPurchaseFee,
           treasury.address
         );
@@ -119,11 +101,6 @@ describe("📦 LootboxInstantFactory", () => {
       });
       it("should assign Lootbox DAO the DAO role", async () => {
         expect(await lootboxFactory.hasRole(DAO_ROLE, dao.address)).to.be.true;
-      });
-      it("should have correct nativeTokenPriceFeed address", async () => {
-        expect(await lootboxFactory.nativeTokenPriceFeed()).to.equal(
-          mockNativeTokenPriceFeed
-        );
       });
       it("the Lootbox Implementation is public, anyone can see it", async () => {
         await expect(lootboxFactory.lootboxImplementation()).to.not.be.reverted;
@@ -145,12 +122,12 @@ describe("📦 LootboxInstantFactory", () => {
     const LOOTBOX_NAME = "Lootbox Name";
     const LOOTBOX_SYMBOL = "LOOTBOX";
     const SHARE_PRICE_USD = "7000000";
+    const TARGET_SHARES_BUY = ethers.utils.parseUnits("45000", "18").toString();
     const MAX_SHARES_BUY = ethers.utils.parseUnits("50000", "18").toString();
     const TICKET_PURCHASE_FEE = "2000000";
     beforeEach(async () => {
       lootboxFactory = await LootboxFactory.deploy(
         dao.address,
-        mockNativeTokenPriceFeed,
         TICKET_PURCHASE_FEE,
         treasury.address
       );
@@ -207,6 +184,7 @@ describe("📦 LootboxInstantFactory", () => {
         await lootboxFactory.createLootbox(
           LOOTBOX_NAME,
           LOOTBOX_SYMBOL,
+          TARGET_SHARES_BUY,
           MAX_SHARES_BUY,
           treasury.address,
           affiliate.address,
@@ -284,6 +262,7 @@ describe("📦 LootboxInstantFactory", () => {
           lootboxFactory.createLootbox(
             LOOTBOX_NAME,
             LOOTBOX_SYMBOL,
+            TARGET_SHARES_BUY,
             MAX_SHARES_BUY,
             treasury.address,
             affiliate.address,
@@ -297,6 +276,7 @@ describe("📦 LootboxInstantFactory", () => {
           .createLootbox(
             LOOTBOX_NAME,
             LOOTBOX_SYMBOL,
+            TARGET_SHARES_BUY,
             MAX_SHARES_BUY,
             treasury.address,
             affiliate.address,
@@ -329,6 +309,7 @@ describe("📦 LootboxInstantFactory", () => {
           .createLootbox(
             LOOTBOX_NAME,
             LOOTBOX_SYMBOL,
+            TARGET_SHARES_BUY,
             MAX_SHARES_BUY,
             treasury.address,
             affiliate.address,
@@ -359,6 +340,7 @@ describe("📦 LootboxInstantFactory", () => {
           .createLootbox(
             LOOTBOX_NAME,
             LOOTBOX_SYMBOL,
+            TARGET_SHARES_BUY,
             MAX_SHARES_BUY,
             treasury.address,
             deployer.address,
@@ -388,6 +370,7 @@ describe("📦 LootboxInstantFactory", () => {
       await lootboxFactory.createLootbox(
         LOOTBOX_NAME,
         LOOTBOX_SYMBOL,
+        TARGET_SHARES_BUY,
         MAX_SHARES_BUY,
         treasury.address,
         affiliate.address,
