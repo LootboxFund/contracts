@@ -56,7 +56,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
   const USDC_STARTING_BALANCE = "10000000000000000000000";
   const USDT_STARTING_BALANCE = "10000000000000000000000";
 
-  const TARGET_SHARES_AVAILABLE_FOR_SALE = "5000000";
+  const TARGET_SHARES_AVAILABLE_FOR_SALE = "50000000";
   const MAX_SHARES_AVAILABLE_FOR_SALE = "500000000";
 
   const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
@@ -167,7 +167,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
         ],
         { kind: "uups" }
       );
-      expect(lootbox).to.be.revertedWith("Name cannot be empty");
+      await expect(lootbox).to.be.revertedWith("Name cannot be empty");
     });
     it("Symbol cannot be empty", async () => {
       const lootbox = upgrades.deployProxy(
@@ -186,7 +186,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
         ],
         { kind: "uups" }
       );
-      expect(lootbox).to.be.revertedWith("Symbol cannot be empty");
+      await expect(lootbox).to.be.revertedWith("Symbol cannot be empty");
     });
     it("Purchase ticket fee must be less than 100000000 (100%)", async () => {
       const lootbox = upgrades.deployProxy(
@@ -205,7 +205,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
         ],
         { kind: "uups" }
       );
-      expect(lootbox).to.be.revertedWith(
+      await expect(lootbox).to.be.revertedWith(
         "Purchase ticket fee must be less than 100000000 (100%)"
       );
     });
@@ -227,7 +227,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
         ],
         { kind: "uups" }
       );
-      expect(lootbox).to.be.revertedWith(
+      await expect(lootbox).to.be.revertedWith(
         "Affiliate ticket fee must be less than or equal to purchase ticket fee"
       );
     });
@@ -248,7 +248,9 @@ describe("📦 LootboxEscrow smart contract", async function () {
         ],
         { kind: "uups" }
       );
-      expect(lootbox).to.be.revertedWith("Treasury cannot be the zero address");
+      await expect(lootbox).to.be.revertedWith(
+        "Treasury cannot be the zero address"
+      );
     });
     it("Issuer cannot be the zero address", async () => {
       const lootbox = upgrades.deployProxy(
@@ -267,27 +269,9 @@ describe("📦 LootboxEscrow smart contract", async function () {
         ],
         { kind: "uups" }
       );
-      expect(lootbox).to.be.revertedWith("Issuer cannot be the zero address");
-    });
-    it("Native token price feed is required", async () => {
-      const lootbox = upgrades.deployProxy(
-        Lootbox,
-        [
-          "Name",
-          "SYMBOL",
-          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
-          ethers.BigNumber.from("100000"),
-          entityTreasury.address,
-          issuingEntity.address,
-          ethers.constants.AddressZero,
-          "2000000",
-          "1000000",
-          broker.address,
-          affiliate.address,
-        ],
-        { kind: "uups" }
+      await expect(lootbox).to.be.revertedWith(
+        "Issuer cannot be the zero address"
       );
-      expect(lootbox).to.be.revertedWith("Native token price feed is required");
     });
     it("Broker cannot be the zero address", async () => {
       const lootbox = upgrades.deployProxy(
@@ -296,7 +280,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
           "Name",
           "SYMBOL",
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
-          ethers.BigNumber.from("100000"),
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           entityTreasury.address,
           issuingEntity.address,
           "2000000",
@@ -306,7 +290,9 @@ describe("📦 LootboxEscrow smart contract", async function () {
         ],
         { kind: "uups" }
       );
-      expect(lootbox).to.be.revertedWith("Broker cannot be the zero address");
+      await expect(lootbox).to.be.revertedWith(
+        "Broker cannot be the zero address"
+      );
     });
     it("Affiliate cannot be the zero address", async () => {
       const lootbox = upgrades.deployProxy(
@@ -315,16 +301,17 @@ describe("📦 LootboxEscrow smart contract", async function () {
           "Name",
           "SYMBOL",
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
-          ethers.BigNumber.from("100000"),
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           entityTreasury.address,
           issuingEntity.address,
           "2000000",
           "1000000",
           broker.address,
+          ethers.constants.AddressZero,
         ],
         { kind: "uups" }
       );
-      expect(lootbox).to.be.revertedWith(
+      await expect(lootbox).to.be.revertedWith(
         "Affiliate cannot be the zero address"
       );
     });
@@ -345,8 +332,50 @@ describe("📦 LootboxEscrow smart contract", async function () {
         ],
         { kind: "uups" }
       );
-      expect(lootbox).to.be.revertedWith(
+      await expect(lootbox).to.be.revertedWith(
         "Max shares sold must be greater than zero"
+      );
+    });
+    it("Target shares sold must be greater than zero", async () => {
+      const lootbox = upgrades.deployProxy(
+        Lootbox,
+        [
+          "Name",
+          "SYMBOL",
+          "0",
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
+          entityTreasury.address,
+          issuingEntity.address,
+          "2000000",
+          "1000000",
+          broker.address,
+          affiliate.address,
+        ],
+        { kind: "uups" }
+      );
+      await expect(lootbox).to.be.revertedWith(
+        "Target shares sold must be greater than zero"
+      );
+    });
+    it("Max shares must be greater than or equal to target shares sold", async () => {
+      const lootbox = upgrades.deployProxy(
+        Lootbox,
+        [
+          "Name",
+          "SYMBOL",
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals,
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18").sub("1"), // 50k shares, 18 decimals
+          entityTreasury.address,
+          issuingEntity.address,
+          "2000000",
+          "1000000",
+          broker.address,
+          affiliate.address,
+        ],
+        { kind: "uups" }
+      );
+      await expect(lootbox).to.be.revertedWith(
+        "Target shares sold must be less than or equal to max shares sold"
       );
     });
   });
