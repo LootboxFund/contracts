@@ -73,6 +73,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   uint256 public sharePriceWei;  // THIS SHOULD NOT BE MODIFIED (should be equal to 1 gwei, i.e. 1000000000)
   uint256 public sharePriceWeiDecimals; // THIS SHOULD NOT BE MODIFIED (should be equal to 18)
   uint256 public sharesSoldCount;
+  uint256 public sharesSoldTarget;
   uint256 public sharesSoldMax;
   uint256 public nativeTokenRaisedTotal;
   EnumerableSetUpgradeable.AddressSet private purchasers;
@@ -175,6 +176,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   function initialize(
     string memory _name,
     string memory _symbol,
+    uint256 _targetSharesSold,
     uint256 _maxSharesSold,
     address _treasury,
     address _issuingEntity,
@@ -198,6 +200,8 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     require(_treasury != address(0), "Treasury cannot be the zero address");
     require(_issuingEntity != address(0), "Issuer cannot be the zero address");
     require(_maxSharesSold > 0, "Max shares sold must be greater than zero");
+    require(_targetSharesSold > 0, "Target shares sold must be greater than zero");
+    require(_targetSharesSold <= _maxSharesSold, "Target shares sold must be less than or equal to max shares sold");
     require(_broker != address(0), "Broker cannot be the zero address");        // the broker is LootboxInstant Ltd.
     require(_affiliate != address(0), "Affiliate cannot be the zero address");  // if there is no affiliate, set affiliate to the broker
 
@@ -215,6 +219,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     sharePriceWeiDecimals = 18;
 
     nativeTokenRaisedTotal = 0;
+    sharesSoldTarget = _targetSharesSold;
     sharesSoldMax = _maxSharesSold;
 
     issuer = _issuingEntity;
