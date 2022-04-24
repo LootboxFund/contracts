@@ -73,9 +73,6 @@ describe("📦 LootboxEscrow smart contract", async function () {
   const buyAmountInSharesB = buyAmountInEtherB
     .mul(ethers.utils.parseUnits("1", 18))
     .div(SHARE_PRICE_WEI);
-  const buyAmountInSharesC = buyAmountInEtherA1
-    .mul(ethers.utils.parseUnits("1", 18))
-    .div(SHARE_PRICE_WEI);
 
   const depositAmountInEtherA1 = ethers.utils.parseUnits("1", "ether");
   const depositAmountInEtherA2 = ethers.utils.parseUnits("0.5", "ether");
