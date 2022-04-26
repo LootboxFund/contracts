@@ -11,7 +11,7 @@ import {
   testLootboxURI,
 } from "./helpers/test-helpers";
 
-describe.only("📦 LootboxEscrowFactory", () => {
+describe("📦 LootboxEscrowFactory", () => {
   const provider = waffle.provider;
 
   let deployer: SignerWithAddress;
@@ -28,7 +28,7 @@ describe.only("📦 LootboxEscrowFactory", () => {
   let lootboxFactory: LootboxEscrowFactory;
 
   const ticketPurchaseFee = "2000000";
-  const BASE_URI = "https://storage.googleapis.com/lootbox-data-staging/";
+  const BASE_URI = "https://storage.googleapis.com/lootbox-data-staging";
 
   before(async () => {
     LootboxFactory = await ethers.getContractFactory("LootboxEscrowFactory");

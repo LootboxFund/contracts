@@ -47,7 +47,7 @@ describe("📦 LootboxInstant smart contract", async function () {
 
   const LOOTBOX_NAME = "Pinata Lootbox";
   const LOOTBOX_SYMBOL = "PINATA";
-  const BASE_URI = "https://storage.googleapis.com/lootbox-data-staging/";
+  const BASE_URI = "https://storage.googleapis.com/lootbox-data-staging";
 
   const SHARE_PRICE_WEI = "1000000000"; // $0.07 usd per share
   const SHARE_PRICE_WEI_DECIMALS = 18;
@@ -303,9 +303,7 @@ describe("📦 LootboxInstant smart contract", async function () {
           entityTreasury.address,
           issuingEntity.address,
           "2000000",
-          "1000000",
           broker.address,
-          affiliate.address,
         ],
         { kind: "uups" }
       );

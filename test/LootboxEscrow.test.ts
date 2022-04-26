@@ -44,7 +44,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
 
   const LOOTBOX_NAME = "Pinata Lootbox";
   const LOOTBOX_SYMBOL = "PINATA";
-  const BASE_URI = "https://storage.googleapis.com/lootbox-data-staging/";
+  const BASE_URI = "https://storage.googleapis.com/lootbox-data-staging";
 
   const SHARE_PRICE_WEI = "1000000000"; // 1 gwei per share
   const SHARE_PRICE_WEI_DECIMALS = 18;
@@ -187,9 +187,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
           entityTreasury.address,
           issuingEntity.address,
           "2000000",
-          "1000000",
           broker.address,
-          affiliate.address,
         ],
         { kind: "uups" }
       );
@@ -1971,7 +1969,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
           );
       });
       describe("purchase ticket fees", async () => {
-        it("charges a 2% fee on ticket sales (0.5% go to affiliate, 1.5% go to broker aka Lootbox Ltd", async () => {
+        it("charges a 2% fee on ticket sales (2% go to broker aka Lootbox Ltd", async () => {
           const startPurchaserBalance = await provider.getBalance(
             purchaser.address
           );

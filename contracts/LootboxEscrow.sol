@@ -242,7 +242,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
 
     // Note: this converts the address into a LOWERCASE string
     string memory addressStr = Strings.toHexString(uint256(uint160(address(this))));
-    _tokenURI = string.concat(_baseTokenURI, addressStr, ".json");
+    _tokenURI = string.concat(_baseTokenURI, "/", addressStr, ".json");
 
     _grantRole(DAO_ROLE, _issuingEntity);
   }
