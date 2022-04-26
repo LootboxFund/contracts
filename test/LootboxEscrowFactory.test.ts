@@ -5,7 +5,6 @@ import {
 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import { padAddressTo32Bytes } from "./helpers/test-helpers";
 import {
   DAO_ROLE,
   generatePermissionRevokeMessage,

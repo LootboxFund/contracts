@@ -22,7 +22,7 @@ import { BigNumber } from "ethers";
 
 // const BNB_ARCHIVED_PRICE = "41771363251"; // $417.36614642 USD per BNB
 
-describe.only("📦 LootboxEscrow smart contract", async function () {
+describe("📦 LootboxEscrow smart contract", async function () {
   let deployer: SignerWithAddress;
   let purchaser: SignerWithAddress;
   let issuingEntity: SignerWithAddress;
@@ -149,7 +149,6 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           entityTreasury.address,
           issuingEntity.address,
           "2000000",
-          "1000000",
           broker.address,
         ],
         { kind: "uups" }
@@ -167,7 +166,6 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           entityTreasury.address,
           issuingEntity.address,
           "2000000",
-          "1000000",
           broker.address,
         ],
         { kind: "uups" }
@@ -185,7 +183,6 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           entityTreasury.address,
           issuingEntity.address,
           "100000001",
-          "1000000",
           broker.address,
         ],
         { kind: "uups" }
@@ -205,7 +202,6 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           ethers.constants.AddressZero,
           issuingEntity.address,
           "2000000",
-          "1000000",
           broker.address,
         ],
         { kind: "uups" }
@@ -225,7 +221,6 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           entityTreasury.address,
           ethers.constants.AddressZero,
           "2000000",
-          "1000000",
           broker.address,
         ],
         { kind: "uups" }
@@ -245,7 +240,6 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           entityTreasury.address,
           issuingEntity.address,
           "2000000",
-          "1000000",
           ethers.constants.AddressZero,
         ],
         { kind: "uups" }
@@ -265,7 +259,6 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           entityTreasury.address,
           issuingEntity.address,
           "2000000",
-          "1000000",
           broker.address,
         ],
         { kind: "uups" }
@@ -285,7 +278,6 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           entityTreasury.address,
           issuingEntity.address,
           "2000000",
-          "1000000",
           broker.address,
         ],
         { kind: "uups" }
@@ -305,7 +297,6 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           entityTreasury.address,
           issuingEntity.address,
           "2000000",
-          "1000000",
           broker.address,
         ],
         { kind: "uups" }

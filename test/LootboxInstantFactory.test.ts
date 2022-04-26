@@ -316,6 +316,7 @@ describe("📦 LootboxInstantFactory", () => {
             emittedLootboxAddress,
             deployer.address,
             treasury.address,
+            TARGET_SHARES_BUY,
             MAX_SHARES_BUY,
             JSON.stringify(testLootboxURI)
           );

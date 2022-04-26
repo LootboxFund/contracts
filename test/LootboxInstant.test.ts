@@ -52,7 +52,6 @@ describe("📦 LootboxInstant smart contract", async function () {
   const SHARE_PRICE_WEI_DECIMALS = 18;
 
   const TICKET_PURCHASE_FEE = "2000000"; // 2%
-  const AFFILIATE_FEE = "500000"; // 1%
   const FEE_DECIMALS = 8;
 
   const HARDHAT_TYPICAL_STARTING_NATIVE_BALANCE = "10000000000000000000000";
@@ -126,7 +125,6 @@ describe("📦 LootboxInstant smart contract", async function () {
           entityTreasury.address,
           issuingEntity.address,
           "2000000",
-          "1000000",
           broker.address,
         ],
         { kind: "uups" }
@@ -144,7 +142,6 @@ describe("📦 LootboxInstant smart contract", async function () {
           entityTreasury.address,
           issuingEntity.address,
           "2000000",
-          "1000000",
           broker.address,
         ],
         { kind: "uups" }
@@ -162,33 +159,12 @@ describe("📦 LootboxInstant smart contract", async function () {
           entityTreasury.address,
           issuingEntity.address,
           "100000001",
-          "1000000",
           broker.address,
         ],
         { kind: "uups" }
       );
       await expect(lootbox).to.be.revertedWith(
         "Purchase ticket fee must be less than 100000000 (100%)"
-      );
-    });
-    it("Affiliate ticket fee must be less than or equal to purchase ticket fee", async () => {
-      const lootbox = upgrades.deployProxy(
-        Lootbox,
-        [
-          "Name",
-          "SYMBOL",
-          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
-          ethers.BigNumber.from("100000"),
-          entityTreasury.address,
-          issuingEntity.address,
-          "2000000",
-          "3000000",
-          broker.address,
-        ],
-        { kind: "uups" }
-      );
-      await expect(lootbox).to.be.revertedWith(
-        "Affiliate ticket fee must be less than or equal to purchase ticket fee"
       );
     });
     it("Treasury cannot be the zero address", async () => {
@@ -202,7 +178,6 @@ describe("📦 LootboxInstant smart contract", async function () {
           ethers.constants.AddressZero,
           issuingEntity.address,
           "2000000",
-          "1000000",
           broker.address,
         ],
         { kind: "uups" }
@@ -222,7 +197,6 @@ describe("📦 LootboxInstant smart contract", async function () {
           entityTreasury.address,
           ethers.constants.AddressZero,
           "2000000",
-          "1000000",
           broker.address,
         ],
         { kind: "uups" }
@@ -242,7 +216,6 @@ describe("📦 LootboxInstant smart contract", async function () {
           entityTreasury.address,
           issuingEntity.address,
           "2000000",
-          "1000000",
           ethers.constants.AddressZero,
         ],
         { kind: "uups" }
@@ -263,7 +236,6 @@ describe("📦 LootboxInstant smart contract", async function () {
           entityTreasury.address,
           issuingEntity.address,
           "2000000",
-          "1000000",
           broker.address,
         ],
         { kind: "uups" }
@@ -283,7 +255,6 @@ describe("📦 LootboxInstant smart contract", async function () {
           entityTreasury.address,
           issuingEntity.address,
           "2000000",
-          "1000000",
           broker.address,
         ],
         { kind: "uups" }
@@ -303,7 +274,6 @@ describe("📦 LootboxInstant smart contract", async function () {
           entityTreasury.address,
           issuingEntity.address,
           "2000000",
-          "1000000",
           broker.address,
         ],
         { kind: "uups" }
