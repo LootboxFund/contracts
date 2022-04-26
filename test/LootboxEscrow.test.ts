@@ -22,7 +22,7 @@ import { BigNumber } from "ethers";
 
 // const BNB_ARCHIVED_PRICE = "41771363251"; // $417.36614642 USD per BNB
 
-describe("📦 LootboxEscrow smart contract", async function () {
+describe.only("📦 LootboxEscrow smart contract", async function () {
   let deployer: SignerWithAddress;
   let purchaser: SignerWithAddress;
   let issuingEntity: SignerWithAddress;
@@ -44,6 +44,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
 
   const LOOTBOX_NAME = "Pinata Lootbox";
   const LOOTBOX_SYMBOL = "PINATA";
+  const BASE_URI = "https://storage.googleapis.com/lootbox-data-staging/";
 
   const SHARE_PRICE_WEI = "1000000000"; // 1 gwei per share
   const SHARE_PRICE_WEI_DECIMALS = 18;
@@ -144,6 +145,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
         [
           "",
           "SYMBOL",
+          BASE_URI,
           ethers.BigNumber.from("100000"),
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           entityTreasury.address,
@@ -161,6 +163,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
         [
           "Name",
           "",
+          BASE_URI,
           ethers.BigNumber.from("100000"),
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           entityTreasury.address,
@@ -172,12 +175,36 @@ describe("📦 LootboxEscrow smart contract", async function () {
       );
       await expect(lootbox).to.be.revertedWith("Symbol cannot be empty");
     });
+    it("Base URI cannot be empty", async () => {
+      const lootbox = upgrades.deployProxy(
+        Lootbox,
+        [
+          "Name",
+          LOOTBOX_SYMBOL,
+          "",
+          ethers.BigNumber.from("100000"),
+          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
+          entityTreasury.address,
+          issuingEntity.address,
+          "2000000",
+          "1000000",
+          broker.address,
+          affiliate.address,
+        ],
+        { kind: "uups" }
+      );
+      await expect(lootbox).to.be.revertedWith(
+        "Base token URI cannot be empty"
+      );
+    });
+
     it("Purchase ticket fee must be less than 100000000 (100%)", async () => {
       const lootbox = upgrades.deployProxy(
         Lootbox,
         [
           "Name",
           "Symbol",
+          BASE_URI,
           ethers.BigNumber.from("100000"),
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           entityTreasury.address,
@@ -197,6 +224,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
         [
           "Name",
           "SYMBOL",
+          BASE_URI,
           ethers.BigNumber.from("100000"),
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           ethers.constants.AddressZero,
@@ -216,6 +244,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
         [
           "Name",
           "SYMBOL",
+          BASE_URI,
           ethers.BigNumber.from("100000"),
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           entityTreasury.address,
@@ -235,6 +264,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
         [
           "Name",
           "SYMBOL",
+          BASE_URI,
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           entityTreasury.address,
@@ -254,6 +284,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
         [
           "Name",
           "SYMBOL",
+          BASE_URI,
           ethers.BigNumber.from("100000"),
           "0",
           entityTreasury.address,
@@ -273,6 +304,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
         [
           "Name",
           "SYMBOL",
+          BASE_URI,
           "0",
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
           entityTreasury.address,
@@ -292,6 +324,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
         [
           "Name",
           "SYMBOL",
+          BASE_URI,
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals,
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18").sub("1"), // 50k shares, 18 decimals
           entityTreasury.address,
@@ -340,6 +373,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
         [
           LOOTBOX_NAME, // string memory _name,
           LOOTBOX_SYMBOL, // string memory _symbol,
+          BASE_URI, // string memory _baseURI,
           ethers.utils.parseUnits(TARGET_SHARES_AVAILABLE_FOR_SALE, 18), // uint256 _targetSharesSold, // 1k shares, 18 decimals
           ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, 18), // uint256 _maxSharesSold, // 50k shares, 18 decimals
           entityTreasury.address, // address _treasury,
@@ -364,6 +398,9 @@ describe("📦 LootboxEscrow smart contract", async function () {
       });
       it("sets the sharePriceWei correctly", async () => {
         expect(await lootbox.sharePriceWei()).to.eq(SHARE_PRICE_WEI);
+      });
+      it("sets the base token URI correctly", async () => {
+        expect(await lootbox.baseTokenURI()).to.eq(BASE_URI);
       });
       it("sets the sharePriceWeiDecimals correctly", async () => {
         expect(await lootbox.sharePriceWeiDecimals()).to.eq(
@@ -427,6 +464,16 @@ describe("📦 LootboxEscrow smart contract", async function () {
         const res = await lootbox.estimateSharesPurchase(stableCoinValue);
         expect(res.toString()).to.eq(expectedShares.toString());
       }
+    });
+
+    describe.only("tokenURI()", () => {
+      it("returns the correct URI", async () => {
+        const ticketId = "0";
+        const ticketURI = await lootbox.tokenURI(ticketId);
+        expect(ticketURI).to.eq(
+          `${BASE_URI}${lootbox.address.toLowerCase()}.json`
+        );
+      });
     });
 
     describe("purchaseTicket() => 'purchasing lootbox tickets'", async () => {
@@ -1503,14 +1550,14 @@ describe("📦 LootboxEscrow smart contract", async function () {
       //     ethers.utils.parseUnits("0.5", shareOwnershipPercentageDecimals)
       //   );
       // });
-      it("retrieve tokenURI will return just the ticketId, without an https url", async () => {
-        const ticketId = "0";
-        await lootbox
-          .connect(purchaser)
-          .purchaseTicket({ value: buyAmountInEtherA1.toString() });
-        const tokenURI = await lootbox.tokenURI(ticketId);
-        expect(tokenURI).to.eq(ticketId);
-      });
+      // it("retrieve tokenURI will return just the ticketId, without an https url", async () => {
+      //   const ticketId = "0";
+      //   await lootbox
+      //     .connect(purchaser)
+      //     .purchaseTicket({ value: buyAmountInEtherA1.toString() });
+      //   const tokenURI = await lootbox.tokenURI(ticketId);
+      //   expect(tokenURI).to.eq(ticketId);
+      // });
       it("viewPurchasers() => can list out all investors", async () => {
         const beforePurchasers = await lootbox.viewPurchasers();
         expect(beforePurchasers).to.deep.eq([]);
