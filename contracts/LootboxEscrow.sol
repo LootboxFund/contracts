@@ -55,7 +55,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   
   string public variant;
   string public semver;
-  string public baseTokenURI;  // Something like https://storage.googleapis.com/lootbox-data-staging/
+  string public _tokenURI;  // Something like https://storage.googleapis.com/lootbox-data-staging/{lootboxAddress}.json
 
   /** ------------------ SETUP & AUTH ------------------
    * 
@@ -241,6 +241,10 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     broker = _broker;
 
     baseTokenURI = _baseTokenURI;
+
+    // Note: this converts the address into a LOWERCASE string
+    string memory addressStr = Strings.toHexString(uint256(uint160(address(this))));
+    _tokenURI = string.concat(_baseTokenURI, addressStr, ".json");
 
     _grantRole(DAO_ROLE, _issuingEntity);
   }
@@ -532,9 +536,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     override(ERC721Upgradeable)
     returns (string memory)
   {
-    // Note: this converts the address into a LOWERCASE string
-    string memory addressStr = Strings.toHexString(uint256(uint160(address(this))));
-    return string.concat(baseTokenURI, addressStr, ".json");
+    return _tokenURI;
   }
   function viewProratedDepositsForTicket(uint256 ticketId) public view returns (DepositMetadata[] memory _depositsMetadatas) {
     uint sharesOwned = sharesInTicket[ticketId]; 
