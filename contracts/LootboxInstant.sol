@@ -95,9 +95,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
    * 
    */
   address public broker;
-  address public affiliate;
   uint256 public ticketPurchaseFee;
-  uint256 public ticketAffiliateFee;
 
   /** ------------------ DEPOSITS ------------------
    * 
@@ -143,14 +141,12 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   event InvestmentFundsDispersed(
     address indexed purchaser,
     address indexed treasury,
-    address indexed affiliate,
-    address broker,
+    address indexed broker,
     address lootbox,
     uint256 ticketId,
     uint256 nativeTokenRaisedTotal,
     uint256 nativeTokensSentToTreasury,
     uint256 nativeTokensSentToBroker,
-    uint256 nativeTokensSentToAffiliate,
     uint256 sharesPurchased,
     uint256 sharePriceWei
   );
@@ -163,10 +159,6 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     address erc20Token,
     uint256 erc20Amount
   );
-  // TODO: Obscure affiliate information (hide it)
-  // hide it by refactoring InvestmentFundsDispersed into two events,
-  // one for public (sharable event ABI), another for private (affiliate rates & wallets)
-  
 
   /** ------------------ CONSTRUCTOR ------------------
    * 
@@ -181,9 +173,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     address _treasury,
     address _issuingEntity,
     uint256 _ticketPurchaseFee,
-    uint256 _ticketAffiliateFee,
-    address _broker,
-    address _affiliate
+    address _broker
   ) initializer public {
     
     variant = "Instant";
@@ -196,14 +186,12 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     require(tempEmptySymbolTest.length != 0, "Symbol cannot be empty");
 
     require(_ticketPurchaseFee < 100000000, "Purchase ticket fee must be less than 100000000 (100%)");
-    require(_ticketAffiliateFee <= _ticketPurchaseFee , "Affiliate ticket fee must be less than or equal to purchase ticket fee");
     require(_treasury != address(0), "Treasury cannot be the zero address");
     require(_issuingEntity != address(0), "Issuer cannot be the zero address");
     require(_maxSharesSold > 0, "Max shares sold must be greater than zero");
     require(_targetSharesSold > 0, "Target shares sold must be greater than zero");
     require(_targetSharesSold <= _maxSharesSold, "Target shares sold must be less than or equal to max shares sold");
     require(_broker != address(0), "Broker cannot be the zero address");        // the broker is LootboxInstant Ltd.
-    require(_affiliate != address(0), "Affiliate cannot be the zero address");  // if there is no affiliate, set affiliate to the broker
 
     __ERC721_init(_name, _symbol);
     __ERC721Enumerable_init();
@@ -228,11 +216,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     treasury = _treasury;
 
     ticketPurchaseFee = _ticketPurchaseFee;
-    ticketAffiliateFee = _ticketAffiliateFee;
     broker = _broker;
-
-    // we can set the broker to a designated smart contract that handles splitting with affiliate fees
-    affiliate = _affiliate;
 
     _grantRole(DAO_ROLE, _issuingEntity);
   }
@@ -275,20 +259,17 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
       sharePriceWei
     );
     // emit the InvestmentFundsDispersed event);
-    uint256 affiliateReceived = msg.value * ticketAffiliateFee / (1*10**(8));
-    uint256 brokerReceived = msg.value * (ticketPurchaseFee - ticketAffiliateFee) / (1*10**(8));
-    uint256 treasuryReceived = msg.value - brokerReceived - affiliateReceived;
+    uint256 brokerReceived = msg.value * (ticketPurchaseFee) / (1*10**(8));
+    uint256 treasuryReceived = msg.value - brokerReceived;
     emit InvestmentFundsDispersed(
       msg.sender,
       treasury,
-      affiliate,
       broker,
       address(this),
       ticketId,
       msg.value,
       treasuryReceived,
       brokerReceived,
-      affiliateReceived,
       sharesPurchased,
       sharePriceWei
     );
@@ -297,8 +278,6 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     require(tsuccess, "Treasury could not receive payment");
     (bool bsuccess,) = address(broker).call{value: brokerReceived}("");
     require(bsuccess, "Broker could not receive payment");
-    (bool asuccess,) = address(affiliate).call{value: affiliateReceived}("");
-    require(asuccess, "Affiliate could not receive payment");
     // mint the NFT ticket
     _safeMint(msg.sender, ticketId);
     // return the ticket ID & sharesPurchased

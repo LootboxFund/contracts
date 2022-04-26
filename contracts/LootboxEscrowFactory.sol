@@ -20,21 +20,8 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
     uint256 public immutable ticketPurchaseFee;
     address public immutable brokerAddress;
 
-    // affiliate => ticketAffiliateFee
-    mapping(address => uint256) internal affiliateFees;
-    // lootbox => affiliate
-    mapping(address => address) internal lootboxAffiliates;
-    EnumerableSet.AddressSet private AFFILIATES;
-
     // Points to the Lootboxes deployed by this factory
     EnumerableSet.AddressSet private LOOTBOXES;
-
-    event AffiliateWhitelisted(
-        address indexed affiliate,
-        address indexed whitelistedBy,
-        uint256 ticketAffiliateFee,
-        uint256 timestamp
-    );
 
     event LootboxCreated(
         string lootboxName,
@@ -44,15 +31,6 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
         uint256 targetSharesSold,
         uint256 maxSharesSold,
         string _data
-    );
-
-    event AffiliateReceipt(
-        address indexed lootbox,
-        address indexed affiliate,
-        uint256 affiliateFee,
-        uint256 ticketPurchaseFee,
-        address lootboxIssuer,
-        address lootboxTreasury
     );
 
     constructor(
@@ -78,53 +56,12 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
         brokerAddress = _brokerAddress;
     }
 
-    function addAffiliate(address affiliate, uint256 ticketAffiliateFee)
-        public
-        onlyRole(DAO_ROLE)
-    {
-        require(
-            ticketAffiliateFee <= ticketPurchaseFee,
-            "Affiliate ticket fee must be less than or equal to purchase ticket fee"
-        );
-        affiliateFees[affiliate] = ticketAffiliateFee;
-        AFFILIATES.add(affiliate);
-        emit AffiliateWhitelisted(
-            affiliate,
-            msg.sender,
-            ticketAffiliateFee,
-            block.timestamp
-        );
-    }
-
-    function listAffiliates()
-        public
-        view
-        onlyRole(DAO_ROLE)
-        returns (bytes32[] memory _affiliates)
-    {
-        return AFFILIATES._inner._values;
-    }
-
-    function checkLootboxAffiliate(address lootbox)
-        public
-        view
-        onlyRole(DAO_ROLE)
-        returns (address)
-    {
-        return lootboxAffiliates[lootbox];
-    }
-
-    // function checkFactoryPrivateDetails() public view onlyRole(DAO_ROLE) returns (address _brokerAddress, uint256 _ticketPurchaseFee) {
-    //   return (brokerAddress, ticketPurchaseFee);
-    // }
-
     function createLootbox(
         string memory _lootboxName,
         string memory _lootboxSymbol,
         uint256 _targetSharesSold,
         uint256 _maxSharesSold,
         address _treasury,
-        address _affiliate,
         string memory _data
     ) public whenNotPaused returns (address _lootbox) {
         require(
@@ -135,7 +72,6 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
             bytes(_lootboxSymbol).length != 0,
             "Lootbox symbol cannot be empty"
         );
-        require(_affiliate != address(0), "Affiliate address cannot be zero");
         require(
             _targetSharesSold > 0,
             "Target shares sold must be greater than zero"
@@ -162,13 +98,10 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
                 _treasury, // address _treasury,
                 msg.sender, // address _issuingEntity,
                 ticketPurchaseFee, // uint256 _ticketPurchaseFee,
-                affiliateFees[_affiliate], // uint256 _ticketAffiliateFee,
-                brokerAddress, // address _broker,
-                _affiliate // address _affiliate,
+                brokerAddress // address _broker,
             )
         );
         LOOTBOXES.add(address(proxy));
-        lootboxAffiliates[address(proxy)] = _affiliate;
 
         emit LootboxCreated(
             _lootboxName,
@@ -178,14 +111,6 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
             _targetSharesSold,
             _maxSharesSold,
             _data
-        );
-        emit AffiliateReceipt(
-            address(proxy),
-            _affiliate,
-            affiliateFees[_affiliate],
-            ticketPurchaseFee,
-            msg.sender,
-            _treasury
         );
         return address(proxy);
     }
