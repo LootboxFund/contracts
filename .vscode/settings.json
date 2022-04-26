@@ -1,5 +1,4 @@
 {
-  "solidity.defaultCompiler": "remote",
   "solidity.compileUsingRemoteVersion": "v0.8.4+commit.c7e474f2",
   "github.copilot.advanced": {},
 
@@ -12,5 +11,6 @@
   },
 
   // Show inline suggestions
-  "github.copilot.inlineSuggest.enable": true
+  "github.copilot.inlineSuggest.enable": true,
+  "solidity.defaultCompiler": "remote"
 }
