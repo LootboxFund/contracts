@@ -5,7 +5,6 @@ import {
 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import { padAddressTo32Bytes } from "./helpers/test-helpers";
 import {
   DAO_ROLE,
   generatePermissionRevokeMessage,
@@ -24,14 +23,12 @@ describe("📦 LootboxEscrowFactory", () => {
   let guildDao: SignerWithAddress;
   let guildDev: SignerWithAddress;
   let guildTreasury: SignerWithAddress;
-  let affiliate: SignerWithAddress;
 
   let LootboxFactory: LootboxEscrowFactory__factory;
   let lootboxFactory: LootboxEscrowFactory;
 
-  const mockNativeTokenPriceFeed = "0x2514895c72f50D8bd4B4F9b1110F0D6bD2c97526";
   const ticketPurchaseFee = "2000000";
-  const ticketAffiliateFee = "500000";
+  const BASE_URI = "https://storage.googleapis.com/lootbox-data-staging";
 
   before(async () => {
     LootboxFactory = await ethers.getContractFactory("LootboxEscrowFactory");
@@ -59,7 +56,6 @@ describe("📦 LootboxEscrowFactory", () => {
     guildDao = _guildDao;
     guildDev = _guildDev;
     guildTreasury = _guildTreasury;
-    affiliate = _gfxStaff;
   });
 
   describe("initialization => constructor()", async () => {
@@ -68,9 +64,9 @@ describe("📦 LootboxEscrowFactory", () => {
         await expect(
           LootboxFactory.deploy(
             ethers.constants.AddressZero,
-            mockNativeTokenPriceFeed,
             ticketPurchaseFee,
-            treasury.address
+            treasury.address,
+            BASE_URI
           )
         ).to.be.revertedWith("DAO Lootbox address cannot be zero");
       });
@@ -78,55 +74,53 @@ describe("📦 LootboxEscrowFactory", () => {
         await expect(
           LootboxFactory.deploy(
             dao.address,
-            mockNativeTokenPriceFeed,
             ticketPurchaseFee,
-            ethers.constants.AddressZero
+            ethers.constants.AddressZero,
+            BASE_URI
           )
         ).to.be.revertedWith("Broker address cannot be zero");
-      });
-      it("nativeTokenPriceFeed address cannot be zero", async () => {
-        await expect(
-          LootboxFactory.deploy(
-            dao.address,
-            ethers.constants.AddressZero,
-            ticketPurchaseFee,
-            treasury.address
-          )
-        ).to.be.revertedWith("nativeTokenPriceFeed address cannot be zero");
       });
       it("Purchase ticket fee must be less than 100000000 (100%)", async () => {
         await expect(
           LootboxFactory.deploy(
             dao.address,
-            mockNativeTokenPriceFeed,
             "100000001",
-            treasury.address
+            treasury.address,
+            BASE_URI
           )
         ).to.be.revertedWith(
           "Purchase ticket fee must be less than 100000000 (100%)"
         );
+      });
+      it("Reverts if base URI is empty", async () => {
+        await expect(
+          LootboxFactory.deploy(
+            dao.address,
+            ticketPurchaseFee,
+            treasury.address,
+            ""
+          )
+        ).to.be.revertedWith("Base token URI cannot be empty");
       });
     });
     describe("constructor setup", async () => {
       beforeEach(async () => {
         lootboxFactory = await LootboxFactory.deploy(
           dao.address,
-          mockNativeTokenPriceFeed,
           ticketPurchaseFee,
-          treasury.address
+          treasury.address,
+          BASE_URI
         );
         await lootboxFactory.deployed();
       });
       it("should assign Lootbox DAO the DAO role", async () => {
         expect(await lootboxFactory.hasRole(DAO_ROLE, dao.address)).to.be.true;
       });
-      it("should have correct nativeTokenPriceFeed address", async () => {
-        expect(await lootboxFactory.nativeTokenPriceFeed()).to.equal(
-          mockNativeTokenPriceFeed
-        );
-      });
       it("the Lootbox Implementation is public, anyone can see it", async () => {
-        expect(lootboxFactory.lootboxImplementation()).to.not.be.reverted;
+        await expect(lootboxFactory.lootboxImplementation()).to.not.be.reverted;
+      });
+      it("should assign the baseTokenURI parameter correctly", async () => {
+        expect(await lootboxFactory.baseTokenURI()).to.eq(BASE_URI);
       });
       // it("the Broker address is hidden from public, only Lootbox DAO can see it", async () => {
       //   expect("brokerAddress" in lootboxFactory).to.be.false;
@@ -142,9 +136,9 @@ describe("📦 LootboxEscrowFactory", () => {
     describe("able to create an escrow factory with pre-set broker treasury", async () => {
       lootboxFactory = await LootboxFactory.deploy(
         dao.address,
-        mockNativeTokenPriceFeed,
         ticketPurchaseFee,
-        treasury.address
+        treasury.address,
+        BASE_URI
       );
       await lootboxFactory.deployed();
     });
@@ -160,9 +154,9 @@ describe("📦 LootboxEscrowFactory", () => {
     beforeEach(async () => {
       lootboxFactory = await LootboxFactory.deploy(
         dao.address,
-        mockNativeTokenPriceFeed,
         ticketPurchaseFee,
-        treasury.address
+        treasury.address,
+        BASE_URI
       );
       await lootboxFactory.deployed();
     });
@@ -171,69 +165,7 @@ describe("📦 LootboxEscrowFactory", () => {
       //   expect(lootboxFactory.connect(deployer).checkFactoryPrivateDetails()).to.be.revertedWith(generatePermissionRevokeMessage(deployer.address, DAO_ROLE))
       //   expect(lootboxFactory.connect(dao).checkFactoryPrivateDetails()).to.not.be.reverted;
       // })
-      it("addAffiliate()", async () => {
-        expect(
-          lootboxFactory
-            .connect(deployer)
-            .addAffiliate(affiliate.address, ticketAffiliateFee)
-        ).to.be.revertedWith(
-          generatePermissionRevokeMessage(deployer.address, DAO_ROLE)
-        );
-        const tx = lootboxFactory
-          .connect(dao)
-          .addAffiliate(affiliate.address, ticketAffiliateFee);
-        const receipt = await (await tx).wait();
-        const timestamp = (await provider.getBlock(receipt.blockNumber))
-          .timestamp;
-        expect(tx).to.not.be.reverted;
-        expect(tx)
-          .to.emit(lootboxFactory, "AffiliateWhitelisted")
-          .withArgs(
-            affiliate.address,
-            dao.address,
-            ticketAffiliateFee,
-            timestamp
-          );
-      });
-      it("listAffiliates()", async () => {
-        expect(
-          lootboxFactory.connect(deployer).listAffiliates()
-        ).to.be.revertedWith(
-          generatePermissionRevokeMessage(deployer.address, DAO_ROLE)
-        );
-        expect(lootboxFactory.connect(dao).listAffiliates()).to.not.be.reverted;
-        expect(await lootboxFactory.connect(dao).listAffiliates()).to.deep.eq(
-          []
-        );
-        await lootboxFactory
-          .connect(dao)
-          .addAffiliate(affiliate.address, ticketAffiliateFee);
-        expect(await lootboxFactory.connect(dao).listAffiliates()).to.deep.eq([
-          padAddressTo32Bytes(affiliate.address),
-        ]);
-      });
-      it("checkLootboxAffiliate()", async () => {
-        await lootboxFactory.createLootbox(
-          LOOTBOX_NAME,
-          LOOTBOX_SYMBOL,
-          TARGET_SHARES_BUY,
-          MAX_SHARES_BUY,
-          treasury.address,
-          affiliate.address,
-          JSON.stringify(testLootboxURI)
-        );
-        const PLUG_LOOTBOX_ADDR = deployer.address; // we dont know the actual lootbox addr unless we check the logs
-        expect(
-          lootboxFactory
-            .connect(deployer)
-            .checkLootboxAffiliate(PLUG_LOOTBOX_ADDR)
-        ).to.be.revertedWith(
-          generatePermissionRevokeMessage(deployer.address, DAO_ROLE)
-        );
-        expect(
-          lootboxFactory.connect(dao).checkLootboxAffiliate(PLUG_LOOTBOX_ADDR)
-        ).to.not.be.reverted;
-      });
+
       describe("🗳 pause()", async () => {
         describe("called by address with the DAO_ROLE", () => {
           let promise: Promise<any>;
@@ -289,15 +221,103 @@ describe("📦 LootboxEscrowFactory", () => {
       });
     });
     describe("createLootbox()", async () => {
+      it("Name cannot be empty", async () => {
+        const lootbox = lootboxFactory.createLootbox(
+          "",
+          LOOTBOX_SYMBOL,
+          TARGET_SHARES_BUY,
+          MAX_SHARES_BUY,
+          guildTreasury.address,
+          JSON.stringify(testLootboxURI)
+        );
+        await expect(lootbox).to.be.revertedWith(
+          "Lootbox name cannot be empty"
+        );
+      });
+      it("Symbol cannot be empty", async () => {
+        const lootbox = lootboxFactory.createLootbox(
+          LOOTBOX_NAME,
+          "",
+          TARGET_SHARES_BUY,
+          MAX_SHARES_BUY,
+          guildTreasury.address,
+          JSON.stringify(testLootboxURI)
+        );
+        await expect(lootbox).to.be.revertedWith(
+          "Lootbox symbol cannot be empty"
+        );
+      });
+      it("Treasury cannot be the zero address", async () => {
+        const lootbox = lootboxFactory.createLootbox(
+          LOOTBOX_NAME,
+          LOOTBOX_SYMBOL,
+          TARGET_SHARES_BUY,
+          MAX_SHARES_BUY,
+          ethers.constants.AddressZero,
+          JSON.stringify(testLootboxURI)
+        );
+        await expect(lootbox).to.be.revertedWith(
+          "Treasury address must be provided"
+        );
+      });
+
+      it("Max shares sold must be greater than zero", async () => {
+        const lootbox = lootboxFactory.createLootbox(
+          LOOTBOX_NAME,
+          LOOTBOX_SYMBOL,
+          TARGET_SHARES_BUY,
+          "0",
+          guildTreasury.address,
+          JSON.stringify(testLootboxURI)
+        );
+        await expect(lootbox).to.be.revertedWith(
+          "Max shares sold must be greater than zero"
+        );
+      });
+      it("Target shares sold must be greater than zero", async () => {
+        const lootbox = lootboxFactory.createLootbox(
+          LOOTBOX_NAME,
+          LOOTBOX_SYMBOL,
+          "0",
+          MAX_SHARES_BUY,
+          guildTreasury.address,
+          JSON.stringify(testLootboxURI)
+        );
+        await expect(lootbox).to.be.revertedWith(
+          "Target shares sold must be greater than zero"
+        );
+      });
+      it("Max shares must be greater than or equal to target shares sold", async () => {
+        const lootbox1 = lootboxFactory.createLootbox(
+          LOOTBOX_NAME,
+          LOOTBOX_SYMBOL,
+          "2",
+          "1",
+          guildTreasury.address,
+          JSON.stringify(testLootboxURI)
+        );
+        const lootbox2 = lootboxFactory.createLootbox(
+          LOOTBOX_NAME,
+          LOOTBOX_SYMBOL,
+          "1",
+          "1",
+          guildTreasury.address,
+          JSON.stringify(testLootboxURI)
+        );
+        await expect(lootbox1).to.be.revertedWith(
+          "Max shares sold must be greater than or equal to target shares sold"
+        );
+        await expect(lootbox2).to.not.be.reverted;
+      });
+
       it("anyone can create a lootbox", async () => {
-        expect(
+        await expect(
           lootboxFactory.createLootbox(
             LOOTBOX_NAME,
             LOOTBOX_SYMBOL,
             TARGET_SHARES_BUY,
             MAX_SHARES_BUY,
             guildTreasury.address,
-            affiliate.address,
             JSON.stringify(testLootboxURI)
           )
         ).to.not.be.reverted;
@@ -312,7 +332,6 @@ describe("📦 LootboxEscrowFactory", () => {
             TARGET_SHARES_BUY,
             MAX_SHARES_BUY,
             guildTreasury.address,
-            affiliate.address,
             JSON.stringify(testLootboxURI)
           );
         const receipt = await (await tx).wait();
@@ -321,7 +340,7 @@ describe("📦 LootboxEscrowFactory", () => {
         })[0];
         const emittedLootboxAddress =
           event?.args?.lootbox || ethers.constants.AddressZero;
-        expect(tx)
+        await expect(tx)
           .to.emit(lootboxFactory, "LootboxCreated")
           .withArgs(
             LOOTBOX_NAME,
@@ -330,88 +349,28 @@ describe("📦 LootboxEscrowFactory", () => {
             guildTreasury.address,
             TARGET_SHARES_BUY,
             MAX_SHARES_BUY,
-            SHARE_PRICE_USD,
             JSON.stringify(testLootboxURI)
           );
       });
-      it("properly tracks affiliates and emits an AffiliateReceipt event", async () => {
-        await lootboxFactory
-          .connect(dao)
-          .addAffiliate(affiliate.address, ticketAffiliateFee);
-        const tx = lootboxFactory
-          .connect(deployer)
-          .createLootbox(
-            LOOTBOX_NAME,
-            LOOTBOX_SYMBOL,
-            TARGET_SHARES_BUY,
-            MAX_SHARES_BUY,
-            guildTreasury.address,
-            affiliate.address,
-            JSON.stringify(testLootboxURI)
-          );
-        const receipt = await (await tx).wait();
-        const event = receipt.events?.filter((x: any) => {
-          return x.event == "AffiliateReceipt";
-        })[0];
-        const emittedLootboxAddress =
-          event?.args?.lootbox || ethers.constants.AddressZero;
 
-        expect(tx)
-          .to.emit(lootboxFactory, "AffiliateReceipt")
-          .withArgs(
-            emittedLootboxAddress,
-            affiliate.address,
-            ticketAffiliateFee,
-            ticketPurchaseFee,
-            deployer.address,
-            treasury.address
-          );
+      it("viewLootboxes()", async () => {
+        const beforeLootboxes = await lootboxFactory
+          .connect(dao)
+          .viewLootboxes();
+        expect(beforeLootboxes.length).to.eq(0);
+        await lootboxFactory.createLootbox(
+          LOOTBOX_NAME,
+          LOOTBOX_SYMBOL,
+          TARGET_SHARES_BUY,
+          MAX_SHARES_BUY,
+          guildTreasury.address,
+          JSON.stringify(testLootboxURI)
+        );
+        const afterLootboxes = await lootboxFactory
+          .connect(dao)
+          .viewLootboxes();
+        expect(afterLootboxes.length).to.eq(1);
       });
-      it("safely sets the affiliate fee to zero if no affiliate was found in mapping", async () => {
-        const affiliateFeeUnknownAffiliate = "0";
-        const tx = lootboxFactory
-          .connect(deployer)
-          .createLootbox(
-            LOOTBOX_NAME,
-            LOOTBOX_SYMBOL,
-            TARGET_SHARES_BUY,
-            MAX_SHARES_BUY,
-            guildTreasury.address,
-            deployer.address,
-            JSON.stringify(testLootboxURI)
-          );
-        const receipt = await (await tx).wait();
-        const event = receipt.events?.filter((x: any) => {
-          return x.event == "AffiliateReceipt";
-        })[0];
-        const emittedLootboxAddress =
-          event?.args?.lootbox || ethers.constants.AddressZero;
-        expect(tx)
-          .to.emit(lootboxFactory, "AffiliateReceipt")
-          .withArgs(
-            emittedLootboxAddress,
-            deployer.address,
-            affiliateFeeUnknownAffiliate,
-            ticketPurchaseFee,
-            deployer.address,
-            treasury.address
-          );
-      });
-    });
-    it("viewLootboxes()", async () => {
-      const beforeLootboxes = await lootboxFactory.connect(dao).viewLootboxes();
-      expect(beforeLootboxes.length).to.eq(0);
-      await lootboxFactory.createLootbox(
-        LOOTBOX_NAME,
-        LOOTBOX_SYMBOL,
-        TARGET_SHARES_BUY,
-        MAX_SHARES_BUY,
-        guildTreasury.address,
-        affiliate.address,
-        JSON.stringify(testLootboxURI)
-      );
-      const afterLootboxes = await lootboxFactory.connect(dao).viewLootboxes();
-      expect(afterLootboxes.length).to.eq(1);
     });
   });
 });

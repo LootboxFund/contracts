@@ -2,14 +2,14 @@
 // https://forum.openzeppelin.com/t/uups-proxies-tutorial-solidity-javascript/7786
 
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.4;
+pragma solidity 0.8.13;
 
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -55,6 +55,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   
   string public variant;
   string public semver;
+  string public _tokenURI;  // Something like https://storage.googleapis.com/lootbox-data-staging/{lootboxAddress}.json
 
   /** ------------------ SETUP & AUTH ------------------
    * 
@@ -66,15 +67,14 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   uint256 public feeDecimals;
   // references
   uint256 public deploymentStartTime;
-  AggregatorV3Interface internal nativeTokenPriceFeed;
 
   /** ------------------ FUNDRAISING STATE ------------------
    * 
    */
   
   
-  
-  uint256 public sharePriceUSD; // THIS SHOULD NOT BE MODIFIED (8 decimals)
+  uint256 public sharePriceWei;  // THIS SHOULD NOT BE MODIFIED (should be equal to 1 gwei, i.e. 1000000000 wei)
+  uint256 public sharePriceWeiDecimals;  // THIS SHOULD NOT BE MODIFIED (should be equal to 18)
   uint256 public sharesSoldCount;
   uint256 public sharesSoldTarget;
   uint256 public sharesSoldMax;
@@ -93,7 +93,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     address lootbox,
     uint256 ticketId,
     uint256 sharesPurchased,
-    uint256 sharePriceUSD
+    uint256 sharePriceWei
   );
   event CompleteFundraiser(
     address indexed issuer,
@@ -115,9 +115,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
    * 
    */
   address public broker;
-  address public affiliate;
   uint256 public ticketPurchaseFee;
-  uint256 public ticketAffiliateFee;
 
   /** ------------------ DEPOSITS ------------------
    * 
@@ -163,16 +161,14 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   event InvestmentFundsDispersed(
     address indexed purchaser,
     address indexed treasury,
-    address indexed affiliate,
-    address broker,
+    address indexed broker,
     address lootbox,
     uint256 ticketId,
     uint256 nativeTokenRaisedTotal,
     uint256 nativeTokensSentToTreasury,
     uint256 nativeTokensSentToBroker,
-    uint256 nativeTokensSentToAffiliate,
     uint256 sharesPurchased,
-    uint256 sharePriceUSD
+    uint256 sharePriceWei
   );
   event WithdrawEarnings(
     address indexed withdrawer,
@@ -183,10 +179,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     address erc20Token,
     uint256 erc20Amount
   );
-  // TODO: Obscure affiliate information (hide it)
-  // hide it by refactoring InvestmentFundsDispersed into two events,
-  // one for public (sharable event ABI), another for private (affiliate rates & wallets)
-  
 
   /** ------------------ CONSTRUCTOR ------------------
    * 
@@ -196,15 +188,13 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   function initialize(
     string memory _name,
     string memory _symbol,
+    string memory _baseTokenURI,
     uint256 _targetSharesSold,
     uint256 _maxSharesSold,
     address _treasury,
     address _issuingEntity,
-    address _nativeTokenPriceFeed,
     uint256 _ticketPurchaseFee,
-    uint256 _ticketAffiliateFee,
-    address _broker,
-    address _affiliate
+    address _broker
   ) initializer public {
 
     variant = "Escrow";
@@ -215,15 +205,15 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
 
     require(tempEmptyNameTest.length != 0, "Name cannot be empty");
     require(tempEmptySymbolTest.length != 0, "Symbol cannot be empty");
+    require(bytes(_baseTokenURI).length != 0, "Base token URI cannot be empty");
 
     require(_ticketPurchaseFee < 100000000, "Purchase ticket fee must be less than 100000000 (100%)");
-    require(_ticketAffiliateFee <= _ticketPurchaseFee , "Affiliate ticket fee must be less than or equal to purchase ticket fee");
     require(_treasury != address(0), "Treasury cannot be the zero address");
     require(_issuingEntity != address(0), "Issuer cannot be the zero address");
-    require(_nativeTokenPriceFeed != address(0), "Native token price feed is required");
     require(_maxSharesSold > 0, "Max shares sold must be greater than zero");
+    require(_targetSharesSold > 0, "Target shares sold must be greater than zero");
+    require(_targetSharesSold <= _maxSharesSold, "Target shares sold must be less than or equal to max shares sold");
     require(_broker != address(0), "Broker cannot be the zero address");        // the broker is LootboxEscrow Ltd.
-    require(_affiliate != address(0), "Affiliate cannot be the zero address");  // if there is no affiliate, set affiliate to the broker
 
     __ERC721_init(_name, _symbol);
     __ERC721Enumerable_init();
@@ -235,24 +225,24 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     deploymentStartTime = block.timestamp;
     shareDecimals = 18;
     feeDecimals = 8;
-    sharePriceUSD = 5000000;
+    sharePriceWei = 1000000000;
+    sharePriceWeiDecimals = 18;
 
     nativeTokenRaisedTotal = 0;
     sharesSoldTarget = _targetSharesSold;
     sharesSoldMax = _maxSharesSold;
 
     issuer = _issuingEntity;
-    nativeTokenPriceFeed = AggregatorV3Interface(_nativeTokenPriceFeed);
 
     isFundraising = true;
     treasury = _treasury;
 
     ticketPurchaseFee = _ticketPurchaseFee;
-    ticketAffiliateFee = _ticketAffiliateFee;
     broker = _broker;
 
-    // we can set the broker to a designated smart contract that handles splitting with affiliate fees
-    affiliate = _affiliate;
+    // Note: this converts the address into a LOWERCASE string
+    string memory addressStr = Strings.toHexString(uint256(uint160(address(this))));
+    _tokenURI = string.concat(_baseTokenURI, "/", addressStr, ".json");
 
     _grantRole(DAO_ROLE, _issuingEntity);
   }
@@ -275,7 +265,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     uint256 sharesPurchased = estimateSharesPurchase(msg.value);
 
     // do not allow selling above sharesSoldMax 
-    require(sharesPurchased < checkMaxSharesRemainingForSale(), "Not enough shares remaining to purchase, try a smaller amount");
+    require(sharesPurchased <= checkMaxSharesRemainingForSale(), "Not enough shares remaining to purchase, try a smaller amount");
     // get an ID
     uint256 ticketId = ticketIdCounter.current();
     ticketIdCounter.increment();
@@ -292,33 +282,28 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
       address(this),
       ticketId,
       sharesPurchased,
-      sharePriceUSD
+      sharePriceWei
     );
     // emit the InvestmentFundsDispersed event);
-    uint256 affiliateReceived = msg.value * ticketAffiliateFee / (1*10**(8));
-    uint256 brokerReceived = msg.value * (ticketPurchaseFee - ticketAffiliateFee) / (1*10**(8));
-    uint256 treasuryReceived = msg.value - brokerReceived - affiliateReceived;
+    uint256 brokerReceived = msg.value * (ticketPurchaseFee) / (1*10**(8));
+    uint256 treasuryReceived = msg.value - brokerReceived;
     emit InvestmentFundsDispersed(
       msg.sender,
       treasury,
-      affiliate,
       broker,
       address(this),
       ticketId,
       msg.value,
       treasuryReceived,
       brokerReceived,
-      affiliateReceived,
       sharesPurchased,
-      sharePriceUSD
+      sharePriceWei
     );
     // sum the cumulative escrow'd amount
     escrowNativeAmount = escrowNativeAmount + treasuryReceived;
-    // broker & affiliate get their cut
+    // broker gets their cut
     (bool bsuccess,) = address(broker).call{value: brokerReceived}("");
     require(bsuccess, "Broker could not receive payment");
-    (bool asuccess,) = address(affiliate).call{value: affiliateReceived}("");
-    require(asuccess, "Affiliate could not receive payment");
     // the rest stays in the contract for escrow
     // mint the NFT ticket
     _safeMint(msg.sender, ticketId);
@@ -327,21 +312,10 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   }
   // external function to estimate how much guild tokens a user will receive
   function estimateSharesPurchase (uint256 nativeTokenAmount) public view returns (uint256) {
-    // get price feed of native token
-    (
-      uint80 roundID,
-      int256 price,
-      uint256 startedAt,
-      uint256 timeStamp,
-      uint80 answeredInRound
-    ) = nativeTokenPriceFeed.latestRoundData();
     uint256 nativeTokenDecimals = 18;
-    // If the round is not complete yet, timestamp is 0
-    require(timeStamp > 0, "Round not complete");
     uint256 sharesPurchased = convertInputTokenToShares(
       nativeTokenAmount,
-      nativeTokenDecimals,
-      uint256(price)
+      nativeTokenDecimals
     );
     return sharesPurchased;
   }
@@ -352,14 +326,9 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   // internal helper function that converts stablecoin amount to guild token amount
   function convertInputTokenToShares(
       uint256 amountOfStableCoin,
-      uint256 stablecoinDecimals,
-      uint256 stableCoinPrice
-  ) internal view returns (uint256 guildTokenAmount) {
-      return
-          (amountOfStableCoin *
-              stableCoinPrice *
-              10**(shareDecimals - stablecoinDecimals)) /
-          sharePriceUSD;
+      uint256 stablecoinDecimals
+  ) internal view returns (uint256 sharesAmount) {
+      return amountOfStableCoin * 10 ** (shareDecimals + sharePriceWeiDecimals - stablecoinDecimals) / sharePriceWei;
   }
 
   /**
@@ -558,14 +527,14 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   *  viewProratedDepositsForTicket(ticketId)
   *  viewAllTicketsOfHolder(address)
   */
-  // metadata about token. returns only the ticketId. the url is built by frontend & actual data is stored off-chain on GBucket
+  // Metadata about token. Path to gbucket file stored off chain. Currently, it does not use the ticketID
   function tokenURI(uint256 ticketId)
     public
-    pure
+    view
     override(ERC721Upgradeable)
     returns (string memory)
   {
-    return uint2str(ticketId);
+    return _tokenURI;
   }
   function viewProratedDepositsForTicket(uint256 ticketId) public view returns (DepositMetadata[] memory _depositsMetadatas) {
     uint sharesOwned = sharesInTicket[ticketId]; 
@@ -729,26 +698,4 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
       override
   {}
   receive() external payable {}
-  // --------- Misc Helpers ---------
-  function uint2str(uint _i) internal pure returns (string memory _uintAsString) {
-    if (_i == 0) {
-        return "0";
-    }
-    uint j = _i;
-    uint len;
-    while (j != 0) {
-        len++;
-        j /= 10;
-    }
-    bytes memory bstr = new bytes(len);
-    uint k = len;
-    while (_i != 0) {
-        k = k-1;
-        uint8 temp = (48 + uint8(_i - _i / 10 * 10));
-        bytes1 b1 = bytes1(temp);
-        bstr[k] = b1;
-        _i /= 10;
-    }
-    return string(bstr);
-  }
 }
