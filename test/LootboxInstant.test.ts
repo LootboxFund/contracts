@@ -372,7 +372,7 @@ describe("📦 LootboxInstant smart contract", async function () {
       });
       it("sets the base token URI correctly", async () => {
         expect(await lootbox._tokenURI()).to.eq(
-          `${BASE_URI}${lootbox.address.toLowerCase()}.json`
+          `${BASE_URI}/${lootbox.address.toLowerCase()}.json`
         );
       });
       it("sets the sharePriceWei correctly", async () => {
@@ -447,7 +447,7 @@ describe("📦 LootboxInstant smart contract", async function () {
         const ticketId = "0";
         const ticketURI = await lootbox.tokenURI(ticketId);
         expect(ticketURI).to.eq(
-          `${BASE_URI}${lootbox.address.toLowerCase()}.json`
+          `${BASE_URI}/${lootbox.address.toLowerCase()}.json`
         );
       });
     });
