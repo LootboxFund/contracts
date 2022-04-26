@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -54,6 +55,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
 
   string public variant;
   string public semver;
+  string public baseTokenURI;  // Something like https://storage.googleapis.com/lootbox-data-staging/
 
   /** ------------------ SETUP & AUTH ------------------
    * 
@@ -168,6 +170,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   function initialize(
     string memory _name,
     string memory _symbol,
+    string memory _baseTokenURI,
     uint256 _targetSharesSold,
     uint256 _maxSharesSold,
     address _treasury,
@@ -184,6 +187,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
 
     require(tempEmptyNameTest.length != 0, "Name cannot be empty");
     require(tempEmptySymbolTest.length != 0, "Symbol cannot be empty");
+    require(bytes(_baseTokenURI).length != 0, "Base token URI cannot be empty");
 
     require(_ticketPurchaseFee < 100000000, "Purchase ticket fee must be less than 100000000 (100%)");
     require(_treasury != address(0), "Treasury cannot be the zero address");
@@ -217,6 +221,8 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
 
     ticketPurchaseFee = _ticketPurchaseFee;
     broker = _broker;
+
+    baseTokenURI = _baseTokenURI;
 
     _grantRole(DAO_ROLE, _issuingEntity);
   }
@@ -448,14 +454,16 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   *  viewProratedDepositsForTicket(ticketId)
   *  viewAllTicketsOfHolder(address)
   */
-  // metadata about token. returns only the ticketId. the url is built by frontend & actual data is stored off-chain on GBucket
+  // Metadata about token. Path to gbucket file stored off chain. Currently, it does not use the ticketID
   function tokenURI(uint256 ticketId)
     public
-    pure
+    view
     override(ERC721Upgradeable)
     returns (string memory)
   {
-    return uint2str(ticketId);
+    // Note: this converts the address into a LOWERCASE string
+    string memory addressStr = Strings.toHexString(uint256(uint160(address(this))));
+    return string.concat(baseTokenURI, addressStr, ".json");
   }
   function viewProratedDepositsForTicket(uint256 ticketId) public view returns (DepositMetadata[] memory _depositsMetadatas) {
     uint sharesOwned = sharesInTicket[ticketId]; 
@@ -617,26 +625,4 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
       override
   {}
   receive() external payable {}
-  // --------- Misc Helpers ---------
-  function uint2str(uint _i) internal pure returns (string memory _uintAsString) {
-    if (_i == 0) {
-        return "0";
-    }
-    uint j = _i;
-    uint len;
-    while (j != 0) {
-        len++;
-        j /= 10;
-    }
-    bytes memory bstr = new bytes(len);
-    uint k = len;
-    while (_i != 0) {
-        k = k-1;
-        uint8 temp = (48 + uint8(_i - _i / 10 * 10));
-        bytes1 b1 = bytes1(temp);
-        bstr[k] = b1;
-        _i /= 10;
-    }
-    return string(bstr);
-  }
 }

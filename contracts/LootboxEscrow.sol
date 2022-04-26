@@ -55,7 +55,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   
   string public variant;
   string public semver;
-  string public baseTokenURI;  // Something like https://storage.googleapis.com/lootbox-data-staging/{0xaddress}.json
+  string public baseTokenURI;  // Something like https://storage.googleapis.com/lootbox-data-staging/
 
   /** ------------------ SETUP & AUTH ------------------
    * 
