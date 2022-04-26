@@ -2,7 +2,7 @@
 // https://forum.openzeppelin.com/t/uups-proxies-tutorial-solidity-javascript/7786
 
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.4;
+pragma solidity 0.8.13;
 
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -15,10 +15,10 @@ contract BadgeFactoryBCS is Pausable, AccessControl {
 
     using EnumerableSet for EnumerableSet.AddressSet;
     address public immutable badgeImplementation;
-    string public logoImageUrl;
     address public paymentToken;
     string public semver;
     address public developer;
+    string public baseTokenURI;
 
     bytes32 public constant DEV_ROLE = keccak256("DEV_ROLE"); // Lootbox Ltd
 
@@ -32,15 +32,13 @@ contract BadgeFactoryBCS is Pausable, AccessControl {
     );
  
     constructor(
-      string memory _logoImageUrl,
       address _developer,
-      address _paymentToken
+      address _paymentToken,
+      string memory _baseTokenURI
     ) {
-      bytes memory tempLogoImageUrl = bytes(_logoImageUrl);
-      require(tempLogoImageUrl.length != 0, "Logo Image URL cannot be empty");
       require(_paymentToken != address(0), "Payment token cannot be zero address");
+      require(bytes(_baseTokenURI).length != 0, "Base token URI cannot be empty");
 
-      logoImageUrl = _logoImageUrl;
       paymentToken = _paymentToken;
       semver = "0.0.1";
 
@@ -48,11 +46,13 @@ contract BadgeFactoryBCS is Pausable, AccessControl {
       developer = _developer;
 
       badgeImplementation = address(new BadgeBCS());
+      baseTokenURI = _baseTokenURI;
     }
     
     function createBadge(
         string memory _guildName,
-        string memory _guildSymbol
+        string memory _guildSymbol,
+        string memory _logoImageUrl
     ) public whenNotPaused returns (address _lootbox) {
         require(bytes(_guildName).length != 0, "Guild name cannot be empty");
         require(bytes(_guildSymbol).length != 0, "Guild symbol cannot be empty");
@@ -68,8 +68,9 @@ contract BadgeFactoryBCS is Pausable, AccessControl {
               BadgeBCS(payable(address(0))).initialize.selector,
               _guildName,
               _guildSymbol,
-              logoImageUrl,
-              developer
+              _logoImageUrl,
+              developer,
+              baseTokenURI
             )
         );
         BADGES.add(address(proxy));

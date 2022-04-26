@@ -2,8 +2,9 @@
 // https://forum.openzeppelin.com/t/uups-proxies-tutorial-solidity-javascript/7786
 
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.4;
+pragma solidity 0.8.13;
 
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
@@ -59,6 +60,7 @@ contract BadgeBCS is Initializable, ERC721Upgradeable, PausableUpgradeable, Acce
   uint256 public deploymentStartTime;
   string public logoImageUrl;
   CountersUpgradeable.Counter public mintedCount;
+  string public _tokenURI;  // Something like https://storage.googleapis.com/lootbox-badge-staging/{lootboxAddress}/{ticketId}.json
 
   mapping(address => bool) public whoMintedMapping;
   event MintBadge(
@@ -75,7 +77,8 @@ contract BadgeBCS is Initializable, ERC721Upgradeable, PausableUpgradeable, Acce
     string memory _name,
     string memory _symbol,
     string memory _logoImageUrl,
-    address _developer
+    address _developer,
+    string memory _baseTokenURI
   ) initializer public {
     
     bytes memory tempEmptyNameTest = bytes(_name);
@@ -86,6 +89,7 @@ contract BadgeBCS is Initializable, ERC721Upgradeable, PausableUpgradeable, Acce
     require(tempEmptySymbolTest.length != 0, "Symbol cannot be empty");
     require(tempEmptyLogoTest.length != 0, "Logo URL cannot be empty");
     require(_developer != address(0), "Developer cannot be zero address");
+    require(bytes(_baseTokenURI).length != 0, "Base token URI cannot be empty");
 
     __ERC721_init(_name, _symbol);
     __Pausable_init();
@@ -96,6 +100,10 @@ contract BadgeBCS is Initializable, ERC721Upgradeable, PausableUpgradeable, Acce
     deploymentStartTime = block.timestamp;
     semver = "0.0.1";
     logoImageUrl = _logoImageUrl;
+
+    // Note: this converts the address into a LOWERCASE string
+    string memory addressStr = Strings.toHexString(uint256(uint160(address(this))));
+    _tokenURI = string.concat(_baseTokenURI, "/", addressStr, "/");
 
     _grantRole(DEV_ROLE, _developer);
   }
@@ -113,16 +121,16 @@ contract BadgeBCS is Initializable, ERC721Upgradeable, PausableUpgradeable, Acce
   // metadata about token. returns only the ticketId. the url is built by frontend & actual data is stored off-chain on GBucket
   function tokenURI(uint256 ticketId)
     public
-    pure
+    view
     override(ERC721Upgradeable)
     returns (string memory)
   {
-    return uint2str(ticketId);
+    return string.concat(_tokenURI, uint2str(ticketId), ".json");
   }
 
   /**
   * ------------------ CLASS INHERITANCE OVERHEAD ------------------
-  *  
+  * 
   * 
   */
   // The following functions are overrides required by Solidity.
@@ -131,6 +139,10 @@ contract BadgeBCS is Initializable, ERC721Upgradeable, PausableUpgradeable, Acce
     whenNotPaused
     override(ERC721Upgradeable)
   {
+    // comment this out if you want to disable NFT transfers
+    if (from != address(0)) {
+      require(false, "NFT Transfers are disabled");
+    }
     super._beforeTokenTransfer(from, to, tokenId);
   }
   // disable burns

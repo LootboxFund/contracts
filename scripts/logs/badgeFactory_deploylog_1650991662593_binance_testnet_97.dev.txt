@@ -1,0 +1,20 @@
+2022-04-26T16:47:43.950Z -  
+   
+ ---------- DEPLOY BADGE Factory for BlockchainSpace ----------
+   
+ ---- Script starting...
+ 
+ ---- Network:                             binance_testnet (Hex ID = 0x61)
+ ---- Lootbox DEV:                         0x5cf72D125e8be3eD2311E50cbbbc4d09C746516e
+ ---- Deployer (UNTRUSTED):                0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A
+ 
+   
+2022-04-26T16:47:43.951Z -  
+ Deploying USDC Starting Balance of 200000000000000000000
+ 
+   
+2022-04-26T16:51:31.473Z -  
+ Deployed USDC to 0x5410A8399df66FdbcBbA772a6Beeb8b49996bb99
+ 
+   
+2022-04-26T16:51:39.952Z - ---- 0x35c09601078f3CE89534991cDA32473857A0503d ---> Badge Factory for BlockchainSpace 

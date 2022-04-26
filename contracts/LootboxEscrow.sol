@@ -334,8 +334,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   /**
   * ------------------ END FUNDRAISING PERIOD ------------------
   *
-  *   endFundraising()
-  *   cancelFundraising()
   */
   function endFundraisingPeriod () public onlyRole(DAO_ROLE) nonReentrant whenNotPaused {
     require(isFundraising == true, "Fundraising period has already ended");
