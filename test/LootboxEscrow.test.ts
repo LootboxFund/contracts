@@ -22,7 +22,7 @@ import { BigNumber } from "ethers";
 
 // const BNB_ARCHIVED_PRICE = "41771363251"; // $417.36614642 USD per BNB
 
-describe.only("📦 LootboxEscrow smart contract", async function () {
+describe("📦 LootboxEscrow smart contract", async function () {
   let deployer: SignerWithAddress;
   let purchaser: SignerWithAddress;
   let issuingEntity: SignerWithAddress;
@@ -396,11 +396,11 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
       it("sets the player treasury address correctly", async () => {
         expect(await lootbox.treasury()).to.eq(entityTreasury.address);
       });
-      it("sets the sharePriceWei correctly", async () => {
-        expect(await lootbox.sharePriceWei()).to.eq(SHARE_PRICE_WEI);
-      });
       it("sets the base token URI correctly", async () => {
         expect(await lootbox.baseTokenURI()).to.eq(BASE_URI);
+      });
+      it("sets the sharePriceWei correctly", async () => {
+        expect(await lootbox.sharePriceWei()).to.eq(SHARE_PRICE_WEI);
       });
       it("sets the sharePriceWeiDecimals correctly", async () => {
         expect(await lootbox.sharePriceWeiDecimals()).to.eq(
@@ -466,7 +466,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
       }
     });
 
-    describe.only("tokenURI()", () => {
+    describe("tokenURI()", () => {
       it("returns the correct URI", async () => {
         const ticketId = "0";
         const ticketURI = await lootbox.tokenURI(ticketId);
