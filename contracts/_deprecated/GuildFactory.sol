@@ -2,7 +2,7 @@
 // https://forum.openzeppelin.com/t/uups-proxies-tutorial-solidity-javascript/7786
 
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.4;
+pragma solidity 0.8.13;
 
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -29,10 +29,10 @@ contract GuildFactory is Pausable, AccessControl {
 
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE"); // GuildFX DAO
     // bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE"); // GuildFX devs
-    bytes32 public constant GUILD_TOKEN_GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE"); // GuildFX devs
+    bytes32 public constant GUILD_TOKEN_GOVERNOR_ROLE =
+        keccak256("GOVERNOR_ROLE"); // GuildFX devs
     bytes32 public constant GUILD_OWNER_ROLE = keccak256("GUILD_OWNER_ROLE"); // People who can create a guild
-    bytes32 public constant GFX_STAFF_ROLE =
-        keccak256("GFX_STAFF_ROLE"); // GuildFX Staff members who can whitelist guild owners
+    bytes32 public constant GFX_STAFF_ROLE = keccak256("GFX_STAFF_ROLE"); // GuildFX Staff members who can whitelist guild owners
 
     // GuildFX constants
     address public fxConstants;
@@ -50,8 +50,16 @@ contract GuildFactory is Pausable, AccessControl {
         address indexed creator,
         address guildFactory
     );
-    event FactoryStaffWhitelist(address indexed staffMember, address indexed whitelistedBy, bool isActive);
-    event GuildOwnerWhitelist(address indexed guildOwner, address indexed whitelistedBy, bool isActive);
+    event FactoryStaffWhitelist(
+        address indexed staffMember,
+        address indexed whitelistedBy,
+        bool isActive
+    );
+    event GuildOwnerWhitelist(
+        address indexed guildOwner,
+        address indexed whitelistedBy,
+        bool isActive
+    );
 
     constructor(address dao, address _fxConstants) {
         require(dao != address(0), "DAO address cannot be zero");
@@ -82,7 +90,7 @@ contract GuildFactory is Pausable, AccessControl {
             guildDao,
             guildDev
         );
-        
+
         return (address(guildToken));
     }
 
@@ -96,7 +104,7 @@ contract GuildFactory is Pausable, AccessControl {
         require(bytes(guildSymbol).length != 0, "Guild symbol cannot be empty");
         require(guildDao != address(0), "DAO address cannot be zero");
         require(guildDev != address(0), "Developer address cannot be zero");
- 
+
         // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
         ERC1967Proxy proxy = new ERC1967Proxy(
             tokenImplementation,
