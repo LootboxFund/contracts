@@ -22,7 +22,7 @@ import { BigNumber } from "ethers";
 
 // const BNB_ARCHIVED_PRICE = "41771363251"; // $417.36614642 USD per BNB
 
-describe("📦 LootboxEscrow smart contract", async function () {
+describe.only("📦 LootboxEscrow smart contract", async function () {
   let deployer: SignerWithAddress;
   let purchaser: SignerWithAddress;
   let issuingEntity: SignerWithAddress;
@@ -30,7 +30,6 @@ describe("📦 LootboxEscrow smart contract", async function () {
   let developer: SignerWithAddress;
   let purchaser2: SignerWithAddress;
   let broker: SignerWithAddress;
-  let affiliate: SignerWithAddress;
 
   let Lootbox: LootboxEscrow__factory;
   let lootbox: LootboxEscrow;
@@ -50,7 +49,6 @@ describe("📦 LootboxEscrow smart contract", async function () {
   const SHARE_PRICE_WEI_DECIMALS = 18;
 
   const TICKET_PURCHASE_FEE = "2000000"; // 2%
-  const AFFILIATE_FEE = "500000"; // 1%
   const FEE_DECIMALS = 8;
 
   const USDC_STARTING_BALANCE = "10000000000000000000000";
@@ -104,19 +102,14 @@ describe("📦 LootboxEscrow smart contract", async function () {
     .mul(ethers.utils.parseUnits("0.90", 18))
     .div(shareDecimals);
 
-  // ether received by affiliate
-  const triggerLimitEtherAffiliateReceived = triggerLimitEtherPurchaseable
-    .mul(AFFILIATE_FEE)
-    .div(feeDecimal);
   // ether received by broker
   const triggerLimitEtherBrokerReceived = triggerLimitEtherPurchaseable
     .mul(TICKET_PURCHASE_FEE)
-    .div(feeDecimal)
-    .sub(triggerLimitEtherAffiliateReceived);
+    .div(feeDecimal);
   // ether received by escrow
-  const triggerLimitEtherTreasuryReceived = triggerLimitEtherPurchaseable
-    .sub(triggerLimitEtherBrokerReceived)
-    .sub(triggerLimitEtherAffiliateReceived);
+  const triggerLimitEtherTreasuryReceived = triggerLimitEtherPurchaseable.sub(
+    triggerLimitEtherBrokerReceived
+  );
   // number of shares sold
   const triggerLimitEtherSharesSoldCount = triggerLimitEtherPurchaseable
     .mul(shareDecimals)
@@ -126,7 +119,6 @@ describe("📦 LootboxEscrow smart contract", async function () {
     let entityTreasury: SignerWithAddress;
     let issuingEntity: SignerWithAddress;
     let broker: SignerWithAddress;
-    let affiliate: SignerWithAddress;
 
     beforeEach(async () => {
       Lootbox = await ethers.getContractFactory("LootboxEscrow");
@@ -144,7 +136,6 @@ describe("📦 LootboxEscrow smart contract", async function () {
       entityTreasury = _guildTreasury;
       issuingEntity = _guildDao;
       broker = _treasury;
-      affiliate = _dao;
     });
 
     it("Name cannot be empty", async () => {
@@ -160,7 +151,6 @@ describe("📦 LootboxEscrow smart contract", async function () {
           "2000000",
           "1000000",
           broker.address,
-          affiliate.address,
         ],
         { kind: "uups" }
       );
@@ -179,7 +169,6 @@ describe("📦 LootboxEscrow smart contract", async function () {
           "2000000",
           "1000000",
           broker.address,
-          affiliate.address,
         ],
         { kind: "uups" }
       );
@@ -198,34 +187,11 @@ describe("📦 LootboxEscrow smart contract", async function () {
           "100000001",
           "1000000",
           broker.address,
-          affiliate.address,
         ],
         { kind: "uups" }
       );
       await expect(lootbox).to.be.revertedWith(
         "Purchase ticket fee must be less than 100000000 (100%)"
-      );
-    });
-    it("Affiliate ticket fee must be less than or equal to purchase ticket fee", async () => {
-      const lootbox = upgrades.deployProxy(
-        Lootbox,
-        [
-          "Name",
-          "SYMBOL",
-          ethers.BigNumber.from("100000"),
-          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
-
-          entityTreasury.address,
-          issuingEntity.address,
-          "2000000",
-          "3000000",
-          broker.address,
-          affiliate.address,
-        ],
-        { kind: "uups" }
-      );
-      await expect(lootbox).to.be.revertedWith(
-        "Affiliate ticket fee must be less than or equal to purchase ticket fee"
       );
     });
     it("Treasury cannot be the zero address", async () => {
@@ -241,7 +207,6 @@ describe("📦 LootboxEscrow smart contract", async function () {
           "2000000",
           "1000000",
           broker.address,
-          affiliate.address,
         ],
         { kind: "uups" }
       );
@@ -262,7 +227,6 @@ describe("📦 LootboxEscrow smart contract", async function () {
           "2000000",
           "1000000",
           broker.address,
-          affiliate.address,
         ],
         { kind: "uups" }
       );
@@ -283,33 +247,11 @@ describe("📦 LootboxEscrow smart contract", async function () {
           "2000000",
           "1000000",
           ethers.constants.AddressZero,
-          affiliate.address,
         ],
         { kind: "uups" }
       );
       await expect(lootbox).to.be.revertedWith(
         "Broker cannot be the zero address"
-      );
-    });
-    it("Affiliate cannot be the zero address", async () => {
-      const lootbox = upgrades.deployProxy(
-        Lootbox,
-        [
-          "Name",
-          "SYMBOL",
-          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
-          ethers.utils.parseUnits(MAX_SHARES_AVAILABLE_FOR_SALE, "18"), // 50k shares, 18 decimals
-          entityTreasury.address,
-          issuingEntity.address,
-          "2000000",
-          "1000000",
-          broker.address,
-          ethers.constants.AddressZero,
-        ],
-        { kind: "uups" }
-      );
-      await expect(lootbox).to.be.revertedWith(
-        "Affiliate cannot be the zero address"
       );
     });
     it("Max shares sold must be greater than zero", async () => {
@@ -325,7 +267,6 @@ describe("📦 LootboxEscrow smart contract", async function () {
           "2000000",
           "1000000",
           broker.address,
-          affiliate.address,
         ],
         { kind: "uups" }
       );
@@ -346,7 +287,6 @@ describe("📦 LootboxEscrow smart contract", async function () {
           "2000000",
           "1000000",
           broker.address,
-          affiliate.address,
         ],
         { kind: "uups" }
       );
@@ -367,7 +307,6 @@ describe("📦 LootboxEscrow smart contract", async function () {
           "2000000",
           "1000000",
           broker.address,
-          affiliate.address,
         ],
         { kind: "uups" }
       );
@@ -398,7 +337,6 @@ describe("📦 LootboxEscrow smart contract", async function () {
       purchaser = _purchaser;
       purchaser2 = _gfxStaff;
       broker = _treasury;
-      affiliate = _dao;
 
       Bnb = await ethers.getContractFactory("BNB");
       Lootbox = await ethers.getContractFactory("LootboxEscrow");
@@ -416,9 +354,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
           entityTreasury.address, // address _treasury,
           issuingEntity.address, // address _issuingEntity,
           TICKET_PURCHASE_FEE, // uint256 _ticketPurchaseFee,
-          AFFILIATE_FEE, // uint256 _ticketAffiliateFee,
           broker.address, // address _broker,
-          affiliate.address, // address _affiliate
         ],
         { kind: "uups" }
       )) as LootboxEscrow;
@@ -2011,9 +1947,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
             entityTreasury.address
           );
           const startBrokerBalance = await provider.getBalance(broker.address);
-          const startAffiliateBalance = await provider.getBalance(
-            affiliate.address
-          );
+
           expect(await lootbox.ticketIdCounter()).to.eq("0");
 
           const tx = await lootbox.connect(purchaser).purchaseTicket({
@@ -2031,9 +1965,6 @@ describe("📦 LootboxEscrow smart contract", async function () {
             entityTreasury.address
           );
           const endBrokerBalance = await provider.getBalance(broker.address);
-          const endAffiliateBalance = await provider.getBalance(
-            affiliate.address
-          );
 
           expect(endPurchaserBalance).to.eq(
             startPurchaserBalance
@@ -2054,19 +1985,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
           );
           expect(endTreasuryBalance.toString()).to.eq(startTreasuryBalance);
 
-          const affiliateFee = ethers.BigNumber.from(AFFILIATE_FEE);
-          const affiliateFeeAmount = triggerLimitEtherPurchaseable
-            .mul(affiliateFee)
-            .div(
-              ethers.BigNumber.from("10").pow(
-                ethers.BigNumber.from(FEE_DECIMALS)
-              )
-            );
-          expect(endAffiliateBalance.toString()).to.eq(
-            startAffiliateBalance.add(affiliateFeeAmount)
-          );
-
-          const brokerFee = ticketPurchaseFee.sub(affiliateFee);
+          const brokerFee = ticketPurchaseFee;
           const brokerFeeAmount = triggerLimitEtherPurchaseable
             .mul(brokerFee)
             .div(
@@ -2095,15 +2014,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
           const treasuryReceivedAmount = buyAmountInEtherD.sub(
             ticketPurchaseFeeAmount
           );
-          const affiliateFee = ethers.BigNumber.from(AFFILIATE_FEE);
-          const affiliateFeeAmount = buyAmountInEtherD
-            .mul(affiliateFee)
-            .div(
-              ethers.BigNumber.from("10").pow(
-                ethers.BigNumber.from(FEE_DECIMALS)
-              )
-            );
-          const brokerFee = ticketPurchaseFee.sub(affiliateFee);
+          const brokerFee = ticketPurchaseFee;
           const brokerFeeAmount = buyAmountInEtherD
             .mul(brokerFee)
             .div(
@@ -2120,14 +2031,12 @@ describe("📦 LootboxEscrow smart contract", async function () {
             .withArgs(
               purchaser.address,
               entityTreasury.address,
-              affiliate.address,
               broker.address,
               lootbox.address,
               ticketId,
               buyAmountInEtherD.toString(),
               treasuryReceivedAmount,
               brokerFeeAmount,
-              affiliateFeeAmount,
               estimatedSharesReceived,
               SHARE_PRICE_WEI
             );
