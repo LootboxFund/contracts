@@ -222,8 +222,6 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     ticketPurchaseFee = _ticketPurchaseFee;
     broker = _broker;
 
-    baseTokenURI = _baseTokenURI;
-
     // Note: this converts the address into a LOWERCASE string
     string memory addressStr = Strings.toHexString(uint256(uint160(address(this))));
     _tokenURI = string.concat(_baseTokenURI, addressStr, ".json");
