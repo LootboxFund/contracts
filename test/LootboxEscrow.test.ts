@@ -22,7 +22,7 @@ import { BigNumber } from "ethers";
 
 // const BNB_ARCHIVED_PRICE = "41771363251"; // $417.36614642 USD per BNB
 
-describe("📦 LootboxEscrow smart contract", async function () {
+describe.only("📦 LootboxEscrow smart contract", async function () {
   let deployer: SignerWithAddress;
   let purchaser: SignerWithAddress;
   let issuingEntity: SignerWithAddress;
@@ -397,7 +397,9 @@ describe("📦 LootboxEscrow smart contract", async function () {
         expect(await lootbox.treasury()).to.eq(entityTreasury.address);
       });
       it("sets the base token URI correctly", async () => {
-        expect(await lootbox.baseTokenURI()).to.eq(BASE_URI);
+        expect(await lootbox._tokenURI()).to.eq(
+          `${BASE_URI}${lootbox.address.toLowerCase()}.json`
+        );
       });
       it("sets the sharePriceWei correctly", async () => {
         expect(await lootbox.sharePriceWei()).to.eq(SHARE_PRICE_WEI);
@@ -1549,14 +1551,6 @@ describe("📦 LootboxEscrow smart contract", async function () {
       //   expect(per3.toString()).to.eq(
       //     ethers.utils.parseUnits("0.5", shareOwnershipPercentageDecimals)
       //   );
-      // });
-      // it("retrieve tokenURI will return just the ticketId, without an https url", async () => {
-      //   const ticketId = "0";
-      //   await lootbox
-      //     .connect(purchaser)
-      //     .purchaseTicket({ value: buyAmountInEtherA1.toString() });
-      //   const tokenURI = await lootbox.tokenURI(ticketId);
-      //   expect(tokenURI).to.eq(ticketId);
       // });
       it("viewPurchasers() => can list out all investors", async () => {
         const beforePurchasers = await lootbox.viewPurchasers();

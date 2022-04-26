@@ -22,7 +22,7 @@ import { BigNumber } from "ethers";
 
 // const BNB_ARCHIVED_PRICE = "41771363251"; // $417.36614642 USD per BNB
 
-describe("📦 LootboxInstant smart contract", async function () {
+describe.only("📦 LootboxInstant smart contract", async function () {
   let deployer: SignerWithAddress;
   let purchaser: SignerWithAddress;
   let issuingEntity: SignerWithAddress;
@@ -373,7 +373,9 @@ describe("📦 LootboxInstant smart contract", async function () {
         expect(await lootbox.treasury()).to.eq(entityTreasury.address);
       });
       it("sets the base token URI correctly", async () => {
-        expect(await lootbox.baseTokenURI()).to.eq(BASE_URI);
+        expect(await lootbox._tokenURI()).to.eq(
+          `${BASE_URI}${lootbox.address.toLowerCase()}.json`
+        );
       });
       it("sets the sharePriceWei correctly", async () => {
         expect(await lootbox.sharePriceWei()).to.eq(SHARE_PRICE_WEI);
