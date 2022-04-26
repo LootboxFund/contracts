@@ -2,7 +2,7 @@
 // https://forum.openzeppelin.com/t/uups-proxies-tutorial-solidity-javascript/7786
 
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.4;
+pragma solidity 0.8.13;
 
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -30,13 +30,21 @@ contract CrowdSaleFactory is Pausable, AccessControl {
         address indexed crowdsaleAddress,
         address indexed guildToken,
         address indexed dao,
-        address developer, 
+        address developer,
         address treasury,
         uint256 startingPrice,
         address deployer
     );
-    event FactoryStaffWhitelist(address indexed staffMember, address indexed whitelistedBy, bool isActive);
-    event GuildOwnerWhitelist(address indexed guildOwner, address indexed whitelistedBy, bool isActive);
+    event FactoryStaffWhitelist(
+        address indexed staffMember,
+        address indexed whitelistedBy,
+        bool isActive
+    );
+    event GuildOwnerWhitelist(
+        address indexed guildOwner,
+        address indexed whitelistedBy,
+        bool isActive
+    );
 
     constructor(address dao, address _fxConstants) {
         require(dao != address(0), "DAO address cannot be zero");

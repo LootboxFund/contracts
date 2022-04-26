@@ -2,7 +2,7 @@
 // https://forum.openzeppelin.com/t/uups-proxies-tutorial-solidity-javascript/7786
 
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.4;
+pragma solidity 0.8.13;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
@@ -36,7 +36,7 @@ contract GuildToken is
     bytes32 public constant DEVELOPER_ROLE = keccak256("DEVELOPER_ROLE");
 
     // GOVERNOR_ROLE is able to whitelist mints & is also its own admin account
-    bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE");            
+    bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE");
 
     // variables
     address public fxConstants; // GuildFX constants smart contract
@@ -83,7 +83,7 @@ contract GuildToken is
         _grantRole(DAO_ROLE, _dao);
         _grantRole(GOVERNOR_ROLE, _dao);
         _grantRole(DEVELOPER_ROLE, _developer);
-        
+
         _setRoleAdmin(GOVERNOR_ROLE, GOVERNOR_ROLE); // Changes the GOVERNOR_ROLE's admin role to itself, so that GOVERNORS can assign new governors
 
         fxConstants = _fxConstants;
@@ -125,7 +125,11 @@ contract GuildToken is
         _mint(_recipient, _amount);
 
         // Mints a fee to GuildFX - fee set and treasury address set by the GuildFXConstants Contract
-        (uint256 _mintFeeAmount, uint256 _mintFeeRate, address _guildFXTreasury) = mintGuildAllocation(_amount);
+        (
+            uint256 _mintFeeAmount,
+            uint256 _mintFeeRate,
+            address _guildFXTreasury
+        ) = mintGuildAllocation(_amount);
         emit MintRequestFulfilled(
             msg.sender,
             _recipient,
@@ -140,7 +144,10 @@ contract GuildToken is
      * WARNING: This function will revoke the GOVERNOR_ROLE from the caller if granting the GOVERNOR_ROLE.
      *          Please see overide in .grantRole() for more details
      */
-    function transferGovernorAdminPrivileges(address account) public onlyRole(GOVERNOR_ROLE) {
+    function transferGovernorAdminPrivileges(address account)
+        public
+        onlyRole(GOVERNOR_ROLE)
+    {
         grantRole(GOVERNOR_ROLE, account);
     }
 
@@ -148,15 +155,18 @@ contract GuildToken is
      * Only addresses with the DEFAULT_ADMIN_ROLE or the GOVERNOR_ROLE (which is it's own admin) can call this.
      * In practice, only the GOVERNOR_ROLE will be able to call this becau se no-one has the DEFAULT_ADMIN_ROLE.
      * WARNING: This function will revoke the GOVERNOR_ROLE from the caller if granting the GOVERNOR_ROLE.
-     *          This is to ensure that only one GOVERNOR_ROLE (and it's admin) can exist. 
-    */
+     *          This is to ensure that only one GOVERNOR_ROLE (and it's admin) can exist.
+     */
     function grantRole(bytes32 role, address account)
         public
         virtual
         override
         onlyRole(getRoleAdmin(role)) /** onlyRole() and getRoleAdmin() are inherited from AccessControlUpgradeable */
     {
-        require(!hasRole(GOVERNOR_ROLE, account), "Account already has GOVERNOR_ROLE"); // To safeguard against locking access out
+        require(
+            !hasRole(GOVERNOR_ROLE, account),
+            "Account already has GOVERNOR_ROLE"
+        ); // To safeguard against locking access out
 
         super.grantRole(role, account);
         if (role == GOVERNOR_ROLE) {
@@ -169,8 +179,8 @@ contract GuildToken is
         internal
         override(ERC20Upgradeable)
     {
-      // Mints provided amount of tokens to the desired recipient
-      super._mint(to, amount);
+        // Mints provided amount of tokens to the desired recipient
+        super._mint(to, amount);
     }
 
     function _burn(address account, uint256 amount)
@@ -213,22 +223,40 @@ contract GuildToken is
 
     function mintGuildAllocation(uint256 _mintAmount)
         internal
-        returns (uint256 mintFeeAmount, uint256 mintFeeRate, address guildFXTreasury)
+        returns (
+            uint256 mintFeeAmount,
+            uint256 mintFeeRate,
+            address guildFXTreasury
+        )
     {
-        (uint256 _mintFeeAmount, uint256 _mintFeeRate, address _guildFXTreasury) = calculateGuildFXMintFee(_mintAmount);
+        (
+            uint256 _mintFeeAmount,
+            uint256 _mintFeeRate,
+            address _guildFXTreasury
+        ) = calculateGuildFXMintFee(_mintAmount);
         _mint(_guildFXTreasury, _mintFeeAmount);
 
         return (_mintFeeAmount, _mintFeeRate, _guildFXTreasury);
     }
 
-    function calculateGuildFXMintFee(uint256 _mintAmount) public view returns (uint256 mintFeeAmount, uint256 mintFeeRate, address guildFXTreasury) {
+    function calculateGuildFXMintFee(uint256 _mintAmount)
+        public
+        view
+        returns (
+            uint256 mintFeeAmount,
+            uint256 mintFeeRate,
+            address guildFXTreasury
+        )
+    {
         ICONSTANTS guildFXConstantsContract = ICONSTANTS(fxConstants);
         address _guildFXTreasury = guildFXConstantsContract.TREASURY();
 
         uint256 _mintFeeRate = guildFXConstantsContract.GUILD_FX_MINTING_FEE();
         uint8 _mintFeeDecimals = guildFXConstantsContract
             .GUILD_FX_MINTING_FEE_DECIMALS();
-        uint256 _mintFeeAmount = (_mintAmount / ((10**_mintFeeDecimals) - _mintFeeRate) * (10**_mintFeeDecimals)) - _mintAmount;
+        uint256 _mintFeeAmount = ((_mintAmount /
+            ((10**_mintFeeDecimals) - _mintFeeRate)) * (10**_mintFeeDecimals)) -
+            _mintAmount;
         return (_mintFeeAmount, _mintFeeRate, _guildFXTreasury);
     }
 
