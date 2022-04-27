@@ -13,8 +13,7 @@
     "deploy:escrowfactory": "npx hardhat run scripts/lootbox-escrow-factory.deploy.ts --network binance_testnet",
     "deploy:instantfactory:production": "npx hardhat run scripts/lootbox-instant-factory.deploy.ts --network binance_mainnet",
     "deploy:escrowfactory:production": "npx hardhat run scripts/lootbox-escrow-factory.deploy.ts --network binance_mainnet",
-    "clean": "rm -rf artifacts cache node_modules typechain",
-    "deploy:testnet:badge-factory": "npx hardhat run scripts/partnerships/badge-bcs.deploy.ts --network binance_testnet"
+    "clean": "rm -rf artifacts cache node_modules typechain"
   },
   "author": "",
   "license": "ISC",
