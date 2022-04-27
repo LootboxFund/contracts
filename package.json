@@ -9,11 +9,13 @@
     "size": "npx hardhat size-contracts",
     "geth-local": "npx hardhat node",
     "build": "yarn install && npx hardhat compile && npx hardhat typechain && yarn abi:publish",
-    "deploy:instantfactory": "npx hardhat run scripts/lootbox-instant-factory.deploy.ts --network binance_testnet",
-    "deploy:escrowfactory": "npx hardhat run scripts/lootbox-escrow-factory.deploy.ts --network binance_testnet",
-    "deploy:instantfactory:production": "npx hardhat run scripts/lootbox-instant-factory.deploy.ts --network binance_mainnet",
-    "deploy:escrowfactory:production": "npx hardhat run scripts/lootbox-escrow-factory.deploy.ts --network binance_mainnet",
-    "clean": "rm -rf artifacts cache node_modules typechain"
+    "deploy:instantfactory": "npx hardhat run scripts/lootbox-instant-factory.deploy.ts",
+    "deploy:escrowfactory": "npx hardhat run scripts/lootbox-escrow-factory.deploy.ts",
+    "clean": "rm -rf artifacts cache node_modules typechain",
+    "__deploy:instantfactory": "npx hardhat run scripts/lootbox-instant-factory.deploy.ts --network binance_testnet",
+    "__deploy:escrowfactory": "npx hardhat run scripts/lootbox-escrow-factory.deploy.ts --network binance_testnet",
+    "__deploy:instantfactory:production": "npx hardhat run scripts/lootbox-instant-factory.deploy.ts --network binance_mainnet",
+    "__deploy:escrowfactory:production": "npx hardhat run scripts/lootbox-escrow-factory.deploy.ts --network binance_mainnet"
   },
   "author": "",
   "license": "ISC",
