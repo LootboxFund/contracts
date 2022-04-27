@@ -29,6 +29,7 @@
 import { ethers, network } from "hardhat";
 import { sleep } from "@wormgraph/helpers";
 import { logToFile } from "./helpers/logger";
+import { buildBaseMetadataPath } from "./helpers/ticketMetadata";
 import { manifest } from "./manifest";
 
 const LOG_FILE_PATH = `${__dirname}/logs/deployLootboxEscrowFactory_log_${Date.now()}_${
@@ -39,10 +40,6 @@ const LOG_FILE_PATH = `${__dirname}/logs/deployLootboxEscrowFactory_log_${Date.n
  * -------------------- INITIALIZATION --------------------
  */
 const defaultFee = ethers.utils.parseUnits("0.032", 8 /* fee decimals */);
-const LootboxDAO = manifest.openZeppelin.multiSigs.LootboxDAO.address;
-const LootboxGrandTreasury =
-  manifest.openZeppelin.multiSigs.LootboxDAO_Treasury.address;
-const nativeTokenPriceFeed = manifest.chain.priceFeedUSD;
 
 // const LootboxDAO = "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F"
 // const LootboxGrandTreasury = "0x3D18304497e214F7F4760756D9F20061DC0699b3"
@@ -54,11 +51,28 @@ const nativeTokenPriceFeed = manifest.chain.priceFeedUSD;
 async function main() {
   const chainIdHex = `0x${network.config.chainId?.toString(16)}`;
 
-  if (chainIdHex !== manifest.chain.chainIDHex) {
+  // find the chain in the manifest
+  const chain = manifest.chains.find(
+    (chainRaw) => chainRaw.chainIdHex === chainIdHex
+  );
+
+  if (!chain) {
+    throw new Error(`Chain ${chainIdHex} not found in manifest`);
+  }
+
+  const LootboxDAO =
+    manifest.openZeppelin.multiSigs[chain.chainIdHex].LootboxDAO.address;
+  const LootboxGrandTreasury =
+    manifest.openZeppelin.multiSigs[chain.chainIdHex].LootboxDAO_Treasury
+      .address;
+
+  if (!LootboxDAO || !LootboxGrandTreasury) {
     throw new Error(
-      `Chain ID mismatch. Expected ${manifest.chain.chainIDHex} but got ${chainIdHex}`
+      "Lootbox DAO or Lootbox Grand Treasury not found in manifest"
     );
   }
+
+  const baseMetadataPath = buildBaseMetadataPath(chainIdHex);
 
   /**
    * IMPORTANT: Our hardhat config uses "untrusted" signers with a single private key.
@@ -78,9 +92,10 @@ async function main() {
 ---- Network:                             ${network.name} (Hex ID = ${chainIdHex})
 ---- Lootbox DAO (multisig):              ${LootboxDAO}
 ---- Lootbox Grand Treasury (multisig):   ${LootboxGrandTreasury}
----- Native Token Price Feed:             ${nativeTokenPriceFeed}
 ---- Default Fee:                         ${defaultFee}
 ---- Deployer (UNTRUSTED):                ${__untrustedDeployer.address}
+---- Base Metadata Path:                  ${baseMetadataPath}
+
 
   \n`,
     LOG_FILE_PATH
@@ -92,9 +107,9 @@ async function main() {
   );
   const lootboxFactory = await LootboxFactory.deploy(
     LootboxDAO,
-    nativeTokenPriceFeed,
     defaultFee.toString(),
-    LootboxGrandTreasury
+    LootboxGrandTreasury,
+    baseMetadataPath
   );
   await lootboxFactory.deployed();
   logToFile(
