@@ -30,6 +30,7 @@ describe("📦 LootboxInstantFactory", () => {
 
   const mockNativeTokenPriceFeed = "0x2514895c72f50D8bd4B4F9b1110F0D6bD2c97526";
   const ticketPurchaseFee = "2000000";
+  const BASE_URI = "https://storage.googleapis.com/lootbox-data-staging";
 
   before(async () => {
     LootboxFactory = await ethers.getContractFactory("LootboxInstantFactory");
@@ -66,7 +67,8 @@ describe("📦 LootboxInstantFactory", () => {
           LootboxFactory.deploy(
             ethers.constants.AddressZero,
             ticketPurchaseFee,
-            treasury.address
+            treasury.address,
+            BASE_URI
           )
         ).to.be.revertedWith("DAO Lootbox address cannot be zero");
       });
@@ -75,13 +77,19 @@ describe("📦 LootboxInstantFactory", () => {
           LootboxFactory.deploy(
             dao.address,
             ticketPurchaseFee,
-            ethers.constants.AddressZero
+            ethers.constants.AddressZero,
+            BASE_URI
           )
         ).to.be.revertedWith("Broker address cannot be zero");
       });
       it("Purchase ticket fee must be less than 100000000 (100%)", async () => {
         await expect(
-          LootboxFactory.deploy(dao.address, "100000001", treasury.address)
+          LootboxFactory.deploy(
+            dao.address,
+            "100000001",
+            treasury.address,
+            BASE_URI
+          )
         ).to.be.revertedWith(
           "Purchase ticket fee must be less than 100000000 (100%)"
         );
@@ -92,7 +100,8 @@ describe("📦 LootboxInstantFactory", () => {
         lootboxFactory = await LootboxFactory.deploy(
           dao.address,
           ticketPurchaseFee,
-          treasury.address
+          treasury.address,
+          BASE_URI
         );
         await lootboxFactory.deployed();
       });
@@ -126,7 +135,8 @@ describe("📦 LootboxInstantFactory", () => {
       lootboxFactory = await LootboxFactory.deploy(
         dao.address,
         TICKET_PURCHASE_FEE,
-        treasury.address
+        treasury.address,
+        BASE_URI
       );
       await lootboxFactory.deployed();
     });

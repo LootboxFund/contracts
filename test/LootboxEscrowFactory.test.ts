@@ -28,6 +28,7 @@ describe("📦 LootboxEscrowFactory", () => {
   let lootboxFactory: LootboxEscrowFactory;
 
   const ticketPurchaseFee = "2000000";
+  const BASE_URI = "https://storage.googleapis.com/lootbox-data-staging";
 
   before(async () => {
     LootboxFactory = await ethers.getContractFactory("LootboxEscrowFactory");
@@ -64,7 +65,8 @@ describe("📦 LootboxEscrowFactory", () => {
           LootboxFactory.deploy(
             ethers.constants.AddressZero,
             ticketPurchaseFee,
-            treasury.address
+            treasury.address,
+            BASE_URI
           )
         ).to.be.revertedWith("DAO Lootbox address cannot be zero");
       });
@@ -73,16 +75,32 @@ describe("📦 LootboxEscrowFactory", () => {
           LootboxFactory.deploy(
             dao.address,
             ticketPurchaseFee,
-            ethers.constants.AddressZero
+            ethers.constants.AddressZero,
+            BASE_URI
           )
         ).to.be.revertedWith("Broker address cannot be zero");
       });
       it("Purchase ticket fee must be less than 100000000 (100%)", async () => {
         await expect(
-          LootboxFactory.deploy(dao.address, "100000001", treasury.address)
+          LootboxFactory.deploy(
+            dao.address,
+            "100000001",
+            treasury.address,
+            BASE_URI
+          )
         ).to.be.revertedWith(
           "Purchase ticket fee must be less than 100000000 (100%)"
         );
+      });
+      it("Reverts if base URI is empty", async () => {
+        await expect(
+          LootboxFactory.deploy(
+            dao.address,
+            ticketPurchaseFee,
+            treasury.address,
+            ""
+          )
+        ).to.be.revertedWith("Base token URI cannot be empty");
       });
     });
     describe("constructor setup", async () => {
@@ -90,7 +108,8 @@ describe("📦 LootboxEscrowFactory", () => {
         lootboxFactory = await LootboxFactory.deploy(
           dao.address,
           ticketPurchaseFee,
-          treasury.address
+          treasury.address,
+          BASE_URI
         );
         await lootboxFactory.deployed();
       });
@@ -99,6 +118,9 @@ describe("📦 LootboxEscrowFactory", () => {
       });
       it("the Lootbox Implementation is public, anyone can see it", async () => {
         await expect(lootboxFactory.lootboxImplementation()).to.not.be.reverted;
+      });
+      it("should assign the baseTokenURI parameter correctly", async () => {
+        expect(await lootboxFactory.baseTokenURI()).to.eq(BASE_URI);
       });
       // it("the Broker address is hidden from public, only Lootbox DAO can see it", async () => {
       //   expect("brokerAddress" in lootboxFactory).to.be.false;
@@ -115,7 +137,8 @@ describe("📦 LootboxEscrowFactory", () => {
       lootboxFactory = await LootboxFactory.deploy(
         dao.address,
         ticketPurchaseFee,
-        treasury.address
+        treasury.address,
+        BASE_URI
       );
       await lootboxFactory.deployed();
     });
@@ -132,7 +155,8 @@ describe("📦 LootboxEscrowFactory", () => {
       lootboxFactory = await LootboxFactory.deploy(
         dao.address,
         ticketPurchaseFee,
-        treasury.address
+        treasury.address,
+        BASE_URI
       );
       await lootboxFactory.deployed();
     });

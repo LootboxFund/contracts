@@ -22,7 +22,7 @@ import { BigNumber } from "ethers";
 
 // const BNB_ARCHIVED_PRICE = "41771363251"; // $417.36614642 USD per BNB
 
-describe.only("📦 LootboxInstant smart contract", async function () {
+describe("📦 LootboxInstant smart contract", async function () {
   let deployer: SignerWithAddress;
   let purchaser: SignerWithAddress;
   let issuingEntity: SignerWithAddress;
@@ -47,7 +47,7 @@ describe.only("📦 LootboxInstant smart contract", async function () {
 
   const LOOTBOX_NAME = "Pinata Lootbox";
   const LOOTBOX_SYMBOL = "PINATA";
-  const BASE_URI = "https://storage.googleapis.com/lootbox-data-staging/";
+  const BASE_URI = "https://storage.googleapis.com/lootbox-data-staging";
 
   const SHARE_PRICE_WEI = "1000000000"; // $0.07 usd per share
   const SHARE_PRICE_WEI_DECIMALS = 18;
@@ -303,9 +303,7 @@ describe.only("📦 LootboxInstant smart contract", async function () {
           entityTreasury.address,
           issuingEntity.address,
           "2000000",
-          "1000000",
           broker.address,
-          affiliate.address,
         ],
         { kind: "uups" }
       );
@@ -374,7 +372,7 @@ describe.only("📦 LootboxInstant smart contract", async function () {
       });
       it("sets the base token URI correctly", async () => {
         expect(await lootbox._tokenURI()).to.eq(
-          `${BASE_URI}${lootbox.address.toLowerCase()}.json`
+          `${BASE_URI}/${lootbox.address.toLowerCase()}.json`
         );
       });
       it("sets the sharePriceWei correctly", async () => {
@@ -449,7 +447,7 @@ describe.only("📦 LootboxInstant smart contract", async function () {
         const ticketId = "0";
         const ticketURI = await lootbox.tokenURI(ticketId);
         expect(ticketURI).to.eq(
-          `${BASE_URI}${lootbox.address.toLowerCase()}.json`
+          `${BASE_URI}/${lootbox.address.toLowerCase()}.json`
         );
       });
     });

@@ -17,6 +17,7 @@ contract LootboxInstantFactory is Pausable, AccessControl {
 
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE"); // Lootbox Ltd
 
+    string public baseTokenURI;
     uint256 public immutable ticketPurchaseFee;
     address public immutable brokerAddress;
 
@@ -36,7 +37,8 @@ contract LootboxInstantFactory is Pausable, AccessControl {
     constructor(
         address _lootboxDao,
         uint256 _ticketPurchaseFee,
-        address _brokerAddress
+        address _brokerAddress,
+        string memory _baseTokenURI
     ) {
         require(
             _lootboxDao != address(0),
@@ -47,6 +49,10 @@ contract LootboxInstantFactory is Pausable, AccessControl {
             _ticketPurchaseFee < 100000000,
             "Purchase ticket fee must be less than 100000000 (100%)"
         );
+        require(
+            bytes(_baseTokenURI).length != 0,
+            "Base token URI cannot be empty"
+        );
 
         lootboxImplementation = address(new LootboxInstant());
 
@@ -54,6 +60,8 @@ contract LootboxInstantFactory is Pausable, AccessControl {
 
         ticketPurchaseFee = _ticketPurchaseFee;
         brokerAddress = _brokerAddress;
+
+        baseTokenURI = _baseTokenURI;
     }
 
     // function checkFactoryPrivateDetails() public view onlyRole(DAO_ROLE) returns (address _brokerAddress, uint256 _ticketPurchaseFee) {
@@ -97,6 +105,7 @@ contract LootboxInstantFactory is Pausable, AccessControl {
                 LootboxInstant(payable(address(0))).initialize.selector,
                 _lootboxName, // string memory _name,
                 _lootboxSymbol, // string memory _symbol,
+                baseTokenURI,
                 _targetSharesSold,
                 _maxSharesSold, // uint256 _maxSharesSold,
                 _treasury, // address _treasury,
