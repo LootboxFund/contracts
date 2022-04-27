@@ -38,7 +38,7 @@ const LOG_FILE_PATH = `${__dirname}/logs/deployLootboxInstantFactory_log_${Date.
 /**
  * -------------------- INITIALIZATION --------------------
  */
-const defaultFee = ethers.utils.parseUnits("0.02", 8 /* fee decimals */);
+const defaultFee = ethers.utils.parseUnits("0.032", 8 /* fee decimals */);
 const LootboxDAO = manifest.openZeppelin.multiSigs.LootboxDAO.address;
 const LootboxGrandTreasury =
   manifest.openZeppelin.multiSigs.LootboxDAO_Treasury.address;
@@ -93,7 +93,7 @@ async function main() {
   const lootboxFactory = await LootboxFactory.deploy(
     LootboxDAO,
     nativeTokenPriceFeed,
-    defaultFee,
+    defaultFee.toString(),
     LootboxGrandTreasury
   );
   await lootboxFactory.deployed();

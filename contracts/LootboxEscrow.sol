@@ -355,8 +355,13 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     (bool tsuccess,) = address(treasury).call{value: finalEscrowedAmount}("");
     require(tsuccess, "Treasury could not receive payment");
   } 
-  function cancelFundraiser() public onlyRole(DAO_ROLE) nonReentrant whenNotPaused{
+  function cancelFundraiser() public nonReentrant whenNotPaused{
     require(isFundraising == true, "Fundraising period has already ended");
+    if (block.timestamp - deploymentStartTime <= 60*60*24*30) {
+      // if the fundraiser was started less than 30 days ago, only the issuer can cancel it
+      require(hasRole(DAO_ROLE, msg.sender), "Only the issuer can cancel the fundraiser before 30 days");
+      // otherwise anyone can cancel it after 30 days
+    }
     isFundraising = false;
     uint256 refundAmount = escrowNativeAmount;
     escrowNativeAmount = 0;
