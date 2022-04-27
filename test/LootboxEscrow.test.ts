@@ -828,11 +828,11 @@ describe("📦 LootboxEscrow smart contract", async function () {
             "0"
           );
       });
-      it("only allows the DAO_ROLE to cancel the fundraiser", async () => {
+      it("only allows the DAO_ROLE to cancel the fundraiser before 30 days", async () => {
         await expect(
           lootbox.connect(deployer).cancelFundraiser()
         ).to.be.revertedWith(
-          generatePermissionRevokeMessage(deployer.address, DAO_ROLE)
+          "Only the issuer can cancel the fundraiser before 30 days"
         );
         await expect(lootbox.connect(issuingEntity).cancelFundraiser()).to.not
           .be.reverted;
@@ -850,6 +850,21 @@ describe("📦 LootboxEscrow smart contract", async function () {
             triggerLimitEtherTreasuryReceived,
             triggerLimitEtherSharesSoldCount
           );
+      });
+      it("public cannot cancel the fundraiser before 30 days", async () => {
+        const twentyNineDays = 29 * 24 * 60 * 60;
+        await ethers.provider.send("evm_increaseTime", [twentyNineDays]);
+        await expect(
+          lootbox.connect(deployer).cancelFundraiser()
+        ).to.be.revertedWith(
+          "Only the issuer can cancel the fundraiser before 30 days"
+        );
+      });
+      it("allows anyone to cancel the fundraiser after 30 days", async () => {
+        const thirtyDays = 30 * 24 * 60 * 60;
+        await ethers.provider.send("evm_increaseTime", [thirtyDays]);
+        await expect(lootbox.connect(deployer).cancelFundraiser()).to.not.be
+          .reverted;
       });
     });
 

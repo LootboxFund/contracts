@@ -38,7 +38,7 @@ const LOG_FILE_PATH = `${__dirname}/logs/deployLootboxEscrowFactory_log_${Date.n
 /**
  * -------------------- INITIALIZATION --------------------
  */
-const defaultFee = ethers.utils.parseUnits("0.02", 8 /* fee decimals */);
+const defaultFee = ethers.utils.parseUnits("0.032", 8 /* fee decimals */);
 const LootboxDAO = manifest.openZeppelin.multiSigs.LootboxDAO.address;
 const LootboxGrandTreasury =
   manifest.openZeppelin.multiSigs.LootboxDAO_Treasury.address;
@@ -52,7 +52,6 @@ const nativeTokenPriceFeed = manifest.chain.priceFeedUSD;
  * -------------------- DEPLOY SCRIPT --------------------
  */
 async function main() {
-  
   const chainIdHex = `0x${network.config.chainId?.toString(16)}`;
 
   if (chainIdHex !== manifest.chain.chainIDHex) {
@@ -94,7 +93,7 @@ async function main() {
   const lootboxFactory = await LootboxFactory.deploy(
     LootboxDAO,
     nativeTokenPriceFeed,
-    defaultFee,
+    defaultFee.toString(),
     LootboxGrandTreasury
   );
   await lootboxFactory.deployed();
