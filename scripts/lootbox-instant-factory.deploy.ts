@@ -51,8 +51,6 @@ const defaultFee = ethers.utils.parseUnits("0.032", 8 /* fee decimals */);
 async function main() {
   const chainIdHex = `0x${network.config.chainId?.toString(16)}`;
 
-  console.log("running the bish", network, network.name);
-
   // find the chain in the manifest
   const chain = manifest.chains.find(
     (chainRaw) => chainRaw.chainIdHex === chainIdHex
