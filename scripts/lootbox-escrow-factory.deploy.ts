@@ -29,7 +29,7 @@
 import { ethers, network } from "hardhat";
 import { sleep } from "@wormgraph/helpers";
 import { logToFile } from "./helpers/logger";
-import { buildBaseMetadataPath } from "./helpers/ticketMetadata";
+import { baseMetadataPath } from "./helpers/ticketMetadata";
 import { manifest } from "./manifest";
 
 const LOG_FILE_PATH = `${__dirname}/logs/deployLootboxEscrowFactory_log_${Date.now()}_${
@@ -71,8 +71,6 @@ async function main() {
       "Lootbox DAO or Lootbox Grand Treasury not found in manifest"
     );
   }
-
-  const baseMetadataPath = buildBaseMetadataPath(chainIdHex);
 
   /**
    * IMPORTANT: Our hardhat config uses "untrusted" signers with a single private key.
