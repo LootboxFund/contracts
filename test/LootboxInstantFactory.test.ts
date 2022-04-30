@@ -201,6 +201,9 @@ describe("📦 LootboxInstantFactory", () => {
       });
     });
     describe("createLootbox()", async () => {
+      it("has the expected semver", async () => {
+        expect(await lootboxFactory.semver()).to.eq("0.4.0-prod");
+      });
       it("Name cannot be empty", async () => {
         const lootbox = lootboxFactory.createLootbox(
           "",
