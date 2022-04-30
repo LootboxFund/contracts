@@ -72,7 +72,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
    * 
    */
   address public issuer;
-  uint256 public sharePriceWei;  // THIS SHOULD NOT BE MODIFIED (should be equal to 1 gwei, i.e. 1000000000)
+  uint256 public sharePriceWei;  // THIS SHOULD NOT BE MODIFIED (should be equal to 1 microether, i.e. 1000000000000)
   uint256 public sharePriceWeiDecimals; // THIS SHOULD NOT BE MODIFIED (should be equal to 18)
   uint256 public sharesSoldCount;
   uint256 public sharesSoldTarget;
@@ -207,7 +207,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     deploymentStartTime = block.timestamp;
     shareDecimals = 18;
     feeDecimals = 8;
-    sharePriceWei = 1000000000;
+    sharePriceWei = 1000000000000;
     sharePriceWeiDecimals = 18;
 
     nativeTokenRaisedTotal = 0;
