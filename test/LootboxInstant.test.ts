@@ -49,7 +49,7 @@ describe("📦 LootboxInstant smart contract", async function () {
   const LOOTBOX_SYMBOL = "PINATA";
   const BASE_URI = "https://storage.googleapis.com/lootbox-data-staging";
 
-  const SHARE_PRICE_WEI = "1000000000"; // $0.07 usd per share
+  const SHARE_PRICE_WEI = "1000000000000"; // $0.07 usd per share
   const SHARE_PRICE_WEI_DECIMALS = 18;
 
   const TICKET_PURCHASE_FEE = "2000000"; // 2%
