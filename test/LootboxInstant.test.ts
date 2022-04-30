@@ -59,8 +59,8 @@ describe("📦 LootboxInstant smart contract", async function () {
   const USDC_STARTING_BALANCE = "10000000000000000000000";
   const USDT_STARTING_BALANCE = "10000000000000000000000";
 
-  const TARGET_SHARES_AVAILABLE_FOR_SALE = "500000000";
-  const MAX_SHARES_AVAILABLE_FOR_SALE = "500000000";
+  const TARGET_SHARES_AVAILABLE_FOR_SALE = "500000";
+  const MAX_SHARES_AVAILABLE_FOR_SALE = "5000000";
 
   const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
   const buyAmountInEtherA2 = ethers.utils.parseUnits("0.00013560931", "ether");
