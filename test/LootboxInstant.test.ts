@@ -365,7 +365,7 @@ describe("📦 LootboxInstant smart contract", async function () {
 
     describe("basic details", async () => {
       it("has the expected semver", async () => {
-        expect(await lootbox.semver()).to.eq("0.3.0-prod");
+        expect(await lootbox.semver()).to.eq("0.4.0-demo");
       });
       it("sets the player treasury address correctly", async () => {
         expect(await lootbox.treasury()).to.eq(entityTreasury.address);
