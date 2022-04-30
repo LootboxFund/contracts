@@ -14,6 +14,7 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     address public immutable lootboxImplementation;
+    string public semver;
 
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE"); // Lootbox Ltd
 
@@ -62,6 +63,7 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
         brokerAddress = _brokerAddress;
 
         baseTokenURI = _baseTokenURI;
+        semver = "0.4.0-prod";
     }
 
     function createLootbox(

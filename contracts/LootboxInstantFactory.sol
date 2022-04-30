@@ -12,6 +12,7 @@ import "./LootboxInstant.sol";
 
 contract LootboxInstantFactory is Pausable, AccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
+    string public semver;
 
     address public immutable lootboxImplementation;
 
@@ -62,6 +63,8 @@ contract LootboxInstantFactory is Pausable, AccessControl {
         brokerAddress = _brokerAddress;
 
         baseTokenURI = _baseTokenURI;
+
+        semver = "0.4.0-prod";
     }
 
     // function checkFactoryPrivateDetails() public view onlyRole(DAO_ROLE) returns (address _brokerAddress, uint256 _ticketPurchaseFee) {
