@@ -28,18 +28,19 @@ contract BadgeFactoryBCS is Pausable, AccessControl {
     event BadgeCreated(
       string badgeName,
       address indexed badge,
-      address indexed issuer
+      address indexed issuer,
+      string _data
     );
  
     constructor(
       address _developer,
-      address _paymentToken,
+      // address _paymentToken,
       string memory _baseTokenURI
     ) {
-      require(_paymentToken != address(0), "Payment token cannot be zero address");
+      // require(_paymentToken != address(0), "Payment token cannot be zero address");
       require(bytes(_baseTokenURI).length != 0, "Base token URI cannot be empty");
 
-      paymentToken = _paymentToken;
+      // paymentToken = _paymentToken;
       semver = "0.0.1";
 
       _grantRole(DEV_ROLE, _developer);
@@ -52,14 +53,15 @@ contract BadgeFactoryBCS is Pausable, AccessControl {
     function createBadge(
         string memory _guildName,
         string memory _guildSymbol,
-        string memory _logoImageUrl
+        string memory _logoImageUrl,
+        string memory _data
     ) public whenNotPaused returns (address _lootbox) {
         require(bytes(_guildName).length != 0, "Guild name cannot be empty");
         require(bytes(_guildSymbol).length != 0, "Guild symbol cannot be empty");
 
-        IERC20 token = IERC20(paymentToken);
+        // IERC20 token = IERC20(paymentToken);
 
-        require(token.balanceOf(msg.sender) >= 200000000000000000000, "Must have at least 200 GUILD tokens to create a badge");
+        // require(token.balanceOf(msg.sender) >= 200000000000000000000, "Must have at least 200 GUILD tokens to create a badge");
 
         // See how to deploy upgradeable token here https://forum.openzeppelin.com/t/deploying-upgradeable-proxies-and-proxy-admin-from-factory-contract/12132/3
         ERC1967Proxy proxy = new ERC1967Proxy(
@@ -77,7 +79,8 @@ contract BadgeFactoryBCS is Pausable, AccessControl {
         emit BadgeCreated(
           _guildName,
           address(proxy),
-          msg.sender
+          msg.sender,
+          _data
         );
         return address(proxy);
     }

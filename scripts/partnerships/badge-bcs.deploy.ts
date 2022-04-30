@@ -64,19 +64,19 @@ async function main() {
     LOG_FILE_PATH
   );
 
-  const Usdc = await ethers.getContractFactory("USDC");
-  const usdc_stablecoin = await Usdc.deploy(0);
-  logToFile(
-    ` 
- Deployed USDC to ${usdc_stablecoin.address}
- 
-   \n`,
-    LOG_FILE_PATH
-  );
-  await usdc_stablecoin.mint(
-    LootboxDEV,
-    ethers.BigNumber.from(USDC_STARTING_BALANCE)
-  );
+  //   const Usdc = await ethers.getContractFactory("USDC");
+  //   const usdc_stablecoin = await Usdc.deploy(0);
+  //   logToFile(
+  //     `
+  //  Deployed USDC to ${usdc_stablecoin.address}
+
+  //    \n`,
+  //     LOG_FILE_PATH
+  //   );
+  //   await usdc_stablecoin.mint(
+  //     LootboxDEV,
+  //     ethers.BigNumber.from(USDC_STARTING_BALANCE)
+  //   );
 
   logToFile(
     ` 
@@ -86,13 +86,13 @@ async function main() {
     LOG_FILE_PATH
   );
 
-  PaymentToken = usdc_stablecoin.address;
+  // PaymentToken = usdc_stablecoin.address;
 
   // --------- Deploy CrowdSale Factory --------- //
   const BadgeBCS = await ethers.getContractFactory("BadgeFactoryBCS");
   const badgeFactoryBCS = await BadgeBCS.deploy(
     LootboxDEV,
-    PaymentToken,
+    // PaymentToken,
     baseTokenURI
   );
   await badgeFactoryBCS.deployed();
