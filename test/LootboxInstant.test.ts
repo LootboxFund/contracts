@@ -422,17 +422,23 @@ describe("📦 LootboxInstant smart contract", async function () {
       const vals = [
         // [stableCoinValue, expectedShares]
         [0, 0],
-        [ethers.utils.parseUnits("1", 4), ethers.utils.parseUnits("1", 13)],
-        [ethers.utils.parseUnits("0.5", 9), ethers.utils.parseUnits("0.5", 18)],
-        [ethers.utils.parseUnits("1", 9), ethers.utils.parseUnits("1", 18)],
-        [ethers.utils.parseUnits("1.5", 9), ethers.utils.parseUnits("1.5", 18)],
-        [ethers.utils.parseUnits("2", 9), ethers.utils.parseUnits("2", 18)],
-        [ethers.utils.parseUnits("10", 9), ethers.utils.parseUnits("10", 18)],
-        [ethers.utils.parseUnits("15", 9), ethers.utils.parseUnits("15", 18)],
-        [ethers.utils.parseUnits("1", 18), ethers.utils.parseUnits("1", 27)],
+        [ethers.utils.parseUnits("1", 4), ethers.utils.parseUnits("1", 10)],
+        [ethers.utils.parseUnits("0.5", 9), ethers.utils.parseUnits("0.5", 15)],
+        [ethers.utils.parseUnits("1", 9), ethers.utils.parseUnits("1", 15)],
+        [ethers.utils.parseUnits("1.5", 9), ethers.utils.parseUnits("1.5", 15)],
+        [ethers.utils.parseUnits("2", 9), ethers.utils.parseUnits("2", 15)],
+        [ethers.utils.parseUnits("10", 9), ethers.utils.parseUnits("10", 15)],
+        [ethers.utils.parseUnits("15", 9), ethers.utils.parseUnits("15", 15)],
+        [
+          ethers.utils.parseUnits("0.5", 12),
+          ethers.utils.parseUnits("0.5", 18),
+        ],
+        [ethers.utils.parseUnits("1", 12), ethers.utils.parseUnits("1", 18)],
+        [ethers.utils.parseUnits("2", 12), ethers.utils.parseUnits("2", 18)],
+        [ethers.utils.parseUnits("1", 18), ethers.utils.parseUnits("1", 24)],
         [
           ethers.utils.parseUnits("1.0000000005", 18),
-          ethers.utils.parseUnits("1.0000000005", 27),
+          ethers.utils.parseUnits("1.0000000005", 24),
         ],
       ];
 
