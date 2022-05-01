@@ -1,6 +1,6 @@
 {
   "name": "@lootboxfund/contracts",
-  "version": "0.2.5-demo",
+  "version": "0.4.0-demo",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -8,12 +8,15 @@
     "abi:publish": "ts-node ./scripts/helpers/uploadABIs.ts",
     "size": "npx hardhat size-contracts",
     "geth-local": "npx hardhat node",
-    "build": "yarn install && npx hardhat compile && npx hardhat typechain && yarn abi:publish",
-    "deploy:instantfactory": "npx hardhat run scripts/lootbox-instant-factory.deploy.ts --network binance_testnet",
-    "deploy:escrowfactory": "npx hardhat run scripts/lootbox-escrow-factory.deploy.ts --network binance_testnet",
-    "deploy:instantfactory:production": "npx hardhat run scripts/lootbox-instant-factory.deploy.ts --network binance_mainnet",
-    "deploy:escrowfactory:production": "npx hardhat run scripts/lootbox-escrow-factory.deploy.ts --network binance_mainnet",
-    "clean": "rm -rf artifacts cache node_modules typechain"
+    "build": "yarn install && npx hardhat compile && npx hardhat typechain",
+    "deploy:instantfactory": "npx hardhat run scripts/lootbox-instant-factory.deploy.ts",
+    "deploy:escrowfactory": "npx hardhat run scripts/lootbox-escrow-factory.deploy.ts",
+    "deploy:abi": "yarn abi:publish",
+    "clean": "rm -rf artifacts cache node_modules typechain",
+    "__deploy:instantfactory": "npx hardhat run scripts/lootbox-instant-factory.deploy.ts --network binance_testnet",
+    "__deploy:escrowfactory": "npx hardhat run scripts/lootbox-escrow-factory.deploy.ts --network binance_testnet",
+    "__deploy:instantfactory:production": "npx hardhat run scripts/lootbox-instant-factory.deploy.ts --network binance_mainnet",
+    "__deploy:escrowfactory:production": "npx hardhat run scripts/lootbox-escrow-factory.deploy.ts --network binance_mainnet"
   },
   "author": "",
   "license": "ISC",
@@ -62,8 +65,8 @@
     "@openzeppelin/contracts": "^4.4.2",
     "@openzeppelin/contracts-upgradeable": "^4.4.2",
     "@openzeppelin/hardhat-upgrades": "^1.12.0",
-    "@wormgraph/helpers": "0.1.1",
-    "@wormgraph/manifest": "0.3.25",
+    "@wormgraph/helpers": "0.1.7",
+    "@wormgraph/manifest": "0.3.40",
     "hardhat-contract-sizer": "^2.5.1",
     "lodash": "^4.17.21",
     "moralis": "^1.2.1"

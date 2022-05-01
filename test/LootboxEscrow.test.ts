@@ -29,6 +29,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
   let entityTreasury: SignerWithAddress;
   let developer: SignerWithAddress;
   let purchaser2: SignerWithAddress;
+  let purchaser3: SignerWithAddress;
   let broker: SignerWithAddress;
 
   let Lootbox: LootboxEscrow__factory;
@@ -46,7 +47,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
   const LOOTBOX_SYMBOL = "PINATA";
   const BASE_URI = "https://storage.googleapis.com/lootbox-data-staging";
 
-  const SHARE_PRICE_WEI = "1000000000"; // 1 gwei per share
+  const SHARE_PRICE_WEI = "1000000000000"; // 1 gwei per share
   const SHARE_PRICE_WEI_DECIMALS = 18;
 
   const TICKET_PURCHASE_FEE = "2000000"; // 2%
@@ -55,23 +56,8 @@ describe("📦 LootboxEscrow smart contract", async function () {
   const USDC_STARTING_BALANCE = "10000000000000000000000";
   const USDT_STARTING_BALANCE = "10000000000000000000000";
 
-  const TARGET_SHARES_AVAILABLE_FOR_SALE = "50000000";
-  const MAX_SHARES_AVAILABLE_FOR_SALE = "500000000";
-
-  const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
-  const buyAmountInEtherA2 = ethers.utils.parseUnits("0.00013560931", "ether");
-  const buyAmountInEtherB = ethers.utils.parseUnits("0.10013560931", "ether"); // equal to 50% if (A1+A2+B). becomes 25% when (A1+A2+B+C)
-  const buyAmountInEtherC = ethers.utils.parseUnits("0.20027121862", "ether"); // equal to 50% if (A1+A2+B+C)
-
-  const buyAmountInSharesA1 = buyAmountInEtherA1
-    .mul(ethers.utils.parseUnits("1", 18))
-    .div(SHARE_PRICE_WEI);
-  const buyAmountInSharesA2 = buyAmountInEtherA2
-    .mul(ethers.utils.parseUnits("1", 18))
-    .div(SHARE_PRICE_WEI);
-  const buyAmountInSharesB = buyAmountInEtherB
-    .mul(ethers.utils.parseUnits("1", 18))
-    .div(SHARE_PRICE_WEI);
+  const TARGET_SHARES_AVAILABLE_FOR_SALE = "500000";
+  const MAX_SHARES_AVAILABLE_FOR_SALE = "5000000";
 
   const depositAmountInEtherA1 = ethers.utils.parseUnits("1", "ether");
   const depositAmountInEtherA2 = ethers.utils.parseUnits("0.5", "ether");
@@ -114,6 +100,26 @@ describe("📦 LootboxEscrow smart contract", async function () {
   // number of shares sold
   const triggerLimitEtherSharesSoldCount = triggerLimitEtherPurchaseable
     .mul(shareDecimals)
+    .div(SHARE_PRICE_WEI);
+
+  // const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
+  // const buyAmountInEtherA2 = ethers.utils.parseUnits("0.00013560931", "ether");
+  // const buyAmountInEtherB = ethers.utils.parseUnits("0.10013560931", "ether"); // equal to 50% if (A1+A2+B). becomes 25% when (A1+A2+B+C)
+  // const buyAmountInEtherC = ethers.utils.parseUnits("0.20027121862", "ether"); // equal to 50% if (A1+A2+B+C)
+
+  const buyAmountInEtherA1 = triggerLimitEtherPurchaseable.mul(4).div(10);
+  const buyAmountInEtherA2 = triggerLimitEtherPurchaseable.mul(1).div(10);
+  const buyAmountInEtherB = triggerLimitEtherPurchaseable.mul(5).div(10);
+  const buyAmountInEtherC = triggerLimitEtherPurchaseable.mul(1).div(10);
+
+  const buyAmountInSharesA1 = buyAmountInEtherA1
+    .mul(ethers.utils.parseUnits("1", 18))
+    .div(SHARE_PRICE_WEI);
+  const buyAmountInSharesA2 = buyAmountInEtherA2
+    .mul(ethers.utils.parseUnits("1", 18))
+    .div(SHARE_PRICE_WEI);
+  const buyAmountInSharesB = buyAmountInEtherB
+    .mul(ethers.utils.parseUnits("1", 18))
     .div(SHARE_PRICE_WEI);
 
   describe("Before constructor & deployment", async () => {
@@ -358,6 +364,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
       developer = _developer;
       purchaser = _purchaser;
       purchaser2 = _gfxStaff;
+      purchaser3 = _guildDev;
       broker = _treasury;
 
       Bnb = await ethers.getContractFactory("BNB");
@@ -389,7 +396,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
 
     describe("basic details", async () => {
       it("has the expected semver", async () => {
-        expect(await lootbox.semver()).to.eq("0.3.0-prod");
+        expect(await lootbox.semver()).to.eq("0.4.0-demo");
       });
       it("sets the player treasury address correctly", async () => {
         expect(await lootbox.treasury()).to.eq(entityTreasury.address);
@@ -446,17 +453,23 @@ describe("📦 LootboxEscrow smart contract", async function () {
       const vals = [
         // [stableCoinValue, expectedShares]
         [0, 0],
-        [ethers.utils.parseUnits("1", 4), ethers.utils.parseUnits("1", 13)],
-        [ethers.utils.parseUnits("0.5", 9), ethers.utils.parseUnits("0.5", 18)],
-        [ethers.utils.parseUnits("1", 9), ethers.utils.parseUnits("1", 18)],
-        [ethers.utils.parseUnits("1.5", 9), ethers.utils.parseUnits("1.5", 18)],
-        [ethers.utils.parseUnits("2", 9), ethers.utils.parseUnits("2", 18)],
-        [ethers.utils.parseUnits("10", 9), ethers.utils.parseUnits("10", 18)],
-        [ethers.utils.parseUnits("15", 9), ethers.utils.parseUnits("15", 18)],
-        [ethers.utils.parseUnits("1", 18), ethers.utils.parseUnits("1", 27)],
+        [ethers.utils.parseUnits("1", 4), ethers.utils.parseUnits("1", 10)],
+        [ethers.utils.parseUnits("0.5", 9), ethers.utils.parseUnits("0.5", 15)],
+        [ethers.utils.parseUnits("1", 9), ethers.utils.parseUnits("1", 15)],
+        [ethers.utils.parseUnits("1.5", 9), ethers.utils.parseUnits("1.5", 15)],
+        [ethers.utils.parseUnits("2", 9), ethers.utils.parseUnits("2", 15)],
+        [ethers.utils.parseUnits("10", 9), ethers.utils.parseUnits("10", 15)],
+        [ethers.utils.parseUnits("15", 9), ethers.utils.parseUnits("15", 15)],
+        [
+          ethers.utils.parseUnits("0.5", 12),
+          ethers.utils.parseUnits("0.5", 18),
+        ],
+        [ethers.utils.parseUnits("1", 12), ethers.utils.parseUnits("1", 18)],
+        [ethers.utils.parseUnits("2", 12), ethers.utils.parseUnits("2", 18)],
+        [ethers.utils.parseUnits("1", 18), ethers.utils.parseUnits("1", 24)],
         [
           ethers.utils.parseUnits("1.0000000005", 18),
-          ethers.utils.parseUnits("1.0000000005", 27),
+          ethers.utils.parseUnits("1.0000000005", 24),
         ],
       ];
 
@@ -828,11 +841,11 @@ describe("📦 LootboxEscrow smart contract", async function () {
             "0"
           );
       });
-      it("only allows the DAO_ROLE to cancel the fundraiser", async () => {
+      it("only allows the DAO_ROLE to cancel the fundraiser before 30 days", async () => {
         await expect(
           lootbox.connect(deployer).cancelFundraiser()
         ).to.be.revertedWith(
-          generatePermissionRevokeMessage(deployer.address, DAO_ROLE)
+          "Only the issuer can cancel the fundraiser before 30 days"
         );
         await expect(lootbox.connect(issuingEntity).cancelFundraiser()).to.not
           .be.reverted;
@@ -850,6 +863,21 @@ describe("📦 LootboxEscrow smart contract", async function () {
             triggerLimitEtherTreasuryReceived,
             triggerLimitEtherSharesSoldCount
           );
+      });
+      it("public cannot cancel the fundraiser before 30 days", async () => {
+        const twentyNineDays = 29 * 24 * 60 * 60;
+        await ethers.provider.send("evm_increaseTime", [twentyNineDays]);
+        await expect(
+          lootbox.connect(deployer).cancelFundraiser()
+        ).to.be.revertedWith(
+          "Only the issuer can cancel the fundraiser before 30 days"
+        );
+      });
+      it("allows anyone to cancel the fundraiser after 30 days", async () => {
+        const thirtyDays = 30 * 24 * 60 * 60;
+        await ethers.provider.send("evm_increaseTime", [thirtyDays]);
+        await expect(lootbox.connect(deployer).cancelFundraiser()).to.not.be
+          .reverted;
       });
     });
 

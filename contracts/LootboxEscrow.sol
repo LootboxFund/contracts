@@ -73,7 +73,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
    */
   
   
-  uint256 public sharePriceWei;  // THIS SHOULD NOT BE MODIFIED (should be equal to 1 gwei, i.e. 1000000000 wei)
+  uint256 public sharePriceWei;  // THIS SHOULD NOT BE MODIFIED (should be equal to 1 microether, i.e. 1000000000000 wei)
   uint256 public sharePriceWeiDecimals;  // THIS SHOULD NOT BE MODIFIED (should be equal to 18)
   uint256 public sharesSoldCount;
   uint256 public sharesSoldTarget;
@@ -198,7 +198,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   ) initializer public {
 
     variant = "Escrow";
-    semver = "0.3.0-prod";
+    semver = "0.4.0-demo";
 
     bytes memory tempEmptyNameTest = bytes(_name);
     bytes memory tempEmptySymbolTest = bytes(_symbol);
@@ -225,7 +225,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     deploymentStartTime = block.timestamp;
     shareDecimals = 18;
     feeDecimals = 8;
-    sharePriceWei = 1000000000;
+    sharePriceWei = 1000000000000;
     sharePriceWeiDecimals = 18;
 
     nativeTokenRaisedTotal = 0;
@@ -355,8 +355,13 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     (bool tsuccess,) = address(treasury).call{value: finalEscrowedAmount}("");
     require(tsuccess, "Treasury could not receive payment");
   } 
-  function cancelFundraiser() public onlyRole(DAO_ROLE) nonReentrant whenNotPaused{
+  function cancelFundraiser() public nonReentrant whenNotPaused{
     require(isFundraising == true, "Fundraising period has already ended");
+    if (block.timestamp - deploymentStartTime <= 60*60*24*30) {
+      // if the fundraiser was started less than 30 days ago, only the issuer can cancel it
+      require(hasRole(DAO_ROLE, msg.sender), "Only the issuer can cancel the fundraiser before 30 days");
+      // otherwise anyone can cancel it after 30 days
+    }
     isFundraising = false;
     uint256 refundAmount = escrowNativeAmount;
     escrowNativeAmount = 0;

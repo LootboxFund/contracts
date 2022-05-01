@@ -1333,28 +1333,20 @@
   resolved "https://registry.yarnpkg.com/@ungap/promise-all-settled/-/promise-all-settled-1.1.2.tgz#aa58042711d6e3275dd37dc597e5d31e8c290a44"
   integrity sha512-sL/cEvJWAnClXw0wHk85/2L0G6Sj8UB0Ctc1TEMbKSsmpRosqhwj9gWgFRZSrBr2f9tiXISwNhCPmlfqUqyb9Q==
 
-"@wormgraph/helpers@0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@wormgraph/helpers/-/helpers-0.1.1.tgz#ce3864a245def07c6f088dde85ff8db59774af0d"
-  integrity sha512-p8n7U63C+JZVe/hw7q2x8JwXRYedTGOR2IrKqxHaXtz1k5pSDHA9ObxuyYEQLUmFnsMiQidXnRIRR3mGDD/BFQ==
+"@wormgraph/helpers@0.1.7":
+  version "0.1.7"
+  resolved "https://registry.yarnpkg.com/@wormgraph/helpers/-/helpers-0.1.7.tgz#4c96deee0229bee0b28d671bd4b7841db9f55200"
+  integrity sha512-A+tMIwwgUUcxDy1YIShO/V9zdlDfHT8hpYSkQub0O+MFo7JzCnqpaNawaSCLnBlseArNcPF8KlggYr0Wa87KTw==
   dependencies:
     axios "0.25.0"
     lodash "4.17.21"
 
-"@wormgraph/helpers@0.1.2":
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/@wormgraph/helpers/-/helpers-0.1.2.tgz#d3bf884961e787625222db9a0dae0ea1a92420d3"
-  integrity sha512-SU7nbVK8/QBkjr2IX5Y/IfROlSeiNnkx+5GXGyn3zh0YTxhAv8rFgkksWyEFKXOT/rGqufucFRyxxAmycQhSGA==
+"@wormgraph/manifest@0.3.40":
+  version "0.3.40"
+  resolved "https://registry.yarnpkg.com/@wormgraph/manifest/-/manifest-0.3.40.tgz#236af219b2ee67ec49c884657e126676959aab29"
+  integrity sha512-B1sMNZVbdy2lbGkffgQztsdKfBB2+y39SgfDV3Ic8cxYNbbO4puBBvk4qiis7lxIEFBOXWHJWHR5CbA96gJQ9w==
   dependencies:
-    axios "0.25.0"
-    lodash "4.17.21"
-
-"@wormgraph/manifest@0.3.25":
-  version "0.3.25"
-  resolved "https://registry.yarnpkg.com/@wormgraph/manifest/-/manifest-0.3.25.tgz#8fe263e366e0ba6f8e01d689d3c4657853b6324e"
-  integrity sha512-BertuEM4P1jNbkwW1RtCS9PaQfrwnUIB8o0pULsWmsHbRp9hPjOnL7iyLbyObn3ecyQKGiagyghr+62uxtz6PA==
-  dependencies:
-    "@wormgraph/helpers" "0.1.2"
+    "@wormgraph/helpers" "0.1.7"
 
 "@yarnpkg/lockfile@^1.1.0":
   version "1.1.0"

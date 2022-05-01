@@ -49,7 +49,7 @@ describe("📦 LootboxInstant smart contract", async function () {
   const LOOTBOX_SYMBOL = "PINATA";
   const BASE_URI = "https://storage.googleapis.com/lootbox-data-staging";
 
-  const SHARE_PRICE_WEI = "1000000000"; // $0.07 usd per share
+  const SHARE_PRICE_WEI = "1000000000000"; // $0.07 usd per share
   const SHARE_PRICE_WEI_DECIMALS = 18;
 
   const TICKET_PURCHASE_FEE = "2000000"; // 2%
@@ -59,8 +59,8 @@ describe("📦 LootboxInstant smart contract", async function () {
   const USDC_STARTING_BALANCE = "10000000000000000000000";
   const USDT_STARTING_BALANCE = "10000000000000000000000";
 
-  const TARGET_SHARES_AVAILABLE_FOR_SALE = "500000000";
-  const MAX_SHARES_AVAILABLE_FOR_SALE = "500000000";
+  const TARGET_SHARES_AVAILABLE_FOR_SALE = "500000";
+  const MAX_SHARES_AVAILABLE_FOR_SALE = "5000000";
 
   const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
   const buyAmountInEtherA2 = ethers.utils.parseUnits("0.00013560931", "ether");
@@ -365,7 +365,7 @@ describe("📦 LootboxInstant smart contract", async function () {
 
     describe("basic details", async () => {
       it("has the expected semver", async () => {
-        expect(await lootbox.semver()).to.eq("0.3.0-prod");
+        expect(await lootbox.semver()).to.eq("0.4.0-demo");
       });
       it("sets the player treasury address correctly", async () => {
         expect(await lootbox.treasury()).to.eq(entityTreasury.address);
@@ -422,17 +422,23 @@ describe("📦 LootboxInstant smart contract", async function () {
       const vals = [
         // [stableCoinValue, expectedShares]
         [0, 0],
-        [ethers.utils.parseUnits("1", 4), ethers.utils.parseUnits("1", 13)],
-        [ethers.utils.parseUnits("0.5", 9), ethers.utils.parseUnits("0.5", 18)],
-        [ethers.utils.parseUnits("1", 9), ethers.utils.parseUnits("1", 18)],
-        [ethers.utils.parseUnits("1.5", 9), ethers.utils.parseUnits("1.5", 18)],
-        [ethers.utils.parseUnits("2", 9), ethers.utils.parseUnits("2", 18)],
-        [ethers.utils.parseUnits("10", 9), ethers.utils.parseUnits("10", 18)],
-        [ethers.utils.parseUnits("15", 9), ethers.utils.parseUnits("15", 18)],
-        [ethers.utils.parseUnits("1", 18), ethers.utils.parseUnits("1", 27)],
+        [ethers.utils.parseUnits("1", 4), ethers.utils.parseUnits("1", 10)],
+        [ethers.utils.parseUnits("0.5", 9), ethers.utils.parseUnits("0.5", 15)],
+        [ethers.utils.parseUnits("1", 9), ethers.utils.parseUnits("1", 15)],
+        [ethers.utils.parseUnits("1.5", 9), ethers.utils.parseUnits("1.5", 15)],
+        [ethers.utils.parseUnits("2", 9), ethers.utils.parseUnits("2", 15)],
+        [ethers.utils.parseUnits("10", 9), ethers.utils.parseUnits("10", 15)],
+        [ethers.utils.parseUnits("15", 9), ethers.utils.parseUnits("15", 15)],
+        [
+          ethers.utils.parseUnits("0.5", 12),
+          ethers.utils.parseUnits("0.5", 18),
+        ],
+        [ethers.utils.parseUnits("1", 12), ethers.utils.parseUnits("1", 18)],
+        [ethers.utils.parseUnits("2", 12), ethers.utils.parseUnits("2", 18)],
+        [ethers.utils.parseUnits("1", 18), ethers.utils.parseUnits("1", 24)],
         [
           ethers.utils.parseUnits("1.0000000005", 18),
-          ethers.utils.parseUnits("1.0000000005", 27),
+          ethers.utils.parseUnits("1.0000000005", 24),
         ],
       ];
 
