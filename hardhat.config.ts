@@ -32,13 +32,11 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
-    // binance_mainnet: {
-    //   chainId: 56,
-    //   url: `https://bsc-dataseed.binance.org`,
-    //   accounts: [
-    //     `${process.env.PROD_DEPLOYER_PRIVATE_KEY}`
-    //   ],
-    // },
+    binance_mainnet: {
+      chainId: 56,
+      url: `https://bsc-dataseed.binance.org`,
+      accounts: [`${process.env.PROD_DEPLOYER_PRIVATE_KEY}`],
+    },
     binance_testnet: {
       chainId: 97,
       url: `https://speedy-nodes-nyc.moralis.io/cfd85a5f6e8635607e954ada/bsc/testnet`,
@@ -69,12 +67,6 @@ const config: HardhatUserConfig = {
         `${process.env.DEV_GUILD_TREASURY_PRIVATE_KEY}`,
       ],
     },
-    hardhat: {
-      forking: {
-        url: "https://speedy-nodes-nyc.moralis.io/57684cf9b961b9d7fd2da53a/bsc/mainnet/archive",
-        blockNumber: 16411871,
-      },
-    },
     mumbai_testnet: {
       chainId: 80001,
       url: `https://speedy-nodes-nyc.moralis.io/cfd85a5f6e8635607e954ada/polygon/mumbai`,
@@ -89,6 +81,17 @@ const config: HardhatUserConfig = {
         `${process.env.DEV_GUILD_DEV_PRIVATE_KEY}`,
         `${process.env.DEV_GUILD_TREASURY_PRIVATE_KEY}`,
       ],
+    },
+    polygon: {
+      chainId: 137,
+      url: `https://polygon-rpc.com`,
+      accounts: [`${process.env.PROD_DEPLOYER_PRIVATE_KEY}`],
+    },
+    hardhat: {
+      forking: {
+        url: "https://speedy-nodes-nyc.moralis.io/57684cf9b961b9d7fd2da53a/bsc/mainnet/archive",
+        blockNumber: 16411871,
+      },
     },
   },
   gasReporter: {
