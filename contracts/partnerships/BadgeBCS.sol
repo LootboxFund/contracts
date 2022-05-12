@@ -65,7 +65,9 @@ contract BadgeBCS is Initializable, ERC721Upgradeable, PausableUpgradeable, Acce
   mapping(address => bool) public whoMintedMapping;
   event MintBadge(
     address indexed purchaser,
-    uint256 ticketId
+    uint256 ticketId,
+    string memberName,
+    string _data
   );
 
   /** ------------------ CONSTRUCTOR ------------------
@@ -109,10 +111,18 @@ contract BadgeBCS is Initializable, ERC721Upgradeable, PausableUpgradeable, Acce
   }
 
   // mint badge
-  function mintBadge () public payable nonReentrant whenNotPaused returns (uint256 _badgeId) {
+  function mintBadge (string memory memberName, string memory _data) public payable nonReentrant whenNotPaused returns (uint256 _badgeId) {
+    require(bytes(memberName).length != 0, "Member name cannot be empty");
+    require(bytes(_data).length != 0, "Data cannot be empty");
     require(whoMintedMapping[msg.sender] != true, "Each address can only mint a badge once.");
     uint256 badgeId = mintedCount.current();
     mintedCount.increment();
+    emit MintBadge(
+      msg.sender,
+      badgeId,
+      memberName,
+      _data
+    );
     // mint the NFT ticket
     _safeMint(msg.sender, badgeId);
     return (badgeId);

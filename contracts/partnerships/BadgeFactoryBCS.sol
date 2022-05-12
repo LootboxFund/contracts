@@ -58,6 +58,8 @@ contract BadgeFactoryBCS is Pausable, AccessControl {
     ) public whenNotPaused returns (address _lootbox) {
         require(bytes(_guildName).length != 0, "Guild name cannot be empty");
         require(bytes(_guildSymbol).length != 0, "Guild symbol cannot be empty");
+        require(bytes(_logoImageUrl).length != 0, "Logo image url cannot be empty");
+        require(bytes(_data).length != 0, "Data cannot be empty");
 
         // IERC20 token = IERC20(paymentToken);
 

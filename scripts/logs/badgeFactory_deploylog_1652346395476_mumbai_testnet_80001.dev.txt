@@ -1,0 +1,20 @@
+2022-05-12T09:06:36.373Z -  
+   
+ ---------- DEPLOY BADGE Factory for BlockchainSpace ----------
+   
+ ---- Script starting...
+ 
+ ---- Network:                             mumbai_testnet (Hex ID = 0x61)
+ ---- Lootbox DEV:                         0x5cf72D125e8be3eD2311E50cbbbc4d09C746516e
+ ---- Deployer (UNTRUSTED):                0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A
+ 
+   
+2022-05-12T09:06:36.422Z -  
+ Deploying USDC Starting Balance of 200000000000000000000
+ 
+   
+2022-05-12T09:06:36.423Z -  
+ Minted 200000000000000000000 to 0x5cf72D125e8be3eD2311E50cbbbc4d09C746516e
+ 
+   
+2022-05-12T09:06:51.311Z - ---- 0xC08C690963A81097A769049858A832b4db310a8A ---> Badge Factory for BlockchainSpace 
