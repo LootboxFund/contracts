@@ -20,17 +20,12 @@ const LOG_FILE_PATH = `${__dirname}/../logs/badgeFactory_deploylog_${Date.now()}
  */
 const LootboxDEV = "0x5cf72D125e8be3eD2311E50cbbbc4d09C746516e";
 let PaymentToken = "0x000000000000000000000000000000000000000";
-const chainIdHex = "0x61";
-const baseTokenURI = "https://images.com";
+const baseTokenURI = "https://storage.googleapis.com/badge-bcs-uri";
 
 /**
  * -------------------- DEPLOY SCRIPT --------------------
  */
 async function main() {
-  if (!chainIdHex) {
-    throw new Error(`Chain ID "${chainIdHex}" was invalid`);
-  }
-
   /**
    * IMPORTANT: Our hardhat config uses "untrusted" signers with a single private key.
    *            However, we have "trusted" guild fx accounts which are secure multisigs created in Openzeppelin Defender.
@@ -46,7 +41,7 @@ async function main() {
    
  ---- Script starting...
  
- ---- Network:                             ${network.name} (Hex ID = ${chainIdHex})
+ ---- Network:                             ${network.name} (Hex ID = )
  ---- Lootbox DEV:                         ${LootboxDEV}
  ---- Deployer (UNTRUSTED):                ${__untrustedDeployer.address}
  
