@@ -117,6 +117,7 @@ contract BadgeBCS is Initializable, ERC721Upgradeable, PausableUpgradeable, Acce
     require(whoMintedMapping[msg.sender] != true, "Each address can only mint a badge once.");
     uint256 badgeId = mintedCount.current();
     mintedCount.increment();
+    whoMintedMapping[msg.sender] = true;
     emit MintBadge(
       msg.sender,
       badgeId,
