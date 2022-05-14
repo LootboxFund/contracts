@@ -504,7 +504,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     uint256 trappedTokens = checkForTrappedNativeTokens();
     if (trappedTokens > 0) {
       (bool success,) = address(treasury).call{value: trappedTokens}("");
-      require(success, "Trasury could not receive trapped tokens");
+      require(success, "Treasury could not receive trapped tokens");
     }
   }
   function checkForTrappedErc20Tokens(address erc20Token) public view returns (uint256 _trappedTokens) {
