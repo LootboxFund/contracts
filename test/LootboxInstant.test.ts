@@ -54,6 +54,7 @@ describe("📦 LootboxInstant smart contract", async function () {
 
   const TICKET_PURCHASE_FEE = "2000000"; // 2%
   const FEE_DECIMALS = 8;
+  const feeDecimal = ethers.utils.parseUnits("1", FEE_DECIMALS);
 
   const HARDHAT_TYPICAL_STARTING_NATIVE_BALANCE = "10000000000000000000000";
   const USDC_STARTING_BALANCE = "10000000000000000000000";
@@ -63,21 +64,35 @@ describe("📦 LootboxInstant smart contract", async function () {
   const MAX_SHARES_AVAILABLE_FOR_SALE = "5000000";
 
   const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
+  const feeEtherA1 = buyAmountInEtherA1
+    .mul(TICKET_PURCHASE_FEE)
+    .div(feeDecimal);
   const buyAmountInEtherA2 = ethers.utils.parseUnits("0.00013560931", "ether");
+  const feeEtherA2 = buyAmountInEtherA2
+    .mul(TICKET_PURCHASE_FEE)
+    .div(feeDecimal);
   const buyAmountInEtherA3 = ethers.utils.parseUnits("0.2", "ether");
+  const feeEtherA3 = buyAmountInEtherA3
+    .mul(TICKET_PURCHASE_FEE)
+    .div(feeDecimal);
   const buyAmountInEtherB = ethers.utils.parseUnits("0.10013560931", "ether"); // equal to 50% if (A1+A2+B). becomes 25% when (A1+A2+B+C)
+  const feeEtherB = buyAmountInEtherB.mul(TICKET_PURCHASE_FEE).div(feeDecimal);
   const buyAmountInEtherC = ethers.utils.parseUnits("0.20027121862", "ether"); // equal to 50% if (A1+A2+B+C)
 
   const buyAmountInSharesA1 = buyAmountInEtherA1
+    .sub(feeEtherA1)
     .mul(ethers.utils.parseUnits("1", 18))
     .div(SHARE_PRICE_WEI);
   const buyAmountInSharesA2 = buyAmountInEtherA2
+    .sub(feeEtherA2)
     .mul(ethers.utils.parseUnits("1", 18))
     .div(SHARE_PRICE_WEI);
   const buyAmountInSharesA3 = buyAmountInEtherA3
+    .sub(feeEtherA3)
     .mul(ethers.utils.parseUnits("1", 18))
     .div(SHARE_PRICE_WEI);
   const buyAmountInSharesB = buyAmountInEtherB
+    .sub(feeEtherB)
     .mul(ethers.utils.parseUnits("1", 18))
     .div(SHARE_PRICE_WEI);
 
@@ -563,7 +578,12 @@ describe("📦 LootboxInstant smart contract", async function () {
       });
       it("increments the nativeTokenRaisedTotal", async () => {
         expect((await lootbox.nativeTokenRaisedTotal()).toString()).to.eq(
-          buyAmountInEtherA1.add(buyAmountInEtherA2).add(buyAmountInEtherB)
+          buyAmountInEtherA1
+            .add(buyAmountInEtherA2)
+            .add(buyAmountInEtherB)
+            .sub(feeEtherA1)
+            .sub(feeEtherA2)
+            .sub(feeEtherB)
         );
       });
       it("emits a purchase event", async () => {
@@ -601,7 +621,7 @@ describe("📦 LootboxInstant smart contract", async function () {
           .connect(purchaser)
           .purchaseTicket({ value: buyAmountInEtherA1.toString() });
         const sharesPurchased = await lootbox.estimateSharesPurchase(
-          buyAmountInEtherA1.toString()
+          buyAmountInEtherA1.sub(feeEtherA1).toString()
         );
         const afterRemainingShares =
           await lootbox.checkMaxSharesRemainingForSale();
@@ -620,7 +640,7 @@ describe("📦 LootboxInstant smart contract", async function () {
           .connect(purchaser)
           .purchaseTicket({ value: buyAmountInEtherA1.toString() });
         const round1SharesPurchased = await lootbox.estimateSharesPurchase(
-          buyAmountInEtherA1.toString()
+          buyAmountInEtherA1.sub(feeEtherA1).toString()
         );
         const round1RemainingShares =
           await lootbox.checkMaxSharesRemainingForSale();
@@ -632,7 +652,7 @@ describe("📦 LootboxInstant smart contract", async function () {
           .connect(purchaser)
           .purchaseTicket({ value: buyAmountInEtherA2.toString() });
         const round2SharesPurchased = await lootbox.estimateSharesPurchase(
-          buyAmountInEtherA2.toString()
+          buyAmountInEtherA2.sub(feeEtherA2).toString()
         );
         const round2RemainingShares =
           await lootbox.checkMaxSharesRemainingForSale();
@@ -644,7 +664,7 @@ describe("📦 LootboxInstant smart contract", async function () {
           .connect(purchaser)
           .purchaseTicket({ value: buyAmountInEtherB.toString() });
         const round3SharesPurchased = await lootbox.estimateSharesPurchase(
-          buyAmountInEtherB.toString()
+          buyAmountInEtherB.sub(feeEtherB).toString()
         );
         const round3RemainingShares =
           await lootbox.checkMaxSharesRemainingForSale();
@@ -653,7 +673,6 @@ describe("📦 LootboxInstant smart contract", async function () {
         );
       });
       it("rejects purchase attempts exceeding the max shares remaining for sale", async () => {
-        const priceFeedDecimalsUSD = ethers.utils.parseUnits("1", 8);
         const sharePriceWei = await lootbox.sharePriceWei();
 
         const remainingShares = await lootbox.checkMaxSharesRemainingForSale();
@@ -662,9 +681,13 @@ describe("📦 LootboxInstant smart contract", async function () {
           ethers.utils.parseUnits("1", 18)
         );
 
-        const buyExcessWithNativeToken = excessSharesPurchase
+        const buyExcessWithNativeTokenWithoutFee = excessSharesPurchase
           .mul(sharePriceWei)
           .div(ethers.utils.parseUnits("1", 18));
+
+        const buyExcessWithNativeToken = buyExcessWithNativeTokenWithoutFee
+          .mul(feeDecimal)
+          .div(feeDecimal.sub(TICKET_PURCHASE_FEE));
 
         await expect(
           lootbox
@@ -683,10 +706,6 @@ describe("📦 LootboxInstant smart contract", async function () {
             .connect(purchaser)
             .purchaseTicket({ value: buyExactWithNativeToken.toString() })
         ).to.not.be.reverted;
-        const marginOfError = "7000"; // 6808
-        expect(await lootbox.checkMaxSharesRemainingForSale()).to.be.lt(
-          marginOfError
-        );
       });
     });
 
@@ -1256,6 +1275,11 @@ describe("📦 LootboxInstant smart contract", async function () {
         ).to.be.revertedWith(
           "Tickets cannot be purchased after the fundraising period"
         );
+      });
+      it("purchase fails if called with zero value", async () => {
+        await expect(
+          lootbox.connect(purchaser).purchaseTicket({ value: "0" })
+        ).to.be.revertedWith("Purchase must be greater than zero");
       });
       it("deposit succeeds if outside fundraising period", async () => {
         await lootbox
