@@ -99,6 +99,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
   );
   // number of shares sold
   const triggerLimitEtherSharesSoldCount = triggerLimitEtherPurchaseable
+    .sub(triggerLimitEtherBrokerReceived)
     .mul(shareDecimals)
     .div(SHARE_PRICE_WEI);
 
@@ -108,17 +109,28 @@ describe("📦 LootboxEscrow smart contract", async function () {
   // const buyAmountInEtherC = ethers.utils.parseUnits("0.20027121862", "ether"); // equal to 50% if (A1+A2+B+C)
 
   const buyAmountInEtherA1 = triggerLimitEtherPurchaseable.mul(4).div(10);
+  const feeEtherA1 = buyAmountInEtherA1
+    .mul(TICKET_PURCHASE_FEE)
+    .div(feeDecimal);
   const buyAmountInEtherA2 = triggerLimitEtherPurchaseable.mul(1).div(10);
+  const feeEtherA2 = buyAmountInEtherA2
+    .mul(TICKET_PURCHASE_FEE)
+    .div(feeDecimal);
   const buyAmountInEtherB = triggerLimitEtherPurchaseable.mul(5).div(10);
+  const feeEtherB = buyAmountInEtherB.mul(TICKET_PURCHASE_FEE).div(feeDecimal);
   const buyAmountInEtherC = triggerLimitEtherPurchaseable.mul(1).div(10);
+  const feeEtherC = buyAmountInEtherC.mul(TICKET_PURCHASE_FEE).div(feeDecimal);
 
   const buyAmountInSharesA1 = buyAmountInEtherA1
+    .sub(feeEtherA1)
     .mul(ethers.utils.parseUnits("1", 18))
     .div(SHARE_PRICE_WEI);
   const buyAmountInSharesA2 = buyAmountInEtherA2
+    .sub(feeEtherA2)
     .mul(ethers.utils.parseUnits("1", 18))
     .div(SHARE_PRICE_WEI);
   const buyAmountInSharesB = buyAmountInEtherB
+    .sub(feeEtherB)
     .mul(ethers.utils.parseUnits("1", 18))
     .div(SHARE_PRICE_WEI);
 
@@ -505,7 +517,11 @@ describe("📦 LootboxEscrow smart contract", async function () {
       let percentageOwnedB: BigNumber;
 
       const buyAmountInEtherA3 = ethers.utils.parseUnits("0.2", "ether");
+      const feeEtherA3 = buyAmountInEtherA3
+        .mul(TICKET_PURCHASE_FEE)
+        .div(feeDecimal);
       const buyAmountInSharesA3 = buyAmountInEtherA3
+        .sub(feeEtherA3)
         .mul(ethers.utils.parseUnits("1", 18))
         .div(SHARE_PRICE_WEI);
 
@@ -598,7 +614,12 @@ describe("📦 LootboxEscrow smart contract", async function () {
       });
       it("increments the nativeTokenRaisedTotal", async () => {
         expect((await lootbox.nativeTokenRaisedTotal()).toString()).to.eq(
-          buyAmountInEtherA1.add(buyAmountInEtherA2).add(buyAmountInEtherB)
+          buyAmountInEtherA1
+            .add(buyAmountInEtherA2)
+            .add(buyAmountInEtherB)
+            .sub(feeEtherA1)
+            .sub(feeEtherA2)
+            .sub(feeEtherB)
         );
       });
       it("emits a purchase event", async () => {
@@ -636,7 +657,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
           .connect(purchaser)
           .purchaseTicket({ value: buyAmountInEtherA1.toString() });
         const sharesPurchased = await lootbox.estimateSharesPurchase(
-          buyAmountInEtherA1.toString()
+          buyAmountInEtherA1.sub(feeEtherA1).toString()
         );
         const afterRemainingShares =
           await lootbox.checkMaxSharesRemainingForSale();
@@ -655,7 +676,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
           .connect(purchaser)
           .purchaseTicket({ value: buyAmountInEtherA1.toString() });
         const round1SharesPurchased = await lootbox.estimateSharesPurchase(
-          buyAmountInEtherA1.toString()
+          buyAmountInEtherA1.sub(feeEtherA1).toString()
         );
         const round1RemainingShares =
           await lootbox.checkMaxSharesRemainingForSale();
@@ -667,7 +688,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
           .connect(purchaser)
           .purchaseTicket({ value: buyAmountInEtherA2.toString() });
         const round2SharesPurchased = await lootbox.estimateSharesPurchase(
-          buyAmountInEtherA2.toString()
+          buyAmountInEtherA2.sub(feeEtherA2).toString()
         );
         const round2RemainingShares =
           await lootbox.checkMaxSharesRemainingForSale();
@@ -679,7 +700,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
           .connect(purchaser)
           .purchaseTicket({ value: buyAmountInEtherB.toString() });
         const round3SharesPurchased = await lootbox.estimateSharesPurchase(
-          buyAmountInEtherB.toString()
+          buyAmountInEtherB.sub(feeEtherB).toString()
         );
         const round3RemainingShares =
           await lootbox.checkMaxSharesRemainingForSale();
@@ -696,14 +717,18 @@ describe("📦 LootboxEscrow smart contract", async function () {
           ethers.utils.parseUnits("1", 18)
         );
 
-        const buyExcessWithNativeToken = excessSharesPurchase
+        const buyExcessWithNativeTokenWithoutFee = excessSharesPurchase
           .mul(sharePriceWei)
           .div(ethers.utils.parseUnits("1", 18));
 
+        const buyExcessWithNativeToken = buyExcessWithNativeTokenWithoutFee
+          .mul(feeDecimal)
+          .div(feeDecimal.sub(TICKET_PURCHASE_FEE));
+
         await expect(
-          lootbox
-            .connect(purchaser)
-            .purchaseTicket({ value: buyExcessWithNativeToken.toString() })
+          lootbox.connect(purchaser).purchaseTicket({
+            value: buyExcessWithNativeToken.toString(),
+          })
         ).to.be.revertedWith(
           "Not enough shares remaining to purchase, try a smaller amount"
         );
@@ -778,17 +803,18 @@ describe("📦 LootboxEscrow smart contract", async function () {
           preNativeTreasuryBalance.add(triggerLimitEtherTreasuryReceived)
         );
       });
-      it("Emits an CompleteFundraiser event", async () => {
+      it("Emits a CompleteFundraiser event", async () => {
         await lootbox.connect(purchaser).purchaseTicket({
           value: triggerLimitEtherPurchaseable.toString(),
         });
+
         await expect(lootbox.connect(issuingEntity).endFundraisingPeriod())
           .to.emit(lootbox, "CompleteFundraiser")
           .withArgs(
             issuingEntity.address,
             entityTreasury.address,
             lootbox.address,
-            triggerLimitEtherPurchaseable,
+            triggerLimitEtherPurchaseable.sub(triggerLimitEtherBrokerReceived),
             triggerLimitEtherTreasuryReceived,
             triggerLimitEtherSharesSoldCount
           );
@@ -859,7 +885,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
           .withArgs(
             issuingEntity.address,
             lootbox.address,
-            triggerLimitEtherPurchaseable,
+            triggerLimitEtherPurchaseable.sub(triggerLimitEtherBrokerReceived),
             triggerLimitEtherTreasuryReceived,
             triggerLimitEtherSharesSoldCount
           );
@@ -1437,6 +1463,11 @@ describe("📦 LootboxEscrow smart contract", async function () {
         ).to.be.revertedWith(
           "Tickets cannot be purchased after the fundraising period"
         );
+      });
+      it("purchase fails if called with zero value", async () => {
+        await expect(
+          lootbox.connect(purchaser).purchaseTicket({ value: "0" })
+        ).to.be.revertedWith("Purchase must be greater than zero");
       });
       it("deposit succeeds if outside fundraising period", async () => {
         await lootbox
