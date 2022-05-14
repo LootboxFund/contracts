@@ -241,10 +241,15 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   */
   // buy in native tokens only. use purchaseTicket(), do not directly send $ to lootbox
   function purchaseTicket () public payable nonReentrant whenNotPaused returns (uint256 _ticketId, uint256 _sharesPurchased) {
+    require(msg.value > 0, "Purchase must be greater than zero");
     require(msg.sender != treasury, "Treasury cannot purchase tickets");
     require(isFundraising == true, "Tickets cannot be purchased after the fundraising period");
-    // calculate how many shares to buy based on msg.value
-    uint256 sharesPurchased = estimateSharesPurchase(msg.value);
+
+    uint256 brokerReceived = msg.value * (ticketPurchaseFee) / (1*10**(8));
+    uint256 treasuryReceived = msg.value - brokerReceived;
+
+    // calculate how many shares to buy based on treasuryReceived
+    uint256 sharesPurchased = estimateSharesPurchase(treasuryReceived);
 
     // do not allow selling above sharesSoldMax 
     require(sharesPurchased <= checkMaxSharesRemainingForSale(), "Not enough shares remaining to purchase, try a smaller amount");
@@ -256,7 +261,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     purchasers.add(msg.sender);
     // update the total count of shares sold
     sharesSoldCount = sharesSoldCount + sharesPurchased;
-    nativeTokenRaisedTotal = nativeTokenRaisedTotal + msg.value;
+    nativeTokenRaisedTotal = nativeTokenRaisedTotal + treasuryReceived;
     // emit the Purchase event
     emit MintTicket(
       msg.sender,
@@ -267,8 +272,6 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
       sharePriceWei
     );
     // emit the InvestmentFundsDispersed event);
-    uint256 brokerReceived = msg.value * (ticketPurchaseFee) / (1*10**(8));
-    uint256 treasuryReceived = msg.value - brokerReceived;
     emit InvestmentFundsDispersed(
       msg.sender,
       treasury,
