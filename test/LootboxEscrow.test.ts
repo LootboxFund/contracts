@@ -1065,7 +1065,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
       });
     });
 
-    describe.only("Trapped Tokens are handled", async () => {
+    describe("Trapped Tokens are handled", async () => {
       beforeEach(async () => {
         await usdc_stablecoin.mint(
           issuingEntity.address,
@@ -1123,7 +1123,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
         );
         expect(trappedTokens.toString()).to.eq(depositAmount);
       });
-      it("only the issuingEntity can rescue trapped tokens", async () => {
+      it("anyone can rescue trapped tokens", async () => {
         await lootbox
           .connect(purchaser)
           .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
@@ -1138,25 +1138,70 @@ describe("📦 LootboxEscrow smart contract", async function () {
         });
         await expect(
           lootbox
-            .connect(purchaser)
-            .rescueTrappedErc20Tokens(usdc_stablecoin.address)
-        ).to.be.revertedWith(
-          generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
-        );
-        await expect(
-          lootbox.connect(purchaser).rescueTrappedNativeTokens()
-        ).to.be.revertedWith(
-          generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
-        );
-        await expect(
-          lootbox
-            .connect(issuingEntity)
+            .connect(purchaser2)
             .rescueTrappedErc20Tokens(usdc_stablecoin.address)
         ).to.not.be.reverted;
-        await expect(lootbox.connect(issuingEntity).rescueTrappedNativeTokens())
-          .to.not.be.reverted;
+        await expect(lootbox.connect(purchaser2).rescueTrappedNativeTokens()).to
+          .not.be.reverted;
       });
-      it.only("trapped tokens can be rescued by the issuingEntity and get deposited into the lootbox", async () => {
+      it("rescued tokens get payed out", async () => {
+        await lootbox
+          .connect(purchaser)
+          .purchaseTicket({ value: buyAmountInEtherA1.toString() });
+        await lootbox
+          .connect(purchaser)
+          .purchaseTicket({ value: buyAmountInEtherA2.toString() });
+        await lootbox
+          .connect(purchaser2)
+          .purchaseTicket({ value: buyAmountInEtherB.toString() }); // equal to 50%
+
+        await lootbox.connect(issuingEntity).endFundraisingPeriod();
+
+        const depositAmount = ethers.utils.parseEther("1");
+
+        const oldNativeBalance = await provider.getBalance(purchaser2.address);
+        const oldERC20Balance = await usdc_stablecoin.balanceOf(
+          purchaser2.address
+        );
+
+        // cause trapped tokens
+        await usdc_stablecoin
+          .connect(issuingEntity)
+          .transfer(lootbox.address, depositAmount);
+        await issuingEntity.sendTransaction({
+          to: lootbox.address,
+          value: depositAmount,
+        });
+
+        await lootbox.connect(purchaser).rescueTrappedNativeTokens();
+
+        await lootbox
+          .connect(purchaser)
+          .rescueTrappedErc20Tokens(usdc_stablecoin.address);
+
+        const tx = await lootbox.connect(purchaser2).withdrawEarnings("2");
+
+        const receipt = await tx.wait();
+        const gasUsed = receipt.cumulativeGasUsed.mul(
+          receipt.effectiveGasPrice
+        );
+        const newNativeBalance = await provider.getBalance(purchaser2.address);
+        const newERC20Balance = await usdc_stablecoin.balanceOf(
+          purchaser2.address
+        );
+
+        const expectedNativeBalance = oldNativeBalance
+          .sub(gasUsed)
+          .add(depositAmount.div(2)); // half of total shares are in ticket2 owned by purchaser2
+        const expectedERC20Balance = oldERC20Balance.add(depositAmount.div(2)); // half of total shares are in ticket2 owned by purchaser2
+        expect(newNativeBalance.toString()).to.eq(
+          expectedNativeBalance.toString()
+        );
+        expect(newERC20Balance.toString()).to.eq(
+          expectedERC20Balance.toString()
+        );
+      });
+      it("trapped tokens can be rescued and get deposited into the lootbox", async () => {
         await lootbox
           .connect(purchaser)
           .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
@@ -1192,11 +1237,11 @@ describe("📦 LootboxEscrow smart contract", async function () {
         );
 
         const nativeResponse = await lootbox
-          .connect(issuingEntity)
+          .connect(purchaser2)
           .rescueTrappedNativeTokens();
 
         const erc20RescueResponse = await lootbox
-          .connect(issuingEntity)
+          .connect(purchaser2)
           .rescueTrappedErc20Tokens(usdc_stablecoin.address);
 
         await expect(nativeResponse)
@@ -1531,7 +1576,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
             .depositEarningsNative({ value: depositAmountInEtherA1.toString() })
         ).to.not.be.reverted;
       });
-      it.only("deposit fails if depositing 0 amount", async () => {
+      it("deposit fails if depositing 0 amount", async () => {
         await lootbox
           .connect(purchaser)
           .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });

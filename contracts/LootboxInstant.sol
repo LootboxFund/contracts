@@ -423,7 +423,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     uint256 trappedTokens = address(this).balance - depositedTokens;
     return trappedTokens;
   }
-  function rescueTrappedNativeTokens() public onlyRole(DAO_ROLE) nonReentrant whenNotPaused {
+  function rescueTrappedNativeTokens() public nonReentrant whenNotPaused {
     require(isFundraising == false, "Rescue cannot be made during fundraising period");
     uint256 trappedTokens = checkForTrappedNativeTokens();
     if (trappedTokens > 0) {
@@ -443,7 +443,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     uint256 trappedTokens = token.balanceOf(address(this)) - depositedTokens;
     return trappedTokens;
   }
-  function rescueTrappedErc20Tokens(address erc20Token) public onlyRole(DAO_ROLE) nonReentrant whenNotPaused {
+  function rescueTrappedErc20Tokens(address erc20Token) public nonReentrant whenNotPaused {
     require(isFundraising == false, "Rescue cannot be made during fundraising period");
     uint256 trappedTokens = checkForTrappedErc20Tokens(erc20Token);
     IERC20 token = IERC20(erc20Token);
