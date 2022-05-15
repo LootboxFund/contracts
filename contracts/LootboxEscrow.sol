@@ -510,7 +510,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     uint256 trappedTokens = address(this).balance - depositedTokens;
     return trappedTokens;
   }
-  function rescueTrappedNativeTokens() public onlyRole(DAO_ROLE) whenNotPaused {
+  function rescueTrappedNativeTokens() public whenNotPaused {
     require(isFundraising == false, "Rescue cannot be made during fundraising period");
     uint256 trappedTokens = checkForTrappedNativeTokens();
     if (trappedTokens > 0) {
@@ -529,7 +529,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     uint256 trappedTokens = token.balanceOf(address(this)) - depositedTokens;
     return trappedTokens;
   }
-  function rescueTrappedErc20Tokens(address erc20Token) public onlyRole(DAO_ROLE) whenNotPaused {
+  function rescueTrappedErc20Tokens(address erc20Token) public whenNotPaused {
     require(isFundraising == false, "Rescue cannot be made during fundraising period");
     uint256 trappedTokens = checkForTrappedErc20Tokens(erc20Token);
     if (trappedTokens > 0) {

@@ -880,7 +880,7 @@ describe("📦 LootboxInstant smart contract", async function () {
       });
     });
 
-    describe("Trapped Tokens are handled", async () => {
+    describe.only("Trapped Tokens are handled", async () => {
       beforeEach(async () => {
         await usdc_stablecoin.mint(
           issuingEntity.address,
@@ -938,7 +938,7 @@ describe("📦 LootboxInstant smart contract", async function () {
         );
         expect(trappedTokens.toString()).to.eq(depositAmount);
       });
-      it("only the issuingEntity can rescue trapped tokens", async () => {
+      it("anyone can rescue trapped tokens", async () => {
         await lootbox
           .connect(purchaser)
           .purchaseTicket({ value: buyAmountInEtherA1.toString() });
@@ -953,23 +953,11 @@ describe("📦 LootboxInstant smart contract", async function () {
         });
         await expect(
           lootbox
-            .connect(purchaser)
-            .rescueTrappedErc20Tokens(usdc_stablecoin.address)
-        ).to.be.revertedWith(
-          generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
-        );
-        await expect(
-          lootbox.connect(purchaser).rescueTrappedNativeTokens()
-        ).to.be.revertedWith(
-          generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
-        );
-        await expect(
-          lootbox
-            .connect(issuingEntity)
+            .connect(purchaser2)
             .rescueTrappedErc20Tokens(usdc_stablecoin.address)
         ).to.not.be.reverted;
-        await expect(lootbox.connect(issuingEntity).rescueTrappedNativeTokens())
-          .to.not.be.reverted;
+        await expect(lootbox.connect(purchaser2).rescueTrappedNativeTokens()).to
+          .not.be.reverted;
       });
       it("trapped tokens can be rescued by the issuingEntity and flush them to treasury", async () => {
         await lootbox
