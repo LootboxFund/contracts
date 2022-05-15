@@ -1065,7 +1065,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
       });
     });
 
-    describe("Trapped Tokens are handled", async () => {
+    describe.only("Trapped Tokens are handled", async () => {
       beforeEach(async () => {
         await usdc_stablecoin.mint(
           issuingEntity.address,
@@ -1156,11 +1156,19 @@ describe("📦 LootboxEscrow smart contract", async function () {
         await expect(lootbox.connect(issuingEntity).rescueTrappedNativeTokens())
           .to.not.be.reverted;
       });
-      it("trapped tokens can be rescued by the issuingEntity and flush them to treasury", async () => {
+      it.only("trapped tokens can be rescued by the issuingEntity and get deposited into the lootbox", async () => {
         await lootbox
           .connect(purchaser)
           .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
         await lootbox.connect(issuingEntity).endFundraisingPeriod();
+
+        const initialNativeLootboxBalance = await provider.getBalance(
+          lootbox.address
+        );
+        const initialErc20LootboxBalance = await usdc_stablecoin.balanceOf(
+          lootbox.address
+        );
+
         const depositAmount = ethers.utils.parseEther("1");
         await usdc_stablecoin
           .connect(issuingEntity)
@@ -1169,30 +1177,65 @@ describe("📦 LootboxEscrow smart contract", async function () {
           to: lootbox.address,
           value: depositAmount,
         });
-        const preRescueNativeTreasuryBalance = await provider.getBalance(
-          entityTreasury.address
+        const preRescueNativeLootboxBalance = await provider.getBalance(
+          lootbox.address
         );
-        const preRescueErc20TreasuryBalance = await usdc_stablecoin.balanceOf(
-          entityTreasury.address
+        const preRescueErc20LootboxBalance = await usdc_stablecoin.balanceOf(
+          lootbox.address
         );
 
-        await lootbox
+        expect(preRescueNativeLootboxBalance.toString()).to.eq(
+          initialNativeLootboxBalance.add(depositAmount)
+        );
+        expect(preRescueErc20LootboxBalance.toString()).to.eq(
+          initialErc20LootboxBalance.add(depositAmount)
+        );
+
+        const nativeResponse = await lootbox
+          .connect(issuingEntity)
+          .rescueTrappedNativeTokens();
+
+        const erc20RescueResponse = await lootbox
           .connect(issuingEntity)
           .rescueTrappedErc20Tokens(usdc_stablecoin.address);
-        await lootbox.connect(issuingEntity).rescueTrappedNativeTokens();
 
-        const postRescueNativeTreasuryBalance = await provider.getBalance(
-          entityTreasury.address
+        await expect(nativeResponse)
+          .to.emit(lootbox, "DepositEarnings")
+          .withArgs(
+            lootbox.address,
+            lootbox.address,
+            "0",
+            depositAmount,
+            ethers.constants.AddressZero,
+            "0"
+          );
+
+        await expect(erc20RescueResponse)
+          .to.emit(lootbox, "DepositEarnings")
+          .withArgs(
+            lootbox.address,
+            lootbox.address,
+            "1",
+            "0",
+            usdc_stablecoin.address,
+            depositAmount
+          );
+
+        const postRescueNativeLootboxBalance = await provider.getBalance(
+          lootbox.address
         );
-        const postRescueErc20TreasuryBalance = await usdc_stablecoin.balanceOf(
-          entityTreasury.address
+        const postRescueErc20LootboxBalance = await usdc_stablecoin.balanceOf(
+          lootbox.address
         );
 
-        expect(postRescueNativeTreasuryBalance.toString()).to.eq(
-          preRescueNativeTreasuryBalance.add(depositAmount).toString()
+        // Lootbox still has the same native token balance
+        expect(postRescueNativeLootboxBalance.toString()).to.eq(
+          preRescueNativeLootboxBalance.toString()
         );
-        expect(postRescueErc20TreasuryBalance.toString()).to.eq(
-          preRescueErc20TreasuryBalance.add(depositAmount).toString()
+
+        // Lootbox still has the same erc20 token balance
+        expect(postRescueErc20LootboxBalance.toString()).to.eq(
+          preRescueErc20LootboxBalance.toString()
         );
 
         const remainingTrappedNativeTokens =
