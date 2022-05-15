@@ -1531,6 +1531,20 @@ describe("📦 LootboxEscrow smart contract", async function () {
             .depositEarningsNative({ value: depositAmountInEtherA1.toString() })
         ).to.not.be.reverted;
       });
+      it.only("deposit fails if depositing 0 amount", async () => {
+        await lootbox
+          .connect(purchaser)
+          .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
+        await lootbox.connect(issuingEntity).endFundraisingPeriod();
+        await expect(
+          lootbox
+            .connect(purchaser)
+            .depositEarningsErc20(usdc_stablecoin.address, "0")
+        ).to.be.revertedWith("Deposit amount must be greater than 0");
+        await expect(
+          lootbox.connect(purchaser).depositEarningsNative({ value: "0" })
+        ).to.be.revertedWith("Deposit amount must be greater than 0");
+      });
       it("deposit fails if during fundraising period", async () => {
         await expect(
           lootbox

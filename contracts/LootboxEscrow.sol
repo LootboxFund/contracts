@@ -419,6 +419,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   function _depositEarningsNative (address from, uint256 amount) internal nonReentrant {
     require(isFundraising == false, "Deposits cannot be made during fundraising period");
     require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
+    require(amount > 0, "Deposit amount must be greater than 0");
     // log this payout in sum
     nativeTokenDeposited = nativeTokenDeposited + amount;
     // create the deposit receipt
@@ -448,11 +449,11 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     require(success, "Lootbox could not receive payment");
   }
 
-  // Note: when using this function, it MUST be wrapped in a "nonReentrant" modifier
   function _depositEarningsErc20 (address from, address erc20Token, uint256 erc20Amount) internal nonReentrant { 
     require(isFundraising == false, "Deposits cannot be made during fundraising period");
     require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
     require(msg.value == 0, "Deposits of erc20 cannot also include native tokens in the same transaction");
+    require(erc20Amount > 0, "Deposit amount must be greater than 0");
     // log this to our list of erc20 tokens
     erc20TokensDeposited.add(erc20Token);
     erc20Deposited[erc20Token] = erc20Deposited[erc20Token] + erc20Amount;
