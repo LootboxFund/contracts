@@ -94,6 +94,16 @@ describe("📦 LootboxInstantFactory", () => {
           "Purchase ticket fee must be less than 100000000 (100%)"
         );
       });
+      it("Reverts if base URI is empty", async () => {
+        await expect(
+          LootboxFactory.deploy(
+            dao.address,
+            ticketPurchaseFee,
+            treasury.address,
+            ""
+          )
+        ).to.be.revertedWith("Base token URI cannot be empty");
+      });
     });
     describe("constructor setup", async () => {
       beforeEach(async () => {
@@ -110,6 +120,9 @@ describe("📦 LootboxInstantFactory", () => {
       });
       it("the Lootbox Implementation is public, anyone can see it", async () => {
         await expect(lootboxFactory.lootboxImplementation()).to.not.be.reverted;
+      });
+      it("should assign the baseTokenURI parameter correctly", async () => {
+        expect(await lootboxFactory.baseTokenURI()).to.eq(BASE_URI);
       });
       // it("the Broker address is hidden from public, only Lootbox DAO can see it", async () => {
       //   expect("brokerAddress" in lootboxFactory).to.be.false;
