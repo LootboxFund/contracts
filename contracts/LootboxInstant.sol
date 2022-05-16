@@ -340,18 +340,20 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   *   checkForTrappedErc20Tokens(address)
   *   rescueTrappedErc20Tokens(address)
   */
-  // do not send native tokens direct to lootbox or it will get stuck. use depositEarningsNative()
-  function depositEarningsNative () public payable nonReentrant whenNotPaused {
+
+  // Note: functions using this MUST be wrapped with the `nonReentrant` modifier because it uses risky `.call`
+  function _depositEarningsNative (address from, uint256 amount) private {
     require(isFundraising == false, "Deposits cannot be made during fundraising period");
     require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
+    require(amount > 0, "Deposit amount must be greater than 0");
     // log this payout in sum
-    nativeTokenDeposited = nativeTokenDeposited + msg.value;
+    nativeTokenDeposited = nativeTokenDeposited + amount;
     // create the deposit receipt
     uint256 depositId = depositIdCounter.current();
     Deposit memory deposit = Deposit ({
       depositId: depositId,
       blockNumber: block.number,
-      nativeTokenAmount: msg.value,
+      nativeTokenAmount: amount,
       erc20Token: address(0),
       erc20TokenAmount: 0,
       timestamp: block.timestamp
@@ -360,23 +362,24 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     depositReciepts[depositId] = deposit;
     // emit the DepositEarnings event
     emit DepositEarnings(
-      msg.sender,
+      from,
       address(this),
       depositId,
-      msg.value,
+      amount,
       address(0),
       0
     );
     depositIdCounter.increment();
     // transfer the native tokens to this LootboxInstant contract
-    (bool success,) = address(this).call{value: msg.value}("");
+    (bool success,) = address(this).call{value: amount}("");
     require(success, "Lootbox could not receive payment");
   }
-  // do not send erc20 direct to lootbox or it will get stuck. use depositEarningsErc20()
-  function depositEarningsErc20 (address erc20Token, uint256 erc20Amount) public payable nonReentrant whenNotPaused { 
+  // Note: functions using this MUST be wrapped with the `nonReentrant` modifier
+  function _depositEarningsErc20 (address from, address erc20Token, uint256 erc20Amount) private { 
     require(isFundraising == false, "Deposits cannot be made during fundraising period");
     require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
     require(msg.value == 0, "Deposits of erc20 cannot also include native tokens in the same transaction");
+    require(erc20Amount > 0, "Deposit amount must be greater than 0");
     // log this to our list of erc20 tokens
     erc20TokensDeposited.add(erc20Token);
     erc20Deposited[erc20Token] = erc20Deposited[erc20Token] + erc20Amount;
@@ -395,7 +398,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     depositReciepts[depositId] = deposit;
     // emit the DepositEarnings event
     emit DepositEarnings(
-      msg.sender,
+      from,
       address(this),
       depositId,
       0,
@@ -407,7 +410,16 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     // transfer the erc20 tokens to this LootboxInstant contract
     IERC20 token = IERC20(erc20Token);
     token.approve(address(this), erc20Amount);
-    token.transferFrom(msg.sender, address(this), erc20Amount);
+    token.transferFrom(from, address(this), erc20Amount);
+  }
+  // do not send native tokens direct to lootbox or it will get stuck. use depositEarningsNative()
+  function depositEarningsNative () public payable nonReentrant whenNotPaused {
+    _depositEarningsNative(msg.sender, msg.value);
+  }
+
+  // do not send erc20 direct to lootbox or it will get stuck. use depositEarningsErc20()
+  function depositEarningsErc20 (address erc20Token, uint256 erc20Amount) public payable nonReentrant whenNotPaused { 
+    _depositEarningsErc20(msg.sender, erc20Token, erc20Amount);
   }
   function viewDeposit(uint depositId) public view returns (Deposit memory _deposit) {
     return depositReciepts[depositId];
@@ -427,8 +439,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     require(isFundraising == false, "Rescue cannot be made during fundraising period");
     uint256 trappedTokens = checkForTrappedNativeTokens();
     if (trappedTokens > 0) {
-      (bool success,) = address(treasury).call{value: trappedTokens}("");
-      require(success, "Treasury could not receive trapped tokens");
+      _depositEarningsNative(address(this), trappedTokens);
     }
   }
   function checkForTrappedErc20Tokens(address erc20Token) public view returns (uint256 _trappedTokens) {
@@ -446,9 +457,8 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   function rescueTrappedErc20Tokens(address erc20Token) public nonReentrant whenNotPaused {
     require(isFundraising == false, "Rescue cannot be made during fundraising period");
     uint256 trappedTokens = checkForTrappedErc20Tokens(erc20Token);
-    IERC20 token = IERC20(erc20Token);
     if (trappedTokens > 0) {
-      token.transfer(treasury, trappedTokens);
+      _depositEarningsErc20(address(this), erc20Token, trappedTokens);
     }
   }
 
