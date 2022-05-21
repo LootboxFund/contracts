@@ -414,9 +414,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
         expect(await lootbox.treasury()).to.eq(entityTreasury.address);
       });
       it("sets the base token URI correctly", async () => {
-        expect(await lootbox._tokenURI()).to.eq(
-          `${BASE_URI}/${lootbox.address.toLowerCase()}.json`
-        );
+        expect(await lootbox._tokenURI()).to.eq(BASE_URI);
       });
       it("sets the sharePriceWei correctly", async () => {
         expect(await lootbox.sharePriceWei()).to.eq(SHARE_PRICE_WEI);
@@ -492,12 +490,14 @@ describe("📦 LootboxEscrow smart contract", async function () {
     });
 
     describe("tokenURI()", () => {
-      it("returns the correct URI", async () => {
-        const ticketId = "0";
-        const ticketURI = await lootbox.tokenURI(ticketId);
-        expect(ticketURI).to.eq(
-          `${BASE_URI}/${lootbox.address.toLowerCase()}.json`
-        );
+      it("tokenURI should return the correct path for ticket URIs (with lowercase addresses)", async () => {
+        let tickets = [0, 1, 2, 3, 4, 5];
+        for (const ticket of tickets) {
+          const uriPath = await lootbox.tokenURI(ticket);
+          expect(uriPath).to.eq(
+            `${BASE_URI}/${lootbox.address.toLowerCase()}/${ticket}.json`
+          );
+        }
       });
     });
 
