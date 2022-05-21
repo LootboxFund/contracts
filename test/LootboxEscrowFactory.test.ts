@@ -122,6 +122,7 @@ describe("📦 LootboxEscrowFactory", () => {
       it("should assign the baseTokenURI parameter correctly", async () => {
         expect(await lootboxFactory.baseTokenURI()).to.eq(BASE_URI);
       });
+
       // it("the Broker address is hidden from public, only Lootbox DAO can see it", async () => {
       //   expect("brokerAddress" in lootboxFactory).to.be.false;
       //   const [brokerAddress, fee] = await lootboxFactory.connect(dao).checkFactoryPrivateDetails();

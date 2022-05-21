@@ -240,9 +240,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     ticketPurchaseFee = _ticketPurchaseFee;
     broker = _broker;
 
-    // Note: this converts the address into a LOWERCASE string
-    string memory addressStr = Strings.toHexString(uint256(uint160(address(this))));
-    _tokenURI = string.concat(_baseTokenURI, "/", addressStr, ".json");
+    _tokenURI = _baseTokenURI;
 
     _grantRole(DAO_ROLE, _issuingEntity);
   }
@@ -554,7 +552,10 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     override(ERC721Upgradeable)
     returns (string memory)
   {
-    return _tokenURI;
+    // Note: this converts the address into a LOWERCASE string
+    string memory addressStr = Strings.toHexString(uint160(address(this)), 20);
+    string memory tokenURIPath = string.concat(_tokenURI, "/", addressStr, "/", Strings.toString(ticketId), ".json");
+    return tokenURIPath;
   }
   function viewProratedDepositsForTicket(uint256 ticketId) public view returns (DepositMetadata[] memory _depositsMetadatas) {
     uint sharesOwned = sharesInTicket[ticketId]; 
