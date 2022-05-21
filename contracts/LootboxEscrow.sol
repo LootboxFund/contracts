@@ -198,7 +198,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   ) initializer public {
 
     variant = "Escrow";
-    semver = "0.4.0-demo";
+    semver = "0.5.0-demo";
 
     bytes memory tempEmptyNameTest = bytes(_name);
     bytes memory tempEmptySymbolTest = bytes(_symbol);
