@@ -5,6 +5,7 @@ import {
   generatePermissionRevokeMessage,
   padAddressTo32Bytes,
 } from "./helpers/test-helpers";
+import { manifest } from "../scripts/manifest";
 
 /* eslint-disable */
 import {
@@ -408,7 +409,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
 
     describe("basic details", async () => {
       it("has the expected semver", async () => {
-        expect(await lootbox.semver()).to.eq("0.4.0-demo");
+        expect(await lootbox.semver()).to.eq(manifest.semver.id);
       });
       it("sets the player treasury address correctly", async () => {
         expect(await lootbox.treasury()).to.eq(entityTreasury.address);
