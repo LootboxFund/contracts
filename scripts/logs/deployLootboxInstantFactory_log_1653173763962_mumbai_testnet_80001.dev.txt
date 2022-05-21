@@ -1,0 +1,15 @@
+2022-05-21T22:56:04.322Z -  
+  
+---------- DEPLOY LOOTBOX INSTANT FACTORY (development) ----------
+  
+---- Script starting...
+
+---- Network:                             mumbai_testnet (Hex ID = 0x13881)
+---- Lootbox DAO (multisig):              0xae069b7d5dfe85CCf056170af7a65F6374588776
+---- Lootbox Grand Treasury (multisig):   0xC2e94223edf8470f32fa318D53564ABe283960B2
+---- Default Fee:                         3200000
+---- Deployer (UNTRUSTED):                0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A
+---- Base Metadata Path:                  https://storage.googleapis.com/lootbox-data-staging
+
+  
+2022-05-21T22:56:09.675Z - ---- 0xba0bF6C93AdED14c19Fe13F39e2b67A6070121F2 ---> Lootbox Instant Factory 
