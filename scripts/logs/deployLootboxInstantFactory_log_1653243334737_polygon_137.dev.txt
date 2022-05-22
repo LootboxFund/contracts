@@ -1,0 +1,15 @@
+2022-05-22T18:15:35.140Z -  
+  
+---------- DEPLOY LOOTBOX INSTANT FACTORY (development) ----------
+  
+---- Script starting...
+
+---- Network:                             polygon (Hex ID = 0x89)
+---- Lootbox DAO (multisig):              0x0d928c9baE570f5F526F1785874cA99523bEd4cA
+---- Lootbox Grand Treasury (multisig):   0x67Ad5E1b4e7CC0458C3c7bBC8Fa6292b78425aAe
+---- Default Fee:                         3200000
+---- Deployer (UNTRUSTED):                0x88c501B30E1A57f13Be608c596c04CB472e50458
+---- Base Metadata Path:                  https://storage.googleapis.com/lootbox-data-prod
+
+  
+2022-05-22T18:15:42.037Z - ---- 0xf8bA10c23Af7C644e96FC03EFaB3bA3c466232A1 ---> Lootbox Instant Factory 
