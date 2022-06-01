@@ -6,7 +6,7 @@ pragma solidity 0.8.13;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-// import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -49,8 +49,7 @@ interface IERC20 {
 }
 
 // solhint-disable-next-line max-states-count
-// contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
-contract LootboxEscrow is Initializable, ERC721Upgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
+contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
   using CountersUpgradeable for CountersUpgradeable.Counter;
   // using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
   
@@ -223,7 +222,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, PausableUpgradeable,
     require(_broker != address(0), "Broker cannot be the zero address");        // the broker is LootboxEscrow Ltd.
 
     __ERC721_init(_name, _symbol);
-    // __ERC721Enumerable_init();
+    __ERC721Enumerable_init();
     __Pausable_init();
     __AccessControl_init();
     __UUPSUpgradeable_init();
@@ -604,7 +603,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, PausableUpgradeable,
     uint256 ownedByHolder = balanceOf(holder);
     uint256[] memory ticketsOwned = new uint256[](ownedByHolder);
     for(uint256 i=0; i < ownedByHolder; i++){
-      // ticketsOwned[i] = tokenOfOwnerByIndex(holder, i);
+      ticketsOwned[i] = tokenOfOwnerByIndex(holder, i);
     }
     return ticketsOwned;
   }
@@ -712,21 +711,19 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, PausableUpgradeable,
   * 
   */
   // The following functions are overrides required by Solidity.
-    // override(ERC721Upgradeable,ERC721EnumerableUpgradeable)
   function _beforeTokenTransfer(address from, address to, uint256 tokenId)
     internal
     whenNotPaused
-    override(ERC721Upgradeable)
+    override(ERC721Upgradeable,ERC721EnumerableUpgradeable)
   {
     super._beforeTokenTransfer(from, to, tokenId);
   }
   // disable burns
-  // override(ERC721Upgradeable,ERC721EnumerableUpgradeable, AccessControlUpgradeable)
   function _burn(uint256 tokenId) internal pure override(ERC721Upgradeable) {}
   function supportsInterface(bytes4 interfaceId)
     public
     view
-    override(ERC721Upgradeable, AccessControlUpgradeable)
+    override(ERC721Upgradeable,ERC721EnumerableUpgradeable, AccessControlUpgradeable)
     returns (bool)
   {
     return super.supportsInterface(interfaceId);
