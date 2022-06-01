@@ -44,6 +44,11 @@ export const GUILD_MANAGER_ROLE = ethers.utils.solidityKeccak256(
   ["GUILD_MANAGER_ROLE"]
 );
 
+export const SUPERSTAFF_ROLE = ethers.utils.solidityKeccak256(
+  ["string"],
+  ["SUPERSTAFF_ROLE"]
+);
+
 export const DEFAULT_ADMIN_ROLE =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
 
@@ -92,4 +97,4 @@ export const testLootboxURI = {
     twitch: "socialState.twitch",
     web: "socialState.web",
   },
-}
+};

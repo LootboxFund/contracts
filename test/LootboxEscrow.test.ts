@@ -21,6 +21,7 @@ import {
 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
+import { SUPERSTAFF_ROLE } from "./helpers/test-helpers";
 
 // const BNB_ARCHIVED_PRICE = "41771363251"; // $417.36614642 USD per BNB
 
@@ -2299,6 +2300,121 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         //       SHARE_PRICE_WEI
         //     );
         // });
+      });
+    });
+
+    describe("bulk NFT minting", async () => {
+      const fractionalTenthMintAmountEther = etherEquivalentOfTargetShares
+        .mul(ethers.utils.parseUnits("0.10", 18))
+        .div(shareDecimals);
+      const quantitySharesBulkMinted = ethers.BigNumber.from(
+        MAX_SHARES_AVAILABLE_FOR_SALE
+      )
+        .div("10")
+        .mul("9");
+      const quantityForBulkMint = "9";
+      it("rejects non-whitelisted addresses from bulkMintNFTs()", async () => {
+        const tx = lootbox
+          .connect(purchaser)
+          .bulkMintNFTs(
+            purchaser.address,
+            fractionalTenthMintAmountEther,
+            quantityForBulkMint,
+            {
+              value: fractionalTenthMintAmountEther
+                .mul(quantityForBulkMint)
+                .toString(),
+            }
+          );
+        await expect(tx).to.be.revertedWith("E14");
+      });
+      it("rejects non-superstaff from whitelisting or unwhitelisting bulk minters", async () => {
+        await expect(
+          lootbox
+            .connect(purchaser)
+            .whitelistBulkMinter(purchaser.address, true)
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(purchaser.address, SUPERSTAFF_ROLE)
+        );
+        await expect(
+          lootbox
+            .connect(purchaser)
+            .whitelistBulkMinter(purchaser.address, false)
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(purchaser.address, SUPERSTAFF_ROLE)
+        );
+      });
+      it("allows superstaff to whitelist or unwhitelist bulk minters", async () => {
+        await expect(
+          lootbox
+            .connect(superstaff)
+            .whitelistBulkMinter(purchaser.address, true)
+        ).to.not.be.reverted;
+        await expect(
+          lootbox
+            .connect(superstaff)
+            .whitelistBulkMinter(purchaser.address, false)
+        ).to.not.be.reverted;
+      });
+      it.only("allows whitelisted minters to bulk mint NFTs", async () => {
+        const feeInverse = ethers.BigNumber.from("1000000").sub(
+          ethers.BigNumber.from(TICKET_PURCHASE_FEE)
+        );
+        console.log(`feeInverse = ${feeInverse}`);
+        const ninethMintedWithFees = fractionalTenthMintAmountEther
+          .mul(quantityForBulkMint)
+          .mul(ethers.BigNumber.from("1000000"))
+          .div(feeInverse); // accounts for 3.2% fee
+        const estSharesPurchased = await lootbox.estimateSharesPurchase(
+          fractionalTenthMintAmountEther.mul(quantityForBulkMint)
+        );
+
+        await lootbox
+          .connect(superstaff)
+          .whitelistBulkMinter(purchaser.address, true);
+
+        expect((await lootbox.sharesSoldCount()).toString()).to.eq("0");
+        console.log(`---------------------------------`);
+        console.log(
+          `etherEquivalentOfTargetShares: ${etherEquivalentOfTargetShares}`
+        );
+        console.log(
+          `fractionalTenthMintAmountEther: ${fractionalTenthMintAmountEther}`
+        );
+        console.log(
+          `fractionalTenthMintAmountEther.mul(quantityForBulkMint) = ${fractionalTenthMintAmountEther.mul(
+            quantityForBulkMint
+          )}`
+        );
+        console.log(`ninethMintedWithFees: ${ninethMintedWithFees}`);
+        console.log(`quantitySharesBulkMinted = ${quantitySharesBulkMinted}`);
+        console.log(`estSharesPurchased = ${estSharesPurchased}`);
+        console.log(`---------------------------------`);
+        await expect(
+          quantitySharesBulkMinted.mul(ethers.utils.parseUnits("1", "18"))
+        ).to.eq(estSharesPurchased);
+        const tx = await lootbox
+          .connect(purchaser)
+          .bulkMintNFTs(
+            purchaser.address,
+            fractionalTenthMintAmountEther,
+            quantityForBulkMint,
+            {
+              value: ninethMintedWithFees.toString(),
+            }
+          );
+        const receipt = await tx.wait();
+        const gasUsed = receipt.cumulativeGasUsed.mul(
+          receipt.effectiveGasPrice
+        );
+        expect(await lootbox.nativeTokenRaisedTotal()).to.eq(
+          fractionalTenthMintAmountEther.mul(quantityForBulkMint)
+        );
+        // expect((await lootbox.sharesSoldCount()).toString()).to.eq(
+        //   ethers.utils
+        //     .parseUnits(quantitySharesBulkMinted.toString(), "18")
+        //     .toString()
+        // );
       });
     });
 

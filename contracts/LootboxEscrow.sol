@@ -343,7 +343,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     address _to,
     uint256 _amount,
     uint256 _quantity
-  ) public payable {
+  ) public payable nonReentrant whenNotPaused {
     require(_to != address(0), "E11"); // E11 - "Cannot mint to the zero address"
     require(_amount > 0, "E12"); // E12 - "Must mint a value greater than zero"
     require(_quantity > 0, "E13"); // E13 - "Must mint a quantity"
