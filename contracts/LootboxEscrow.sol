@@ -6,11 +6,11 @@ pragma solidity 0.8.13;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+// import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
+// import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
@@ -49,9 +49,10 @@ interface IERC20 {
 }
 
 // solhint-disable-next-line max-states-count
-contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
+// contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
+contract LootboxEscrow is Initializable, ERC721Upgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
   using CountersUpgradeable for CountersUpgradeable.Counter;
-  using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
+  // using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
   
   string public variant;
   string public semver;
@@ -62,6 +63,8 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
    */
   // roles
   bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
+  bytes32 public constant SUPERSTAFF_ROLE = keccak256("SUPERSTAFF_ROLE");
+
   // decimals
   uint256 public shareDecimals;
   uint256 public feeDecimals;
@@ -80,7 +83,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   uint256 public sharesSoldMax;
   uint256 public nativeTokenRaisedTotal;
   uint256 public escrowNativeAmount;
-  EnumerableSetUpgradeable.AddressSet private purchasers;
+  // EnumerableSetUpgradeable.AddressSet private purchasers;
   bool public isFundraising;
   address public issuer;
   address public treasury;
@@ -133,7 +136,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   CountersUpgradeable.Counter public depositIdCounter;
   // token => totalDeposited
   mapping(address => uint256) public erc20Deposited;
-  EnumerableSetUpgradeable.AddressSet private erc20TokensDeposited;
+  // EnumerableSetUpgradeable.AddressSet private erc20TokensDeposited;
   uint256 public nativeTokenDeposited;
   event DepositEarnings(
     address indexed depositor,
@@ -180,6 +183,9 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     uint256 erc20Amount
   );
 
+  /** ------------------ BULK MINTERS ----------------- */
+  mapping(address => bool) public whitelistedBulkMinters;
+
   /** ------------------ CONSTRUCTOR ------------------
    * 
    */
@@ -194,7 +200,8 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     address _treasury,
     address _issuingEntity,
     uint256 _ticketPurchaseFee,
-    address _broker
+    address _broker,
+    address _superstaff
   ) initializer public {
 
     variant = "Escrow";
@@ -216,7 +223,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     require(_broker != address(0), "Broker cannot be the zero address");        // the broker is LootboxEscrow Ltd.
 
     __ERC721_init(_name, _symbol);
-    __ERC721Enumerable_init();
+    // __ERC721Enumerable_init();
     __Pausable_init();
     __AccessControl_init();
     __UUPSUpgradeable_init();
@@ -243,6 +250,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     _tokenURI = _baseTokenURI;
 
     _grantRole(DAO_ROLE, _issuingEntity);
+    _grantRole(SUPERSTAFF_ROLE,_superstaff);
   }
 
 
@@ -274,7 +282,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     ticketIdCounter.increment();
     // update the mapping that tracks how many shares a ticket owns
     sharesInTicket[ticketId] = sharesPurchased;
-    purchasers.add(msg.sender);
+    // purchasers.add(msg.sender);
     // update the total count of shares sold
     sharesSoldCount = sharesSoldCount + sharesPurchased;
     nativeTokenRaisedTotal = nativeTokenRaisedTotal + treasuryReceived;
@@ -330,6 +338,21 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
       uint256 stablecoinDecimals
   ) internal view returns (uint256 sharesAmount) {
       return amountOfStableCoin * 10 ** (shareDecimals + sharePriceWeiDecimals - stablecoinDecimals) / sharePriceWei;
+  }
+  // bulk mint NFTs
+  function bulkMintNFTs (
+    address _to,
+    uint256 _amount,
+    uint256 _quantity
+  ) public view returns (address) {
+    require(_to != address(0), "Cannot mint to the zero address");
+    require(_amount > 0, "Must mint a value greater than zero");
+    require(_quantity > 0, "Must mint a quantity");
+    require(whitelistedBulkMinters[msg.sender] == true, "Only whitelisted can bulk mint NFTs");
+  }
+  // whitelist bulk minter
+  function whitelistBulkMinter (address _addr, bool _allowed) public onlyRole(SUPERSTAFF_ROLE) {
+    whitelistedBulkMinters[_addr] = _allowed;
   }
 
   /**
@@ -456,7 +479,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     require(msg.value == 0, "Deposits of erc20 cannot also include native tokens in the same transaction");
     require(erc20Amount > 0, "Deposit amount must be greater than 0");
     // log this to our list of erc20 tokens
-    erc20TokensDeposited.add(erc20Token);
+    // erc20TokensDeposited.add(erc20Token);
     erc20Deposited[erc20Token] = erc20Deposited[erc20Token] + erc20Amount;
     // create the deposit receipt
     uint256 depositId = depositIdCounter.current();
@@ -581,7 +604,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     uint256 ownedByHolder = balanceOf(holder);
     uint256[] memory ticketsOwned = new uint256[](ownedByHolder);
     for(uint256 i=0; i < ownedByHolder; i++){
-      ticketsOwned[i] = tokenOfOwnerByIndex(holder, i);
+      // ticketsOwned[i] = tokenOfOwnerByIndex(holder, i);
     }
     return ticketsOwned;
   }
@@ -656,12 +679,12 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     }
     return _deposits;
   }
-  function viewDepositedTokens() public view returns (bytes32[] memory) {
-    return erc20TokensDeposited._inner._values;
-  }
-  function viewPurchasers() public view returns (bytes32[] memory) {
-    return purchasers._inner._values;
-  }
+  // function viewDepositedTokens() public view returns (bytes32[] memory) {
+  //   return erc20TokensDeposited._inner._values;
+  // }
+  // function viewPurchasers() public view returns (bytes32[] memory) {
+  //   return purchasers._inner._values;
+  // }
   function viewTotalDepositOfNativeToken() public view returns (uint256 _totalDeposit) {
     uint256 totalDeposit = 0;
     for (uint256 i=0; i < depositIdCounter.current(); i++) {
@@ -689,19 +712,21 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   * 
   */
   // The following functions are overrides required by Solidity.
+    // override(ERC721Upgradeable,ERC721EnumerableUpgradeable)
   function _beforeTokenTransfer(address from, address to, uint256 tokenId)
     internal
     whenNotPaused
-    override(ERC721Upgradeable,ERC721EnumerableUpgradeable)
+    override(ERC721Upgradeable)
   {
     super._beforeTokenTransfer(from, to, tokenId);
   }
   // disable burns
+  // override(ERC721Upgradeable,ERC721EnumerableUpgradeable, AccessControlUpgradeable)
   function _burn(uint256 tokenId) internal pure override(ERC721Upgradeable) {}
   function supportsInterface(bytes4 interfaceId)
     public
     view
-    override(ERC721Upgradeable,ERC721EnumerableUpgradeable, AccessControlUpgradeable)
+    override(ERC721Upgradeable, AccessControlUpgradeable)
     returns (bool)
   {
     return super.supportsInterface(interfaceId);
