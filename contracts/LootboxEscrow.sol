@@ -82,7 +82,8 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   uint256 public sharesSoldMax;
   uint256 public nativeTokenRaisedTotal;
   uint256 public escrowNativeAmount;
-  // EnumerableSetUpgradeable.AddressSet private purchasers;
+  mapping(uint256 => address) public purchasers;
+  CountersUpgradeable.Counter public purchaserCounter;
   bool public isFundraising;
   address public issuer;
   address public treasury;
@@ -135,7 +136,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   CountersUpgradeable.Counter public depositIdCounter;
   // token => totalDeposited
   mapping(address => uint256) public erc20Deposited;
-  // EnumerableSetUpgradeable.AddressSet private erc20TokensDeposited;
   uint256 public nativeTokenDeposited;
   event DepositEarnings(
     address indexed depositor,
@@ -160,18 +160,18 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
    */
   // ticketID => depositID => redeemed
   mapping(uint256 => mapping(uint256 => bool)) public depositRedemptions;
-  event InvestmentFundsDispersed(
-    address indexed purchaser,
-    address indexed treasury,
-    address indexed broker,
-    address lootbox,
-    uint256 ticketId,
-    uint256 nativeTokenRaisedTotal,
-    uint256 nativeTokensSentToTreasury,
-    uint256 nativeTokensSentToBroker,
-    uint256 sharesPurchased,
-    uint256 sharePriceWei
-  );
+  // event InvestmentFundsDispersed(
+  //   address indexed purchaser,
+  //   address indexed treasury,
+  //   address indexed broker,
+  //   address lootbox,
+  //   uint256 ticketId,
+  //   uint256 nativeTokenRaisedTotal,
+  //   uint256 nativeTokensSentToTreasury,
+  //   uint256 nativeTokensSentToBroker,
+  //   uint256 sharesPurchased,
+  //   uint256 sharePriceWei
+  // );
   event WithdrawEarnings(
     address indexed withdrawer,
     address lootbox,
@@ -206,20 +206,18 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     variant = "Escrow";
     semver = "0.5.0-prod";
 
-    bytes memory tempEmptyNameTest = bytes(_name);
-    bytes memory tempEmptySymbolTest = bytes(_symbol);
+    require(bytes(_name).length != 0, "E0"); // E0 - "Name cannot be empty"
+    require(bytes(_symbol).length != 0, "E1"); // E1 - "Symbol cannot be empty
+    require(bytes(_baseTokenURI).length != 0, "E2"); // E2 - "Base token URI cannot be empty"
 
-    require(tempEmptyNameTest.length != 0, "Name cannot be empty");
-    require(tempEmptySymbolTest.length != 0, "Symbol cannot be empty");
-    require(bytes(_baseTokenURI).length != 0, "Base token URI cannot be empty");
-
-    require(_ticketPurchaseFee < 100000000, "Purchase ticket fee must be less than 100000000 (100%)");
-    require(_treasury != address(0), "Treasury cannot be the zero address");
-    require(_issuingEntity != address(0), "Issuer cannot be the zero address");
-    require(_maxSharesSold > 0, "Max shares sold must be greater than zero");
-    require(_targetSharesSold > 0, "Target shares sold must be greater than zero");
-    require(_targetSharesSold <= _maxSharesSold, "Target shares sold must be less than or equal to max shares sold");
-    require(_broker != address(0), "Broker cannot be the zero address");        // the broker is LootboxEscrow Ltd.
+    require(_ticketPurchaseFee < 100000000, "E3"); // E3 - "Purchase ticket fee must be less than 100000000 (100%)"
+    require(_treasury != address(0), "E4"); // E4 - "Treasury cannot be the zero address"
+    require(_issuingEntity != address(0), "E5"); // E5 - "Issuer cannot be the zero address"
+    require(_maxSharesSold > 0, "E6"); // E6 - "Max shares sold must be greater than zero"
+    require(_targetSharesSold > 0, "E7"); // E7 - "Target shares sold must be greater than zero"
+    require(_targetSharesSold <= _maxSharesSold, "E8"); // E8 - "Target shares sold must be less than or equal to max shares sold"
+    require(_broker != address(0), "E9"); // E9 - "Broker cannot be the zero address" (the broker is LootboxEscrow Ltd.)
+    require(_superstaff != address(0), "E10"); // E10 - "Superstaff cannot be the zero address" (the superstaff is a staff member of the lootbox)
 
     __ERC721_init(_name, _symbol);
     __ERC721Enumerable_init();
@@ -275,13 +273,15 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     uint256 sharesPurchased = estimateSharesPurchase(treasuryReceived);
 
     // do not allow selling above sharesSoldMax 
-    require(sharesPurchased <= checkMaxSharesRemainingForSale(), "Not enough shares remaining to purchase, try a smaller amount");
+    require(sharesPurchased <= checkMaxSharesRemainingForSale(), "Not enough shares remaining to purchase");
     // get an ID
     uint256 ticketId = ticketIdCounter.current();
     ticketIdCounter.increment();
     // update the mapping that tracks how many shares a ticket owns
     sharesInTicket[ticketId] = sharesPurchased;
-    // purchasers.add(msg.sender);
+    // track the purchaser in a mapping with counter (may contain duplicates)
+    purchasers[purchaserCounter.current()] = msg.sender;
+    purchaserCounter.increment();
     // update the total count of shares sold
     sharesSoldCount = sharesSoldCount + sharesPurchased;
     nativeTokenRaisedTotal = nativeTokenRaisedTotal + treasuryReceived;
@@ -295,18 +295,18 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
       sharePriceWei
     );
     // emit the InvestmentFundsDispersed event);
-    emit InvestmentFundsDispersed(
-      msg.sender,
-      treasury,
-      broker,
-      address(this),
-      ticketId,
-      msg.value,
-      treasuryReceived,
-      brokerReceived,
-      sharesPurchased,
-      sharePriceWei
-    );
+    // emit InvestmentFundsDispersed(
+    //   msg.sender,
+    //   treasury,
+    //   broker,
+    //   address(this),
+    //   ticketId,
+    //   msg.value,
+    //   treasuryReceived,
+    //   brokerReceived,
+    //   sharesPurchased,
+    //   sharePriceWei
+    // );
     // sum the cumulative escrow'd amount
     escrowNativeAmount = escrowNativeAmount + treasuryReceived;
     // broker gets their cut
@@ -343,11 +343,36 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     address _to,
     uint256 _amount,
     uint256 _quantity
-  ) public view returns (address) {
+  ) public payable {
     require(_to != address(0), "Cannot mint to the zero address");
     require(_amount > 0, "Must mint a value greater than zero");
     require(_quantity > 0, "Must mint a quantity");
     require(whitelistedBulkMinters[msg.sender] == true, "Only whitelisted can bulk mint NFTs");
+
+    uint256 brokerReceived = msg.value * (ticketPurchaseFee) / (1*10**(8));
+    uint256 treasuryReceived = msg.value - brokerReceived;
+    // calculate how many shares to buy based on treasuryReceived
+    uint256 sharesPurchased = estimateSharesPurchase(treasuryReceived);
+    // do not allow selling above sharesSoldMax 
+    require(sharesPurchased <= checkMaxSharesRemainingForSale(), "Not enough shares remaining to purchase");
+    sharesSoldCount = sharesSoldCount + sharesPurchased;
+    nativeTokenRaisedTotal = nativeTokenRaisedTotal + treasuryReceived;
+    // sum the cumulative escrow'd amount
+    escrowNativeAmount = escrowNativeAmount + treasuryReceived;
+    // broker gets their cut, the rest stays in the contract for escrow
+    (bool bsuccess,) = address(broker).call{value: brokerReceived}("");
+    require(bsuccess, "Broker could not receive payment");
+    purchasers[purchaserCounter.current()] = msg.sender;
+    purchaserCounter.increment();
+    // loop through bulk minting
+    for (uint256 i=0; i < _quantity; i++) {
+      // update the mapping that tracks how many shares a ticket owns
+      sharesInTicket[ticketIdCounter.current()] = sharesPurchased;
+      // mint the NFT ticket
+      _safeMint(msg.sender, ticketIdCounter.current());
+      ticketIdCounter.increment();
+    }
+    return;
   }
   // whitelist bulk minter
   function whitelistBulkMinter (address _addr, bool _allowed) public onlyRole(SUPERSTAFF_ROLE) {
@@ -477,8 +502,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
     require(msg.value == 0, "Deposits of erc20 cannot also include native tokens in the same transaction");
     require(erc20Amount > 0, "Deposit amount must be greater than 0");
-    // log this to our list of erc20 tokens
-    // erc20TokensDeposited.add(erc20Token);
     erc20Deposited[erc20Token] = erc20Deposited[erc20Token] + erc20Amount;
     // create the deposit receipt
     uint256 depositId = depositIdCounter.current();
@@ -666,8 +689,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   * ------------------ LOOTBOX INFO ------------------
   *  
   *  viewAllDeposits()
-  *  viewDepositedTokens()
-  *  viewPurchasers()
   *  viewTotalDepositOfNativeToken()
   *  viewTotalDepositOfErc20Token(address)
   */
@@ -678,12 +699,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     }
     return _deposits;
   }
-  // function viewDepositedTokens() public view returns (bytes32[] memory) {
-  //   return erc20TokensDeposited._inner._values;
-  // }
-  // function viewPurchasers() public view returns (bytes32[] memory) {
-  //   return purchasers._inner._values;
-  // }
   function viewTotalDepositOfNativeToken() public view returns (uint256 _totalDeposit) {
     uint256 totalDeposit = 0;
     for (uint256 i=0; i < depositIdCounter.current(); i++) {
