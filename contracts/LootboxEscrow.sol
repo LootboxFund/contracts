@@ -344,10 +344,10 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     uint256 _amount,
     uint256 _quantity
   ) public payable {
-    require(_to != address(0), "Cannot mint to the zero address");
-    require(_amount > 0, "Must mint a value greater than zero");
-    require(_quantity > 0, "Must mint a quantity");
-    require(whitelistedBulkMinters[msg.sender] == true, "Only whitelisted can bulk mint NFTs");
+    require(_to != address(0), "E11"); // E11 - "Cannot mint to the zero address"
+    require(_amount > 0, "E12"); // E12 - "Must mint a value greater than zero"
+    require(_quantity > 0, "E13"); // E13 - "Must mint a quantity"
+    require(whitelistedBulkMinters[msg.sender] == true, "E14"); // E14 - "Only whitelisted can bulk mint NFTs"
 
     uint256 brokerReceived = msg.value * (ticketPurchaseFee) / (1*10**(8));
     uint256 treasuryReceived = msg.value - brokerReceived;
@@ -372,6 +372,14 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
       _safeMint(msg.sender, ticketIdCounter.current());
       ticketIdCounter.increment();
     }
+    emit MintTicket(
+      msg.sender,
+      treasury,
+      address(this),
+      ticketIdCounter.current(),
+      sharesPurchased,
+      sharePriceWei
+    );
     return;
   }
   // whitelist bulk minter

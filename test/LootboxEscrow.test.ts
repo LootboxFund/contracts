@@ -558,7 +558,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
 
         const purchaserCounter = await lootbox.purchaserCounter();
         const purchaserLoop = Array.from(
-          { length: purchaserCounter.toNumber() - 1 },
+          { length: purchaserCounter.toNumber() },
           (_, i) => i
         );
         purchasers = await Promise.all(
@@ -667,12 +667,15 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
             SHARE_PRICE_WEI
           );
       });
-      it.only("viewPurchasers() => tracks an EnumerableSet of addresses of purchasers", async () => {
-        expect(purchasers.length).to.eq(2);
+      it("viewPurchasers() => tracks an EnumerableSet of addresses of purchasers", async () => {
+        expect(purchasers.length).to.eq(3);
         expect(padAddressTo32Bytes(purchasers[0])).to.eq(
           padAddressTo32Bytes(purchaser.address)
         );
-        expect(padAddressTo32Bytes(stripZeros(purchasers[1]))).to.eq(
+        expect(padAddressTo32Bytes(purchasers[1])).to.eq(
+          padAddressTo32Bytes(purchaser.address)
+        );
+        expect(padAddressTo32Bytes(stripZeros(purchasers[2]))).to.eq(
           padAddressTo32Bytes(purchaser2.address)
         );
       });
@@ -1073,27 +1076,31 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           .depositEarningsNative({ value: depositAmountInEtherA2.toString() });
         expect(await lootbox.depositIdCounter()).to.eq("2");
       });
-      // it("viewDepositedTokens() => tracks an EnumerableSet of all erc20 tokens paid out", async () => {
-      //   await lootbox
-      //     .connect(purchaser)
-      //     .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
-      //   await lootbox.connect(issuingEntity).endFundraisingPeriod();
-      //   await lootbox
-      //     .connect(issuingEntity)
-      //     .depositEarningsErc20(
-      //       usdc_stablecoin.address,
-      //       depositAmountInUSDCB1.toString()
-      //     );
-      //   await lootbox
-      //     .connect(issuingEntity)
-      //     .depositEarningsErc20(
-      //       usdt_stablecoin.address,
-      //       depositAmountInUSDCB1.toString()
-      //     );
-      //   const [a, b] = await lootbox.viewDepositedTokens();
-      //   expect(a).to.eq(padAddressTo32Bytes(usdc_stablecoin.address));
-      //   expect(b).to.eq(padAddressTo32Bytes(usdt_stablecoin.address));
-      // });
+      it("viewAllDeposits() => tracks an EnumerableSet of all native & erc20 tokens paid out", async () => {
+        await lootbox
+          .connect(purchaser)
+          .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
+        await lootbox.connect(issuingEntity).endFundraisingPeriod();
+        await lootbox
+          .connect(issuingEntity)
+          .depositEarningsErc20(
+            usdc_stablecoin.address,
+            depositAmountInUSDCB1.toString()
+          );
+        await lootbox
+          .connect(issuingEntity)
+          .depositEarningsErc20(
+            usdt_stablecoin.address,
+            depositAmountInUSDCB1.toString()
+          );
+        const [a, b] = await lootbox.viewAllDeposits();
+        expect(padAddressTo32Bytes(a[3])).to.eq(
+          padAddressTo32Bytes(usdc_stablecoin.address)
+        );
+        expect(padAddressTo32Bytes(b[3])).to.eq(
+          padAddressTo32Bytes(usdt_stablecoin.address)
+        );
+      });
     });
 
     describe("Trapped Tokens are handled", async () => {
@@ -1742,10 +1749,10 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
       //     ethers.utils.parseUnits("0.5", shareOwnershipPercentageDecimals)
       //   );
       // });
-      it.only("viewPurchasers() => can list out all investors", async () => {
+      it("viewPurchasers() => can list out all investors", async () => {
         const beforePurchaserCounter = await lootbox.purchaserCounter();
         const beforePurchaserLoop = Array.from(
-          { length: beforePurchaserCounter.toNumber() - 1 },
+          { length: beforePurchaserCounter.toNumber() },
           (_, i) => i
         );
         const beforePurchasers = await Promise.all(
@@ -1762,7 +1769,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           .purchaseTicket({ value: buyAmountInEtherB.toString() });
         const afterPurchaserCounter = await lootbox.purchaserCounter();
         const afterPurchaserLoop = Array.from(
-          { length: afterPurchaserCounter.toNumber() - 1 },
+          { length: afterPurchaserCounter.toNumber() },
           (_, i) => i
         );
         console.log(`afterPurchaserLoop = ${afterPurchaserLoop}`);
@@ -1776,38 +1783,48 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           padAddressTo32Bytes(purchaser2.address),
         ]);
       });
-      // it("viewDepositedTokens() => can list out all erc20 tokens deposited", async () => {
-      //   await lootbox
-      //     .connect(purchaser)
-      //     .purchaseTicket({ value: buyAmountInEtherA1.toString() });
-      //   await lootbox.connect(issuingEntity).endFundraisingPeriod();
-      //   await lootbox
-      //     .connect(issuingEntity)
-      //     .depositEarningsNative({ value: depositAmountInEtherA1.toString() });
-      //   await lootbox
-      //     .connect(issuingEntity)
-      //     .depositEarningsErc20(
-      //       usdc_stablecoin.address,
-      //       depositAmountInUSDCB1.toString()
-      //     );
+      it("viewAllDeposits() => can list out all native & erc20 tokens deposited", async () => {
+        await lootbox
+          .connect(purchaser)
+          .purchaseTicket({ value: buyAmountInEtherA1.toString() });
+        await lootbox.connect(issuingEntity).endFundraisingPeriod();
+        await lootbox
+          .connect(issuingEntity)
+          .depositEarningsNative({ value: depositAmountInEtherA1.toString() });
+        await lootbox
+          .connect(issuingEntity)
+          .depositEarningsErc20(
+            usdc_stablecoin.address,
+            depositAmountInUSDCB1.toString()
+          );
 
-      //   const depositedTokens1 = await lootbox.viewDepositedTokens();
-      //   expect(depositedTokens1).to.deep.eq([
-      //     padAddressTo32Bytes(usdc_stablecoin.address),
-      //   ]);
+        const [depositedTokens0, depositedTokens1] =
+          await lootbox.viewAllDeposits();
+        expect([padAddressTo32Bytes(depositedTokens0[3])]).to.deep.eq([
+          padAddressTo32Bytes(ethers.constants.AddressZero),
+        ]);
+        expect([padAddressTo32Bytes(depositedTokens1[3])]).to.deep.eq([
+          padAddressTo32Bytes(usdc_stablecoin.address),
+        ]);
 
-      //   await lootbox
-      //     .connect(issuingEntity)
-      //     .depositEarningsErc20(
-      //       usdt_stablecoin.address,
-      //       depositAmountInUSDTC1.toString()
-      //     );
-      //   const depositedTokens2 = await lootbox.viewDepositedTokens();
-      //   expect(depositedTokens2).to.deep.eq([
-      //     padAddressTo32Bytes(usdc_stablecoin.address),
-      //     padAddressTo32Bytes(usdt_stablecoin.address),
-      //   ]);
-      // });
+        await lootbox
+          .connect(issuingEntity)
+          .depositEarningsErc20(
+            usdt_stablecoin.address,
+            depositAmountInUSDTC1.toString()
+          );
+        const [_depositedTokens0, _depositedTokens1, _depositedTokens2] =
+          await lootbox.viewAllDeposits();
+        expect([
+          padAddressTo32Bytes(_depositedTokens0[3]),
+          padAddressTo32Bytes(_depositedTokens1[3]),
+          padAddressTo32Bytes(_depositedTokens2[3]),
+        ]).to.deep.eq([
+          padAddressTo32Bytes(ethers.constants.AddressZero),
+          padAddressTo32Bytes(usdc_stablecoin.address),
+          padAddressTo32Bytes(usdt_stablecoin.address),
+        ]);
+      });
       it("can query the total amount deposited in native token", async () => {
         await lootbox
           .connect(purchaser)
