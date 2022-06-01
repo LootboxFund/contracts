@@ -87,7 +87,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   bool public isFundraising;
   address public issuer;
   address public treasury;
-  address public superstaff;
   // ticketId => numShares
   mapping(uint256 => uint256) public sharesInTicket;
   CountersUpgradeable.Counter public ticketIdCounter;
@@ -243,7 +242,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
 
     ticketPurchaseFee = _ticketPurchaseFee;
     broker = _broker;
-    superstaff = _superstaff;
 
     _tokenURI = _baseTokenURI;
 
