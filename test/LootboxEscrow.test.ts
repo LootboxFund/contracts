@@ -2357,6 +2357,16 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         ).to.not.be.reverted;
       });
       it.only("allows whitelisted minters to bulk mint NFTs", async () => {
+        console.log(
+          `ethers.BigNumber.from("1000000") = ${ethers.BigNumber.from(
+            "1000000"
+          )}`
+        );
+        console.log(
+          `ethers.BigNumber.from(TICKET_PURCHASE_FEE) = ${ethers.BigNumber.from(
+            TICKET_PURCHASE_FEE
+          )}`
+        );
         const feeInverse = ethers.BigNumber.from("1000000").sub(
           ethers.BigNumber.from(TICKET_PURCHASE_FEE)
         );
