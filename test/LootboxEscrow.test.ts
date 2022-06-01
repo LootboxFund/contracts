@@ -664,8 +664,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
             entityTreasury.address,
             lootbox.address,
             "3",
-            buyAmountInSharesA3,
-            SHARE_PRICE_WEI
+            buyAmountInSharesA3
           );
       });
       it("viewPurchasers() => tracks an EnumerableSet of addresses of purchasers", async () => {
@@ -2313,6 +2312,13 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         .div("10")
         .mul("9");
       const quantityForBulkMint = "9";
+      const feeInverse = ethers.BigNumber.from("100000000").sub(
+        ethers.BigNumber.from(TICKET_PURCHASE_FEE)
+      );
+      const ninethMintedWithFees = fractionalTenthMintAmountEther
+        .mul(quantityForBulkMint)
+        .mul(ethers.BigNumber.from("100000000"))
+        .div(feeInverse); // accounts for 3.2% fee
       it("rejects non-whitelisted addresses from bulkMintNFTs()", async () => {
         const tx = lootbox
           .connect(purchaser)
@@ -2356,25 +2362,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
             .whitelistBulkMinter(purchaser.address, false)
         ).to.not.be.reverted;
       });
-      it.only("allows whitelisted minters to bulk mint NFTs", async () => {
-        console.log(
-          `ethers.BigNumber.from("1000000") = ${ethers.BigNumber.from(
-            "1000000"
-          )}`
-        );
-        console.log(
-          `ethers.BigNumber.from(TICKET_PURCHASE_FEE) = ${ethers.BigNumber.from(
-            TICKET_PURCHASE_FEE
-          )}`
-        );
-        const feeInverse = ethers.BigNumber.from("1000000").sub(
-          ethers.BigNumber.from(TICKET_PURCHASE_FEE)
-        );
-        console.log(`feeInverse = ${feeInverse}`);
-        const ninethMintedWithFees = fractionalTenthMintAmountEther
-          .mul(quantityForBulkMint)
-          .mul(ethers.BigNumber.from("1000000"))
-          .div(feeInverse); // accounts for 3.2% fee
+      it("allows whitelisted minters to bulk mint NFTs", async () => {
         const estSharesPurchased = await lootbox.estimateSharesPurchase(
           fractionalTenthMintAmountEther.mul(quantityForBulkMint)
         );
@@ -2384,22 +2372,6 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           .whitelistBulkMinter(purchaser.address, true);
 
         expect((await lootbox.sharesSoldCount()).toString()).to.eq("0");
-        console.log(`---------------------------------`);
-        console.log(
-          `etherEquivalentOfTargetShares: ${etherEquivalentOfTargetShares}`
-        );
-        console.log(
-          `fractionalTenthMintAmountEther: ${fractionalTenthMintAmountEther}`
-        );
-        console.log(
-          `fractionalTenthMintAmountEther.mul(quantityForBulkMint) = ${fractionalTenthMintAmountEther.mul(
-            quantityForBulkMint
-          )}`
-        );
-        console.log(`ninethMintedWithFees: ${ninethMintedWithFees}`);
-        console.log(`quantitySharesBulkMinted = ${quantitySharesBulkMinted}`);
-        console.log(`estSharesPurchased = ${estSharesPurchased}`);
-        console.log(`---------------------------------`);
         await expect(
           quantitySharesBulkMinted.mul(ethers.utils.parseUnits("1", "18"))
         ).to.eq(estSharesPurchased);
@@ -2420,11 +2392,113 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         expect(await lootbox.nativeTokenRaisedTotal()).to.eq(
           fractionalTenthMintAmountEther.mul(quantityForBulkMint)
         );
-        // expect((await lootbox.sharesSoldCount()).toString()).to.eq(
-        //   ethers.utils
-        //     .parseUnits(quantitySharesBulkMinted.toString(), "18")
-        //     .toString()
-        // );
+        expect((await lootbox.sharesSoldCount()).toString()).to.eq(
+          ethers.utils
+            .parseUnits(quantitySharesBulkMinted.toString(), "18")
+            .toString()
+        );
+      });
+      it("bulk whitelisting sends the NFTs to the designated address", async () => {
+        await lootbox
+          .connect(superstaff)
+          .whitelistBulkMinter(purchaser.address, true);
+        expect((await lootbox.sharesSoldCount()).toString()).to.eq("0");
+        const tx = await lootbox
+          .connect(purchaser)
+          .bulkMintNFTs(
+            purchaser.address,
+            fractionalTenthMintAmountEther,
+            quantityForBulkMint,
+            {
+              value: ninethMintedWithFees.toString(),
+            }
+          );
+        const receipt = await tx.wait();
+        const gasUsed = receipt.cumulativeGasUsed.mul(
+          receipt.effectiveGasPrice
+        );
+        expect(await lootbox.balanceOf(purchaser.address)).to.eq(
+          quantityForBulkMint
+        );
+      });
+      it("bulk whitelisting sends the correct amount to the treasury & broker", async () => {
+        const startLootboxBalance = await provider.getBalance(lootbox.address);
+        const startPurchaserBalance = await provider.getBalance(
+          purchaser.address
+        );
+        const startBrokerBalance = await provider.getBalance(broker.address);
+        expect(await lootbox.ticketIdCounter()).to.eq("0");
+        await lootbox
+          .connect(superstaff)
+          .whitelistBulkMinter(purchaser.address, true);
+        const tx = await lootbox
+          .connect(purchaser)
+          .bulkMintNFTs(
+            purchaser.address,
+            fractionalTenthMintAmountEther,
+            quantityForBulkMint,
+            {
+              value: ninethMintedWithFees.toString(),
+            }
+          );
+        const receipt = await tx.wait();
+        const gasUsed = receipt.cumulativeGasUsed.mul(
+          receipt.effectiveGasPrice
+        );
+        const endLootboxBalance = await provider.getBalance(lootbox.address);
+        const endBrokerBalance = await provider.getBalance(broker.address);
+        const endPurchaserBalance = await provider.getBalance(
+          purchaser.address
+        );
+        expect(endLootboxBalance.toString()).to.eq(
+          startLootboxBalance
+            .add(fractionalTenthMintAmountEther.mul(quantityForBulkMint))
+            .toString()
+        );
+        expect(endBrokerBalance.toString()).to.eq(
+          startBrokerBalance
+            .add(
+              ninethMintedWithFees.sub(
+                fractionalTenthMintAmountEther.mul(quantityForBulkMint)
+              )
+            )
+            .toString()
+        );
+        expect(endPurchaserBalance.toString()).to.eq(
+          startPurchaserBalance
+            .sub(ninethMintedWithFees)
+            .sub(gasUsed)
+            .toString()
+        );
+      });
+      it("bulk whitelisting emits MintTicket event with cumulative sharesPurchased and ticketId set to the new latest ticketId", async () => {
+        await lootbox
+          .connect(superstaff)
+          .whitelistBulkMinter(purchaser.address, true);
+        expect((await lootbox.sharesSoldCount()).toString()).to.eq("0");
+        const tx = await lootbox
+          .connect(purchaser)
+          .bulkMintNFTs(
+            purchaser.address,
+            fractionalTenthMintAmountEther,
+            quantityForBulkMint,
+            {
+              value: ninethMintedWithFees.toString(),
+            }
+          );
+        const receipt = await tx.wait();
+        const gasUsed = receipt.cumulativeGasUsed.mul(
+          receipt.effectiveGasPrice
+        );
+        expect(tx)
+          .to.emit(lootbox, "MintTicket")
+          .withArgs(
+            purchaser.address,
+            entityTreasury.address,
+            lootbox.address,
+            quantityForBulkMint,
+            quantitySharesBulkMinted
+          );
       });
     });
 

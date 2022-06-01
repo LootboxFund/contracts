@@ -95,8 +95,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     address indexed treasury,
     address lootbox,
     uint256 ticketId,
-    uint256 sharesPurchased,
-    uint256 sharePriceWei
+    uint256 sharesPurchased
   );
   event CompleteFundraiser(
     address indexed issuer,
@@ -291,8 +290,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
       treasury,
       address(this),
       ticketId,
-      sharesPurchased,
-      sharePriceWei
+      sharesPurchased
     );
     // emit the InvestmentFundsDispersed event);
     // emit InvestmentFundsDispersed(
@@ -354,14 +352,14 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     // calculate how many shares to buy based on treasuryReceived
     uint256 sharesPurchased = estimateSharesPurchase(treasuryReceived);
     // do not allow selling above sharesSoldMax 
-    require(sharesPurchased <= checkMaxSharesRemainingForSale(), "Not enough shares remaining to purchase");
+    require(sharesPurchased <= checkMaxSharesRemainingForSale(), "E15"); // E15 - "Not enough shares remaining to purchase"
     sharesSoldCount = sharesSoldCount + sharesPurchased;
     nativeTokenRaisedTotal = nativeTokenRaisedTotal + treasuryReceived;
     // sum the cumulative escrow'd amount
     escrowNativeAmount = escrowNativeAmount + treasuryReceived;
     // broker gets their cut, the rest stays in the contract for escrow
     (bool bsuccess,) = address(broker).call{value: brokerReceived}("");
-    require(bsuccess, "Broker could not receive payment");
+    require(bsuccess, "E16"); // E16 - "Broker could not receive payment"
     purchasers[purchaserCounter.current()] = msg.sender;
     purchaserCounter.increment();
     // loop through bulk minting
@@ -376,9 +374,8 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
       msg.sender,
       treasury,
       address(this),
-      ticketIdCounter.current(),
-      sharesPurchased,
-      sharePriceWei
+      ticketIdCounter.current() - 1,
+      sharesPurchased
     );
     return;
   }
