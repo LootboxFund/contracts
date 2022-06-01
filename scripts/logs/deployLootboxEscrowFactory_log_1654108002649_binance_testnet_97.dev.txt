@@ -1,0 +1,17 @@
+2022-06-01T18:26:43.374Z -  
+  
+---------- DEPLOY LOOTBOX ESCROW FACTORY (development) ----------
+  
+---- Script starting...
+
+---- Network:                             binance_testnet (Hex ID = 0x61)
+---- Lootbox DAO (multisig):              0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F
+---- Lootbox Grand Treasury (multisig):   0x3D18304497e214F7F4760756D9F20061DC0699b3
+---- Lootbox SuperStaff:                  0x5cf72D125e8be3eD2311E50cbbbc4d09C746516e
+---- Default Fee:                         3200000
+---- Deployer (UNTRUSTED):                0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A
+---- Base Metadata Path:                  https://storage.googleapis.com/lootbox-data-prod
+
+
+  
+2022-06-01T18:26:57.038Z - ---- 0xc5d11Bec5F22DF0551d1bBCeBA2f5Ca6c9273D31 ---> Lootbox Escrow Factory 
