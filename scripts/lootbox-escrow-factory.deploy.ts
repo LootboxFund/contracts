@@ -52,6 +52,12 @@ const LootboxSuperStaff = "0x5cf72D125e8be3eD2311E50cbbbc4d09C746516e";
  */
 async function main() {
   // const chainIdHex = `0x${network.config.chainId?.toString(16)}`;
+  // const LootboxDAO =
+  //   manifest.openZeppelin.multiSigs[chain.chainIdHex].LootboxDAO.address;
+  // const LootboxGrandTreasury =
+  //   manifest.openZeppelin.multiSigs[chain.chainIdHex].LootboxDAO_Treasury
+  //     .address;
+  // const LootboxSuperStaff = "____________";
 
   // find the chain in the manifest
   const chain = manifest.chains.find(
@@ -61,13 +67,6 @@ async function main() {
   if (!chain) {
     throw new Error(`Chain ${chainIdHex} not found in manifest`);
   }
-
-  // const LootboxDAO =
-  //   manifest.openZeppelin.multiSigs[chain.chainIdHex].LootboxDAO.address;
-  // const LootboxGrandTreasury =
-  //   manifest.openZeppelin.multiSigs[chain.chainIdHex].LootboxDAO_Treasury
-  //     .address;
-  // const LootboxSuperStaff = "____________";
 
   if (!LootboxDAO || !LootboxGrandTreasury || !LootboxSuperStaff) {
     throw new Error(

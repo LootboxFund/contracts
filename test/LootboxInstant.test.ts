@@ -1,9 +1,11 @@
 import { expect } from "chai";
 import { ethers, waffle, upgrades } from "hardhat";
 import {
+  BULKMINTER_ROLE,
   DAO_ROLE,
   generatePermissionRevokeMessage,
   padAddressTo32Bytes,
+  SUPERSTAFF_ROLE,
 } from "./helpers/test-helpers";
 import { manifest } from "../scripts/manifest";
 
@@ -31,6 +33,7 @@ describe("📦 LootboxInstant smart contract", async function () {
   let developer: SignerWithAddress;
   let purchaser2: SignerWithAddress;
   let broker: SignerWithAddress;
+  let superstaff: SignerWithAddress;
 
   let Lootbox: LootboxInstant__factory;
   let lootbox: LootboxInstant;
@@ -52,6 +55,7 @@ describe("📦 LootboxInstant smart contract", async function () {
 
   const SHARE_PRICE_WEI = "1000000000000"; // $0.07 usd per share
   const SHARE_PRICE_WEI_DECIMALS = 18;
+  const shareDecimals = ethers.utils.parseUnits("1", 18);
 
   const TICKET_PURCHASE_FEE = "2000000"; // 2%
   const FEE_DECIMALS = 8;
@@ -63,6 +67,15 @@ describe("📦 LootboxInstant smart contract", async function () {
 
   const TARGET_SHARES_AVAILABLE_FOR_SALE = "500000";
   const MAX_SHARES_AVAILABLE_FOR_SALE = "5000000";
+
+  const targetSharesWei = ethers.utils.parseUnits(
+    MAX_SHARES_AVAILABLE_FOR_SALE,
+    18
+  );
+  // max ether spent
+  const etherEquivalentOfTargetShares = targetSharesWei
+    .mul(SHARE_PRICE_WEI)
+    .div(shareDecimals);
 
   const buyAmountInEtherA1 = ethers.utils.parseUnits("0.1", "ether");
   const feeEtherA1 = buyAmountInEtherA1
@@ -129,6 +142,7 @@ describe("📦 LootboxInstant smart contract", async function () {
       entityTreasury = _guildTreasury;
       issuingEntity = _guildDao;
       broker = _treasury;
+      superstaff = _gfxStaff;
     });
 
     it("Name cannot be empty", async () => {
@@ -144,6 +158,7 @@ describe("📦 LootboxInstant smart contract", async function () {
           issuingEntity.address,
           "2000000",
           broker.address,
+          superstaff.address,
         ],
         { kind: "uups" }
       );
@@ -162,6 +177,7 @@ describe("📦 LootboxInstant smart contract", async function () {
           issuingEntity.address,
           "2000000",
           broker.address,
+          superstaff.address,
         ],
         { kind: "uups" }
       );
@@ -180,6 +196,7 @@ describe("📦 LootboxInstant smart contract", async function () {
           issuingEntity.address,
           "100000001",
           broker.address,
+          superstaff.address,
         ],
         { kind: "uups" }
       );
@@ -200,6 +217,7 @@ describe("📦 LootboxInstant smart contract", async function () {
           issuingEntity.address,
           "2000000",
           broker.address,
+          superstaff.address,
         ],
         { kind: "uups" }
       );
@@ -220,6 +238,7 @@ describe("📦 LootboxInstant smart contract", async function () {
           ethers.constants.AddressZero,
           "2000000",
           broker.address,
+          superstaff.address,
         ],
         { kind: "uups" }
       );
@@ -240,6 +259,7 @@ describe("📦 LootboxInstant smart contract", async function () {
           issuingEntity.address,
           "2000000",
           ethers.constants.AddressZero,
+          superstaff.address,
         ],
         { kind: "uups" }
       );
@@ -260,6 +280,7 @@ describe("📦 LootboxInstant smart contract", async function () {
           issuingEntity.address,
           "2000000",
           broker.address,
+          superstaff.address,
         ],
         { kind: "uups" }
       );
@@ -280,6 +301,7 @@ describe("📦 LootboxInstant smart contract", async function () {
           issuingEntity.address,
           "2000000",
           broker.address,
+          superstaff.address,
         ],
         { kind: "uups" }
       );
@@ -300,6 +322,7 @@ describe("📦 LootboxInstant smart contract", async function () {
           issuingEntity.address,
           "2000000",
           broker.address,
+          superstaff.address,
         ],
         { kind: "uups" }
       );
@@ -320,6 +343,7 @@ describe("📦 LootboxInstant smart contract", async function () {
           issuingEntity.address,
           "2000000",
           broker.address,
+          superstaff.address,
         ],
         { kind: "uups" }
       );
@@ -348,8 +372,9 @@ describe("📦 LootboxInstant smart contract", async function () {
       issuingEntity = _guildDao;
       developer = _developer;
       purchaser = _purchaser;
-      purchaser2 = _gfxStaff;
+      purchaser2 = _guildDev;
       broker = _treasury;
+      superstaff = _gfxStaff;
 
       Bnb = await ethers.getContractFactory("BNB");
       Lootbox = await ethers.getContractFactory("LootboxInstant");
@@ -370,6 +395,7 @@ describe("📦 LootboxInstant smart contract", async function () {
           issuingEntity.address,
           TICKET_PURCHASE_FEE,
           broker.address,
+          superstaff.address,
         ],
         { kind: "uups" }
       )) as LootboxInstant;
@@ -497,7 +523,16 @@ describe("📦 LootboxInstant smart contract", async function () {
           .connect(purchaser2)
           .purchaseTicket({ value: buyAmountInEtherB.toString() }); // equal to 50%
 
-        purchasers = await lootbox.viewPurchasers();
+        const purchaserCounter = await lootbox.purchaserCounter();
+        const purchaserLoop = Array.from(
+          { length: purchaserCounter.toNumber() },
+          (_, i) => i
+        );
+        purchasers = await Promise.all(
+          purchaserLoop.map((n) => {
+            return lootbox.purchasers(n);
+          })
+        );
 
         ticketsA = await lootbox.viewAllTicketsOfHolder(purchaser.address);
         ticketsB = await lootbox.viewAllTicketsOfHolder(purchaser2.address);
@@ -599,14 +634,20 @@ describe("📦 LootboxInstant smart contract", async function () {
             entityTreasury.address,
             lootbox.address,
             "3",
-            buyAmountInSharesA3,
-            SHARE_PRICE_WEI
+            buyAmountInSharesA3
           );
       });
       it("viewPurchasers() => tracks an EnumerableSet of addresses of purchasers", async () => {
-        expect(purchasers.length).to.eq(2);
-        expect(purchasers[0]).to.eq(padAddressTo32Bytes(purchaser.address));
-        expect(purchasers[1]).to.eq(padAddressTo32Bytes(purchaser2.address));
+        expect(purchasers.length).to.eq(3);
+        expect(padAddressTo32Bytes(purchasers[0])).to.eq(
+          padAddressTo32Bytes(purchaser.address)
+        );
+        expect(padAddressTo32Bytes(purchasers[1])).to.eq(
+          padAddressTo32Bytes(purchaser.address)
+        );
+        expect(padAddressTo32Bytes(purchasers[2])).to.eq(
+          padAddressTo32Bytes(purchaser2.address)
+        );
       });
     });
 
@@ -875,9 +916,13 @@ describe("📦 LootboxInstant smart contract", async function () {
             usdt_stablecoin.address,
             depositAmountInUSDCB1.toString()
           );
-        const [a, b] = await lootbox.viewDepositedTokens();
-        expect(a).to.eq(padAddressTo32Bytes(usdc_stablecoin.address));
-        expect(b).to.eq(padAddressTo32Bytes(usdt_stablecoin.address));
+        const [a, b] = await lootbox.viewAllDeposits();
+        expect(padAddressTo32Bytes(a[3])).to.eq(
+          padAddressTo32Bytes(usdc_stablecoin.address)
+        );
+        expect(padAddressTo32Bytes(b[3])).to.eq(
+          padAddressTo32Bytes(usdt_stablecoin.address)
+        );
       });
     });
 
@@ -1505,7 +1550,16 @@ describe("📦 LootboxInstant smart contract", async function () {
       //   );
       // });
       it("viewPurchasers() => can list out all investors", async () => {
-        const beforePurchasers = await lootbox.viewPurchasers();
+        const beforePurchaserCounter = await lootbox.purchaserCounter();
+        const beforePurchaserLoop = Array.from(
+          { length: beforePurchaserCounter.toNumber() },
+          (_, i) => i
+        );
+        const beforePurchasers = await Promise.all(
+          beforePurchaserLoop.map((n) => {
+            return lootbox.purchasers(n);
+          })
+        );
         expect(beforePurchasers).to.deep.eq([]);
         await lootbox
           .connect(purchaser)
@@ -1513,8 +1567,17 @@ describe("📦 LootboxInstant smart contract", async function () {
         await lootbox
           .connect(purchaser2)
           .purchaseTicket({ value: buyAmountInEtherB.toString() });
-        const afterPurchasers = await lootbox.viewPurchasers();
-        expect(afterPurchasers).to.deep.eq([
+        const afterPurchaserCounter = await lootbox.purchaserCounter();
+        const afterPurchaserLoop = Array.from(
+          { length: afterPurchaserCounter.toNumber() },
+          (_, i) => i
+        );
+        const afterPurchasers = await Promise.all(
+          afterPurchaserLoop.map((n) => {
+            return lootbox.purchasers(n);
+          })
+        );
+        expect(afterPurchasers.map((p) => padAddressTo32Bytes(p))).to.deep.eq([
           padAddressTo32Bytes(purchaser.address),
           padAddressTo32Bytes(purchaser2.address),
         ]);
@@ -1524,9 +1587,9 @@ describe("📦 LootboxInstant smart contract", async function () {
           .connect(purchaser)
           .purchaseTicket({ value: buyAmountInEtherA1.toString() });
         await lootbox.connect(issuingEntity).endFundraisingPeriod();
-        await lootbox
-          .connect(issuingEntity)
-          .depositEarningsNative({ value: depositAmountInEtherA1.toString() });
+        await lootbox.connect(issuingEntity).depositEarningsNative({
+          value: depositAmountInEtherA1.toString(),
+        });
         await lootbox
           .connect(issuingEntity)
           .depositEarningsErc20(
@@ -1534,10 +1597,10 @@ describe("📦 LootboxInstant smart contract", async function () {
             depositAmountInUSDCB1.toString()
           );
 
-        const depositedTokens1 = await lootbox.viewDepositedTokens();
-        expect(depositedTokens1).to.deep.eq([
-          padAddressTo32Bytes(usdc_stablecoin.address),
-        ]);
+        const [depositedTokens1] = await lootbox.viewAllDeposits();
+        expect(padAddressTo32Bytes(depositedTokens1[3])).to.deep.eq(
+          padAddressTo32Bytes(ethers.constants.AddressZero)
+        );
 
         await lootbox
           .connect(issuingEntity)
@@ -1545,8 +1608,11 @@ describe("📦 LootboxInstant smart contract", async function () {
             usdt_stablecoin.address,
             depositAmountInUSDTC1.toString()
           );
-        const depositedTokens2 = await lootbox.viewDepositedTokens();
-        expect(depositedTokens2).to.deep.eq([
+        const depositedTokens = await lootbox.viewAllDeposits();
+        expect(
+          depositedTokens.map((t) => padAddressTo32Bytes(t[3]))
+        ).to.deep.eq([
+          padAddressTo32Bytes(ethers.constants.AddressZero),
           padAddressTo32Bytes(usdc_stablecoin.address),
           padAddressTo32Bytes(usdt_stablecoin.address),
         ]);
@@ -1894,6 +1960,227 @@ describe("📦 LootboxInstant smart contract", async function () {
           erc20TokenAmount: depositAmountInUSDCB1.toString(),
           timestamp: timestamp2,
         });
+      });
+    });
+
+    describe("bulk NFT minting", async () => {
+      const fractionalTenthMintAmountEther = etherEquivalentOfTargetShares
+        .mul(ethers.utils.parseUnits("0.10", 18))
+        .div(shareDecimals);
+      const quantitySharesBulkMinted = ethers.BigNumber.from(
+        MAX_SHARES_AVAILABLE_FOR_SALE
+      )
+        .div("10")
+        .mul("9");
+      const quantityForBulkMint = "9";
+      const feeInverse = ethers.BigNumber.from("100000000").sub(
+        ethers.BigNumber.from(TICKET_PURCHASE_FEE)
+      );
+      const ninethMintedWithFees = fractionalTenthMintAmountEther
+        .mul(quantityForBulkMint)
+        .mul(ethers.BigNumber.from("100000000"))
+        .div(feeInverse); // accounts for 3.2% fee
+      it("rejects non-whitelisted addresses from bulkMintNFTs()", async () => {
+        const tx = lootbox
+          .connect(purchaser)
+          .bulkMintNFTs(purchaser.address, quantityForBulkMint, {
+            value: fractionalTenthMintAmountEther
+              .mul(quantityForBulkMint)
+              .toString(),
+          });
+        await expect(tx).to.be.revertedWith(
+          generatePermissionRevokeMessage(purchaser.address, BULKMINTER_ROLE)
+        );
+      });
+      it("rejects non-superstaff from whitelisting or unwhitelisting bulk minters", async () => {
+        await expect(
+          lootbox
+            .connect(purchaser)
+            .whitelistBulkMinter(purchaser.address, true)
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(purchaser.address, SUPERSTAFF_ROLE)
+        );
+        await expect(
+          lootbox
+            .connect(purchaser)
+            .whitelistBulkMinter(purchaser.address, false)
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(purchaser.address, SUPERSTAFF_ROLE)
+        );
+      });
+      it("allows superstaff to whitelist or unwhitelist bulk minters", async () => {
+        await expect(
+          lootbox
+            .connect(superstaff)
+            .whitelistBulkMinter(purchaser.address, true)
+        ).to.not.be.reverted;
+        await expect(
+          lootbox
+            .connect(superstaff)
+            .whitelistBulkMinter(purchaser.address, false)
+        ).to.not.be.reverted;
+      });
+      it("allows whitelisted minters to bulk mint NFTs", async () => {
+        const estSharesPurchased = await lootbox.estimateSharesPurchase(
+          fractionalTenthMintAmountEther.mul(quantityForBulkMint)
+        );
+
+        await lootbox
+          .connect(superstaff)
+          .whitelistBulkMinter(purchaser.address, true);
+
+        expect((await lootbox.sharesSoldCount()).toString()).to.eq("0");
+        await expect(
+          quantitySharesBulkMinted.mul(ethers.utils.parseUnits("1", "18"))
+        ).to.eq(estSharesPurchased);
+        const tx = await lootbox
+          .connect(purchaser)
+          .bulkMintNFTs(purchaser.address, quantityForBulkMint, {
+            value: ninethMintedWithFees.toString(),
+          });
+        const receipt = await tx.wait();
+        const gasUsed = receipt.cumulativeGasUsed.mul(
+          receipt.effectiveGasPrice
+        );
+        expect(await lootbox.nativeTokenRaisedTotal()).to.eq(
+          fractionalTenthMintAmountEther.mul(quantityForBulkMint)
+        );
+        expect((await lootbox.sharesSoldCount()).toString()).to.eq(
+          ethers.utils
+            .parseUnits(quantitySharesBulkMinted.toString(), "18")
+            .toString()
+        );
+      });
+      it("bulk whitelisting sends the NFTs to the designated address", async () => {
+        await lootbox
+          .connect(superstaff)
+          .whitelistBulkMinter(purchaser.address, true);
+        expect((await lootbox.sharesSoldCount()).toString()).to.eq("0");
+        const tx = await lootbox
+          .connect(purchaser)
+          .bulkMintNFTs(purchaser.address, quantityForBulkMint, {
+            value: ninethMintedWithFees.toString(),
+          });
+        const receipt = await tx.wait();
+        const gasUsed = receipt.cumulativeGasUsed.mul(
+          receipt.effectiveGasPrice
+        );
+        expect(await lootbox.balanceOf(purchaser.address)).to.eq(
+          quantityForBulkMint
+        );
+      });
+      it("bulk whitelisting sends the correct amount of shares to each NFT", async () => {
+        // sharePriceWei = 1000000000000;
+        // sharesForSale = 5 000 000;
+        // totalShareValueInWei = 5 000 000 000 000 000 000
+        const quantityForThirdsBulkMint = "3";
+        const fullValueOfTargetSharesWithFees = etherEquivalentOfTargetShares
+          .mul(ethers.BigNumber.from("100000000"))
+          .div(feeInverse); // accounts for 3.2% fee
+        await lootbox
+          .connect(superstaff)
+          .whitelistBulkMinter(purchaser.address, true);
+        expect((await lootbox.sharesSoldCount()).toString()).to.eq("0");
+        const sharesRemainingForSale =
+          await lootbox.checkMaxSharesRemainingForSale();
+        const tx = await lootbox
+          .connect(purchaser)
+          .bulkMintNFTs(purchaser.address, quantityForThirdsBulkMint, {
+            value: fullValueOfTargetSharesWithFees.toString(),
+          });
+        const receipt = await tx.wait();
+        const gasUsed = receipt.cumulativeGasUsed.mul(
+          receipt.effectiveGasPrice
+        );
+
+        const [sharesOwnedBulk1, sharesOwnedBulk2, sharesOwnedBulk3] =
+          await Promise.all([
+            lootbox.sharesInTicket(0),
+            lootbox.sharesInTicket(1),
+            lootbox.sharesInTicket(2),
+          ]);
+
+        // 1st NFT should be 1/3rd of 5,000,000 shares
+        await expect(sharesOwnedBulk1).to.eq(
+          ethers.BigNumber.from("1666666666666666666666666")
+        );
+        // 2nd NFT should be 1/3rd of 5,000,000 shares
+        await expect(sharesOwnedBulk2).to.eq(
+          ethers.BigNumber.from("1666666666666666666666666")
+        );
+        // 3rd & last NFT should be remaining 1/3rd of 5,000,000 shares + remainder
+        await expect(sharesOwnedBulk3).to.eq(
+          ethers.BigNumber.from("1666666666666666666666668")
+        );
+      });
+      it("bulk whitelisting sends the correct amount to the treasury & broker", async () => {
+        const startLootboxBalance = await provider.getBalance(lootbox.address);
+        const startPurchaserBalance = await provider.getBalance(
+          purchaser.address
+        );
+        const startBrokerBalance = await provider.getBalance(broker.address);
+        expect(await lootbox.ticketIdCounter()).to.eq("0");
+        await lootbox
+          .connect(superstaff)
+          .whitelistBulkMinter(purchaser.address, true);
+        const tx = await lootbox
+          .connect(purchaser)
+          .bulkMintNFTs(purchaser.address, quantityForBulkMint, {
+            value: ninethMintedWithFees.toString(),
+          });
+        const receipt = await tx.wait();
+        const gasUsed = receipt.cumulativeGasUsed.mul(
+          receipt.effectiveGasPrice
+        );
+        const endLootboxBalance = await provider.getBalance(lootbox.address);
+        const endBrokerBalance = await provider.getBalance(broker.address);
+        const endPurchaserBalance = await provider.getBalance(
+          purchaser.address
+        );
+        await expect(endLootboxBalance.toString()).to.eq(
+          startLootboxBalance
+            .add(fractionalTenthMintAmountEther.mul(quantityForBulkMint))
+            .toString()
+        );
+        await expect(endBrokerBalance.toString()).to.eq(
+          startBrokerBalance
+            .add(
+              ninethMintedWithFees.sub(
+                fractionalTenthMintAmountEther.mul(quantityForBulkMint)
+              )
+            )
+            .toString()
+        );
+        await expect(endPurchaserBalance.toString()).to.eq(
+          startPurchaserBalance
+            .sub(ninethMintedWithFees)
+            .sub(gasUsed)
+            .toString()
+        );
+      });
+      it("bulk whitelisting emits MintTicket event with cumulative sharesPurchased and ticketId set to the new latest ticketId", async () => {
+        await lootbox
+          .connect(superstaff)
+          .whitelistBulkMinter(purchaser.address, true);
+        expect((await lootbox.sharesSoldCount()).toString()).to.eq("0");
+        const tx = await lootbox
+          .connect(purchaser)
+          .bulkMintNFTs(purchaser.address, quantityForBulkMint, {
+            value: ninethMintedWithFees.toString(),
+          });
+        const receipt = await tx.wait();
+        const gasUsed = receipt.cumulativeGasUsed.mul(
+          receipt.effectiveGasPrice
+        );
+        await expect(tx)
+          .to.emit(lootbox, "MintTicket")
+          .withArgs(
+            purchaser.address,
+            entityTreasury.address,
+            lootbox.address,
+            "8",
+            ethers.utils.parseUnits(quantitySharesBulkMinted.toString(), "18")
+          );
       });
     });
 
