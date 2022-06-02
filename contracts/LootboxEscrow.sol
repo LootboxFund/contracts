@@ -63,6 +63,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   // roles
   bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
   bytes32 public constant SUPERSTAFF_ROLE = keccak256("SUPERSTAFF_ROLE");
+  bytes32 public constant BULKMINTER_ROLE = keccak256("BULKMINTER_ROLE");
 
   // decimals
   uint256 public shareDecimals;
@@ -103,13 +104,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     address lootbox,
     uint256 totalAmountRaised,
     uint256 totalAmountReceived,
-    uint256 sharesSold
-  );
-  event CancelFundraiser(
-    address indexed issuer,
-    address lootbox,
-    uint256 totalAmountRaised,
-    uint256 totalAmountRefunded,
     uint256 sharesSold
   );
 
@@ -257,7 +251,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   *   purchaseTicket()
   *
   *   estimateSharesPurchase(nativeTokenAmount)
-  *   checkMaxSharesRemainingForSale()
   */
   // buy in native tokens only. use purchaseTicket(), do not directly send $ to lootbox
   function purchaseTicket () public payable nonReentrant whenNotPaused returns (uint256 _ticketId, uint256 _sharesPurchased) {
@@ -316,6 +309,10 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     // return the ticket ID & sharesPurchased
     return (ticketId, sharesPurchased);
   }
+  // external function 
+  function checkMaxSharesRemainingForSale () public view returns (uint256) {
+    return sharesSoldMax - sharesSoldCount;
+  }
   // external function to estimate how much guild tokens a user will receive
   function estimateSharesPurchase (uint256 nativeTokenAmount) public view returns (uint256) {
     uint256 nativeTokenDecimals = 18;
@@ -324,10 +321,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
       nativeTokenDecimals
     );
     return sharesPurchased;
-  }
-  // external function to check how many shares are remaining for sale
-  function checkMaxSharesRemainingForSale () public view returns (uint256) {
-    return sharesSoldMax - sharesSoldCount;
   }
   // internal helper function that converts stablecoin amount to guild token amount
   function convertInputTokenToShares(
@@ -341,31 +334,38 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     address _to,
     uint256 _amount,
     uint256 _quantity
-  ) public payable nonReentrant whenNotPaused {
+  ) public payable nonReentrant whenNotPaused onlyRole(BULKMINTER_ROLE) {
     require(_to != address(0), "E11"); // E11 - "Cannot mint to the zero address"
     require(_amount > 0, "E12"); // E12 - "Must mint a value greater than zero"
     require(_quantity > 0, "E13"); // E13 - "Must mint a quantity"
-    require(whitelistedBulkMinters[msg.sender] == true, "E14"); // E14 - "Only whitelisted can bulk mint NFTs"
 
     uint256 brokerReceived = msg.value * (ticketPurchaseFee) / (1*10**(8));
     uint256 treasuryReceived = msg.value - brokerReceived;
     // calculate how many shares to buy based on treasuryReceived
     uint256 sharesPurchased = estimateSharesPurchase(treasuryReceived);
     // do not allow selling above sharesSoldMax 
-    require(sharesPurchased <= checkMaxSharesRemainingForSale(), "E15"); // E15 - "Not enough shares remaining to purchase"
+    require(sharesPurchased <= checkMaxSharesRemainingForSale(), "E14"); // E14 - "Not enough shares remaining to purchase"
     sharesSoldCount = sharesSoldCount + sharesPurchased;
     nativeTokenRaisedTotal = nativeTokenRaisedTotal + treasuryReceived;
     // sum the cumulative escrow'd amount
     escrowNativeAmount = escrowNativeAmount + treasuryReceived;
     // broker gets their cut, the rest stays in the contract for escrow
     (bool bsuccess,) = address(broker).call{value: brokerReceived}("");
-    require(bsuccess, "E16"); // E16 - "Broker could not receive payment"
+    require(bsuccess, "E15"); // E15 - "Broker could not receive payment"
     purchasers[purchaserCounter.current()] = msg.sender;
     purchaserCounter.increment();
     // loop through bulk minting
+    uint256 bulkSharesRemain = sharesPurchased;
+    uint256 portionAllocated = sharesPurchased / _quantity;
     for (uint256 i=0; i < _quantity; i++) {
       // update the mapping that tracks how many shares a ticket owns
-      sharesInTicket[ticketIdCounter.current()] = sharesPurchased;
+      if (portionAllocated > bulkSharesRemain) {
+        sharesInTicket[ticketIdCounter.current()] = bulkSharesRemain;
+        bulkSharesRemain = 0;
+      } else {
+        sharesInTicket[ticketIdCounter.current()] = portionAllocated;
+        bulkSharesRemain = bulkSharesRemain - portionAllocated;
+      }
       // mint the NFT ticket
       _safeMint(msg.sender, ticketIdCounter.current());
       ticketIdCounter.increment();
@@ -381,7 +381,11 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   }
   // whitelist bulk minter
   function whitelistBulkMinter (address _addr, bool _allowed) public onlyRole(SUPERSTAFF_ROLE) {
-    whitelistedBulkMinters[_addr] = _allowed;
+    if (_allowed) {
+      _grantRole(BULKMINTER_ROLE, _addr);
+    } else {
+      _revokeRole(BULKMINTER_ROLE, _addr);
+    }
   }
 
   /**
@@ -443,8 +447,9 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     );
     depositIdCounter.increment();
     // emit cancel event
-    emit CancelFundraiser(
-      issuer,
+    emit CompleteFundraiser(
+      msg.sender,
+      address(this),
       address(this),
       nativeTokenRaisedTotal,
       refundAmount,
@@ -469,9 +474,9 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
 
   // Note: functions using this MUST be wrapped with the `nonReentrant` modifier because it uses risky `.call`
   function _depositEarningsNative (address from, uint256 amount) private {
-    require(isFundraising == false, "Deposits cannot be made during fundraising period");
-    require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
-    require(amount > 0, "Deposit amount must be greater than 0");
+    require(isFundraising == false, "E17"); // E17 - "Cannot deposit earnings during fundraising period"
+    require(sharesSoldCount > 0, "E18"); // E18 - "No shares have been sold yet"
+    require(amount > 0, "E19"); // E19 - "Deposit must be greater than zero"
     // log this payout in sum
     nativeTokenDeposited = nativeTokenDeposited + amount;
     // create the deposit receipt
@@ -498,15 +503,15 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     depositIdCounter.increment();
     // transfer the native tokens to this LootboxEscrow contract
     (bool success,) = address(this).call{value: amount}("");
-    require(success, "Lootbox could not receive payment");
+    require(success, "E20"); // E20 - "Lootbox could not receive payment"
   }
   
   // Note: functions using this MUST be wrapped with the `nonReentrant` modifier
   function _depositEarningsErc20 (address from, address erc20Token, uint256 erc20Amount) private { 
-    require(isFundraising == false, "Deposits cannot be made during fundraising period");
-    require(sharesSoldCount > 0, "No shares have been sold. Deposits will not be accepted");
-    require(msg.value == 0, "Deposits of erc20 cannot also include native tokens in the same transaction");
-    require(erc20Amount > 0, "Deposit amount must be greater than 0");
+    require(isFundraising == false, "E21"); // E21 - "Deposits can't be made during fundraising"
+    require(sharesSoldCount > 0, "E22"); // E22 - "No shares have been sold yet"
+    require(msg.value == 0, "E23"); // E23 - "Deposits of erc20 cannot include native tokens in same transaction"
+    require(erc20Amount > 0, "E24"); // E24 - "Deposit amount must be greater than zero"
     erc20Deposited[erc20Token] = erc20Deposited[erc20Token] + erc20Amount;
     // create the deposit receipt
     uint256 depositId = depositIdCounter.current();
@@ -562,7 +567,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     return trappedTokens;
   }
   function rescueTrappedNativeTokens() public nonReentrant whenNotPaused {
-    require(isFundraising == false, "Rescue cannot be made during fundraising period");
+    require(isFundraising == false, "E16"); // E16 - "Cannot rescue native tokens during fundraising"
     uint256 trappedTokens = checkForTrappedNativeTokens();
     if (trappedTokens > 0) {
       _depositEarningsNative(address(this), trappedTokens);
@@ -581,7 +586,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     return trappedTokens;
   }
   function rescueTrappedErc20Tokens(address erc20Token) public nonReentrant whenNotPaused {
-    require(isFundraising == false, "Rescue cannot be made during fundraising period");
+    require(isFundraising == false, "E17"); // E17 - "Cannot rescue erc20 tokens during fundraising"
     uint256 trappedTokens = checkForTrappedErc20Tokens(erc20Token);
     if (trappedTokens > 0) {
       _depositEarningsErc20(address(this), erc20Token, trappedTokens);
@@ -642,7 +647,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   *  withdrawEarnings(ticketId)
   */
   function withdrawEarnings (uint256 ticketId) public nonReentrant whenNotPaused {
-    require(isFundraising == false, "Withdrawals cannot be made during fundraising period");
+    require(isFundraising == false, "Withdrawals cannot be made during fundraising");
     require(ownerOf(ticketId) == msg.sender, "You do not own this ticket");
     uint sharesOwned = sharesInTicket[ticketId]; 
     // loop through all deposits
