@@ -332,11 +332,10 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   // bulk mint NFTs
   function bulkMintNFTs (
     address _to,
-    uint256 _amount,
     uint256 _quantity
   ) public payable nonReentrant whenNotPaused onlyRole(BULKMINTER_ROLE) {
     require(_to != address(0), "E11"); // E11 - "Cannot mint to the zero address"
-    require(_amount > 0, "E12"); // E12 - "Must mint a value greater than zero"
+    
     require(_quantity > 0, "E13"); // E13 - "Must mint a quantity"
 
     uint256 brokerReceived = msg.value * (ticketPurchaseFee) / (1*10**(8));
@@ -359,12 +358,12 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     uint256 portionAllocated = sharesPurchased / _quantity;
     for (uint256 i=0; i < _quantity; i++) {
       // update the mapping that tracks how many shares a ticket owns
-      if (portionAllocated > bulkSharesRemain) {
-        sharesInTicket[ticketIdCounter.current()] = bulkSharesRemain;
-        bulkSharesRemain = 0;
-      } else {
+      if (i+1 < _quantity) {
         sharesInTicket[ticketIdCounter.current()] = portionAllocated;
         bulkSharesRemain = bulkSharesRemain - portionAllocated;
+      } else {
+        sharesInTicket[ticketIdCounter.current()] = bulkSharesRemain;
+        bulkSharesRemain = 0;
       }
       // mint the NFT ticket
       _safeMint(msg.sender, ticketIdCounter.current());
@@ -586,7 +585,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     return trappedTokens;
   }
   function rescueTrappedErc20Tokens(address erc20Token) public nonReentrant whenNotPaused {
-    require(isFundraising == false, "E17"); // E17 - "Cannot rescue erc20 tokens during fundraising"
+    require(isFundraising == false, "E25"); // E25 - "Cannot rescue erc20 tokens during fundraising"
     uint256 trappedTokens = checkForTrappedErc20Tokens(erc20Token);
     if (trappedTokens > 0) {
       _depositEarningsErc20(address(this), erc20Token, trappedTokens);
