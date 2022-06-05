@@ -10,7 +10,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721Enumer
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
@@ -51,7 +50,6 @@ interface IERC20 {
 // solhint-disable-next-line max-states-count
 contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
   using CountersUpgradeable for CountersUpgradeable.Counter;
-  using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
   string public variant;
   string public semver;
@@ -62,6 +60,8 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
    */
   // roles
   bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
+  bytes32 public constant SUPERSTAFF_ROLE = keccak256("SUPERSTAFF_ROLE");
+  bytes32 public constant BULKMINTER_ROLE = keccak256("BULKMINTER_ROLE");
   // decimals
   uint256 public shareDecimals;
   uint256 public feeDecimals;
@@ -78,7 +78,8 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   uint256 public sharesSoldTarget;
   uint256 public sharesSoldMax;
   uint256 public nativeTokenRaisedTotal;
-  EnumerableSetUpgradeable.AddressSet private purchasers;
+  mapping(uint256 => address) public purchasers;
+  CountersUpgradeable.Counter public purchaserCounter;
   bool public isFundraising;
   address public treasury;
   // ticketId => numShares
@@ -89,8 +90,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     address indexed treasury,
     address lootbox,
     uint256 ticketId,
-    uint256 sharesPurchased,
-    uint256 sharePriceWei
+    uint256 sharesPurchased
   );
 
   /** ------------------ FEES STATE ------------------
@@ -98,6 +98,13 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
    */
   address public broker;
   uint256 public ticketPurchaseFee;
+  event CompleteFundraiser(
+    address indexed issuer,
+    address indexed treasury,
+    address lootbox,
+    uint256 totalAmountRaised,
+    uint256 sharesSold
+  );
 
   /** ------------------ DEPOSITS ------------------
    * 
@@ -115,7 +122,6 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   CountersUpgradeable.Counter public depositIdCounter;
   // token => totalDeposited
   mapping(address => uint256) public erc20Deposited;
-  EnumerableSetUpgradeable.AddressSet private erc20TokensDeposited;
   uint256 public nativeTokenDeposited;
   event DepositEarnings(
     address indexed depositor,
@@ -176,7 +182,8 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     address _treasury,
     address _issuingEntity,
     uint256 _ticketPurchaseFee,
-    address _broker
+    address _broker,
+    address _superstaff
   ) initializer public {
     
     variant = "Instant";
@@ -196,6 +203,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     require(_targetSharesSold > 0, "Target shares sold must be greater than zero");
     require(_targetSharesSold <= _maxSharesSold, "Target shares sold must be less than or equal to max shares sold");
     require(_broker != address(0), "Broker cannot be the zero address");        // the broker is LootboxInstant Ltd.
+    require(_superstaff != address(0), "Superstaff cannot be the zero address"); // E10 - "Superstaff cannot be the zero address" (the superstaff is a staff member of the lootbox)
 
     __ERC721_init(_name, _symbol);
     __ERC721Enumerable_init();
@@ -225,6 +233,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     _tokenURI = _baseTokenURI;
     
     _grantRole(DAO_ROLE, _issuingEntity);
+    _grantRole(SUPERSTAFF_ROLE,_superstaff);
   }
 
 
@@ -256,7 +265,8 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     ticketIdCounter.increment();
     // update the mapping that tracks how many shares a ticket owns
     sharesInTicket[ticketId] = sharesPurchased;
-    purchasers.add(msg.sender);
+    purchasers[purchaserCounter.current()] = msg.sender;
+    purchaserCounter.increment();
     // update the total count of shares sold
     sharesSoldCount = sharesSoldCount + sharesPurchased;
     nativeTokenRaisedTotal = nativeTokenRaisedTotal + treasuryReceived;
@@ -266,8 +276,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
       treasury,
       address(this),
       ticketId,
-      sharesPurchased,
-      sharePriceWei
+      sharesPurchased
     );
     // emit the InvestmentFundsDispersed event);
     emit InvestmentFundsDispersed(
@@ -312,6 +321,61 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   ) internal view returns (uint256 sharesAmount) {
       return amountOfStableCoin * 10 ** (shareDecimals + sharePriceWeiDecimals - stablecoinDecimals) / sharePriceWei;
   }
+  // bulk mint NFTs
+  function bulkMintNFTs (
+    address _to,
+    uint256 _quantity
+  ) public payable nonReentrant whenNotPaused onlyRole(BULKMINTER_ROLE) {
+    require(_to != address(0), "Cannot mint to the zero address"); // E11 - "Cannot mint to the zero address"
+    
+    require(_quantity > 0, "Must mint a quantity"); // E13 - "Must mint a quantity"
+
+    uint256 brokerReceived = msg.value * (ticketPurchaseFee) / (1*10**(8));
+    uint256 treasuryReceived = msg.value - brokerReceived;
+    // calculate how many shares to buy based on treasuryReceived
+    uint256 sharesPurchased = estimateSharesPurchase(treasuryReceived);
+    // do not allow selling above sharesSoldMax 
+    require(sharesPurchased <= checkMaxSharesRemainingForSale(), "Not enough shares remaining to purchase"); // E14 - "Not enough shares remaining to purchase"
+    sharesSoldCount = sharesSoldCount + sharesPurchased;
+    nativeTokenRaisedTotal = nativeTokenRaisedTotal + treasuryReceived;
+    // broker gets their cut, the rest stays in the contract for escrow
+    (bool bsuccess,) = address(broker).call{value: brokerReceived}("");
+    require(bsuccess, "Broker could not receive payment"); // E15 - "Broker could not receive payment"
+    purchasers[purchaserCounter.current()] = msg.sender;
+    purchaserCounter.increment();
+    // loop through bulk minting
+    uint256 bulkSharesRemain = sharesPurchased;
+    uint256 portionAllocated = sharesPurchased / _quantity;
+    for (uint256 i=0; i < _quantity; i++) {
+      // update the mapping that tracks how many shares a ticket owns
+      if (i+1 < _quantity) {
+        sharesInTicket[ticketIdCounter.current()] = portionAllocated;
+        bulkSharesRemain = bulkSharesRemain - portionAllocated;
+      } else {
+        sharesInTicket[ticketIdCounter.current()] = bulkSharesRemain;
+        bulkSharesRemain = 0;
+      }
+      // mint the NFT ticket
+      _safeMint(msg.sender, ticketIdCounter.current());
+      ticketIdCounter.increment();
+    }
+    emit MintTicket(
+      msg.sender,
+      treasury,
+      address(this),
+      ticketIdCounter.current() - 1,
+      sharesPurchased
+    );
+    return;
+  }
+  // whitelist bulk minter
+  function whitelistBulkMinter (address _addr, bool _allowed) public onlyRole(SUPERSTAFF_ROLE) {
+    if (_allowed) {
+      _grantRole(BULKMINTER_ROLE, _addr);
+    } else {
+      _revokeRole(BULKMINTER_ROLE, _addr);
+    }
+  }
 
   /**
   * ------------------ END FUNDRAISING PERIOD ------------------
@@ -321,6 +385,13 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   function endFundraisingPeriod () public onlyRole(DAO_ROLE) nonReentrant whenNotPaused {
     require(isFundraising == true, "Fundraising period has already ended");
     isFundraising = false;
+    emit CompleteFundraiser(
+      issuer,
+      treasury,
+      address(this),
+      nativeTokenRaisedTotal,
+      sharesSoldCount
+    );
   }
 
 
@@ -379,7 +450,6 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
     require(msg.value == 0, "Deposits of erc20 cannot also include native tokens in the same transaction");
     require(erc20Amount > 0, "Deposit amount must be greater than 0");
     // log this to our list of erc20 tokens
-    erc20TokensDeposited.add(erc20Token);
     erc20Deposited[erc20Token] = erc20Deposited[erc20Token] + erc20Amount;
     // create the deposit receipt
     uint256 depositId = depositIdCounter.current();
@@ -564,8 +634,6 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   * ------------------ LOOTBOX INFO ------------------
   *  
   *  viewAllDeposits()
-  *  viewDepositedTokens()
-  *  viewPurchasers()
   *  viewTotalDepositOfNativeToken()
   *  viewTotalDepositOfErc20Token(address)
   */
@@ -575,12 +643,6 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
       _deposits[i] = depositReciepts[i];
     }
     return _deposits;
-  }
-  function viewDepositedTokens() public view returns (bytes32[] memory) {
-    return erc20TokensDeposited._inner._values;
-  }
-  function viewPurchasers() public view returns (bytes32[] memory) {
-    return purchasers._inner._values;
   }
   function viewTotalDepositOfNativeToken() public view returns (uint256 _totalDeposit) {
     uint256 totalDeposit = 0;

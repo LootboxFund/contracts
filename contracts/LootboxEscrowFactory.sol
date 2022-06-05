@@ -21,6 +21,7 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
     string public baseTokenURI;
     uint256 public immutable ticketPurchaseFee;
     address public immutable brokerAddress;
+    address public immutable superstaff;
 
     // Points to the Lootboxes deployed by this factory
     EnumerableSet.AddressSet private LOOTBOXES;
@@ -39,6 +40,7 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
         address _lootboxDao,
         uint256 _ticketPurchaseFee,
         address _brokerAddress,
+        address _superstaff,
         string memory _baseTokenURI
     ) {
         require(
@@ -46,6 +48,7 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
             "DAO Lootbox address cannot be zero"
         );
         require(_brokerAddress != address(0), "Broker address cannot be zero");
+        require(_superstaff != address(0), "Superstaff address cannot be zero");
         require(
             _ticketPurchaseFee < 100000000,
             "Purchase ticket fee must be less than 100000000 (100%)"
@@ -61,6 +64,7 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
 
         ticketPurchaseFee = _ticketPurchaseFee;
         brokerAddress = _brokerAddress;
+        superstaff = _superstaff;
 
         baseTokenURI = _baseTokenURI;
         semver = "0.4.0-prod";
@@ -109,7 +113,8 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
                 _treasury, // address _treasury,
                 msg.sender, // address _issuingEntity,
                 ticketPurchaseFee, // uint256 _ticketPurchaseFee,
-                brokerAddress // address _broker,
+                brokerAddress, // address _broker,
+                superstaff // address _superstaff
             )
         );
         LOOTBOXES.add(address(proxy));

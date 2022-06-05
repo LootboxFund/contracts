@@ -21,6 +21,7 @@ contract LootboxInstantFactory is Pausable, AccessControl {
     string public baseTokenURI;
     uint256 public immutable ticketPurchaseFee;
     address public immutable brokerAddress;
+    address public immutable superstaff;
 
     // Points to the Lootboxes deployed by this factory
     EnumerableSet.AddressSet private LOOTBOXES;
@@ -39,6 +40,7 @@ contract LootboxInstantFactory is Pausable, AccessControl {
         address _lootboxDao,
         uint256 _ticketPurchaseFee,
         address _brokerAddress,
+        address _superstaff,
         string memory _baseTokenURI
     ) {
         require(
@@ -54,6 +56,7 @@ contract LootboxInstantFactory is Pausable, AccessControl {
             bytes(_baseTokenURI).length != 0,
             "Base token URI cannot be empty"
         );
+        require(_superstaff != address(0), "Superstaff address cannot be zero");
 
         lootboxImplementation = address(new LootboxInstant());
 
@@ -61,6 +64,7 @@ contract LootboxInstantFactory is Pausable, AccessControl {
 
         ticketPurchaseFee = _ticketPurchaseFee;
         brokerAddress = _brokerAddress;
+        superstaff = _superstaff;
 
         baseTokenURI = _baseTokenURI;
 
@@ -114,7 +118,8 @@ contract LootboxInstantFactory is Pausable, AccessControl {
                 _treasury, // address _treasury,
                 msg.sender, // address _issuingEntity,
                 ticketPurchaseFee, // uint256 _ticketPurchaseFee,
-                brokerAddress // address _broker,
+                brokerAddress, // address _broker,
+                superstaff    // address superstaff
             )
         );
 

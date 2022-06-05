@@ -66,6 +66,7 @@ describe("📦 LootboxEscrowFactory", () => {
             ethers.constants.AddressZero,
             ticketPurchaseFee,
             treasury.address,
+            gfxStaff.address,
             BASE_URI
           )
         ).to.be.revertedWith("DAO Lootbox address cannot be zero");
@@ -76,9 +77,21 @@ describe("📦 LootboxEscrowFactory", () => {
             dao.address,
             ticketPurchaseFee,
             ethers.constants.AddressZero,
+            gfxStaff.address,
             BASE_URI
           )
         ).to.be.revertedWith("Broker address cannot be zero");
+      });
+      it("Superstaff address cannot be zero", async () => {
+        await expect(
+          LootboxFactory.deploy(
+            dao.address,
+            ticketPurchaseFee,
+            treasury.address,
+            ethers.constants.AddressZero,
+            BASE_URI
+          )
+        ).to.be.revertedWith("Superstaff address cannot be zero");
       });
       it("Purchase ticket fee must be less than 100000000 (100%)", async () => {
         await expect(
@@ -86,6 +99,7 @@ describe("📦 LootboxEscrowFactory", () => {
             dao.address,
             "100000001",
             treasury.address,
+            gfxStaff.address,
             BASE_URI
           )
         ).to.be.revertedWith(
@@ -98,6 +112,7 @@ describe("📦 LootboxEscrowFactory", () => {
             dao.address,
             ticketPurchaseFee,
             treasury.address,
+            gfxStaff.address,
             ""
           )
         ).to.be.revertedWith("Base token URI cannot be empty");
@@ -109,6 +124,7 @@ describe("📦 LootboxEscrowFactory", () => {
           dao.address,
           ticketPurchaseFee,
           treasury.address,
+          gfxStaff.address,
           BASE_URI
         );
         await lootboxFactory.deployed();
@@ -139,6 +155,7 @@ describe("📦 LootboxEscrowFactory", () => {
         dao.address,
         ticketPurchaseFee,
         treasury.address,
+        gfxStaff.address,
         BASE_URI
       );
       await lootboxFactory.deployed();
@@ -157,6 +174,7 @@ describe("📦 LootboxEscrowFactory", () => {
         dao.address,
         ticketPurchaseFee,
         treasury.address,
+        gfxStaff.address,
         BASE_URI
       );
       await lootboxFactory.deployed();
