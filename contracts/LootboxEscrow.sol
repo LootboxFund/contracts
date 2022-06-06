@@ -333,7 +333,8 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   function bulkMintNFTs (
     address _to,
     uint256 _quantity
-  ) public payable nonReentrant whenNotPaused onlyRole(BULKMINTER_ROLE) {
+  // ) public payable nonReentrant whenNotPaused onlyRole(BULKMINTER_ROLE) {
+  ) public payable nonReentrant whenNotPaused {
     require(_to != address(0), "E11"); // E11 - "Cannot mint to the zero address"
     
     require(_quantity > 0, "E13"); // E13 - "Must mint a quantity"

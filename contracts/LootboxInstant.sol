@@ -325,7 +325,8 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   function bulkMintNFTs (
     address _to,
     uint256 _quantity
-  ) public payable nonReentrant whenNotPaused onlyRole(BULKMINTER_ROLE) {
+  // ) public payable nonReentrant whenNotPaused onlyRole(BULKMINTER_ROLE) {
+  ) public payable nonReentrant whenNotPaused {
     require(_to != address(0), "Cannot mint to the zero address"); // E11 - "Cannot mint to the zero address"
     
     require(_quantity > 0, "Must mint a quantity"); // E13 - "Must mint a quantity"
