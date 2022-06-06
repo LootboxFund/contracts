@@ -1980,7 +1980,7 @@ describe("📦 LootboxInstant smart contract", async function () {
         .mul(quantityForBulkMint)
         .mul(ethers.BigNumber.from("100000000"))
         .div(feeInverse); // accounts for 3.2% fee
-      it("rejects non-whitelisted addresses from bulkMintNFTs()", async () => {
+      it("does NOT reject non-whitelisted addresses from bulkMintNFTs()", async () => {
         const tx = lootbox
           .connect(purchaser)
           .bulkMintNFTs(purchaser.address, quantityForBulkMint, {
@@ -1988,9 +1988,10 @@ describe("📦 LootboxInstant smart contract", async function () {
               .mul(quantityForBulkMint)
               .toString(),
           });
-        await expect(tx).to.be.revertedWith(
-          generatePermissionRevokeMessage(purchaser.address, BULKMINTER_ROLE)
-        );
+        // await expect(tx).to.be.revertedWith(
+        //   generatePermissionRevokeMessage(purchaser.address, BULKMINTER_ROLE)
+        // );
+        await expect(tx).to.not.be.reverted;
       });
       it("rejects non-superstaff from whitelisting or unwhitelisting bulk minters", async () => {
         await expect(

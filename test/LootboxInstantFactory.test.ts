@@ -23,6 +23,7 @@ describe("📦 LootboxInstantFactory", () => {
   let gfxStaff: SignerWithAddress;
   let guildDao: SignerWithAddress;
   let guildDev: SignerWithAddress;
+  let superstaff: SignerWithAddress;
   let guildTreasury: SignerWithAddress;
 
   let LootboxFactory: LootboxInstantFactory__factory;
@@ -58,6 +59,7 @@ describe("📦 LootboxInstantFactory", () => {
     guildDao = _guildDao;
     guildDev = _guildDev;
     guildTreasury = _guildTreasury;
+    superstaff = _gfxStaff;
   });
 
   describe("initialization => constructor()", async () => {
@@ -68,6 +70,7 @@ describe("📦 LootboxInstantFactory", () => {
             ethers.constants.AddressZero,
             ticketPurchaseFee,
             treasury.address,
+            superstaff.address,
             BASE_URI
           )
         ).to.be.revertedWith("DAO Lootbox address cannot be zero");
@@ -78,6 +81,7 @@ describe("📦 LootboxInstantFactory", () => {
             dao.address,
             ticketPurchaseFee,
             ethers.constants.AddressZero,
+            superstaff.address,
             BASE_URI
           )
         ).to.be.revertedWith("Broker address cannot be zero");
@@ -88,11 +92,23 @@ describe("📦 LootboxInstantFactory", () => {
             dao.address,
             "100000001",
             treasury.address,
+            superstaff.address,
             BASE_URI
           )
         ).to.be.revertedWith(
           "Purchase ticket fee must be less than 100000000 (100%)"
         );
+      });
+      it("Superstaff address cannot be zero", async () => {
+        await expect(
+          LootboxFactory.deploy(
+            dao.address,
+            ticketPurchaseFee,
+            treasury.address,
+            ethers.constants.AddressZero,
+            BASE_URI
+          )
+        ).to.be.revertedWith("Superstaff address cannot be zero");
       });
       it("Reverts if base URI is empty", async () => {
         await expect(
@@ -100,6 +116,7 @@ describe("📦 LootboxInstantFactory", () => {
             dao.address,
             ticketPurchaseFee,
             treasury.address,
+            superstaff.address,
             ""
           )
         ).to.be.revertedWith("Base token URI cannot be empty");
@@ -111,6 +128,7 @@ describe("📦 LootboxInstantFactory", () => {
           dao.address,
           ticketPurchaseFee,
           treasury.address,
+          superstaff.address,
           BASE_URI
         );
         await lootboxFactory.deployed();
@@ -149,6 +167,7 @@ describe("📦 LootboxInstantFactory", () => {
         dao.address,
         TICKET_PURCHASE_FEE,
         treasury.address,
+        superstaff.address,
         BASE_URI
       );
       await lootboxFactory.deployed();
