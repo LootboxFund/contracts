@@ -41,23 +41,11 @@ const LOG_FILE_PATH = `${__dirname}/logs/deployLootboxEscrowFactory_log_${Date.n
  */
 const defaultFee = ethers.utils.parseUnits("0.032", 8 /* fee decimals */);
 
-const chainIdHex = "0x61";
-const LootboxDAO = "0x26dE296ff2DF4eA26aB688B8680531D2B1Bb461F";
-const LootboxGrandTreasury = "0x3D18304497e214F7F4760756D9F20061DC0699b3";
-const LootboxSuperStaff = "0x5cf72D125e8be3eD2311E50cbbbc4d09C746516e";
-// const nativeTokenPriceFeed = "0x2514895c72f50D8bd4B4F9b1110F0D6bD2c97526"
-
 /**
  * -------------------- DEPLOY SCRIPT --------------------
  */
 async function main() {
-  // const chainIdHex = `0x${network.config.chainId?.toString(16)}`;
-  // const LootboxDAO =
-  //   manifest.openZeppelin.multiSigs[chain.chainIdHex].LootboxDAO.address;
-  // const LootboxGrandTreasury =
-  //   manifest.openZeppelin.multiSigs[chain.chainIdHex].LootboxDAO_Treasury
-  //     .address;
-  // const LootboxSuperStaff = "____________";
+  const chainIdHex = `0x${network.config.chainId?.toString(16)}`;
 
   // find the chain in the manifest
   const chain = manifest.chains.find(
@@ -67,6 +55,15 @@ async function main() {
   if (!chain) {
     throw new Error(`Chain ${chainIdHex} not found in manifest`);
   }
+
+  const LootboxDAO =
+    manifest.openZeppelin.multiSigs[chain.chainIdHex].LootboxDAO.address;
+  const LootboxGrandTreasury =
+    manifest.openZeppelin.multiSigs[chain.chainIdHex].LootboxDAO_Treasury
+      .address;
+  const LootboxSuperStaff =
+    manifest.lootbox.contracts[chain.chainIdHex].LootboxEscrowFactory
+      .bulkMinterSuperStaff;
 
   if (!LootboxDAO || !LootboxGrandTreasury || !LootboxSuperStaff) {
     throw new Error(
