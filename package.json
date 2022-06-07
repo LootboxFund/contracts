@@ -1,6 +1,6 @@
 {
   "name": "@lootboxfund/contracts",
-  "version": "0.6.0-demo",
+  "version": "0.6.0-prod",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -70,7 +70,7 @@
     "@openzeppelin/contracts-upgradeable": "^4.4.2",
     "@openzeppelin/hardhat-upgrades": "^1.12.0",
     "@wormgraph/helpers": "0.1.10",
-    "@wormgraph/manifest": "0.3.73",
+    "@wormgraph/manifest": "0.3.79",
     "hardhat-contract-sizer": "^2.5.1",
     "lodash": "^4.17.21",
     "moralis": "^1.2.1"
