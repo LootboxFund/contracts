@@ -68,7 +68,7 @@ contract LootboxInstantFactory is Pausable, AccessControl {
 
         baseTokenURI = _baseTokenURI;
 
-        semver = "0.4.0-prod";
+        semver = "0.6.0-prod";
     }
 
     // function checkFactoryPrivateDetails() public view onlyRole(DAO_ROLE) returns (address _brokerAddress, uint256 _ticketPurchaseFee) {
