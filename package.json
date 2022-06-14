@@ -1,6 +1,6 @@
 {
   "name": "@lootboxfund/contracts",
-  "version": "0.6.0-prod",
+  "version": "0.6.1-prod",
   "description": "",
   "main": "index.js",
   "scripts": {
