@@ -54,6 +54,11 @@ export const BULKMINTER_ROLE = ethers.utils.solidityKeccak256(
   ["BULKMINTER_ROLE"]
 );
 
+export const WHITELISTER_ROLE = ethers.utils.solidityKeccak256(
+  ["string"],
+  ["WHITELISTER_ROLE"]
+);
+
 export const DEFAULT_ADMIN_ROLE =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
 
