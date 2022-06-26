@@ -361,7 +361,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
       ticketIdCounter.increment();
     }
     emit MintTicket(
-      msg.sender,
+      _to,
       treasury,
       address(this),
       ticketIdCounter.current() - 1,
