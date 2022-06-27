@@ -1,28 +1,34 @@
 import { expect } from "chai";
-import { ethers, waffle, upgrades } from "hardhat";
-import { WHITELISTER_ROLE } from "./helpers/test-helpers";
+import { ethers, waffle, upgrades, network } from "hardhat";
+import {
+  WHITELISTER_ROLE,
+  signWhitelist,
+  DAO_ROLE,
+} from "./helpers/test-helpers";
 import { manifest } from "../scripts/manifest";
 
 import { LootboxEscrow, PartyBasket, PartyBasket__factory } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { BigNumber } from "ethers";
-import { SUPERSTAFF_ROLE } from "./helpers/test-helpers";
 
-// const BNB_ARCHIVED_PRICE = "41771363251"; // $417.36614642 USD per BNB
-
-describe.only("📦 PartyBasket smart contract", () => {
+describe("📦 PartyBasket smart contract", () => {
   let PartyBasket: PartyBasket__factory;
   let partyBasket: PartyBasket;
 
   let deployer: SignerWithAddress;
-  let whitelister: SignerWithAddress;
+  let whitelistKey: SignerWithAddress;
+  let maliciousKey: SignerWithAddress;
+  let mintingKey: SignerWithAddress;
+  let admin: SignerWithAddress;
 
   beforeEach(async () => {
     PartyBasket = await ethers.getContractFactory("PartyBasket");
-    const [_deployer, _treasury] = await ethers.getSigners();
+    const accounts = await ethers.getSigners();
 
-    deployer = _deployer;
-    whitelister = _treasury;
+    mintingKey = accounts[0];
+    whitelistKey = accounts[1];
+    maliciousKey = accounts[2];
+    deployer = accounts[3];
+    admin = accounts[4];
   });
 
   it("reverts when name is empty string", async () => {
@@ -30,7 +36,8 @@ describe.only("📦 PartyBasket smart contract", () => {
       PartyBasket.deploy(
         "",
         "0xf1d92ef22db63bd8590eed61362ee851eec2dbdc",
-        "0xf1d92ef22db63bd8590eed61362ee851eec2dbdc"
+        admin.address,
+        whitelistKey.address
       )
     ).to.be.revertedWith("Name cannot be empty");
   });
@@ -40,16 +47,29 @@ describe.only("📦 PartyBasket smart contract", () => {
       PartyBasket.deploy(
         "PartyBasket",
         ethers.constants.AddressZero,
-        "0xf1d92ef22db63bd8590eed61362ee851eec2dbdc"
+        admin.address,
+        whitelistKey.address
       )
     ).to.be.revertedWith("Lootbox address cannot be the zero address");
   });
 
-  it("reverts when whitelister is zero address", async () => {
+  it("reverts when admin is zero address", async () => {
     await expect(
       PartyBasket.deploy(
         "PartyBasket",
         "0xf1d92ef22db63bd8590eed61362ee851eec2dbdc",
+        ethers.constants.AddressZero,
+        whitelistKey.address
+      )
+    ).to.be.revertedWith("Admin address cannot be the zero address");
+  });
+
+  it("reverts when whitelistKey is zero address", async () => {
+    await expect(
+      PartyBasket.deploy(
+        "PartyBasket",
+        "0xf1d92ef22db63bd8590eed61362ee851eec2dbdc",
+        admin.address,
         ethers.constants.AddressZero
       )
     ).to.be.revertedWith("Whitelister cannot be the zero address");
@@ -60,13 +80,35 @@ describe.only("📦 PartyBasket smart contract", () => {
 
     beforeEach(async () => {
       const lootboxFactory = await ethers.getContractFactory("LootboxEscrow");
-      lootbox = await lootboxFactory.deploy();
+
+      lootbox = (await upgrades.deployProxy(
+        lootboxFactory,
+        [
+          "NAME",
+          "SYMBOL",
+          "base",
+          ethers.BigNumber.from("100000"),
+          ethers.utils.parseUnits("5000000", "18"), // 50k shares, 18 decimals
+          deployer.address,
+          deployer.address,
+          "2000000",
+          deployer.address,
+          deployer.address,
+        ],
+        { kind: "uups" }
+      )) as LootboxEscrow;
 
       partyBasket = await PartyBasket.deploy(
         "PartyBasket",
         lootbox.address,
-        whitelister.address
+        admin.address,
+        whitelistKey.address
       );
+
+      // bulk mint a lootbox for the partyBasket
+      await lootbox.bulkMintNFTs(partyBasket.address, "10", {
+        value: "100000000000000000",
+      });
     });
 
     it("has correct name", async () => {
@@ -79,17 +121,216 @@ describe.only("📦 PartyBasket smart contract", () => {
       expect(lootboxAddress).to.equal(lootbox.address);
     });
 
-    it("grants the whitelister the whitelister role", async () => {
+    it("grants the whitelistKey the WHITELISTER role", async () => {
       const isWhitelister = await partyBasket.hasRole(
         WHITELISTER_ROLE,
-        whitelister.address
+        whitelistKey.address
       );
       expect(isWhitelister).to.equal(true);
     });
 
+    it("grants the admin the DAO_ROLE role", async () => {
+      const isAdmin = await partyBasket.hasRole(DAO_ROLE, admin.address);
+      expect(isAdmin).to.equal(true);
+    });
+
     it("has the correct DOMAIN_SEPARATOR", async () => {
-      const domainSeparator = await partyBasket.DOMAIN_SEPARATOR();
-      expect(domainSeparator).to.equal(".");
+      const expectedDomainSeparator = await partyBasket.DOMAIN_SEPARATOR();
+
+      const domainSeparator = ethers.utils.keccak256(
+        ethers.utils.defaultAbiCoder.encode(
+          ["bytes32", "bytes32", "bytes32", "uint256", "address"],
+          [
+            ethers.utils.keccak256(
+              ethers.utils.toUtf8Bytes(
+                "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+              )
+            ),
+            ethers.utils.keccak256(ethers.utils.toUtf8Bytes("PartyBasket")),
+            ethers.utils.keccak256(ethers.utils.toUtf8Bytes("1")),
+            network.config.chainId,
+            partyBasket.address,
+          ]
+        )
+      );
+
+      expect(domainSeparator).to.equal(expectedDomainSeparator);
+    });
+
+    it("has the expected semver", async () => {
+      expect(await partyBasket.semver()).to.eq(manifest.semver.id);
+    });
+
+    describe("redeemBounty()", () => {
+      it("reverts when called with invalid calldata", async () => {
+        await expect(
+          partyBasket.connect(maliciousKey).redeemBounty("saldkmals", 0)
+        ).to.be.reverted; // 'Error: invalid arrayify value (argument="value", value="saldkmals", code=INVALID_ARGUMENT, version=bytes/5.6.0)'
+
+        await expect(
+          partyBasket
+            .connect(maliciousKey)
+            .redeemBounty(ethers.constants.AddressZero, 0)
+        ).to.be.revertedWith("ECDSA: invalid signature length");
+      });
+
+      it("reverts when the signer does not have the minter role", async () => {
+        const signature = await signWhitelist(
+          network.config.chainId || 0,
+          partyBasket.address,
+          maliciousKey,
+          mintingKey.address,
+          0
+        );
+
+        await expect(
+          partyBasket.connect(maliciousKey).redeemBounty(signature, 0)
+        ).to.be.revertedWith("Invalid Signature");
+      });
+
+      it("reverts when called with a valid signature, but different mintingKey address", async () => {
+        const signature = await signWhitelist(
+          network.config.chainId || 0,
+          partyBasket.address,
+          whitelistKey,
+          mintingKey.address,
+          0
+        );
+
+        await expect(
+          partyBasket.connect(maliciousKey).redeemBounty(signature, 0)
+        ).to.be.revertedWith("Invalid Signature");
+      });
+
+      it("reverts when called with a valid whitelistKey & mintingKey, but different nonce", async () => {
+        const signature = await signWhitelist(
+          network.config.chainId || 0,
+          partyBasket.address,
+          whitelistKey,
+          mintingKey.address,
+          0
+        );
+
+        await expect(
+          partyBasket.connect(maliciousKey).redeemBounty(signature, 1)
+        ).to.be.revertedWith("Invalid Signature");
+      });
+
+      it("reverts when called with the same signature multiple times", async () => {
+        const signature = await signWhitelist(
+          network.config.chainId || 0,
+          partyBasket.address,
+          whitelistKey,
+          maliciousKey.address,
+          0
+        );
+
+        await expect(
+          partyBasket.connect(maliciousKey).redeemBounty(signature, 0)
+        ).to.not.be.reverted;
+
+        await expect(
+          partyBasket.connect(maliciousKey).redeemBounty(signature, 0)
+        ).to.be.revertedWith("signature used");
+      });
+
+      it("reverts when called with no NFTs in the basket", async () => {
+        const nonce = 1;
+
+        const partyBasket2 = await PartyBasket.deploy(
+          "PartyBasket",
+          lootbox.address,
+          admin.address,
+          whitelistKey.address
+        );
+
+        const signature = await signWhitelist(
+          network.config.chainId || 0,
+          partyBasket2.address,
+          whitelistKey,
+          mintingKey.address,
+          nonce
+        );
+
+        await expect(
+          partyBasket2.connect(mintingKey).redeemBounty(signature, nonce)
+        ).to.be.revertedWith("No NFTs available");
+      });
+
+      it("reverts with Pauseable error when paused", async () => {
+        const signature = await signWhitelist(
+          network.config.chainId || 0,
+          partyBasket.address,
+          whitelistKey,
+          mintingKey.address,
+          1
+        );
+        await partyBasket.connect(admin).pause();
+        await expect(
+          partyBasket.connect(mintingKey).redeemBounty(signature, 1)
+        ).to.be.revertedWith("Pausable: paused");
+      });
+
+      it("does not revert when called with appropriate signer", async () => {
+        const nonce = 2;
+        const signature = await signWhitelist(
+          network.config.chainId || 0,
+          partyBasket.address,
+          whitelistKey,
+          mintingKey.address,
+          nonce
+        );
+
+        await expect(
+          partyBasket.connect(mintingKey).redeemBounty(signature, nonce)
+        ).to.not.be.reverted;
+      });
+
+      it("sends the bounty to minter", async () => {
+        const nonce = 2;
+        const signature = await signWhitelist(
+          network.config.chainId || 0,
+          partyBasket.address,
+          whitelistKey,
+          mintingKey.address,
+          nonce
+        );
+
+        const beforeTickets = await partyBasket.viewNFTs();
+
+        await partyBasket.connect(mintingKey).redeemBounty(signature, nonce);
+
+        const afterTickets = await partyBasket.viewNFTs();
+
+        expect(afterTickets.length).to.eq(beforeTickets.length - 1);
+        expect(await lootbox.ownerOf(beforeTickets[0])).to.eq(
+          mintingKey.address
+        );
+      });
+
+      it("emits a BountyRedeemed event", async () => {
+        const nonce = 2;
+        const signature = await signWhitelist(
+          network.config.chainId || 0,
+          partyBasket.address,
+          whitelistKey,
+          mintingKey.address,
+          nonce
+        );
+
+        const tickets = await partyBasket.viewNFTs();
+
+        await expect(
+          await partyBasket.connect(mintingKey).redeemBounty(signature, nonce)
+        )
+          .to.emit(partyBasket, "BountyRedeemed")
+          .withArgs(
+            partyBasket.address,
+            mintingKey.address,
+            lootbox.address,
+            tickets[0]
+          );
+      });
     });
   });
 });
