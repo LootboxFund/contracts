@@ -2059,7 +2059,7 @@ describe("📦 LootboxInstant smart contract", async function () {
         expect((await lootbox.sharesSoldCount()).toString()).to.eq("0");
         const tx = await lootbox
           .connect(purchaser)
-          .bulkMintNFTs(purchaser.address, quantityForBulkMint, {
+          .bulkMintNFTs(purchaser2.address, quantityForBulkMint, {
             value: ninethMintedWithFees.toString(),
           });
         const receipt = await tx.wait();
@@ -2067,6 +2067,9 @@ describe("📦 LootboxInstant smart contract", async function () {
           receipt.effectiveGasPrice
         );
         expect(await lootbox.balanceOf(purchaser.address)).to.eq(
+          "0"
+        );
+        expect(await lootbox.balanceOf(purchaser2.address)).to.eq(
           quantityForBulkMint
         );
       });
