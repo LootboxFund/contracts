@@ -367,7 +367,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
         bulkSharesRemain = 0;
       }
       // mint the NFT ticket
-      _safeMint(msg.sender, ticketIdCounter.current());
+      _safeMint(_to, ticketIdCounter.current());
       ticketIdCounter.increment();
     }
     emit MintTicket(
