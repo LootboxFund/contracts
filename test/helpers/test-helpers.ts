@@ -1,7 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Address } from "@wormgraph/helpers";
 import { ethers, upgrades } from "hardhat";
-import { manifest } from "../../scripts/manifest";
+import { randomBytes } from "crypto";
 
 export const generatePermissionRevokeMessage = (
   address: string,
@@ -117,7 +116,7 @@ export const signWhitelist = async (
   contractAddress: string,
   whitelistKey: SignerWithAddress,
   mintingAddress: string,
-  nonce: number
+  nonce: string // should be a stringified uint256 number
 ) => {
   // Domain data should match whats specified in the DOMAIN_SEPARATOR constructed in the contract
   // https://github.com/msfeldstein/EIP712-whitelisting/blob/main/contracts/EIP712Whitelisting.sol#L33-L43
@@ -143,4 +142,28 @@ export const signWhitelist = async (
   });
 
   return sig;
+};
+
+export const generateNonce = () => {
+  const hexToDec = (s: string) => {
+    var i,
+      j,
+      digits = [0],
+      carry;
+    for (i = 0; i < s.length; i += 1) {
+      carry = parseInt(s.charAt(i), 16);
+      for (j = 0; j < digits.length; j += 1) {
+        digits[j] = digits[j] * 16 + carry;
+        carry = (digits[j] / 10) | 0;
+        digits[j] %= 10;
+      }
+      while (carry > 0) {
+        digits.push(carry % 10);
+        carry = (carry / 10) | 0;
+      }
+    }
+    return digits.reverse().join("");
+  };
+  const bytes = randomBytes(16);
+  return hexToDec(bytes.toString("hex"));
 };

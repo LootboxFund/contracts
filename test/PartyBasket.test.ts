@@ -4,9 +4,9 @@ import {
   WHITELISTER_ROLE,
   signWhitelist,
   DAO_ROLE,
+  generateNonce,
 } from "./helpers/test-helpers";
 import { manifest } from "../scripts/manifest";
-
 import { LootboxEscrow, PartyBasket, PartyBasket__factory } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
@@ -180,7 +180,7 @@ describe("📦 PartyBasket smart contract", () => {
           partyBasket.address,
           maliciousKey,
           mintingKey.address,
-          0
+          generateNonce()
         );
 
         await expect(
@@ -194,7 +194,7 @@ describe("📦 PartyBasket smart contract", () => {
           partyBasket.address,
           whitelistKey,
           mintingKey.address,
-          0
+          generateNonce()
         );
 
         await expect(
@@ -208,7 +208,7 @@ describe("📦 PartyBasket smart contract", () => {
           partyBasket.address,
           whitelistKey,
           mintingKey.address,
-          0
+          generateNonce()
         );
 
         await expect(
@@ -217,25 +217,26 @@ describe("📦 PartyBasket smart contract", () => {
       });
 
       it("reverts when called with the same signature multiple times", async () => {
+        const nonce = generateNonce();
         const signature = await signWhitelist(
           network.config.chainId || 0,
           partyBasket.address,
           whitelistKey,
           maliciousKey.address,
-          0
+          nonce
         );
 
         await expect(
-          partyBasket.connect(maliciousKey).redeemBounty(signature, 0)
+          partyBasket.connect(maliciousKey).redeemBounty(signature, nonce)
         ).to.not.be.reverted;
 
         await expect(
-          partyBasket.connect(maliciousKey).redeemBounty(signature, 0)
+          partyBasket.connect(maliciousKey).redeemBounty(signature, nonce)
         ).to.be.revertedWith("signature used");
       });
 
       it("reverts when called with no NFTs in the basket", async () => {
-        const nonce = 1;
+        const nonce = generateNonce();
 
         const partyBasket2 = await PartyBasket.deploy(
           "PartyBasket",
@@ -258,21 +259,22 @@ describe("📦 PartyBasket smart contract", () => {
       });
 
       it("reverts with Pauseable error when paused", async () => {
+        const nonce = generateNonce();
         const signature = await signWhitelist(
           network.config.chainId || 0,
           partyBasket.address,
           whitelistKey,
           mintingKey.address,
-          1
+          nonce
         );
         await partyBasket.connect(admin).pause();
         await expect(
-          partyBasket.connect(mintingKey).redeemBounty(signature, 1)
+          partyBasket.connect(mintingKey).redeemBounty(signature, nonce)
         ).to.be.revertedWith("Pausable: paused");
       });
 
       it("does not revert when called with appropriate signer", async () => {
-        const nonce = 2;
+        const nonce = generateNonce();
         const signature = await signWhitelist(
           network.config.chainId || 0,
           partyBasket.address,
@@ -287,7 +289,7 @@ describe("📦 PartyBasket smart contract", () => {
       });
 
       it("sends the bounty to minter", async () => {
-        const nonce = 2;
+        const nonce = generateNonce();
         const signature = await signWhitelist(
           network.config.chainId || 0,
           partyBasket.address,
@@ -309,7 +311,7 @@ describe("📦 PartyBasket smart contract", () => {
       });
 
       it("emits a BountyRedeemed event", async () => {
-        const nonce = 2;
+        const nonce = generateNonce();
         const signature = await signWhitelist(
           network.config.chainId || 0,
           partyBasket.address,
