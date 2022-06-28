@@ -35,7 +35,7 @@ describe("📦 PartyBasket smart contract", () => {
     await expect(
       PartyBasket.deploy(
         "",
-        "0xf1d92ef22db63bd8590eed61362ee851eec2dbdc",
+        maliciousKey.address,
         admin.address,
         whitelistKey.address
       )
@@ -57,7 +57,7 @@ describe("📦 PartyBasket smart contract", () => {
     await expect(
       PartyBasket.deploy(
         "PartyBasket",
-        "0xf1d92ef22db63bd8590eed61362ee851eec2dbdc",
+        maliciousKey.address,
         ethers.constants.AddressZero,
         whitelistKey.address
       )
@@ -86,7 +86,7 @@ describe("📦 PartyBasket smart contract", () => {
         [
           "NAME",
           "SYMBOL",
-          "base",
+          "baseURI",
           ethers.BigNumber.from("100000"),
           ethers.utils.parseUnits("5000000", "18"), // 50k shares, 18 decimals
           deployer.address,
