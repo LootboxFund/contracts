@@ -71,6 +71,7 @@
     "@openzeppelin/hardhat-upgrades": "^1.12.0",
     "@wormgraph/helpers": "0.1.10",
     "@wormgraph/manifest": "0.3.95",
+    "crypto": "^1.0.1",
     "hardhat-contract-sizer": "^2.5.1",
     "lodash": "^4.17.21",
     "moralis": "^1.2.1"
