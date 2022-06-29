@@ -25,17 +25,12 @@ async function main() {
 
   const LootboxDAO =
     manifest.openZeppelin.multiSigs[chain.chainIdHex].LootboxDAO.address;
-  const LootboxGrandTreasury =
-    manifest.openZeppelin.multiSigs[chain.chainIdHex].LootboxDAO_Treasury
-      .address;
-  const LootboxSuperStaff =
-    manifest.lootbox.contracts[chain.chainIdHex].LootboxInstantFactory
-      .bulkMinterSuperStaff;
 
-  if (!LootboxDAO || !LootboxGrandTreasury || !LootboxSuperStaff) {
-    throw new Error(
-      "Lootbox DAO or Lootbox Grand Treasury not found in manifest"
-    );
+  const Whitelister =
+    manifest.lootbox.contracts[chain.chainIdHex].PartyBasketFactory.whitelister;
+
+  if (!LootboxDAO || !Whitelister) {
+    throw new Error("Lootbox DAO or whitelister manifest");
   }
 
   /**
@@ -49,15 +44,13 @@ async function main() {
   logToFile(
     ` 
   
----------- DEPLOY LOOTBOX INSTANT FACTORY (development) ----------
+---------- DEPLOY PARTY BASKET FACTORY (development) ----------
   
 ---- Script starting...
 
 ---- Network:                             ${network.name} (Hex ID = ${chainIdHex})
 ---- Lootbox DAO (multisig):              ${LootboxDAO}
----- Lootbox Grand Treasury (multisig):   ${LootboxGrandTreasury}
----- Lootbox SuperStaff:                  ${LootboxSuperStaff}
----- Default Fee:                         ${defaultFee}
+---- Whitelister:                         ${Whitelister}
 ---- Deployer (UNTRUSTED):                ${__untrustedDeployer.address}
 ---- Base Metadata Path:                  ${baseMetadataPath}
 
@@ -66,19 +59,16 @@ async function main() {
   );
 
   // --------- Deploy CrowdSale Factory --------- //
-  const LootboxFactory = await ethers.getContractFactory(
-    "LootboxInstantFactory"
+  const PartyBasketFactory = await ethers.getContractFactory(
+    "PartyBasketFactory"
   );
-  const lootboxFactory = await LootboxFactory.deploy(
+  const partyBasketFactory = await PartyBasketFactory.deploy(
     LootboxDAO,
-    defaultFee.toString(),
-    LootboxGrandTreasury,
-    LootboxSuperStaff,
-    baseMetadataPath
+    Whitelister
   );
-  await lootboxFactory.deployed();
+  await partyBasketFactory.deployed();
   logToFile(
-    `---- ${lootboxFactory.address} ---> Lootbox Instant Factory \n`,
+    `---- ${partyBasketFactory.address} ---> Party Basket Factory \n`,
     LOG_FILE_PATH
   );
 }
