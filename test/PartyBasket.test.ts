@@ -10,7 +10,7 @@ import { manifest } from "../scripts/manifest";
 import { LootboxEscrow, PartyBasket, PartyBasket__factory } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-describe.only("📦 PartyBasket smart contract", () => {
+describe("📦 PartyBasket smart contract", () => {
   let PartyBasket: PartyBasket__factory;
   let partyBasket: PartyBasket;
 

@@ -11,6 +11,7 @@ contract PartyBasketFactory is Pausable, AccessControl {
     address private immutable whitelister;
 
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
+    string public semver;
 
     EnumerableSet.AddressSet private PartyBaskets;
 
@@ -21,6 +22,8 @@ contract PartyBasketFactory is Pausable, AccessControl {
         require(_whitelister != address(0), "Whitelister address cannot be the zero address");
         _grantRole(DAO_ROLE, dao);
         whitelister = _whitelister;
+
+        semver = "0.6.3-demo";
     }
 
     function createPartyBasket (string memory _name, address _lootboxAddress, address admin) public whenNotPaused returns (address partyBasket) {

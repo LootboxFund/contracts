@@ -2,6 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers as _ethers } from "ethers";
 import { ethers, upgrades } from "hardhat";
+import { manifest } from "../scripts/manifest";
 import {
   PartyBasketFactory__factory,
   PartyBasketFactory,
@@ -10,7 +11,7 @@ import {
 } from "../typechain";
 import { DAO_ROLE, stripZeros } from "./helpers/test-helpers";
 
-describe.only("📦 PartyBasketFactory smart contract", () => {
+describe("📦 PartyBasketFactory smart contract", () => {
   let PartyBasketFactory: PartyBasketFactory__factory;
   let partyBasketFactory: PartyBasketFactory;
   let partyBasket: PartyBasket;
@@ -60,6 +61,14 @@ describe.only("📦 PartyBasketFactory smart contract", () => {
 
     expect(await partyBasketFactory.hasRole(DAO_ROLE, lootboxDAO.address)).to.be
       .true;
+  });
+
+  it("has the expected semver", async () => {
+    const partyBasketFactory = await PartyBasketFactory.deploy(
+      lootboxDAO.address,
+      whitelistKey.address
+    );
+    expect(await partyBasketFactory.semver()).to.eq(manifest.semver.id);
   });
 
   describe("createPartyBasket()", () => {
