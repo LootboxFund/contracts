@@ -10,7 +10,7 @@ import {
 } from "../typechain";
 import { DAO_ROLE, stripZeros } from "./helpers/test-helpers";
 
-describe("📦 PartyBasketFactory smart contract", () => {
+describe.only("📦 PartyBasketFactory smart contract", () => {
   let PartyBasketFactory: PartyBasketFactory__factory;
   let partyBasketFactory: PartyBasketFactory;
   let partyBasket: PartyBasket;

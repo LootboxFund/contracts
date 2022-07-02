@@ -11,6 +11,7 @@ import {
   generatePermissionRevokeMessage,
   testLootboxURI,
 } from "./helpers/test-helpers";
+import { manifest } from "../scripts/manifest";
 
 describe("📦 LootboxInstantFactory", () => {
   const provider = waffle.provider;
@@ -234,7 +235,7 @@ describe("📦 LootboxInstantFactory", () => {
     });
     describe("createLootbox()", async () => {
       it("has the expected semver", async () => {
-        expect(await lootboxFactory.semver()).to.eq("0.4.0-prod");
+        expect(await lootboxFactory.semver()).to.eq(manifest.semver.id);
       });
       it("Name cannot be empty", async () => {
         const lootbox = lootboxFactory.createLootbox(
