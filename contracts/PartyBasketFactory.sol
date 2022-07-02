@@ -14,7 +14,7 @@ contract PartyBasketFactory is Pausable, AccessControl {
 
     EnumerableSet.AddressSet private PartyBaskets;
 
-    event PartyBasketCreated(address indexed partyBasket, address indexed issuer, string name, address lootboxAddress);
+    event PartyBasketCreated(address indexed partyBasket, address indexed issuer, string name, address indexed lootboxAddress);
 
     constructor(address dao, address _whitelister) {
         require(dao != address(0), "DAO address cannot be the zero address");
