@@ -2066,9 +2066,7 @@ describe("📦 LootboxInstant smart contract", async function () {
         const gasUsed = receipt.cumulativeGasUsed.mul(
           receipt.effectiveGasPrice
         );
-        expect(await lootbox.balanceOf(purchaser.address)).to.eq(
-          "0"
-        );
+        expect(await lootbox.balanceOf(purchaser.address)).to.eq("0");
         expect(await lootbox.balanceOf(purchaser2.address)).to.eq(
           quantityForBulkMint
         );
