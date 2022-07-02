@@ -1,0 +1,14 @@
+2022-07-02T01:52:19.682Z -  
+  
+---------- DEPLOY PARTY BASKET FACTORY (development) ----------
+  
+---- Script starting...
+
+---- Network:                             mumbai_testnet (Hex ID = 0x13881)
+---- Lootbox DAO (multisig):              0xae069b7d5dfe85CCf056170af7a65F6374588776
+---- Whitelister:                         0xEf3a69a53F65D5bFa688Fb9FE621Aa5c41F1f9aF
+---- Deployer (UNTRUSTED):                0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A
+---- Base Metadata Path:                  https://storage.googleapis.com/lootbox-data-staging
+
+  
+2022-07-02T01:52:20.339Z - insufficient funds for intrinsic transaction cost [ See: https://links.ethers.org/v5-errors-INSUFFICIENT_FUNDS ] (error={"name":"ProviderError","code":-32000,"_isProviderError":true}, method="sendTransaction", transaction=undefined, code=INSUFFICIENT_FUNDS, version=providers/5.6.1)

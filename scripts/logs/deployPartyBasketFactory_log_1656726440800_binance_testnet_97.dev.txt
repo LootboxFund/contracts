@@ -1,0 +1,14 @@
+2022-07-02T01:47:21.109Z -  
+  
+---------- DEPLOY PARTY BASKET FACTORY (development) ----------
+  
+---- Script starting...
+
+---- Network:                             binance_testnet (Hex ID = 0x61)
+---- Lootbox DAO (multisig):              0xb9a608a29979421461838047BDe9166Cd7ea647f
+---- Whitelister:                         0xEf3a69a53F65D5bFa688Fb9FE621Aa5c41F1f9aF
+---- Deployer (UNTRUSTED):                0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A
+---- Base Metadata Path:                  https://storage.googleapis.com/lootbox-data-staging
+
+  
+2022-07-02T01:47:30.211Z - ---- 0x12742386D33C12049114c74A26545d2CB5993843 ---> Party Basket Factory 
