@@ -67,7 +67,7 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
         superstaff = _superstaff;
 
         baseTokenURI = _baseTokenURI;
-        semver = "0.6.3-demo";
+        semver = "0.6.3-prod";
     }
 
     function createLootbox(
