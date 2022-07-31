@@ -383,7 +383,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   *
   *   endFundraising()
   */
-  function endFundraisingPeriod () public onlyRole(DAO_ROLE) nonReentrant whenNotPaused {
+  function endFundraisingPeriod () public nonReentrant whenNotPaused {
     require(isFundraising == true, "Fundraising period has already ended");
     isFundraising = false;
     emit CompleteFundraiser(
