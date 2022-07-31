@@ -89,7 +89,7 @@ const config: HardhatUserConfig = {
     },
     hardhat: {
       forking: {
-        url: "https://speedy-nodes-nyc.moralis.io/57684cf9b961b9d7fd2da53a/bsc/mainnet/archive",
+        url: "https://lively-empty-cloud.bsc.discover.quiknode.pro/9c63320ce1ba0601b709342cf75f87efdc3117c2/",
         blockNumber: 16411871,
       },
     },

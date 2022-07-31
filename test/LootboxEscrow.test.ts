@@ -26,7 +26,7 @@ import { SUPERSTAFF_ROLE } from "./helpers/test-helpers";
 
 // const BNB_ARCHIVED_PRICE = "41771363251"; // $417.36614642 USD per BNB
 
-describe("📦 LootboxEscrow smart contract", async function () {
+describe.only("📦 LootboxEscrow smart contract", async function () {
   let deployer: SignerWithAddress;
   let purchaser: SignerWithAddress;
   let issuingEntity: SignerWithAddress;
@@ -2298,6 +2298,55 @@ describe("📦 LootboxEscrow smart contract", async function () {
       });
     });
 
+    describe("flush tokens", async () => {
+      it("rejects non-superstaff from flushing tokens", async () => {
+        await expect(
+          lootbox.connect(purchaser).flushTokens()
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(purchaser.address, SUPERSTAFF_ROLE)
+        );
+        await expect(
+          lootbox.connect(purchaser).flushTokens()
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(purchaser.address, SUPERSTAFF_ROLE)
+        );
+      });
+      it("allows superstaff to flush tokens", async () => {
+        await expect(lootbox.connect(superstaff).flushTokens()).to.not.be
+          .reverted;
+      });
+      it("flushing tokens moves all tokens out of Lootbox to treasury", async () => {
+        await lootbox
+          .connect(purchaser)
+          .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
+        await lootbox.connect(issuingEntity).endFundraisingPeriod();
+        await expect(lootbox.flushed).to.equal(false);
+        await lootbox
+          .connect(issuingEntity)
+          .depositEarningsNative({ value: depositAmountInEtherA1.toString() });
+        await lootbox
+          .connect(issuingEntity)
+          .depositEarningsErc20(
+            usdc_stablecoin.address,
+            depositAmountInUSDCB1.toString()
+          );
+        const oldNativeBalance = await provider.getBalance(lootbox.address);
+        const oldERC20Balance = await usdc_stablecoin.balanceOf(
+          lootbox.address
+        );
+        await expect(oldNativeBalance).to.equal(
+          depositAmountInEtherA1.toString()
+        );
+        await expect(oldERC20Balance).to.equal(
+          depositAmountInUSDCB1.toString()
+        );
+        await expect(lootbox.connect(superstaff).flushTokens());
+        await expect(oldNativeBalance).to.equal("0");
+        await expect(oldERC20Balance).to.equal("0");
+        await expect(lootbox.flushed).to.equal(true);
+      });
+    });
+
     describe("bulk NFT minting", async () => {
       const fractionalTenthMintAmountEther = etherEquivalentOfTargetShares
         .mul(ethers.utils.parseUnits("0.10", 18))
@@ -2329,42 +2378,10 @@ describe("📦 LootboxEscrow smart contract", async function () {
 
         await expect(tx).to.not.be.reverted;
       });
-      it("rejects non-superstaff from whitelisting or unwhitelisting bulk minters", async () => {
-        await expect(
-          lootbox
-            .connect(purchaser)
-            .whitelistBulkMinter(purchaser.address, true)
-        ).to.be.revertedWith(
-          generatePermissionRevokeMessage(purchaser.address, SUPERSTAFF_ROLE)
-        );
-        await expect(
-          lootbox
-            .connect(purchaser)
-            .whitelistBulkMinter(purchaser.address, false)
-        ).to.be.revertedWith(
-          generatePermissionRevokeMessage(purchaser.address, SUPERSTAFF_ROLE)
-        );
-      });
-      it("allows superstaff to whitelist or unwhitelist bulk minters", async () => {
-        await expect(
-          lootbox
-            .connect(superstaff)
-            .whitelistBulkMinter(purchaser.address, true)
-        ).to.not.be.reverted;
-        await expect(
-          lootbox
-            .connect(superstaff)
-            .whitelistBulkMinter(purchaser.address, false)
-        ).to.not.be.reverted;
-      });
-      it("allows whitelisted minters to bulk mint NFTs", async () => {
+      it("allows anyone to bulk mint NFTs", async () => {
         const estSharesPurchased = await lootbox.estimateSharesPurchase(
           fractionalTenthMintAmountEther.mul(quantityForBulkMint)
         );
-
-        await lootbox
-          .connect(superstaff)
-          .whitelistBulkMinter(purchaser.address, true);
 
         expect((await lootbox.sharesSoldCount()).toString()).to.eq("0");
         await expect(
@@ -2389,9 +2406,6 @@ describe("📦 LootboxEscrow smart contract", async function () {
         );
       });
       it("bulk whitelisting sends the NFTs to the designated address", async () => {
-        await lootbox
-          .connect(superstaff)
-          .whitelistBulkMinter(purchaser.address, true);
         expect((await lootbox.sharesSoldCount()).toString()).to.eq("0");
         const tx = await lootbox
           .connect(purchaser)
@@ -2415,9 +2429,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
         const fullValueOfTargetSharesWithFees = etherEquivalentOfTargetShares
           .mul(ethers.BigNumber.from("100000000"))
           .div(feeInverse); // accounts for 3.2% fee
-        await lootbox
-          .connect(superstaff)
-          .whitelistBulkMinter(purchaser.address, true);
+
         expect((await lootbox.sharesSoldCount()).toString()).to.eq("0");
         const sharesRemainingForSale =
           await lootbox.checkMaxSharesRemainingForSale();
@@ -2458,9 +2470,7 @@ describe("📦 LootboxEscrow smart contract", async function () {
         );
         const startBrokerBalance = await provider.getBalance(broker.address);
         expect(await lootbox.ticketIdCounter()).to.eq("0");
-        await lootbox
-          .connect(superstaff)
-          .whitelistBulkMinter(purchaser.address, true);
+
         const tx = await lootbox
           .connect(purchaser)
           .bulkMintNFTs(purchaser.address, quantityForBulkMint, {
@@ -2497,9 +2507,6 @@ describe("📦 LootboxEscrow smart contract", async function () {
         );
       });
       it("bulk whitelisting emits MintTicket event with cumulative sharesPurchased and ticketId set to the new latest ticketId", async () => {
-        await lootbox
-          .connect(superstaff)
-          .whitelistBulkMinter(purchaser.address, true);
         expect((await lootbox.sharesSoldCount()).toString()).to.eq("0");
         const tx = await lootbox
           .connect(purchaser)
