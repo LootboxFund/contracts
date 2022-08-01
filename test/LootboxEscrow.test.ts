@@ -26,7 +26,7 @@ import { SUPERSTAFF_ROLE } from "./helpers/test-helpers";
 
 // const BNB_ARCHIVED_PRICE = "41771363251"; // $417.36614642 USD per BNB
 
-describe.only("📦 LootboxEscrow smart contract", async function () {
+describe("📦 LootboxEscrow smart contract", async function () {
   let deployer: SignerWithAddress;
   let purchaser: SignerWithAddress;
   let issuingEntity: SignerWithAddress;
@@ -793,15 +793,12 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         await expect(lootbox.connect(issuingEntity).endFundraisingPeriod()).to
           .not.be.reverted;
       });
-      it("only allows the DAO_ROLE to complete the fundraising period", async () => {
+      it("allows anyone to complete the fundraising period if fundraising target hit", async () => {
         await lootbox.connect(purchaser).purchaseTicket({
           value: etherEquivalentOfTargetShares.toString(),
         });
-        await expect(
-          lootbox.connect(deployer).endFundraisingPeriod()
-        ).to.be.revertedWith(
-          generatePermissionRevokeMessage(deployer.address, DAO_ROLE)
-        );
+        await expect(lootbox.connect(deployer).endFundraisingPeriod()).to.not.be
+          .reverted;
       });
       it("holds funds in escrow during the fundraising period", async () => {
         const preNativeTreasuryBalance = await provider.getBalance(
@@ -1649,7 +1646,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           .connect(purchaser)
           .purchaseTicket({ value: buyAmountInEtherA1.toString() });
         await expect(lootbox.withdrawEarnings(ticketId)).to.be.revertedWith(
-          "Withdrawals cannot be made during fundraising"
+          "E28"
         );
       });
       it("withdrawal succeeds if outside fundraising period", async () => {
@@ -1664,17 +1661,15 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         await expect(lootbox.connect(purchaser).withdrawEarnings(ticketId)).to
           .not.be.reverted;
       });
-      it("endFundraisingPeriod() => only allows the issuingEntity to end the fundraising period", async () => {
+      it("endFundraisingPeriod() => allows anyone to end the fundraising period if fundraising target hit", async () => {
         await lootbox
           .connect(purchaser)
           .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
+        await expect(lootbox.connect(deployer).endFundraisingPeriod()).to.not.be
+          .reverted;
         await expect(
-          lootbox.connect(deployer).endFundraisingPeriod()
-        ).to.be.revertedWith(
-          generatePermissionRevokeMessage(deployer.address, DAO_ROLE)
-        );
-        await expect(lootbox.connect(issuingEntity).endFundraisingPeriod()).to
-          .not.be.reverted;
+          lootbox.connect(issuingEntity).endFundraisingPeriod()
+        ).to.be.revertedWith("Fundraising period has already ended");
       });
       it("endFundraisingPeriod() => cannot be called twice", async () => {
         await lootbox
@@ -2299,6 +2294,18 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
     });
 
     describe("flush tokens", async () => {
+      beforeEach(async () => {
+        await usdc_stablecoin.mint(
+          issuingEntity.address,
+          ethers.BigNumber.from(USDC_STARTING_BALANCE)
+        );
+        await usdc_stablecoin
+          .connect(issuingEntity)
+          .approve(
+            lootbox.address,
+            ethers.BigNumber.from(USDC_STARTING_BALANCE)
+          );
+      });
       it("rejects non-superstaff from flushing tokens", async () => {
         await expect(
           lootbox.connect(purchaser).flushTokens()
@@ -2320,7 +2327,7 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
           .connect(purchaser)
           .purchaseTicket({ value: triggerLimitEtherPurchaseable.toString() });
         await lootbox.connect(issuingEntity).endFundraisingPeriod();
-        await expect(lootbox.flushed).to.equal(false);
+        await expect(await lootbox.flushed()).to.equal(false);
         await lootbox
           .connect(issuingEntity)
           .depositEarningsNative({ value: depositAmountInEtherA1.toString() });
@@ -2340,10 +2347,14 @@ describe.only("📦 LootboxEscrow smart contract", async function () {
         await expect(oldERC20Balance).to.equal(
           depositAmountInUSDCB1.toString()
         );
-        await expect(lootbox.connect(superstaff).flushTokens());
-        await expect(oldNativeBalance).to.equal("0");
-        await expect(oldERC20Balance).to.equal("0");
-        await expect(lootbox.flushed).to.equal(true);
+        await lootbox.connect(superstaff).flushTokens();
+        const newNativeBalance = await provider.getBalance(lootbox.address);
+        const newERC20Balance = await usdc_stablecoin.balanceOf(
+          lootbox.address
+        );
+        await expect(newNativeBalance).to.equal("0");
+        await expect(newERC20Balance).to.equal("0");
+        await expect(await lootbox.flushed()).to.equal(true);
       });
     });
 

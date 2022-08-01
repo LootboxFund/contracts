@@ -87,7 +87,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   bool public isFundraising;
   address public issuer;
   address public treasury;
-  bool public flushed = false;
+  bool public flushed;
   // ticketId => numShares
   mapping(uint256 => uint256) public sharesInTicket;
   CountersUpgradeable.Counter public ticketIdCounter;
@@ -231,6 +231,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
 
     issuer = _issuingEntity;
 
+    flushed = false;
     isFundraising = true;
     treasury = _treasury;
 
