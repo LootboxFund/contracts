@@ -63,7 +63,7 @@ async function main() {
       .address;
   const LootboxSuperStaff =
     manifest.lootbox.contracts[chain.chainIdHex].LootboxInstantFactory
-      .bulkMinterSuperStaff;
+      .superStaff;
 
   if (!LootboxDAO || !LootboxGrandTreasury || !LootboxSuperStaff) {
     throw new Error(

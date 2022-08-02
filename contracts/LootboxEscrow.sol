@@ -197,7 +197,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   ) initializer public {
 
     variant = "Escrow";
-    semver = "0.6.3-prod";
+    semver = "0.6.4-prod";
 
     require(bytes(_name).length != 0, "E0"); // E0 - "Name cannot be empty"
     require(bytes(_symbol).length != 0, "E1"); // E1 - "Symbol cannot be empty

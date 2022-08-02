@@ -27,7 +27,7 @@ contract PartyBasket is AccessControl, Pausable, EIP712Whitelisting, IERC721Rece
         require(admin != address(0), "Admin address cannot be the zero address");
         require(bytes(_name).length != 0, "Name cannot be empty");
 
-        semver = "0.6.3-prod";
+        semver = "0.6.4-prod";
 
         name = _name;
 
