@@ -63,7 +63,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   // roles
   bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
   bytes32 public constant SUPERSTAFF_ROLE = keccak256("SUPERSTAFF_ROLE");
-  bytes32 public constant BULKMINTER_ROLE = keccak256("BULKMINTER_ROLE");
 
   // decimals
   uint256 public shareDecimals;
@@ -88,6 +87,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   bool public isFundraising;
   address public issuer;
   address public treasury;
+  bool public flushed;
   // ticketId => numShares
   mapping(uint256 => uint256) public sharesInTicket;
   CountersUpgradeable.Counter public ticketIdCounter;
@@ -231,6 +231,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
 
     issuer = _issuingEntity;
 
+    flushed = false;
     isFundraising = true;
     treasury = _treasury;
 
@@ -242,8 +243,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     _grantRole(DAO_ROLE, _issuingEntity);
     _grantRole(SUPERSTAFF_ROLE,_superstaff);
   }
-
-
 
   /**
   * ------------------ PURCHASE TICKET ------------------
@@ -333,7 +332,6 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   function bulkMintNFTs (
     address _to,
     uint256 _quantity
-  // ) public payable nonReentrant whenNotPaused onlyRole(BULKMINTER_ROLE) {
   ) public payable nonReentrant whenNotPaused {
     require(_to != address(0), "E11"); // E11 - "Cannot mint to the zero address"
     
@@ -379,13 +377,27 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
     );
     return;
   }
-  // whitelist bulk minter
-  function whitelistBulkMinter (address _addr, bool _allowed) public onlyRole(SUPERSTAFF_ROLE) {
-    if (_allowed) {
-      _grantRole(BULKMINTER_ROLE, _addr);
-    } else {
-      _revokeRole(BULKMINTER_ROLE, _addr);
+  // flush tokens to treasury in case of abandoned lootbox with cash inside
+  // be sure to first rescue any trapped tokens if there are any
+  function flushTokens () public onlyRole(SUPERSTAFF_ROLE) {
+    for(uint256 i=0; i < depositIdCounter.current(); i++){
+      // handle erc20 tokens
+      if (depositReciepts[i].erc20Token != address(0)) {
+        IERC20 token = IERC20(depositReciepts[i].erc20Token);
+        token.transferFrom(address(this), treasury, token.balanceOf(address(this)));
+        // commented out because we dont want to edit past history (should be immutable)
+        // however note that after a flush, the deposit history will still show redeemable funds even though the dont exist
+        // also, flushes can happen multiple times so its still possible to deposit rewards and redeem them
+        
+        // depositReciepts[i].erc20TokenAmount = 0;
+      } else {
+        // handle native tokens
+        (bool success,) = address(treasury).call{value: address(this).balance}("");
+        // depositReciepts[i].nativeTokenAmount = 0;
+        require(success, "E26"); // E26 - Ticket holder could not receive earnings
+      } 
     }
+    flushed = true;
   }
 
   /**
@@ -394,7 +406,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   *   endFundraising()
   *   cancelFundraising()
   */
-  function endFundraisingPeriod () public onlyRole(DAO_ROLE) nonReentrant whenNotPaused {
+  function endFundraisingPeriod () public nonReentrant whenNotPaused {
     require(isFundraising == true, "Fundraising period has already ended");
     require(sharesSoldCount >= sharesSoldTarget, "Fundraising period can only end if the fundraising target has been hit");
     isFundraising = false;
@@ -410,7 +422,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
       sharesSoldCount
     );
     (bool tsuccess,) = address(treasury).call{value: finalEscrowedAmount}("");
-    require(tsuccess, "Treasury could not receive payment");
+    require(tsuccess, "E27"); // E27 - Treasury could not receive payment
   } 
   function cancelFundraiser() public nonReentrant whenNotPaused{
     require(isFundraising == true, "Fundraising period has already ended");
@@ -647,7 +659,7 @@ contract LootboxEscrow is Initializable, ERC721Upgradeable, ERC721EnumerableUpgr
   *  withdrawEarnings(ticketId)
   */
   function withdrawEarnings (uint256 ticketId) public nonReentrant whenNotPaused {
-    require(isFundraising == false, "Withdrawals cannot be made during fundraising");
+    require(isFundraising == false, "E28"); // E28 - Withdrawals cannot be made during fundraising
     require(ownerOf(ticketId) == msg.sender, "You do not own this ticket");
     uint sharesOwned = sharesInTicket[ticketId]; 
     // loop through all deposits
