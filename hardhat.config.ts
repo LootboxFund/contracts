@@ -85,6 +85,7 @@ const config: HardhatUserConfig = {
     polygon: {
       chainId: 137,
       url: `https://polygon-rpc.com`,
+      // url: `https://rpc-mainnet.maticvigil.com/v1/2d7e3c422de3f0d064946c31786a49dfd2085d4d`,
       accounts: [`${process.env.PROD_DEPLOYER_PRIVATE_KEY}`],
     },
     hardhat: {
