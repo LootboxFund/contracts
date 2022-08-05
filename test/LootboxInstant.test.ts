@@ -1474,14 +1474,12 @@ describe("📦 LootboxInstant smart contract", async function () {
         await expect(lootbox.connect(purchaser).withdrawEarnings(ticketId)).to
           .not.be.reverted;
       });
-      it("endFundraisingPeriod() => only allows the issuingEntity to end the fundraising period", async () => {
+      it("endFundraisingPeriod() => allows anyone to end the fundraising period", async () => {
+        await expect(lootbox.connect(deployer).endFundraisingPeriod()).to.not.be
+          .reverted;
         await expect(
-          lootbox.connect(deployer).endFundraisingPeriod()
-        ).to.be.revertedWith(
-          generatePermissionRevokeMessage(deployer.address, DAO_ROLE)
-        );
-        await expect(lootbox.connect(issuingEntity).endFundraisingPeriod()).to
-          .not.be.reverted;
+          lootbox.connect(issuingEntity).endFundraisingPeriod()
+        ).to.be.revertedWith("Fundraising period has already ended");
       });
       it("endFundraisingPeriod() => cannot be called twice", async () => {
         await lootbox.connect(issuingEntity).endFundraisingPeriod();

@@ -23,7 +23,7 @@ contract PartyBasketFactory is Pausable, AccessControl {
         _grantRole(DAO_ROLE, dao);
         whitelister = _whitelister;
 
-        semver = "0.6.3-prod";
+        semver = "0.6.4-prod";
     }
 
     function createPartyBasket (string memory _name, address _lootboxAddress, address admin) public whenNotPaused returns (address partyBasket) {

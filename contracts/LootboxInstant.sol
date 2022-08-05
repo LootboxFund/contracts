@@ -187,7 +187,7 @@ contract LootboxInstant is Initializable, ERC721Upgradeable, ERC721EnumerableUpg
   ) initializer public {
     
     variant = "Instant";
-    semver = "0.6.3-prod";
+    semver = "0.6.4-prod";
 
     bytes memory tempEmptyNameTest = bytes(_name);
     bytes memory tempEmptySymbolTest = bytes(_symbol);
