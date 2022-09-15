@@ -116,12 +116,13 @@ export const signWhitelist = async (
   contractAddress: string,
   whitelistKey: SignerWithAddress,
   mintingAddress: string,
-  nonce: string // should be a stringified uint256 number
+  nonce: string, // should be a stringified uint256 number
+  contractName = "PartyBasket"
 ) => {
   // Domain data should match whats specified in the DOMAIN_SEPARATOR constructed in the contract
   // https://github.com/msfeldstein/EIP712-whitelisting/blob/main/contracts/EIP712Whitelisting.sol#L33-L43
   const domain = {
-    name: "PartyBasket",
+    name: contractName,
     version: "1",
     chainId,
     verifyingContract: contractAddress,
