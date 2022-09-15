@@ -69,11 +69,13 @@ contract LootboxCosmic is
     string public _tokenURI; // Something like https://storage.googleapis.com/lootbox-data-staging/{lootboxAddress}.json
 
     Counters.Counter public ticketIdCounter;
-    mapping(uint256 => Deposit) public depositReciepts;
+    mapping(uint256 => Deposit) public depositReceipts;
     Counters.Counter public depositIdCounter;
     mapping(address => uint256) public erc20Deposited;
     uint256 public nativeTokenDeposited;
     mapping(uint256 => mapping(uint256 => bool)) public depositRedemptions;
+    mapping(uint256 => address) public minters;
+    bool public isPayingOut = false;
 
     constructor(
         string memory _name,
@@ -83,14 +85,16 @@ contract LootboxCosmic is
         address _issuingEntity,
         address _superstaff, // Cam we remove this?
         address _whitelister
-    ) ERC721(_name, _symbol) EIP712Whitelisting(_whitelister) {
-        require(bytes(_name).length != 0, "Name not specified");
-        require(bytes(_symbol).length != 0, "Symbol not specified");
-        require(bytes(_baseTokenURI).length != 0, "URI not specified");
-        require(_issuingEntity != address(0), "Issuer cannot be 0");
-        require(_maxTickets > 0, "Max tickets >= 0");
+    ) ERC721(_name, _symbol) EIP712Whitelisting(_whitelister, "LootboxCosmic") {
+        require(bytes(_name).length != 0, "invalid name");
+        require(bytes(_symbol).length != 0, "invalid symbol");
+        require(bytes(_baseTokenURI).length != 0, "invalid URI");
+        require(_issuingEntity != address(0), "invalid issuer");
+        require(_superstaff != address(0), "invalid superstafft");
+        require(_whitelister != address(0), "invalid whitelistert");
+        require(_maxTickets > 0, "invalid maxTickets");
 
-        maxTickets = maxTickets;
+        maxTickets = _maxTickets;
         _tokenURI = _baseTokenURI;
 
         _grantRole(DAO_ROLE, _issuingEntity);
@@ -112,6 +116,7 @@ contract LootboxCosmic is
 
         // get an ID
         uint256 ticketId = ticketIdCounter.current();
+        minters[ticketId] = msg.sender;
         ticketIdCounter.increment();
 
         emit MintTicket(msg.sender, address(this), ticketId);
@@ -121,16 +126,39 @@ contract LootboxCosmic is
         return (ticketId);
     }
 
+    function changeMaxTickets(uint256 targetMaxTickets)
+        public
+        nonReentrant
+        onlyRole(DAO_ROLE)
+    {
+        require(!isPayingOut, "Lootbox is paying out");
+        require(
+            targetMaxTickets > maxTickets,
+            "Must be greater than maxTickets"
+        );
+
+        maxTickets = targetMaxTickets;
+    }
+
     function withdrawEarnings(uint256 ticketId)
         public
         nonReentrant
         whenNotPaused
     {
+        _requireMinted(ticketId);
         require(ownerOf(ticketId) == msg.sender, "You do not own this ticket");
+        require(depositIdCounter.current() > 0, "No deposits");
+
+        if (!isPayingOut) {
+            // Auto set isPayingOut to true
+            // This prevents changing maxTickets
+            isPayingOut = true;
+        }
+
         // uint256 sharesOwned = sharesInTicket[ticketId];
         // loop through all deposits
         for (uint256 i = 0; i < depositIdCounter.current(); i++) {
-            Deposit memory deposit = depositReciepts[i];
+            Deposit memory deposit = depositReceipts[i];
             if (depositRedemptions[ticketId][deposit.depositId] != true) {
                 // mark as redeemed
                 depositRedemptions[ticketId][deposit.depositId] = true;
@@ -187,7 +215,7 @@ contract LootboxCosmic is
     {
         uint256 totalDeposit = 0;
         for (uint256 i = 0; i < depositIdCounter.current(); i++) {
-            Deposit memory deposit = depositReciepts[i];
+            Deposit memory deposit = depositReceipts[i];
             if (deposit.erc20Token == erc20Token) {
                 totalDeposit = totalDeposit + deposit.erc20TokenAmount;
             }
@@ -202,7 +230,7 @@ contract LootboxCosmic is
     {
         uint256 totalDeposit = 0;
         for (uint256 i = 0; i < depositIdCounter.current(); i++) {
-            Deposit memory deposit = depositReciepts[i];
+            Deposit memory deposit = depositReceipts[i];
             if (deposit.erc20Token == address(0)) {
                 totalDeposit = totalDeposit + deposit.nativeTokenAmount;
             }
@@ -217,7 +245,7 @@ contract LootboxCosmic is
     {
         _deposits = new Deposit[](depositIdCounter.current());
         for (uint256 i = 0; i < depositIdCounter.current(); i++) {
-            _deposits[i] = depositReciepts[i];
+            _deposits[i] = depositReceipts[i];
         }
         return _deposits;
     }
@@ -266,20 +294,21 @@ contract LootboxCosmic is
     {
         _depositsMetadatas = new DepositMetadata[](depositIdCounter.current());
         for (uint256 i = 0; i < depositIdCounter.current(); i++) {
-            uint256 owedNative = depositReciepts[i].nativeTokenAmount /
+            uint256 owedNative = depositReceipts[i].nativeTokenAmount /
                 maxTickets;
-            uint256 owedErc20 = depositReciepts[i].erc20TokenAmount /
+            uint256 owedErc20 = depositReceipts[i].erc20TokenAmount /
                 maxTickets;
             DepositMetadata memory depositMetadata = DepositMetadata({
+                depositer: depositReceipts[i].depositer,
                 ticketId: ticketId,
-                depositId: depositReciepts[i].depositId,
+                depositId: depositReceipts[i].depositId,
                 redeemed: depositRedemptions[ticketId][
-                    depositReciepts[i].depositId
+                    depositReceipts[i].depositId
                 ],
                 nativeTokenAmount: owedNative,
-                erc20Token: depositReciepts[i].erc20Token,
+                erc20Token: depositReceipts[i].erc20Token,
                 erc20TokenAmount: owedErc20,
-                timestamp: depositReciepts[i].timestamp
+                timestamp: depositReceipts[i].timestamp
             });
             _depositsMetadatas[i] = depositMetadata;
         }
@@ -291,7 +320,7 @@ contract LootboxCosmic is
         view
         returns (Deposit memory _deposit)
     {
-        return depositReciepts[depositId];
+        return depositReceipts[depositId];
     }
 
     // Note: functions using this MUST be wrapped with the `nonReentrant` modifier because it uses risky `.call`
@@ -302,6 +331,7 @@ contract LootboxCosmic is
         // create the deposit receipt
         uint256 depositId = depositIdCounter.current();
         Deposit memory deposit = Deposit({
+            depositer: from,
             depositId: depositId,
             blockNumber: block.number,
             nativeTokenAmount: amount,
@@ -310,7 +340,7 @@ contract LootboxCosmic is
             timestamp: block.timestamp
         });
         // save deposit receipt to mapping, increment ID
-        depositReciepts[depositId] = deposit;
+        depositReceipts[depositId] = deposit;
         // emit the DepositEarnings event
         emit DepositEarnings(
             from,
@@ -338,6 +368,7 @@ contract LootboxCosmic is
         // create the deposit receipt
         uint256 depositId = depositIdCounter.current();
         Deposit memory deposit = Deposit({
+            depositer: from,
             depositId: depositId,
             blockNumber: block.number,
             nativeTokenAmount: 0,
@@ -346,7 +377,7 @@ contract LootboxCosmic is
             timestamp: block.timestamp
         });
         // save deposit receipt to mapping, increment ID
-        depositReciepts[depositId] = deposit;
+        depositReceipts[depositId] = deposit;
         // emit the DepositEarnings event
         emit DepositEarnings(
             from,
@@ -369,11 +400,12 @@ contract LootboxCosmic is
         public
         onlyRole(SUPERSTAFF_ROLE)
         nonReentrant
+        whenNotPaused
     {
         for (uint256 i = 0; i < depositIdCounter.current(); i++) {
             // handle erc20 tokens
-            if (depositReciepts[i].erc20Token != address(0)) {
-                IERC20 token = IERC20(depositReciepts[i].erc20Token);
+            if (depositReceipts[i].erc20Token != address(0)) {
+                IERC20 token = IERC20(depositReceipts[i].erc20Token);
                 token.transferFrom(
                     address(this),
                     _flushTarget,
@@ -383,13 +415,13 @@ contract LootboxCosmic is
                 // however note that after a flush, the deposit history will still show redeemable funds even though they dont exist
                 // also, flushes can happen multiple times so its still possible to deposit rewards and redeem them
 
-                // depositReciepts[i].erc20TokenAmount = 0;
+                // depositReceipts[i].erc20TokenAmount = 0;
             } else {
                 // handle native tokens
                 (bool success, ) = address(_flushTarget).call{
                     value: address(this).balance
                 }("");
-                // depositReciepts[i].nativeTokenAmount = 0;
+                // depositReceipts[i].nativeTokenAmount = 0;
                 require(success, "E26"); // E26 - Ticket holder could not receive earnings
             }
         }

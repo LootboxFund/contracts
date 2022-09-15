@@ -3,6 +3,7 @@ pragma solidity 0.8.13;
 
 interface Lootbox {
     struct Deposit {
+        address depositer;
         uint256 depositId;
         uint256 blockNumber;
         uint256 nativeTokenAmount;
@@ -12,6 +13,7 @@ interface Lootbox {
     }
 
     struct DepositMetadata {
+        address depositer;
         uint256 ticketId;
         uint256 depositId;
         bool redeemed;
@@ -88,4 +90,6 @@ interface Lootbox {
     function depositEarningsNative() external payable;
 
     function flushTokens(address _flushTarget) external;
+
+    function changeMaxTickets(uint256 _maxTickets) external;
 }
