@@ -60,7 +60,6 @@ contract LootboxCosmic is
     using Counters for Counters.Counter;
 
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
-    bytes32 public constant SUPERSTAFF_ROLE = keccak256("SUPERSTAFF_ROLE");
 
     string public constant VARIANT = "Cosmic";
     string public constant SEMVER = "0.7.0-demo";
@@ -83,22 +82,19 @@ contract LootboxCosmic is
         string memory _baseTokenURI,
         uint256 _maxTickets,
         address _issuingEntity,
-        address _superstaff, // Cam we remove this?
         address _whitelister
     ) ERC721(_name, _symbol) EIP712Whitelisting(_whitelister, "LootboxCosmic") {
         require(bytes(_name).length != 0, "invalid name");
         require(bytes(_symbol).length != 0, "invalid symbol");
         require(bytes(_baseTokenURI).length != 0, "invalid URI");
         require(_issuingEntity != address(0), "invalid issuer");
-        require(_superstaff != address(0), "invalid superstafft");
-        require(_whitelister != address(0), "invalid whitelistert");
+        require(_whitelister != address(0), "invalid whitelister");
         require(_maxTickets > 0, "invalid maxTickets");
 
         maxTickets = _maxTickets;
         _tokenURI = _baseTokenURI;
 
         _grantRole(DAO_ROLE, _issuingEntity);
-        _grantRole(SUPERSTAFF_ROLE, _superstaff);
     }
 
     function getTicketsLeft() internal view returns (uint256 _ticketsLeft) {
@@ -398,7 +394,7 @@ contract LootboxCosmic is
     // flush tokens to a specified address in case of abandoned lootbox with cash inside
     function flushTokens(address _flushTarget)
         public
-        onlyRole(SUPERSTAFF_ROLE)
+        onlyRole(DAO_ROLE)
         nonReentrant
         whenNotPaused
     {
