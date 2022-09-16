@@ -89,7 +89,7 @@ interface Lootbox {
 
     function depositEarningsNative() external payable;
 
-    function flushTokens(address _flushTarget) external;
+    function flushTokens(address target) external;
 
     function changeMaxTickets(uint256 _maxTickets) external;
 }

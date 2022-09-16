@@ -1,21 +1,17 @@
 import { expect } from "chai";
 import { ethers, network, waffle } from "hardhat";
 import {
-  BULKMINTER_ROLE,
   DAO_ROLE,
   generateNonce,
   generatePermissionRevokeMessage,
   padAddressTo32Bytes,
   signWhitelist,
-  stripZeros,
   WHITELISTER_ROLE,
 } from "./helpers/test-helpers";
 import { manifest } from "../scripts/manifest";
 
 /* eslint-disable */
 import {
-  BNB,
-  BNB__factory,
   USDC,
   USDC__factory,
   USDT,
@@ -25,10 +21,7 @@ import {
 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber, constants } from "ethers";
-import { SUPERSTAFF_ROLE } from "./helpers/test-helpers";
-import { min, random } from "lodash";
-
-// const BNB_ARCHIVED_PRICE = "41771363251"; // $417.36614642 USD per BNB
+import { random } from "lodash";
 
 const LOOTBOX_NAME = "Pinata Lootbox";
 const LOOTBOX_SYMBOL = "PINATA";
@@ -50,7 +43,6 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
   let deployer: SignerWithAddress;
   let whitelister: SignerWithAddress;
   let issuingEntity: SignerWithAddress;
-  let superstaff: SignerWithAddress;
   let malicious: SignerWithAddress;
   let minter: SignerWithAddress;
   let purchaser: SignerWithAddress;
@@ -60,16 +52,8 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
   let LOOTBOX_MAX_TICKETS: number;
 
   before(async () => {
-    [
-      deployer,
-      minter,
-      issuingEntity,
-      superstaff,
-      whitelister,
-      malicious,
-      purchaser,
-      user,
-    ] = await ethers.getSigners();
+    [deployer, minter, issuingEntity, whitelister, malicious, purchaser, user] =
+      await ethers.getSigners();
   });
   beforeEach(() => {
     LOOTBOX_MAX_TICKETS = random(10, 1000);
@@ -94,7 +78,6 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
           BASE_URI,
           10,
           issuingEntity.address,
-          superstaff.address,
           whitelister.address
         )
       ).to.be.revertedWith("invalid name");
@@ -108,7 +91,6 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
           BASE_URI,
           10,
           issuingEntity.address,
-          superstaff.address,
           whitelister.address
         )
       ).to.be.revertedWith("invalid symbol");
@@ -122,7 +104,6 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
           "",
           10,
           issuingEntity.address,
-          superstaff.address,
           whitelister.address
         )
       ).to.be.revertedWith("invalid URI");
@@ -136,24 +117,9 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
           BASE_URI,
           10,
           constants.AddressZero,
-          superstaff.address,
           whitelister.address
         )
       ).to.be.revertedWith("invalid issuer");
-    });
-
-    it("reverts if superstaff is zero", async () => {
-      await expect(
-        Lootbox.deploy(
-          "name",
-          "symbol",
-          BASE_URI,
-          10,
-          issuingEntity.address,
-          constants.AddressZero,
-          whitelister.address
-        )
-      ).to.be.revertedWith("invalid superstaff");
     });
 
     it("reverts if whitelister is zero", async () => {
@@ -164,7 +130,6 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
           BASE_URI,
           10,
           issuingEntity.address,
-          superstaff.address,
           constants.AddressZero
         )
       ).to.be.revertedWith("Whitelister cannot be the zero address");
@@ -178,7 +143,6 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
           BASE_URI,
           0,
           issuingEntity.address,
-          superstaff.address,
           whitelister.address
         )
       ).to.be.revertedWith("invalid maxTickets");
@@ -192,7 +156,6 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
           BASE_URI,
           -1,
           issuingEntity.address,
-          superstaff.address,
           whitelister.address
         )
         // ).to.be.revertedWith("value out-of-bounds");
@@ -214,7 +177,6 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
         BASE_URI,
         LOOTBOX_MAX_TICKETS,
         issuingEntity.address,
-        superstaff.address,
         whitelister.address
       );
 
@@ -228,6 +190,10 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
 
     it(`has the expected semver ${manifest.semver.id}`, async () => {
       expect(await lootbox.SEMVER()).to.eq(manifest.semver.id);
+    });
+
+    it("has the createdAt timestamp", async () => {
+      expect(await lootbox.createdAt()).to.be.gt(10000000);
     });
 
     it("has Cosmic variant", async () => {
@@ -268,11 +234,6 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
 
     it("grants the issuer the DAO role", async () => {
       expect(await lootbox.hasRole(DAO_ROLE, issuingEntity.address)).to.be.true;
-    });
-
-    it("grants the superstaff the SUPERSTAFF role", async () => {
-      expect(await lootbox.hasRole(SUPERSTAFF_ROLE, superstaff.address)).to.be
-        .true;
     });
 
     it("grants the whitelister the WHITELISTER role", async () => {
@@ -327,6 +288,7 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
               nonce,
               "LootboxCosmic"
             );
+
             const tx = await lootbox.connect(redeemer).mint(signature, nonce);
             await tx.wait();
             if (!redeemerTicketIds[redeemer.address]) {
@@ -358,10 +320,241 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
       });
     });
 
-    // TODO: need more comprehensive tests
-    // 5)... overall, what should happen if maxTickets changes?
-    // 6) flushing tests
-    // 7) still need to build out nft randomization
+    describe("flush tokens", async () => {
+      let flushTarget: SignerWithAddress;
+      let depositers: SignerWithAddress[];
+      beforeEach(async () => {
+        flushTarget = user;
+        depositers = [issuingEntity, deployer];
+        for (let depositer of depositers) {
+          await usdc_stablecoin.mint(
+            depositer.address,
+            ethers.BigNumber.from(USDC_STARTING_BALANCE)
+          );
+          await usdc_stablecoin
+            .connect(depositer)
+            .approve(
+              lootbox.address,
+              ethers.BigNumber.from(USDC_STARTING_BALANCE)
+            );
+
+          await timeout(400);
+
+          await usdt_stablecoin.mint(
+            depositer.address,
+            ethers.BigNumber.from(USDC_STARTING_BALANCE)
+          );
+          await usdt_stablecoin
+            .connect(depositer)
+            .approve(
+              lootbox.address,
+              ethers.BigNumber.from(USDC_STARTING_BALANCE)
+            );
+        }
+      });
+
+      it("rejects if caller does not have DAO role", async () => {
+        await expect(
+          lootbox.connect(purchaser).flushTokens(flushTarget.address)
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
+        );
+        await expect(
+          lootbox.connect(purchaser).flushTokens(flushTarget.address)
+        ).to.be.revertedWith(
+          generatePermissionRevokeMessage(purchaser.address, DAO_ROLE)
+        );
+        await expect(
+          lootbox.connect(issuingEntity).flushTokens(flushTarget.address)
+        ).to.not.be.revertedWith(
+          generatePermissionRevokeMessage(issuingEntity.address, DAO_ROLE)
+        );
+      });
+
+      it("reverts if called withing 120 days from lootbox creation", async () => {
+        await expect(
+          lootbox.connect(issuingEntity).flushTokens(flushTarget.address)
+        ).to.be.revertedWith("Must wait 120 days");
+
+        await network.provider.send("evm_increaseTime", [86400 * 100]); // increase number of seconds (86400 seconds in a day)
+        await network.provider.send("evm_mine");
+
+        await expect(
+          lootbox.connect(issuingEntity).flushTokens(flushTarget.address)
+        ).to.be.revertedWith("Must wait 120 days");
+
+        await network.provider.send("evm_increaseTime", [86400 * 20]); // increase number of seconds (86400 seconds in a day)
+        await network.provider.send("evm_mine");
+
+        await expect(
+          lootbox.connect(issuingEntity).flushTokens(flushTarget.address)
+        ).to.be.not.be.revertedWith("Must wait 120 days");
+      });
+
+      it("when it does not revert, it also sets 'flushed' to true", async () => {
+        await network.provider.send("evm_increaseTime", [86400 * 120]); // increase number of seconds (86400 seconds in a day)
+        await network.provider.send("evm_mine");
+
+        const initFlushed = await lootbox.flushed();
+        expect(initFlushed).to.be.false;
+        await expect(
+          lootbox.connect(issuingEntity).flushTokens(flushTarget.address)
+        ).to.not.be.reverted;
+        expect(await lootbox.flushed()).to.be.true;
+      });
+
+      describe("given a random number of deposits only", async () => {
+        let runningDepositNative: BigNumber;
+        let runningDepositUSDC: BigNumber;
+        let runningDepositUSDT: BigNumber;
+        let expectedNativeYieldPerTicket: BigNumber;
+        let expectedUsdcYieldPerTicket: BigNumber;
+        let expectedUsdtYieldPerTicket: BigNumber;
+
+        beforeEach(async () => {
+          runningDepositNative = ethers.BigNumber.from(0);
+          runningDepositUSDC = ethers.BigNumber.from(0);
+          runningDepositUSDT = ethers.BigNumber.from(0);
+          expectedNativeYieldPerTicket = ethers.BigNumber.from(0);
+          expectedUsdcYieldPerTicket = ethers.BigNumber.from(0);
+          expectedUsdtYieldPerTicket = ethers.BigNumber.from(0);
+
+          for (let depositer of depositers) {
+            if (random(0, 1) === 1) {
+              // make native deposit
+              const amt = USDC_STARTING_BALANCE.mul(random(1, 1000)).div(
+                10000000
+              );
+              await lootbox
+                .connect(depositer)
+                .depositEarningsNative({ value: amt });
+              runningDepositNative = runningDepositNative.add(amt);
+              expectedNativeYieldPerTicket = expectedNativeYieldPerTicket.add(
+                amt.div(LOOTBOX_MAX_TICKETS)
+              );
+              await timeout(200);
+            }
+            if (random(0, 1) === 1) {
+              // make usdc deposit
+              const amt = USDC_STARTING_BALANCE.mul(random(1, 1000)).div(
+                10000000
+              );
+              await lootbox
+                .connect(depositer)
+                .depositEarningsErc20(usdc_stablecoin.address, amt);
+              runningDepositUSDC = runningDepositUSDC.add(amt);
+              expectedUsdcYieldPerTicket = expectedUsdcYieldPerTicket.add(
+                amt.div(LOOTBOX_MAX_TICKETS)
+              );
+              await timeout(200);
+            }
+
+            if (random(0, 1) === 1) {
+              // make usdt deposit
+              const amt = USDT_STARTING_BALANCE.mul(random(1, 1000)).div(
+                10000000
+              );
+              await lootbox
+                .connect(depositer)
+                .depositEarningsErc20(usdt_stablecoin.address, amt);
+              runningDepositUSDT = runningDepositUSDT.add(amt);
+              expectedUsdtYieldPerTicket = expectedUsdtYieldPerTicket.add(
+                amt.div(LOOTBOX_MAX_TICKETS)
+              );
+              await timeout(200);
+            }
+          }
+
+          await network.provider.send("evm_increaseTime", [86400 * 120]); // increase number of seconds (86400 seconds in a day)
+          await network.provider.send("evm_mine");
+        });
+
+        it("flushes all tokens correctly to the provided address", async () => {
+          const initNative = await flushTarget.getBalance();
+          const initUSDC = await usdc_stablecoin.balanceOf(flushTarget.address);
+          const initUSDT = await usdt_stablecoin.balanceOf(flushTarget.address);
+
+          await lootbox.connect(issuingEntity).flushTokens(flushTarget.address);
+
+          const newNative = await flushTarget.getBalance();
+          const newUSDC = await usdc_stablecoin.balanceOf(flushTarget.address);
+          const newUSDT = await usdt_stablecoin.balanceOf(flushTarget.address);
+
+          const expectedNative = runningDepositNative.eq(0)
+            ? initNative
+            : initNative.add(runningDepositNative);
+          expect(newNative).to.eq(expectedNative);
+          const expectedUSDC = runningDepositUSDC.eq(0)
+            ? initUSDC
+            : initUSDC.add(runningDepositUSDC);
+          expect(newUSDC).to.eq(expectedUSDC);
+          const expectedUSDT = runningDepositUSDT.eq(0)
+            ? initUSDT
+            : initUSDT.add(runningDepositUSDT);
+          expect(newUSDT).to.eq(expectedUSDT);
+        });
+
+        it("flushes all tokens correctly after paying a few token redeemers", async () => {
+          const nonce1 = generateNonce();
+          const signature1 = await signWhitelist(
+            network.config.chainId || 0,
+            lootbox.address,
+            whitelister,
+            minter.address,
+            nonce1,
+            "LootboxCosmic"
+          );
+
+          const nonce2 = generateNonce();
+          const signature2 = await signWhitelist(
+            network.config.chainId || 0,
+            lootbox.address,
+            whitelister,
+            minter.address,
+            nonce2,
+            "LootboxCosmic"
+          );
+
+          await lootbox.connect(minter).mint(signature1, nonce1);
+          await lootbox.connect(minter).mint(signature2, nonce2);
+
+          await lootbox.connect(minter).withdrawEarnings(0);
+          await lootbox.connect(minter).withdrawEarnings(1);
+
+          const initNative = await flushTarget.getBalance();
+          const initUSDC = await usdc_stablecoin.balanceOf(flushTarget.address);
+          const initUSDT = await usdt_stablecoin.balanceOf(flushTarget.address);
+
+          await lootbox.connect(issuingEntity).flushTokens(flushTarget.address);
+
+          const newNative = await flushTarget.getBalance();
+          const newUSDC = await usdc_stablecoin.balanceOf(flushTarget.address);
+          const newUSDT = await usdt_stablecoin.balanceOf(flushTarget.address);
+
+          const expectedNative = runningDepositNative.eq(0)
+            ? initNative
+            : initNative
+                .add(runningDepositNative)
+                .sub(expectedNativeYieldPerTicket)
+                .sub(expectedNativeYieldPerTicket);
+          expect(newNative).to.eq(expectedNative);
+          const expectedUSDC = runningDepositUSDC.eq(0)
+            ? initUSDC
+            : initUSDC
+                .add(runningDepositUSDC)
+                .sub(expectedUsdcYieldPerTicket)
+                .sub(expectedUsdcYieldPerTicket);
+          expect(newUSDC).to.eq(expectedUSDC);
+          const expectedUSDT = runningDepositUSDT.eq(0)
+            ? initUSDT
+            : initUSDT
+                .add(runningDepositUSDT)
+                .sub(expectedUsdtYieldPerTicket)
+                .sub(expectedUsdtYieldPerTicket);
+          expect(newUSDT).to.eq(expectedUSDT);
+        });
+      });
+    });
 
     describe("mint()", () => {
       it("reverts when called with invalid calldata", async () => {
@@ -552,7 +745,6 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
             BASE_URI,
             ticketsToMint,
             issuingEntity.address,
-            superstaff.address,
             whitelister.address
           );
 
@@ -720,7 +912,6 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
           BASE_URI,
           ticketCount,
           issuingEntity.address,
-          superstaff.address,
           whitelister.address
         );
 
@@ -762,7 +953,6 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
             BASE_URI,
             ticketCount,
             issuingEntity.address,
-            superstaff.address,
             whitelister.address
           );
 
@@ -933,11 +1123,15 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
       let depositers: SignerWithAddress[];
       let redeemers: SignerWithAddress[];
       const redeemerTicketIds: { [key: string]: number[] } = {};
-      let expectedNativeYieldPerTicket: BigNumber = ethers.BigNumber.from(0);
-      let expectedUsdcYieldPerTicket: BigNumber = ethers.BigNumber.from(0);
-      let expectedUsdtYieldPerTicket: BigNumber = ethers.BigNumber.from(0);
+      let expectedNativeYieldPerTicket: BigNumber;
+      let expectedUsdcYieldPerTicket: BigNumber;
+      let expectedUsdtYieldPerTicket: BigNumber;
 
       beforeEach(async () => {
+        expectedNativeYieldPerTicket = ethers.BigNumber.from(0);
+        expectedUsdcYieldPerTicket = ethers.BigNumber.from(0);
+        expectedUsdtYieldPerTicket = ethers.BigNumber.from(0);
+
         depositers = [issuingEntity, deployer];
         redeemers = [user, minter];
         for (let depositer of depositers) {
@@ -1085,11 +1279,15 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
       let depositers: SignerWithAddress[];
       let redeemers: SignerWithAddress[];
       const redeemerTicketIds: { [key: string]: number[] } = {};
-      let expectedNativeYieldPerTicket: BigNumber = ethers.BigNumber.from(0);
-      let expectedUsdcYieldPerTicket: BigNumber = ethers.BigNumber.from(0);
-      let expectedUsdtYieldPerTicket: BigNumber = ethers.BigNumber.from(0);
+      let expectedNativeYieldPerTicket: BigNumber;
+      let expectedUsdcYieldPerTicket: BigNumber;
+      let expectedUsdtYieldPerTicket: BigNumber;
 
       beforeEach(async () => {
+        expectedNativeYieldPerTicket = ethers.BigNumber.from(0);
+        expectedUsdcYieldPerTicket = ethers.BigNumber.from(0);
+        expectedUsdtYieldPerTicket = ethers.BigNumber.from(0);
+
         LOOTBOX_MAX_TICKETS = LOOTBOX_MAX_TICKETS = random(1, 10); // Change the default so its more sustainable for our tests
         depositers = [issuingEntity, deployer];
         redeemers = [user, minter];
@@ -1100,7 +1298,6 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
           BASE_URI,
           LOOTBOX_MAX_TICKETS,
           issuingEntity.address,
-          superstaff.address,
           whitelister.address
         );
 
@@ -1260,7 +1457,6 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
         expect(lootboxFinalBalanceNative.toNumber()).to.be.lt(100);
         expect(lootboxFinalBalanceUSDC.toNumber()).to.be.lt(100);
         expect(lootboxFinalBalanceUSDT.toNumber()).to.be.lt(100);
-
         // expect(lootboxFinalBalanceNative.toNumber()).to.eq(0);
         // expect(lootboxFinalBalanceUSDC.toNumber()).to.eq(0);
         // expect(lootboxFinalBalanceUSDT.toNumber()).to.eq(0);

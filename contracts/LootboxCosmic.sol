@@ -76,6 +76,8 @@ contract LootboxCosmic is
     mapping(uint256 => address) public minters;
     bool public isPayingOut = false;
 
+    uint256 public immutable createdAt;
+
     constructor(
         string memory _name,
         string memory _symbol,
@@ -93,6 +95,7 @@ contract LootboxCosmic is
 
         maxTickets = _maxTickets;
         _tokenURI = _baseTokenURI;
+        createdAt = block.timestamp;
 
         _grantRole(DAO_ROLE, _issuingEntity);
     }
@@ -320,7 +323,7 @@ contract LootboxCosmic is
     }
 
     // Note: functions using this MUST be wrapped with the `nonReentrant` modifier because it uses risky `.call`
-    function _depositEarningsNative(address from, uint256 amount) private {
+    function _depositNative(address from, uint256 amount) private {
         require(amount > 0, "Must be greater than zero");
         // log this payout in sum
         nativeTokenDeposited = nativeTokenDeposited + amount;
@@ -353,7 +356,7 @@ contract LootboxCosmic is
     }
 
     // Note: functions using this MUST be wrapped with the `nonReentrant` modifier
-    function _depositEarningsErc20(
+    function _depositErc20(
         address from,
         address erc20Token,
         uint256 erc20Amount
@@ -391,20 +394,35 @@ contract LootboxCosmic is
         token.transferFrom(from, address(this), erc20Amount);
     }
 
+    function depositEarningsErc20(address erc20Token, uint256 erc20Amount)
+        public
+        payable
+        nonReentrant
+        whenNotPaused
+    {
+        _depositErc20(msg.sender, erc20Token, erc20Amount);
+    }
+
+    function depositEarningsNative() public payable nonReentrant whenNotPaused {
+        _depositNative(msg.sender, msg.value);
+    }
+
     // flush tokens to a specified address in case of abandoned lootbox with cash inside
-    function flushTokens(address _flushTarget)
+    function flushTokens(address target)
         public
         onlyRole(DAO_ROLE)
         nonReentrant
         whenNotPaused
     {
+        require(block.timestamp > createdAt + 120 days, "Must wait 120 days");
+
         for (uint256 i = 0; i < depositIdCounter.current(); i++) {
             // handle erc20 tokens
             if (depositReceipts[i].erc20Token != address(0)) {
                 IERC20 token = IERC20(depositReceipts[i].erc20Token);
                 token.transferFrom(
                     address(this),
-                    _flushTarget,
+                    target,
                     token.balanceOf(address(this))
                 );
                 // commented out because we dont want to edit past history (should be immutable)
@@ -414,27 +432,14 @@ contract LootboxCosmic is
                 // depositReceipts[i].erc20TokenAmount = 0;
             } else {
                 // handle native tokens
-                (bool success, ) = address(_flushTarget).call{
+                (bool success, ) = address(target).call{
                     value: address(this).balance
                 }("");
                 // depositReceipts[i].nativeTokenAmount = 0;
-                require(success, "E26"); // E26 - Ticket holder could not receive earnings
+                require(success, "Target could not receive funds");
             }
         }
         flushed = true;
-    }
-
-    function depositEarningsErc20(address erc20Token, uint256 erc20Amount)
-        public
-        payable
-        nonReentrant
-        whenNotPaused
-    {
-        _depositEarningsErc20(msg.sender, erc20Token, erc20Amount);
-    }
-
-    function depositEarningsNative() public payable nonReentrant whenNotPaused {
-        _depositEarningsNative(msg.sender, msg.value);
     }
 
     // The following functions are overrides required by Solidity.
