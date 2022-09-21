@@ -9,12 +9,11 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./LootboxCosmic.sol";
 
-contract LootboxEscrowFactory is Pausable, AccessControl {
+contract LootboxCosmicFactory is Pausable, AccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     string public semver;
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE"); // Lootbox Ltd
-    bytes32 public constant LOGGER_ROLE = keccak256("LOGGER_ROLE");
 
     string public baseTokenURI;
     address private immutable whitelister;
@@ -29,33 +28,6 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
         address indexed issuer,
         uint256 maxTickets,
         string _data
-    );
-
-    // Event emitted when child Lootbox ticket (AKA NFT) minted
-    event LootboxMint(
-        address indexed lootboxAddress,
-        address indexed minterAddress,
-        uint256 ticketId
-    );
-
-    // Event emitted when a deposit is made into a Lootbox
-    event LootboxDeposit(
-        address indexed lootboxAddress,
-        address indexed depositor,
-        uint256 indexed depositId,
-        uint256 nativeTokenAmount,
-        address erc20Token,
-        uint256 erc20Amount
-    );
-
-    // Event emitted when child Lootbox has NFT payed out
-    event LootboxWithdrawEarnings(
-        address indexed lootboxAddress,
-        address indexed withdrawer,
-        uint256 ticketId,
-        uint256 nativeTokenAmount,
-        address erc20Token,
-        uint256 erc20Amount
     );
 
     constructor(
@@ -107,7 +79,6 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
             whitelister
         );
         address newLootboxAddress = address(newLootbox);
-        grantRole(LOGGER_ROLE, newLootboxAddress);
 
         LOOTBOXES.add(newLootboxAddress);
 
@@ -120,41 +91,6 @@ contract LootboxEscrowFactory is Pausable, AccessControl {
         );
 
         return newLootboxAddress;
-    }
-
-    function emitMint(address minter, uint256 ticketID)
-        public
-        onlyRole(LOGGER_ROLE)
-    {
-        emit LootboxMint(msg.sender, minter, ticketID);
-    }
-
-    function emitWithdrawEarnings(
-        address withdrawer,
-        uint256 ticketID,
-        uint256 nativeTokenAmount,
-        address erc20Token,
-        uint256 erc20TokenAmount
-    ) public onlyRole(LOGGER_ROLE) {
-        emit LootboxWithdrawEarnings(
-            msg.sender,
-            withdrawer,
-            ticketID,
-            nativeTokenAmount,
-            erc20Token,
-            erc20TokenAmount
-        );
-    }
-
-    function emitDeposit(
-        address lootboxAddress,
-        address depositor,
-        uint256 depositId, 
-        uint256 nativeTokenAmount,
-        address erc20Token,
-        uint256 erc20TokenAmount
-    ) public onlyRole(LOGGER_ROLE) {
-        emit LootboxDeposit(lootboxAddress, depositor, depositId, nativeTokenAmount, erc20Token, erc20TokenAmount);
     }
 
     function viewLootboxes() public view returns (bytes32[] memory) {

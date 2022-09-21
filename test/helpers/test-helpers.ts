@@ -1,6 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ethers, upgrades } from "hardhat";
 import { randomBytes } from "crypto";
+import { BigNumberish } from "ethers";
 
 export const generatePermissionRevokeMessage = (
   address: string,
@@ -11,6 +12,10 @@ export const generatePermissionRevokeMessage = (
 export const DAO_ROLE = ethers.utils.solidityKeccak256(
   ["string"],
   ["DAO_ROLE"]
+);
+export const LOGGER_ROLE = ethers.utils.solidityKeccak256(
+  ["string"],
+  ["LOGGER_ROLE"]
 );
 export const REBASE_ROLE = ethers.utils.solidityKeccak256(
   ["string"],
@@ -167,4 +172,8 @@ export const generateNonce = () => {
   };
   const bytes = randomBytes(16);
   return hexToDec(bytes.toString("hex"));
+};
+
+export const randomBN = (max: BigNumberish) => {
+  return ethers.BigNumber.from(ethers.utils.randomBytes(32)).mod(max);
 };

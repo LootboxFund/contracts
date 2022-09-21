@@ -10,6 +10,7 @@ interface Lootbox {
         address erc20Token;
         uint256 erc20TokenAmount;
         uint256 timestamp;
+        uint256 maxTicketsSnapshot;
     }
 
     struct DepositMetadata {
@@ -21,6 +22,7 @@ interface Lootbox {
         address erc20Token;
         uint256 erc20TokenAmount;
         uint256 timestamp;
+        uint256 maxTicketsSnapshot;
     }
 
     event DepositEarnings(
@@ -29,12 +31,14 @@ interface Lootbox {
         uint256 depositId,
         uint256 nativeTokenAmount,
         address erc20Token,
-        uint256 erc20Amount
+        uint256 erc20Amount,
+        uint256 maxTicketsSnapshot
     );
 
     event MintTicket(
         address indexed redeemer,
         address lootbox,
+        uint256 nonce,
         uint256 ticketId
     );
     event WithdrawEarnings(

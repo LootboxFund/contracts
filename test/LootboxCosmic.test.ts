@@ -7,10 +7,9 @@ import {
   padAddressTo32Bytes,
   signWhitelist,
   WHITELISTER_ROLE,
+  randomBN,
 } from "./helpers/test-helpers";
 import { manifest } from "../scripts/manifest";
-
-/* eslint-disable */
 import {
   USDC,
   USDC__factory,
@@ -20,7 +19,7 @@ import {
   LootboxCosmic__factory,
 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { BigNumber, constants } from "ethers";
+import { BigNumber, constants, Contract, ContractTransaction } from "ethers";
 import { random } from "lodash";
 
 const LOOTBOX_NAME = "Pinata Lootbox";
@@ -47,22 +46,21 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
   let minter: SignerWithAddress;
   let purchaser: SignerWithAddress;
   let user: SignerWithAddress;
+  let NATIVE_STARTING_BALANCE: BigNumber;
   let USDC_STARTING_BALANCE: BigNumber;
   let USDT_STARTING_BALANCE: BigNumber;
-  let LOOTBOX_MAX_TICKETS: number;
+  let lootboxMaxTickets: number;
 
   before(async () => {
     [deployer, minter, issuingEntity, whitelister, malicious, purchaser, user] =
       await ethers.getSigners();
   });
   beforeEach(() => {
-    LOOTBOX_MAX_TICKETS = random(10, 1000);
-    USDC_STARTING_BALANCE = ethers.BigNumber.from(random(1, 100)).mul(
-      "1000000000000000000000"
-    );
-    USDT_STARTING_BALANCE = ethers.BigNumber.from(random(1, 100)).mul(
-      "1000000000000000000000"
-    );
+    lootboxMaxTickets = random(10, 1000);
+    NATIVE_STARTING_BALANCE = randomBN("10000000000000000000");
+
+    USDC_STARTING_BALANCE = randomBN("1000000000000000000000");
+    USDT_STARTING_BALANCE = randomBN("1000000000000000000000");
   });
 
   describe("Before constructor & deployment", async () => {
@@ -175,7 +173,7 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
         LOOTBOX_NAME,
         LOOTBOX_SYMBOL,
         BASE_URI,
-        LOOTBOX_MAX_TICKETS,
+        lootboxMaxTickets,
         issuingEntity.address,
         whitelister.address
       );
@@ -208,12 +206,15 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
       expect(await lootbox.depositIdCounter()).to.eq(0);
     });
 
-    it("has flushed equal to false", async () => {
-      expect(await lootbox.flushed()).to.be.false;
+    it("yields zero total deposit of native & any erc20 token", async () => {
+      expect(await lootbox.viewTotalDepositOfNativeToken()).to.eq(0);
+      expect(
+        await lootbox.viewTotalDepositOfErc20Token(usdc_stablecoin.address)
+      ).to.eq(0);
     });
 
-    it("has isPayingOut equal to false", async () => {
-      expect(await lootbox.isPayingOut()).to.be.false;
+    it("has flushed equal to false", async () => {
+      expect(await lootbox.flushed()).to.be.false;
     });
 
     it("sets the name correctly", async () => {
@@ -229,7 +230,7 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
     });
 
     it("sets the maxTickets correctly", async () => {
-      expect(await lootbox.maxTickets()).to.eq(LOOTBOX_MAX_TICKETS);
+      expect(await lootbox.maxTickets()).to.eq(lootboxMaxTickets);
     });
 
     it("grants the issuer the DAO role", async () => {
@@ -270,10 +271,11 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
 
     describe("viewAllTicketsOfHolder()", () => {
       let redeemers: SignerWithAddress[];
-      const redeemerTicketIds: { [key: string]: number[] } = {};
+      let redeemerTicketIds: { [key: string]: number[] };
 
       beforeEach(async () => {
         redeemers = [user, minter];
+        redeemerTicketIds = {};
         // we have to whitelist & mint out tickets
         let ticketCounter = 0;
         for (let redeemer of redeemers) {
@@ -342,13 +344,13 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
 
           await usdt_stablecoin.mint(
             depositer.address,
-            ethers.BigNumber.from(USDC_STARTING_BALANCE)
+            ethers.BigNumber.from(USDT_STARTING_BALANCE)
           );
           await usdt_stablecoin
             .connect(depositer)
             .approve(
               lootbox.address,
-              ethers.BigNumber.from(USDC_STARTING_BALANCE)
+              ethers.BigNumber.from(USDT_STARTING_BALANCE)
             );
         }
       });
@@ -422,44 +424,39 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
           for (let depositer of depositers) {
             if (random(0, 1) === 1) {
               // make native deposit
-              const amt = USDC_STARTING_BALANCE.mul(random(1, 1000)).div(
-                10000000
-              );
+              const amt = randomBN(NATIVE_STARTING_BALANCE).div(100);
+
               await lootbox
                 .connect(depositer)
                 .depositEarningsNative({ value: amt });
               runningDepositNative = runningDepositNative.add(amt);
               expectedNativeYieldPerTicket = expectedNativeYieldPerTicket.add(
-                amt.div(LOOTBOX_MAX_TICKETS)
+                amt.div(lootboxMaxTickets)
               );
               await timeout(200);
             }
             if (random(0, 1) === 1) {
               // make usdc deposit
-              const amt = USDC_STARTING_BALANCE.mul(random(1, 1000)).div(
-                10000000
-              );
+              const amt = randomBN(USDC_STARTING_BALANCE).div(100);
               await lootbox
                 .connect(depositer)
                 .depositEarningsErc20(usdc_stablecoin.address, amt);
               runningDepositUSDC = runningDepositUSDC.add(amt);
               expectedUsdcYieldPerTicket = expectedUsdcYieldPerTicket.add(
-                amt.div(LOOTBOX_MAX_TICKETS)
+                amt.div(lootboxMaxTickets)
               );
               await timeout(200);
             }
 
             if (random(0, 1) === 1) {
               // make usdt deposit
-              const amt = USDT_STARTING_BALANCE.mul(random(1, 1000)).div(
-                10000000
-              );
+              const amt = randomBN(USDT_STARTING_BALANCE).div(100);
               await lootbox
                 .connect(depositer)
                 .depositEarningsErc20(usdt_stablecoin.address, amt);
               runningDepositUSDT = runningDepositUSDT.add(amt);
               expectedUsdtYieldPerTicket = expectedUsdtYieldPerTicket.add(
-                amt.div(LOOTBOX_MAX_TICKETS)
+                amt.div(lootboxMaxTickets)
               );
               await timeout(200);
             }
@@ -653,6 +650,101 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
           ).to.be.revertedWith("Pausable: paused");
         });
 
+        it("reverts if the maxTickets has been hit", async () => {
+          // lets just set up a new test so we dont have to mint too many
+          const ticketsToMint = random(1, 6);
+
+          const testLootbox = await Lootbox.deploy(
+            LOOTBOX_NAME,
+            LOOTBOX_SYMBOL,
+            BASE_URI,
+            ticketsToMint,
+            issuingEntity.address,
+            whitelister.address
+          );
+
+          for (let ticketIdx = 0; ticketIdx < ticketsToMint; ticketIdx++) {
+            const nonce = generateNonce();
+            const signature = await signWhitelist(
+              network.config.chainId || 0,
+              testLootbox.address,
+              whitelister,
+              minter.address,
+              nonce,
+              "LootboxCosmic"
+            );
+
+            await testLootbox.connect(minter).mint(signature, nonce);
+          }
+
+          // try to do 1 extra mint and it should revert because of max tickets
+          const nonceExtra = generateNonce();
+          const signatureExtra = await signWhitelist(
+            network.config.chainId || 0,
+            testLootbox.address,
+            whitelister,
+            minter.address,
+            nonceExtra,
+            "LootboxCosmic"
+          );
+
+          await expect(
+            testLootbox.connect(minter).mint(signatureExtra, nonceExtra)
+          ).to.be.revertedWith("Sold out");
+        });
+
+        it("reverts if the maxTickets has been hit, but if maxTickets increases, subsequent calls do not revert", async () => {
+          // lets just set up a new test so we dont have to mint too many
+          const ticketsToMint = random(1, 6);
+
+          const testLootbox = await Lootbox.deploy(
+            LOOTBOX_NAME,
+            LOOTBOX_SYMBOL,
+            BASE_URI,
+            ticketsToMint,
+            issuingEntity.address,
+            whitelister.address
+          );
+
+          for (let ticketIdx = 0; ticketIdx < ticketsToMint; ticketIdx++) {
+            const nonce = generateNonce();
+            const signature = await signWhitelist(
+              network.config.chainId || 0,
+              testLootbox.address,
+              whitelister,
+              minter.address,
+              nonce,
+              "LootboxCosmic"
+            );
+
+            await testLootbox.connect(minter).mint(signature, nonce);
+          }
+
+          // try to do 1 extra mint and it should revert because of max tickets
+          const nonceExtra = generateNonce();
+          const signatureExtra = await signWhitelist(
+            network.config.chainId || 0,
+            testLootbox.address,
+            whitelister,
+            minter.address,
+            nonceExtra,
+            "LootboxCosmic"
+          );
+
+          await expect(
+            testLootbox.connect(minter).mint(signatureExtra, nonceExtra)
+          ).to.be.revertedWith("Sold out");
+
+          // Update max tickets
+          await testLootbox
+            .connect(issuingEntity)
+            .changeMaxTickets(ticketsToMint + 3);
+
+          await expect(
+            testLootbox.connect(minter).mint(signatureExtra, nonceExtra)
+          ).to.not.be.reverted;
+        });
+
         it("does not revert when called with appropriate signer", async () => {
           await expect(lootbox.connect(minter).mint(signature, nonce)).to.not.be
             .reverted;
@@ -675,7 +767,7 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
 
           await expect(await lootbox.connect(minter).mint(signature, nonce))
             .to.emit(lootbox, "MintTicket")
-            .withArgs(minter.address, lootbox.address, beforeTicketIdx);
+            .withArgs(minter.address, lootbox.address, nonce, beforeTicketIdx);
         });
 
         it("increments the minters variable with the minters address", async () => {
@@ -734,49 +826,6 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
             "ERC721: caller is not token owner nor approved"
           );
         });
-
-        it("rejects if the maxTickets has been hit", async () => {
-          // lets just set up a new test so we dont have to mint too many
-          const ticketsToMint = random(1, 6);
-
-          const testLootbox = await Lootbox.deploy(
-            LOOTBOX_NAME,
-            LOOTBOX_SYMBOL,
-            BASE_URI,
-            ticketsToMint,
-            issuingEntity.address,
-            whitelister.address
-          );
-
-          for (let ticketIdx = 0; ticketIdx < ticketsToMint; ticketIdx++) {
-            const nonce = generateNonce();
-            const signature = await signWhitelist(
-              network.config.chainId || 0,
-              testLootbox.address,
-              whitelister,
-              minter.address,
-              nonce,
-              "LootboxCosmic"
-            );
-
-            await testLootbox.connect(minter).mint(signature, nonce);
-          }
-
-          // try to do 1 extra mint and it should revert because of max tickets
-          const nonceExtra = generateNonce();
-          const signatureExtra = await signWhitelist(
-            network.config.chainId || 0,
-            testLootbox.address,
-            whitelister,
-            minter.address,
-            nonceExtra,
-            "LootboxCosmic"
-          );
-
-          await expect(
-            testLootbox.connect(minter).mint(signatureExtra, nonceExtra)
-          ).to.be.revertedWith("Sold out");
-        });
       });
     });
 
@@ -801,39 +850,6 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
         await expect(
           lootbox.connect(issuingEntity).changeMaxTickets(initMaxTickets.add(1))
         ).to.not.be.reverted;
-      });
-
-      it("reverts when isPayingOut is true", async () => {
-        let depositer = user;
-        const depositAmount = ethers.BigNumber.from(USDC_STARTING_BALANCE)
-          .mul(random(1, 1000))
-          .div(10000);
-        const initMaxTickets = await lootbox.maxTickets();
-        const isPayingOut = await lootbox.isPayingOut();
-        // Should be false to start
-        expect(isPayingOut).to.be.false;
-        // We need to toggle ispayingout by initializing a withdrawal....
-        await lootbox.connect(depositer).depositEarningsNative({
-          value: depositAmount,
-        });
-        // Mint an NFT to minter
-        const nonce = generateNonce();
-        const signature = await signWhitelist(
-          network.config.chainId || 0,
-          lootbox.address,
-          whitelister,
-          minter.address,
-          nonce,
-          "LootboxCosmic"
-        );
-        await lootbox.connect(minter).mint(signature, nonce);
-        await lootbox.connect(minter).withdrawEarnings("0");
-        const isPayingOut2 = await lootbox.isPayingOut();
-        expect(isPayingOut2).to.be.true;
-        await expect(
-          lootbox.connect(issuingEntity).changeMaxTickets(initMaxTickets.add(1))
-        ).to.be.revertedWith("Lootbox is paying out");
-        expect(await lootbox.maxTickets()).to.eq(initMaxTickets);
       });
 
       it("reverts targetMaxTickets is 0 or less than 0 or less than current maxTickets, otherwise, does not revert", async () => {
@@ -869,11 +885,270 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
           ).to.not.be.reverted;
         }
       });
-    });
 
-    describe("changing the max tickets (side effects)", () => {
-      it("", async () => {
-        expect(false).to.be.true;
+      describe("interactions with deposits", () => {
+        let depositer: SignerWithAddress;
+        let nativeDepositAmount: BigNumber;
+        let usdcDepositAmount: BigNumber;
+
+        beforeEach(async () => {
+          depositer = deployer;
+
+          await usdc_stablecoin.mint(
+            depositer.address,
+            ethers.BigNumber.from(USDC_STARTING_BALANCE)
+          );
+
+          await usdc_stablecoin
+            .connect(depositer)
+            .approve(
+              lootbox.address,
+              ethers.BigNumber.from(USDC_STARTING_BALANCE)
+            );
+
+          nativeDepositAmount = randomBN(NATIVE_STARTING_BALANCE).div(100);
+
+          usdcDepositAmount = randomBN(USDC_STARTING_BALANCE).div(100);
+        });
+
+        it("changing max tickets gets snapshotted on deposits", async () => {
+          await lootbox
+            .connect(depositer)
+            .depositEarningsNative({ value: nativeDepositAmount });
+          await lootbox
+            .connect(depositer)
+            .depositEarningsErc20(usdc_stablecoin.address, usdcDepositAmount);
+
+          // So Max tickets should be lootboxMaxTickets
+          const [nativeDeposit, erc20Deposit] = await lootbox.viewAllDeposits();
+
+          expect(nativeDeposit[7]).to.eq(lootboxMaxTickets);
+          expect(erc20Deposit[7]).to.eq(lootboxMaxTickets);
+
+          // Change the max tickets
+          const newMaxTickets = lootboxMaxTickets * random(2, 100);
+          await lootbox.connect(issuingEntity).changeMaxTickets(newMaxTickets);
+
+          const [nativeDepositDUPE, erc20DepositDUPE] =
+            await lootbox.viewAllDeposits();
+
+          expect(nativeDepositDUPE[7]).to.eq(lootboxMaxTickets);
+          expect(erc20DepositDUPE[7]).to.eq(lootboxMaxTickets);
+
+          // new deposits will have the new max tickets tho
+
+          await lootbox
+            .connect(depositer)
+            .depositEarningsNative({ value: nativeDepositAmount });
+          await lootbox
+            .connect(depositer)
+            .depositEarningsErc20(usdc_stablecoin.address, usdcDepositAmount);
+
+          await lootbox
+            .connect(depositer)
+            .depositEarningsNative({ value: nativeDepositAmount });
+          await lootbox
+            .connect(depositer)
+            .depositEarningsErc20(usdc_stablecoin.address, usdcDepositAmount);
+
+          // So Max tickets should be new max
+          const [_, __, nativeDepositNEW, erc20DepositNEW] =
+            await lootbox.viewAllDeposits();
+          expect(nativeDepositNEW[7]).to.eq(newMaxTickets);
+          expect(erc20DepositNEW[7]).to.eq(newMaxTickets);
+        });
+
+        it("changing max tickets gets snapshotted on pro-rated deposits", async () => {
+          await lootbox
+            .connect(depositer)
+            .depositEarningsNative({ value: nativeDepositAmount });
+          await lootbox
+            .connect(depositer)
+            .depositEarningsErc20(usdc_stablecoin.address, usdcDepositAmount);
+
+          // So Max tickets should be lootboxMaxTickets
+          const [nativeDepositProrated, erc20DepositProrated] =
+            await lootbox.viewProratedDepositsForTicket(0);
+          expect(nativeDepositProrated[4]).to.eq(
+            nativeDepositAmount.div(lootboxMaxTickets)
+          );
+          expect(nativeDepositProrated[8]).to.eq(lootboxMaxTickets);
+
+          expect(erc20DepositProrated[6]).to.eq(
+            usdcDepositAmount.div(lootboxMaxTickets)
+          );
+          expect(erc20DepositProrated[8]).to.eq(lootboxMaxTickets);
+
+          // Change the max tickets
+          const newMaxTickets = lootboxMaxTickets * random(2, 100);
+          await lootbox.connect(issuingEntity).changeMaxTickets(newMaxTickets);
+
+          // Old deposits should have the same max tickets
+          const [nativeDepositProratedDUPE, erc20DepositProratedDUPE] =
+            await lootbox.viewProratedDepositsForTicket(0);
+          expect(nativeDepositProratedDUPE[4]).to.eq(
+            nativeDepositAmount.div(lootboxMaxTickets)
+          );
+          expect(nativeDepositProratedDUPE[8]).to.eq(lootboxMaxTickets);
+
+          expect(erc20DepositProratedDUPE[6]).to.eq(
+            usdcDepositAmount.div(lootboxMaxTickets)
+          );
+          expect(erc20DepositProratedDUPE[8]).to.eq(lootboxMaxTickets);
+
+          // new deposits will have the new max tickets tho
+
+          await lootbox
+            .connect(depositer)
+            .depositEarningsNative({ value: nativeDepositAmount });
+          await lootbox
+            .connect(depositer)
+            .depositEarningsErc20(usdc_stablecoin.address, usdcDepositAmount);
+
+          // So Max tickets should be new max
+          const [_, __, nativeDepositProratedNEW, erc20DepositProratedNEW] =
+            await lootbox.viewProratedDepositsForTicket(0);
+          expect(nativeDepositProratedNEW[4]).to.eq(
+            nativeDepositAmount.div(newMaxTickets)
+          );
+          expect(nativeDepositProratedNEW[8]).to.eq(newMaxTickets);
+
+          expect(erc20DepositProratedNEW[6]).to.eq(
+            usdcDepositAmount.div(newMaxTickets)
+          );
+          expect(erc20DepositProratedNEW[8]).to.eq(newMaxTickets);
+        });
+
+        it("prorated deposits only show if the ticket id is less than the maxTickets", async () => {
+          const testLootbox = await Lootbox.deploy(
+            LOOTBOX_NAME,
+            LOOTBOX_SYMBOL,
+            BASE_URI,
+            1,
+            issuingEntity.address,
+            whitelister.address
+          );
+
+          await usdc_stablecoin
+            .connect(depositer)
+            .approve(
+              testLootbox.address,
+              ethers.BigNumber.from(USDC_STARTING_BALANCE)
+            );
+
+          await testLootbox
+            .connect(depositer)
+            .depositEarningsNative({ value: nativeDepositAmount });
+          await testLootbox
+            .connect(depositer)
+            .depositEarningsErc20(usdc_stablecoin.address, usdcDepositAmount);
+
+          const initDeposits0 = await testLootbox.viewProratedDepositsForTicket(
+            0
+          );
+
+          expect(initDeposits0.length).to.eq(2);
+
+          const [nativeDepositInit, erc20DepositInit] = initDeposits0;
+
+          expect(nativeDepositInit[0]).to.eq(depositer.address);
+          expect(nativeDepositInit[1]).to.eq(0); // ticketid
+          expect(nativeDepositInit[2]).to.eq(0); // deposit id
+          expect(nativeDepositInit[3]).to.be.false;
+          expect(nativeDepositInit[4]).to.eq(nativeDepositAmount.div(1));
+          expect(nativeDepositInit[5]).to.eq(ethers.constants.AddressZero);
+          expect(nativeDepositInit[6]).to.eq(0);
+          expect(nativeDepositInit[8]).to.eq(1);
+
+          expect(erc20DepositInit[0]).to.eq(depositer.address);
+          expect(erc20DepositInit[1]).to.eq(0); // ticketid
+          expect(erc20DepositInit[2]).to.eq(1); // deposit id
+          expect(erc20DepositInit[3]).to.be.false;
+          expect(erc20DepositInit[4]).to.eq(0);
+          expect(erc20DepositInit[5]).to.eq(usdc_stablecoin.address);
+          expect(erc20DepositInit[6]).to.eq(usdcDepositAmount.div(1));
+          expect(erc20DepositInit[8]).to.eq(1);
+
+          const ticketDepositsInit1 =
+            await testLootbox.viewProratedDepositsForTicket(1);
+
+          expect(ticketDepositsInit1.length).to.eq(0);
+
+          // now we need to increase the maxtickets cap
+
+          await testLootbox.connect(issuingEntity).changeMaxTickets(2);
+
+          // make another couple of deposits
+          const nativeDepositAmount2 = randomBN(nativeDepositAmount);
+          const usdcDepositAmount2 = randomBN(usdcDepositAmount);
+          await testLootbox
+            .connect(depositer)
+            .depositEarningsNative({ value: nativeDepositAmount2 });
+          await testLootbox
+            .connect(depositer)
+            .depositEarningsErc20(usdc_stablecoin.address, usdcDepositAmount2);
+
+          const ticketDeposits0 =
+            await testLootbox.viewProratedDepositsForTicket(0);
+          expect(ticketDeposits0.length).to.eq(4);
+          const ticketDeposits1 =
+            await testLootbox.viewProratedDepositsForTicket(1);
+          expect(ticketDeposits1.length).to.eq(2);
+
+          expect(ticketDeposits0[0][0]).to.eq(depositer.address);
+          expect(ticketDeposits0[0][1]).to.eq(0); // ticketid
+          expect(ticketDeposits0[0][2]).to.eq(0); // deposit id
+          expect(ticketDeposits0[0][3]).to.be.false;
+          expect(ticketDeposits0[0][4]).to.eq(nativeDepositAmount.div(1));
+          expect(ticketDeposits0[0][5]).to.eq(ethers.constants.AddressZero);
+          expect(ticketDeposits0[0][6]).to.eq(0);
+          expect(ticketDeposits0[0][8]).to.eq(1);
+
+          expect(ticketDeposits0[1][0]).to.eq(depositer.address);
+          expect(ticketDeposits0[1][1]).to.eq(0); // ticketid
+          expect(ticketDeposits0[1][2]).to.eq(1); // deposit id
+          expect(ticketDeposits0[1][3]).to.be.false;
+          expect(ticketDeposits0[1][4]).to.eq(0);
+          expect(ticketDeposits0[1][5]).to.eq(usdc_stablecoin.address);
+          expect(ticketDeposits0[1][6]).to.eq(usdcDepositAmount.div(1));
+          expect(ticketDeposits0[1][8]).to.eq(1);
+
+          expect(ticketDeposits0[2][0]).to.eq(depositer.address);
+          expect(ticketDeposits0[2][1]).to.eq(0); // ticketid
+          expect(ticketDeposits0[2][2]).to.eq(2); // deposit id
+          expect(ticketDeposits0[2][3]).to.be.false;
+          expect(ticketDeposits0[2][4]).to.eq(nativeDepositAmount2.div(2));
+          expect(ticketDeposits0[2][5]).to.eq(ethers.constants.AddressZero);
+          expect(ticketDeposits0[2][6]).to.eq(0);
+          expect(ticketDeposits0[2][8]).to.eq(2);
+
+          expect(ticketDeposits0[3][0]).to.eq(depositer.address);
+          expect(ticketDeposits0[3][1]).to.eq(0); // ticketid
+          expect(ticketDeposits0[3][2]).to.eq(3); // deposit id
+          expect(ticketDeposits0[3][3]).to.be.false;
+          expect(ticketDeposits0[3][4]).to.eq(0);
+          expect(ticketDeposits0[3][5]).to.eq(usdc_stablecoin.address);
+          expect(ticketDeposits0[3][6]).to.eq(usdcDepositAmount2.div(2));
+          expect(ticketDeposits0[3][8]).to.eq(2);
+
+          expect(ticketDeposits1[0][0]).to.eq(depositer.address);
+          expect(ticketDeposits1[0][1]).to.eq(1); // ticketid
+          expect(ticketDeposits1[0][2]).to.eq(2); // deposit id
+          expect(ticketDeposits1[0][3]).to.be.false;
+          expect(ticketDeposits1[0][4]).to.eq(nativeDepositAmount2.div(2));
+          expect(ticketDeposits1[0][5]).to.eq(ethers.constants.AddressZero);
+          expect(ticketDeposits1[0][6]).to.eq(0);
+          expect(ticketDeposits1[0][8]).to.eq(2);
+
+          expect(ticketDeposits1[1][0]).to.eq(depositer.address);
+          expect(ticketDeposits1[1][1]).to.eq(1); // ticketid
+          expect(ticketDeposits1[1][2]).to.eq(3); // deposit id
+          expect(ticketDeposits1[1][3]).to.be.false;
+          expect(ticketDeposits1[1][4]).to.eq(0);
+          expect(ticketDeposits1[1][5]).to.eq(usdc_stablecoin.address);
+          expect(ticketDeposits1[1][6]).to.eq(usdcDepositAmount2.div(2));
+          expect(ticketDeposits1[1][8]).to.eq(2);
+        });
       });
     });
 
@@ -903,9 +1178,8 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
       });
 
       it("when the deposit is equal to maxTickets, it pays out 1 unit", async () => {
-        const ticketCount = ethers.BigNumber.from("1000000000000000000")
-          .mul(random(1, 1000))
-          .div(1000);
+        const ticketCount = randomBN("1000000000000000000");
+
         lootbox = await Lootbox.deploy(
           LOOTBOX_NAME,
           LOOTBOX_SYMBOL,
@@ -942,9 +1216,8 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
       });
 
       it("when deposit is smaller than maxTickets, it pays out nothing", async () => {
-        const ticketCount = ethers.BigNumber.from("1000000000000000000")
-          .mul(random(1, 1000))
-          .div(1000);
+        const ticketCount = randomBN("1000000000000000000");
+
         const testDiffs = ["1", "10", "100000", ticketCount.sub(1).toString()];
         for (let diff of testDiffs) {
           lootbox = await Lootbox.deploy(
@@ -1014,12 +1287,9 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
         let erc20DepositAmount: BigNumber;
 
         beforeEach(async () => {
-          nativeDepositAmount = ethers.BigNumber.from(USDC_STARTING_BALANCE)
-            .mul(random(1, 100))
-            .div(1000);
-          erc20DepositAmount = ethers.BigNumber.from(USDC_STARTING_BALANCE)
-            .mul(random(1, 100))
-            .div(1000);
+          nativeDepositAmount = randomBN(NATIVE_STARTING_BALANCE).div(10);
+          erc20DepositAmount = randomBN(USDC_STARTING_BALANCE).div(10);
+
           await lootbox.connect(depositer).depositEarningsNative({
             value: nativeDepositAmount,
           });
@@ -1028,30 +1298,11 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
             .depositEarningsErc20(usdc_stablecoin.address, erc20DepositAmount);
         });
 
-        it("changes isPayingOut to true only if isPayingOut is false", async () => {
-          expect(await lootbox.isPayingOut()).to.be.false;
-          await expect(lootbox.connect(minter).withdrawEarnings(ticketId)).to
-            .not.be.reverted;
-          expect(await lootbox.isPayingOut()).to.be.true;
-
-          await lootbox
-            .connect(depositer)
-            .depositEarningsErc20(
-              usdc_stablecoin.address,
-              ethers.BigNumber.from(USDC_STARTING_BALANCE).div(10)
-            );
-
-          expect(await lootbox.isPayingOut()).to.be.true;
-          await expect(lootbox.connect(minter).withdrawEarnings(ticketId)).to
-            .not.be.reverted;
-          expect(await lootbox.isPayingOut()).to.be.true; // stays the same lol
-        });
-
         it("transfers the correct amount of native & or erc20", async () => {
           const expectedNativeYieldPerTicket =
-            nativeDepositAmount.div(LOOTBOX_MAX_TICKETS);
+            nativeDepositAmount.div(lootboxMaxTickets);
           const expectedUsdcYieldPerTicket =
-            erc20DepositAmount.div(LOOTBOX_MAX_TICKETS);
+            erc20DepositAmount.div(lootboxMaxTickets);
 
           const nativeBalanceInit = await minter.getBalance();
           const usdcBalanceInit = await usdc_stablecoin.balanceOf(
@@ -1087,11 +1338,21 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
           );
         });
 
+        it("updates the depositRedemptions to true", async () => {
+          expect(await lootbox.depositRedemptions(0, 0)).to.be.false;
+          expect(await lootbox.depositRedemptions(0, 1)).to.be.false;
+
+          await lootbox.connect(minter).withdrawEarnings(ticketId);
+
+          expect(await lootbox.depositRedemptions(0, 0)).to.be.true;
+          expect(await lootbox.depositRedemptions(0, 1)).to.be.true;
+        });
+
         it("emits the correct WithdrawEarnings event", async () => {
           const expectedNativeYieldPerTicket =
-            nativeDepositAmount.div(LOOTBOX_MAX_TICKETS);
+            nativeDepositAmount.div(lootboxMaxTickets);
           const expectedUsdcYieldPerTicket =
-            erc20DepositAmount.div(LOOTBOX_MAX_TICKETS);
+            erc20DepositAmount.div(lootboxMaxTickets);
 
           const response = lootbox.connect(minter).withdrawEarnings(0);
           await expect(response)
@@ -1192,30 +1453,20 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
         }
 
         for (let depositer of depositers) {
-          const nativeDepositAmount = ethers.BigNumber.from(
-            USDC_STARTING_BALANCE
-          )
-            .mul(random(1, 100))
-            .div(1000);
+          const nativeDepositAmount = randomBN(NATIVE_STARTING_BALANCE).div(10);
           expectedNativeYieldPerTicket = expectedNativeYieldPerTicket.add(
-            nativeDepositAmount.div(LOOTBOX_MAX_TICKETS)
+            nativeDepositAmount.div(lootboxMaxTickets)
           );
 
-          const erc20DepositAmount = ethers.BigNumber.from(
-            USDC_STARTING_BALANCE
-          )
-            .mul(random(1, 100))
-            .div(1000);
+          const erc20DepositAmount = randomBN(USDC_STARTING_BALANCE).div(10);
           expectedUsdcYieldPerTicket = expectedUsdcYieldPerTicket.add(
-            erc20DepositAmount.div(LOOTBOX_MAX_TICKETS)
+            erc20DepositAmount.div(lootboxMaxTickets)
           );
 
-          const usdtDepositAmount = ethers.BigNumber.from(USDC_STARTING_BALANCE)
-            .mul(random(1, 100))
-            .div(1000);
+          const usdtDepositAmount = randomBN(USDC_STARTING_BALANCE).div(10);
 
           expectedUsdtYieldPerTicket = expectedUsdtYieldPerTicket.add(
-            usdtDepositAmount.div(LOOTBOX_MAX_TICKETS)
+            usdtDepositAmount.div(lootboxMaxTickets)
           );
 
           await lootbox.connect(depositer).depositEarningsNative({
@@ -1278,7 +1529,7 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
     describe("withdrawing payout (full ticket distribution)", () => {
       let depositers: SignerWithAddress[];
       let redeemers: SignerWithAddress[];
-      const redeemerTicketIds: { [key: string]: number[] } = {};
+      let redeemerTicketIds: { [key: string]: number[] };
       let expectedNativeYieldPerTicket: BigNumber;
       let expectedUsdcYieldPerTicket: BigNumber;
       let expectedUsdtYieldPerTicket: BigNumber;
@@ -1287,8 +1538,9 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
         expectedNativeYieldPerTicket = ethers.BigNumber.from(0);
         expectedUsdcYieldPerTicket = ethers.BigNumber.from(0);
         expectedUsdtYieldPerTicket = ethers.BigNumber.from(0);
+        redeemerTicketIds = {};
 
-        LOOTBOX_MAX_TICKETS = LOOTBOX_MAX_TICKETS = random(1, 10); // Change the default so its more sustainable for our tests
+        lootboxMaxTickets = lootboxMaxTickets = random(1, 10); // Change the default so its more sustainable for our tests
         depositers = [issuingEntity, deployer];
         redeemers = [user, minter];
 
@@ -1296,7 +1548,7 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
           LOOTBOX_NAME,
           LOOTBOX_SYMBOL,
           BASE_URI,
-          LOOTBOX_MAX_TICKETS,
+          lootboxMaxTickets,
           issuingEntity.address,
           whitelister.address
         );
@@ -1329,7 +1581,7 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
           await timeout(400);
         }
 
-        for (let ticketIdx = 0; ticketIdx < LOOTBOX_MAX_TICKETS; ticketIdx++) {
+        for (let ticketIdx = 0; ticketIdx < lootboxMaxTickets; ticketIdx++) {
           // Randomly choose the redeemer
           const redeemer =
             redeemers[Math.floor(Math.random() * redeemers.length)];
@@ -1361,9 +1613,7 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
             depositers[Math.floor(Math.random() * depositers.length)];
 
           // Randomly choose how much monays to deposit
-          const depositAmount = USDC_STARTING_BALANCE.mul(random(100, 300)).div(
-            10000
-          );
+          const depositAmount = randomBN(USDC_STARTING_BALANCE).div(100);
           const depositCurrency = random(0, 2);
 
           if (depositCurrency === 0) {
@@ -1372,7 +1622,7 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
               value: depositAmount,
             });
             expectedNativeYieldPerTicket = expectedNativeYieldPerTicket.add(
-              depositAmount.div(LOOTBOX_MAX_TICKETS)
+              depositAmount.div(lootboxMaxTickets)
             );
           } else if (depositCurrency === 1) {
             // usdc
@@ -1380,7 +1630,7 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
               .connect(depositer)
               .depositEarningsErc20(usdc_stablecoin.address, depositAmount);
             expectedUsdcYieldPerTicket = expectedUsdcYieldPerTicket.add(
-              depositAmount.div(LOOTBOX_MAX_TICKETS)
+              depositAmount.div(lootboxMaxTickets)
             );
           } else {
             // usdt
@@ -1388,7 +1638,7 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
               .connect(depositer)
               .depositEarningsErc20(usdt_stablecoin.address, depositAmount);
             expectedUsdtYieldPerTicket = expectedUsdtYieldPerTicket.add(
-              depositAmount.div(LOOTBOX_MAX_TICKETS)
+              depositAmount.div(lootboxMaxTickets)
             );
           }
         }
@@ -1457,9 +1707,362 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
         expect(lootboxFinalBalanceNative.toNumber()).to.be.lt(100);
         expect(lootboxFinalBalanceUSDC.toNumber()).to.be.lt(100);
         expect(lootboxFinalBalanceUSDT.toNumber()).to.be.lt(100);
-        // expect(lootboxFinalBalanceNative.toNumber()).to.eq(0);
-        // expect(lootboxFinalBalanceUSDC.toNumber()).to.eq(0);
-        // expect(lootboxFinalBalanceUSDT.toNumber()).to.eq(0);
+      });
+    });
+
+    describe.only("withdrawing payout (interactions with changing maxTickets)", () => {
+      let depositers: SignerWithAddress[];
+      let redeemers: SignerWithAddress[];
+      let expectedNativeYieldRound1: BigNumber;
+      let expectedUSDCYieldRound1: BigNumber;
+      let expectedUSDTYieldRound1: BigNumber;
+      let maxTicketRound1: number;
+      let redeemerTicketIdsRound1: { [key: string]: number[] };
+
+      beforeEach(async () => {
+        expectedNativeYieldRound1 = ethers.BigNumber.from(0);
+        expectedUSDCYieldRound1 = ethers.BigNumber.from(0);
+        expectedUSDTYieldRound1 = ethers.BigNumber.from(0);
+        redeemerTicketIdsRound1 = {};
+
+        maxTicketRound1 = random(1, 4); // Change the default so its more sustainable for our tests
+
+        depositers = [issuingEntity, deployer];
+        redeemers = [user, minter];
+
+        lootbox = await Lootbox.deploy(
+          LOOTBOX_NAME,
+          LOOTBOX_SYMBOL,
+          BASE_URI,
+          maxTicketRound1,
+          issuingEntity.address,
+          whitelister.address
+        );
+
+        for (let depositer of depositers) {
+          // setup
+          await usdc_stablecoin.mint(
+            depositer.address,
+            ethers.BigNumber.from(USDC_STARTING_BALANCE)
+          );
+          await timeout(300);
+          await usdc_stablecoin
+            .connect(depositer)
+            .approve(
+              lootbox.address,
+              ethers.BigNumber.from(USDC_STARTING_BALANCE)
+            );
+          await timeout(300);
+          await usdt_stablecoin.mint(
+            depositer.address,
+            ethers.BigNumber.from(USDT_STARTING_BALANCE)
+          );
+          await timeout(300);
+          await usdt_stablecoin
+            .connect(depositer)
+            .approve(
+              lootbox.address,
+              ethers.BigNumber.from(USDT_STARTING_BALANCE)
+            );
+          await timeout(300);
+        }
+
+        for (let ticketIdx = 0; ticketIdx < maxTicketRound1; ticketIdx++) {
+          // Randomly choose the redeemer
+          const redeemer =
+            redeemers[Math.floor(Math.random() * redeemers.length)];
+
+          // Mint all the tickets
+          const nonce = generateNonce();
+          const signature = await signWhitelist(
+            network.config.chainId || 0,
+            lootbox.address,
+            whitelister,
+            redeemer.address,
+            nonce,
+            "LootboxCosmic"
+          );
+          await lootbox.connect(redeemer).mint(signature, nonce);
+          await timeout(200);
+          if (!redeemerTicketIdsRound1[redeemer.address]) {
+            redeemerTicketIdsRound1[redeemer.address] = [ticketIdx];
+          } else {
+            redeemerTicketIdsRound1[redeemer.address].push(ticketIdx);
+          }
+        }
+
+        // Make some random deposits
+        const ndeposits = random(1, 5);
+        for (let depositIdx = 0; depositIdx < ndeposits; depositIdx++) {
+          // Choose random depositer
+          const depositer =
+            depositers[Math.floor(Math.random() * depositers.length)];
+
+          // Randomly choose how much monays to deposit
+          const depositAmount = randomBN(USDC_STARTING_BALANCE).div(1000);
+          const depositCurrency = random(0, 2);
+
+          if (depositCurrency === 0) {
+            // native
+            await lootbox.connect(depositer).depositEarningsNative({
+              value: depositAmount,
+            });
+            expectedNativeYieldRound1 = expectedNativeYieldRound1.add(
+              depositAmount.div(maxTicketRound1)
+            );
+          } else if (depositCurrency === 1) {
+            // usdc
+            await lootbox
+              .connect(depositer)
+              .depositEarningsErc20(usdc_stablecoin.address, depositAmount);
+
+            expectedUSDCYieldRound1 = expectedUSDCYieldRound1.add(
+              depositAmount.div(maxTicketRound1)
+            );
+          } else {
+            // usdt
+            await lootbox
+              .connect(depositer)
+              .depositEarningsErc20(usdt_stablecoin.address, depositAmount);
+
+            expectedUSDTYieldRound1 = expectedUSDTYieldRound1.add(
+              depositAmount.div(maxTicketRound1)
+            );
+          }
+        }
+
+        it("pays out each ticket the same amount & lootbox has near-zero balance after distribution", async () => {
+          for (const [address, tickets] of Object.entries(
+            redeemerTicketIdsRound1
+          )) {
+            // We need to withdraw each ticket & make sure the same mmoney
+            const user = redeemers.find(
+              (r) => r.address === address
+            ) as SignerWithAddress;
+            expect(user).to.not.be.undefined;
+
+            let runningBalanceNative = await user.getBalance();
+            let runningBalanceUSDC = await usdc_stablecoin.balanceOf(
+              user.address
+            );
+            let runningBalanceUSDT = await usdt_stablecoin.balanceOf(
+              user.address
+            );
+
+            // make the withdraw call
+            for (let ticketIdx of tickets) {
+              const res = await lootbox
+                .connect(user)
+                .withdrawEarnings(ticketIdx);
+              const receipt = await res.wait();
+              const gasUsed = receipt.gasUsed.mul(receipt.effectiveGasPrice);
+
+              // Makesure they have the right balance
+              runningBalanceNative = runningBalanceNative
+                .add(expectedNativeYieldRound1)
+                .sub(gasUsed);
+              runningBalanceUSDC = runningBalanceUSDC.add(
+                expectedUSDCYieldRound1
+              );
+              runningBalanceUSDT = runningBalanceUSDT.add(
+                expectedUSDTYieldRound1
+              );
+            }
+
+            const finalBalanceNative = await user.getBalance();
+            const finalBalanceUSDC = await usdc_stablecoin.balanceOf(
+              user.address
+            );
+            const finalBalanceUSDT = await usdt_stablecoin.balanceOf(
+              user.address
+            );
+
+            expect(finalBalanceNative).to.eq(runningBalanceNative);
+            expect(finalBalanceUSDC).to.eq(runningBalanceUSDC);
+            expect(finalBalanceUSDT).to.eq(runningBalanceUSDT);
+          }
+
+          // Lootbox should have zero balance....
+          const lootboxFinalBalanceNative = await provider.getBalance(
+            lootbox.address
+          );
+          const lootboxFinalBalanceUSDC = await usdc_stablecoin.balanceOf(
+            lootbox.address
+          );
+          const lootboxFinalBalanceUSDT = await usdt_stablecoin.balanceOf(
+            lootbox.address
+          );
+
+          // Lootbox balance should be near zero - but, not exactly zero because of
+          // round off truncations in the smarty contract
+          expect(lootboxFinalBalanceNative.toNumber()).to.be.lt(100);
+          expect(lootboxFinalBalanceUSDC.toNumber()).to.be.lt(100);
+          expect(lootboxFinalBalanceUSDT.toNumber()).to.be.lt(100);
+          // expect(lootboxFinalBalanceNative.toNumber()).to.eq(0);
+          // expect(lootboxFinalBalanceUSDC.toNumber()).to.eq(0);
+          // expect(lootboxFinalBalanceUSDT.toNumber()).to.eq(0);
+        });
+
+        describe("given that max tickets increases (round 2)", () => {
+          let expectedNativeYieldRound2: BigNumber;
+          let expectedUSDCYieldRound2: BigNumber;
+          let expectedUSDTYieldRound2: BigNumber;
+          let maxTicketRound2: number;
+          let redeemerTicketIdsRound2: { [key: string]: number[] };
+
+          beforeEach(async () => {
+            expectedNativeYieldRound2 = ethers.BigNumber.from(0);
+            expectedUSDCYieldRound2 = ethers.BigNumber.from(0);
+            expectedUSDTYieldRound2 = ethers.BigNumber.from(0);
+            redeemerTicketIdsRound2 = {};
+
+            maxTicketRound2 = maxTicketRound1 + random(1, 4); // Change the default so its more sustainable for our tests
+
+            await lootbox
+              .connect(issuingEntity)
+              .changeMaxTickets(maxTicketRound2);
+
+            for (let ticketIdx = 0; ticketIdx < maxTicketRound2; ticketIdx++) {
+              // Randomly choose the redeemer
+              const redeemer =
+                redeemers[Math.floor(Math.random() * redeemers.length)];
+
+              // Mint all the tickets
+              const nonce = generateNonce();
+              const signature = await signWhitelist(
+                network.config.chainId || 0,
+                lootbox.address,
+                whitelister,
+                redeemer.address,
+                nonce,
+                "LootboxCosmic"
+              );
+              await lootbox.connect(redeemer).mint(signature, nonce);
+              await timeout(200);
+              if (!redeemerTicketIdsRound2[redeemer.address]) {
+                redeemerTicketIdsRound2[redeemer.address] = [ticketIdx];
+              } else {
+                redeemerTicketIdsRound2[redeemer.address].push(ticketIdx);
+              }
+            }
+
+            // Make some random deposits
+            const ndeposits = random(1, 5);
+            for (let depositIdx = 0; depositIdx < ndeposits; depositIdx++) {
+              // Choose random depositer
+              const depositer =
+                depositers[Math.floor(Math.random() * depositers.length)];
+
+              // Randomly choose how much monays to deposit
+              const depositAmount = randomBN(USDC_STARTING_BALANCE).div(100);
+              const depositCurrency = random(0, 2);
+
+              if (depositCurrency === 0) {
+                // native
+                await lootbox.connect(depositer).depositEarningsNative({
+                  value: depositAmount,
+                });
+                expectedNativeYieldRound2 = expectedNativeYieldRound2.add(
+                  depositAmount.div(maxTicketRound2)
+                );
+              } else if (depositCurrency === 1) {
+                // usdc
+                await lootbox
+                  .connect(depositer)
+                  .depositEarningsErc20(usdc_stablecoin.address, depositAmount);
+
+                expectedUSDCYieldRound2 = expectedUSDCYieldRound2.add(
+                  depositAmount.div(maxTicketRound2)
+                );
+              } else {
+                // usdt
+                await lootbox
+                  .connect(depositer)
+                  .depositEarningsErc20(usdt_stablecoin.address, depositAmount);
+
+                expectedUSDTYieldRound2 = expectedUSDTYieldRound2.add(
+                  depositAmount.div(maxTicketRound2)
+                );
+              }
+            }
+          });
+
+          it("pays out round1 tickets round1 payout + round2 payout", () => {
+            expect(false).to.be.true;
+          });
+
+          it("pays out round2 tickets from the round 2 deposits", async () => {
+            for (const [address, tickets] of Object.entries(
+              redeemerTicketIdsRound2
+            )) {
+              // We need to withdraw each ticket & make sure the same mmoney
+              const user = redeemers.find(
+                (r) => r.address === address
+              ) as SignerWithAddress;
+              expect(user).to.not.be.undefined;
+
+              let runningBalanceNative = await user.getBalance();
+              let runningBalanceUSDC = await usdc_stablecoin.balanceOf(
+                user.address
+              );
+              let runningBalanceUSDT = await usdt_stablecoin.balanceOf(
+                user.address
+              );
+
+              // make the withdraw call
+              for (let ticketIdx of tickets) {
+                const res = await lootbox
+                  .connect(user)
+                  .withdrawEarnings(ticketIdx);
+                const receipt = await res.wait();
+                const gasUsed = receipt.gasUsed.mul(receipt.effectiveGasPrice);
+
+                // Makesure they have the right balance
+                runningBalanceNative = runningBalanceNative
+                  .add(expectedNativeYieldRound1)
+                  .sub(gasUsed);
+                runningBalanceUSDC = runningBalanceUSDC.add(
+                  expectedUSDCYieldRound1
+                );
+                runningBalanceUSDT = runningBalanceUSDT.add(
+                  expectedUSDTYieldRound1
+                );
+              }
+
+              const finalBalanceNative = await user.getBalance();
+              const finalBalanceUSDC = await usdc_stablecoin.balanceOf(
+                user.address
+              );
+              const finalBalanceUSDT = await usdt_stablecoin.balanceOf(
+                user.address
+              );
+
+              expect(finalBalanceNative).to.eq(runningBalanceNative);
+              expect(finalBalanceUSDC).to.eq(runningBalanceUSDC);
+              expect(finalBalanceUSDT).to.eq(runningBalanceUSDT);
+            }
+
+            // Lootbox should have zero balance....
+            const lootboxFinalBalanceNative = await provider.getBalance(
+              lootbox.address
+            );
+            const lootboxFinalBalanceUSDC = await usdc_stablecoin.balanceOf(
+              lootbox.address
+            );
+            const lootboxFinalBalanceUSDT = await usdt_stablecoin.balanceOf(
+              lootbox.address
+            );
+
+            // Lootbox balance should be near zero - but, not exactly zero because of
+            // round off truncations in the smarty contract
+            expect(lootboxFinalBalanceNative.toNumber()).to.be.lt(100);
+            expect(lootboxFinalBalanceUSDC.toNumber()).to.be.lt(100);
+            expect(lootboxFinalBalanceUSDT.toNumber()).to.be.lt(100);
+            // expect(lootboxFinalBalanceNative.toNumber()).to.eq(0);
+            // expect(lootboxFinalBalanceUSDC.toNumber()).to.eq(0);
+            // expect(lootboxFinalBalanceUSDT.toNumber()).to.eq(0);
+          });
+        });
       });
     });
 
@@ -1483,13 +2086,9 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
             ethers.BigNumber.from(USDC_STARTING_BALANCE)
           );
 
-        nativeDepositAmount = USDC_STARTING_BALANCE.mul(random(100, 300)).div(
-          10000
-        );
+        nativeDepositAmount = randomBN(USDC_STARTING_BALANCE).div(10);
 
-        usdcDepositAmount = USDC_STARTING_BALANCE.mul(random(100, 300)).div(
-          10000
-        );
+        usdcDepositAmount = randomBN(USDC_STARTING_BALANCE).div(10);
       });
 
       it("reverts when contract is paused", async () => {
@@ -1539,80 +2138,138 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
         await timeout(400);
       });
 
-      it("increments depositId", async () => {
-        expect(await lootbox.depositIdCounter()).to.eq(0);
-        await lootbox.connect(depositer).depositEarningsNative({
-          value: nativeDepositAmount,
-        });
-        expect(await lootbox.depositIdCounter()).to.eq(1);
-        await lootbox
-          .connect(depositer)
-          .depositEarningsErc20(usdc_stablecoin.address, usdcDepositAmount);
-        expect(await lootbox.depositIdCounter()).to.eq(2);
-      });
+      describe("given two deposits of native and erc20 token", async () => {
+        let nativeTx: ContractTransaction;
+        let erc20Tx: ContractTransaction;
 
-      it("emits correct evets for erc20 & native", async () => {
-        let nativePromise = lootbox.connect(depositer).depositEarningsNative({
-          value: nativeDepositAmount,
+        beforeEach(async () => {
+          nativeTx = await lootbox.connect(depositer).depositEarningsNative({
+            value: nativeDepositAmount,
+          });
+
+          erc20Tx = await lootbox
+            .connect(depositer)
+            .depositEarningsErc20(usdc_stablecoin.address, usdcDepositAmount);
         });
 
-        let erc20Promise = lootbox
-          .connect(depositer)
-          .depositEarningsErc20(usdc_stablecoin.address, usdcDepositAmount);
+        it("counts the total native & erc20 token amount correctly", async () => {
+          expect(await lootbox.viewTotalDepositOfNativeToken()).to.eq(
+            nativeDepositAmount
+          );
+          expect(
+            await lootbox.viewTotalDepositOfErc20Token(usdc_stablecoin.address)
+          ).to.eq(usdcDepositAmount);
 
-        await expect(nativePromise)
-          .to.emit(lootbox, "DepositEarnings")
-          .withArgs(
-            depositer.address,
+          const nativeDepositAmount2 = randomBN(USDC_STARTING_BALANCE).div(10);
+
+          const usdcDepositAmount2 = randomBN(USDC_STARTING_BALANCE).div(10);
+
+          // Make sure it gets updated
+          await lootbox.connect(depositer).depositEarningsNative({
+            value: nativeDepositAmount2,
+          });
+
+          await lootbox
+            .connect(depositer)
+            .depositEarningsErc20(usdc_stablecoin.address, usdcDepositAmount2);
+
+          expect(await lootbox.viewTotalDepositOfNativeToken()).to.eq(
+            nativeDepositAmount.add(nativeDepositAmount2)
+          );
+          expect(
+            await lootbox.viewTotalDepositOfErc20Token(usdc_stablecoin.address)
+          ).to.eq(usdcDepositAmount.add(usdcDepositAmount2));
+        });
+
+        it("tracks the deposit event correctly", async () => {
+          const [receiptNative, receiptUSDC] = await lootbox.viewAllDeposits();
+
+          expect(receiptNative[0]).to.eq(depositer.address);
+          expect(receiptNative[1]).to.eq(0);
+          expect(receiptNative[3]).to.eq(nativeDepositAmount);
+          expect(receiptNative[4]).to.eq(constants.AddressZero);
+          expect(receiptNative[5]).to.eq(0);
+          expect(receiptNative[7]).to.eq(lootboxMaxTickets);
+
+          expect(padAddressTo32Bytes(receiptUSDC[0])).to.eq(
+            padAddressTo32Bytes(depositer.address)
+          );
+          expect(receiptUSDC[1]).to.eq(1);
+          expect(receiptUSDC[3]).to.eq(0);
+          expect(receiptUSDC[4]).to.eq(usdc_stablecoin.address);
+          expect(receiptUSDC[5]).to.eq(usdcDepositAmount);
+          expect(receiptUSDC[7]).to.eq(lootboxMaxTickets);
+        });
+
+        it("tracks the pro-rated deposit event correctly", async () => {
+          // mint ticket to check prorated data
+          const nonce = generateNonce();
+          const signature = await signWhitelist(
+            network.config.chainId || 0,
             lootbox.address,
-            0,
-            nativeDepositAmount,
-            constants.AddressZero,
+            whitelister,
+            minter.address,
+            nonce,
+            "LootboxCosmic"
+          );
+          await lootbox.connect(minter).mint(signature, nonce);
+
+          const proratedDeposits = await lootbox.viewProratedDepositsForTicket(
             0
           );
 
-        await expect(erc20Promise)
-          .to.emit(lootbox, "DepositEarnings")
-          .withArgs(
-            depositer.address,
-            lootbox.address,
-            1,
-            0,
-            usdc_stablecoin.address,
-            usdcDepositAmount
-          );
-      });
+          expect(proratedDeposits.length).to.eq(2);
 
-      it("tracks the deposit event correctly", async () => {
-        await lootbox.connect(depositer).depositEarningsNative({
-          value: nativeDepositAmount,
+          const [nativeDeposit, erc20Deposit] = proratedDeposits;
+
+          expect(nativeDeposit[0]).to.eq(depositer.address);
+          expect(nativeDeposit[1]).to.eq(0); // ticketid
+          expect(nativeDeposit[2]).to.eq(0); // deposit id
+          expect(nativeDeposit[3]).to.be.false;
+          expect(nativeDeposit[4]).to.eq(
+            nativeDepositAmount.div(lootboxMaxTickets)
+          );
+          expect(nativeDeposit[5]).to.eq(ethers.constants.AddressZero);
+          expect(nativeDeposit[6]).to.eq(0);
+          expect(nativeDeposit[8]).to.eq(lootboxMaxTickets);
+
+          expect(erc20Deposit[0]).to.eq(depositer.address);
+          expect(erc20Deposit[1]).to.eq(0); // ticketid
+          expect(erc20Deposit[2]).to.eq(1); // deposit id
+          expect(erc20Deposit[3]).to.be.false;
+          expect(erc20Deposit[4]).to.eq(0);
+          expect(erc20Deposit[5]).to.eq(usdc_stablecoin.address);
+          expect(erc20Deposit[6]).to.eq(
+            usdcDepositAmount.div(lootboxMaxTickets)
+          );
+          expect(erc20Deposit[8]).to.eq(lootboxMaxTickets);
         });
 
-        await lootbox
-          .connect(depositer)
-          .depositEarningsErc20(usdc_stablecoin.address, usdcDepositAmount);
+        it("emits correct events for erc20 & native", async () => {
+          await expect(nativeTx)
+            .to.emit(lootbox, "DepositEarnings")
+            .withArgs(
+              depositer.address,
+              lootbox.address,
+              0,
+              nativeDepositAmount,
+              constants.AddressZero,
+              0,
+              lootboxMaxTickets
+            );
 
-        const [receiptNative, receiptUSDC] = await lootbox.viewAllDeposits();
-
-        expect(padAddressTo32Bytes(receiptNative[0])).to.eq(
-          padAddressTo32Bytes(depositer.address)
-        );
-        expect(receiptNative[1]).to.eq(0);
-        expect(receiptNative[3]).to.eq(nativeDepositAmount);
-        expect(padAddressTo32Bytes(receiptNative[4])).to.eq(
-          padAddressTo32Bytes(constants.AddressZero)
-        );
-        expect(receiptNative[5]).to.eq(0);
-
-        expect(padAddressTo32Bytes(receiptUSDC[0])).to.eq(
-          padAddressTo32Bytes(depositer.address)
-        );
-        expect(receiptUSDC[1]).to.eq(1);
-        expect(receiptUSDC[3]).to.eq(0);
-        expect(padAddressTo32Bytes(receiptUSDC[4])).to.eq(
-          padAddressTo32Bytes(usdc_stablecoin.address)
-        );
-        expect(receiptUSDC[5]).to.eq(usdcDepositAmount);
+          await expect(erc20Tx)
+            .to.emit(lootbox, "DepositEarnings")
+            .withArgs(
+              depositer.address,
+              lootbox.address,
+              1,
+              0,
+              usdc_stablecoin.address,
+              usdcDepositAmount,
+              lootboxMaxTickets
+            );
+        });
       });
     });
 
@@ -1695,7 +2352,8 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
               expectedDepositId,
               ethers.BigNumber.from(USDC_STARTING_BALANCE).div(10),
               constants.AddressZero,
-              0
+              0,
+              lootboxMaxTickets
             );
 
           await timeout(400);
@@ -1709,7 +2367,8 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
               expectedDepositId,
               0,
               usdc_stablecoin.address,
-              ethers.BigNumber.from(USDC_STARTING_BALANCE).div(10)
+              ethers.BigNumber.from(USDC_STARTING_BALANCE).div(10),
+              lootboxMaxTickets
             );
 
           await timeout(400);
@@ -1723,7 +2382,8 @@ describe.only("📦 LootboxCosmic smart contract", async function () {
               expectedDepositId,
               0,
               usdt_stablecoin.address,
-              ethers.BigNumber.from(USDT_STARTING_BALANCE).div(10)
+              ethers.BigNumber.from(USDT_STARTING_BALANCE).div(10),
+              lootboxMaxTickets
             );
 
           await timeout(400);
