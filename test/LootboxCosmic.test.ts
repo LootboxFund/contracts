@@ -899,6 +899,7 @@ describe("📦 LootboxCosmic smart contract", async function () {
             ethers.BigNumber.from(USDC_STARTING_BALANCE)
           );
 
+          await timeout(200);
           await usdc_stablecoin
             .connect(depositer)
             .approve(
@@ -915,6 +916,7 @@ describe("📦 LootboxCosmic smart contract", async function () {
           await lootbox
             .connect(depositer)
             .depositEarningsNative({ value: nativeDepositAmount });
+          await timeout(300);
           await lootbox
             .connect(depositer)
             .depositEarningsErc20(usdc_stablecoin.address, usdcDepositAmount);
@@ -940,16 +942,19 @@ describe("📦 LootboxCosmic smart contract", async function () {
           await lootbox
             .connect(depositer)
             .depositEarningsNative({ value: nativeDepositAmount });
+          await timeout(300);
           await lootbox
             .connect(depositer)
             .depositEarningsErc20(usdc_stablecoin.address, usdcDepositAmount);
-
+          await timeout(300);
           await lootbox
             .connect(depositer)
             .depositEarningsNative({ value: nativeDepositAmount });
+          await timeout(300);
           await lootbox
             .connect(depositer)
             .depositEarningsErc20(usdc_stablecoin.address, usdcDepositAmount);
+          await timeout(300);
 
           // So Max tickets should be new max
           const [_, __, nativeDepositNEW, erc20DepositNEW] =
@@ -962,9 +967,11 @@ describe("📦 LootboxCosmic smart contract", async function () {
           await lootbox
             .connect(depositer)
             .depositEarningsNative({ value: nativeDepositAmount });
+          await timeout(300);
           await lootbox
             .connect(depositer)
             .depositEarningsErc20(usdc_stablecoin.address, usdcDepositAmount);
+          await timeout(300);
 
           // So Max tickets should be lootboxMaxTickets
           const [nativeDepositProrated, erc20DepositProrated] =
@@ -1035,14 +1042,15 @@ describe("📦 LootboxCosmic smart contract", async function () {
               testLootbox.address,
               ethers.BigNumber.from(USDC_STARTING_BALANCE)
             );
-
+          await timeout(300);
           await testLootbox
             .connect(depositer)
             .depositEarningsNative({ value: nativeDepositAmount });
+          await timeout(300);
           await testLootbox
             .connect(depositer)
             .depositEarningsErc20(usdc_stablecoin.address, usdcDepositAmount);
-
+          await timeout(300);
           const initDeposits0 = await testLootbox.viewProratedDepositsForTicket(
             0
           );
@@ -1077,6 +1085,7 @@ describe("📦 LootboxCosmic smart contract", async function () {
           // now we need to increase the maxtickets cap
 
           await testLootbox.connect(issuingEntity).changeMaxTickets(2);
+          await timeout(300);
 
           // make another couple of deposits
           const nativeDepositAmount2 = randomBN(nativeDepositAmount);
@@ -1084,9 +1093,11 @@ describe("📦 LootboxCosmic smart contract", async function () {
           await testLootbox
             .connect(depositer)
             .depositEarningsNative({ value: nativeDepositAmount2 });
+          await timeout(300);
           await testLootbox
             .connect(depositer)
             .depositEarningsErc20(usdc_stablecoin.address, usdcDepositAmount2);
+          await timeout(300);
 
           const ticketDeposits0 =
             await testLootbox.viewProratedDepositsForTicket(0);
@@ -1293,9 +1304,11 @@ describe("📦 LootboxCosmic smart contract", async function () {
           await lootbox.connect(depositer).depositEarningsNative({
             value: nativeDepositAmount,
           });
+          await timeout(300);
           await lootbox
             .connect(depositer)
             .depositEarningsErc20(usdc_stablecoin.address, erc20DepositAmount);
+          await timeout(200);
         });
 
         it("transfers the correct amount of native & or erc20", async () => {
@@ -1597,7 +1610,7 @@ describe("📦 LootboxCosmic smart contract", async function () {
             "LootboxCosmic"
           );
           await lootbox.connect(redeemer).mint(signature, nonce);
-          await timeout(200);
+          await timeout(300);
           if (!redeemerTicketIds[redeemer.address]) {
             redeemerTicketIds[redeemer.address] = [ticketIdx];
           } else {
@@ -1641,6 +1654,7 @@ describe("📦 LootboxCosmic smart contract", async function () {
               depositAmount.div(lootboxMaxTickets)
             );
           }
+          await timeout(300);
         }
       });
 
@@ -1854,7 +1868,7 @@ describe("📦 LootboxCosmic smart contract", async function () {
               "LootboxCosmic"
             );
             await lootbox.connect(redeemer).mint(signature, nonce);
-            await timeout(220);
+            await timeout(300);
             if (!redeemerTicketIds[round][redeemer.address]) {
               redeemerTicketIds[round][redeemer.address] = [ticketIdx];
             } else {
@@ -1862,10 +1876,6 @@ describe("📦 LootboxCosmic smart contract", async function () {
             }
           }
         }
-      });
-
-      it("lootbox has near-zero balance after distribution", async () => {
-        expect(false).to.be.true;
       });
 
       it("pays each ticket the cumulative sum of round deposits where their ticketID < maxTickets", async () => {
@@ -1903,7 +1913,7 @@ describe("📦 LootboxCosmic smart contract", async function () {
                 .withdrawEarnings(ticketIdx);
               const receipt = await res.wait();
               const gasUsed = receipt.gasUsed.mul(receipt.effectiveGasPrice);
-              await timeout(220);
+              await timeout(300);
 
               // Makesure they have the right balance
               runningBalanceNative = runningBalanceNative
@@ -1918,9 +1928,11 @@ describe("📦 LootboxCosmic smart contract", async function () {
             }
 
             const finalBalanceNative = await userInUse.getBalance();
+            await timeout(300);
             const finalBalanceUSDC = await usdc_stablecoin.balanceOf(
               userInUse.address
             );
+            await timeout(300);
             const finalBalanceUSDT = await usdt_stablecoin.balanceOf(
               userInUse.address
             );
