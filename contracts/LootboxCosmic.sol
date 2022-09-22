@@ -11,7 +11,6 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-import "./LootboxCosmic.interface.sol";
 import "./EIP712Whitelisting.sol";
 
 interface IERC20 {
@@ -54,8 +53,7 @@ contract LootboxCosmic is
     AccessControl,
     ReentrancyGuard,
     EIP712Whitelisting,
-    IERC721Receiver,
-    Lootbox
+    IERC721Receiver
 {
     using Counters for Counters.Counter;
 
@@ -67,6 +65,29 @@ contract LootboxCosmic is
     bool public flushed = false;
     string public _tokenURI; // Something like https://storage.googleapis.com/lootbox-data-staging/{lootboxAddress}.json
 
+    struct Deposit {
+        address depositer;
+        uint256 depositId;
+        uint256 blockNumber;
+        uint256 nativeTokenAmount;
+        address erc20Token;
+        uint256 erc20TokenAmount;
+        uint256 timestamp;
+        uint256 maxTicketsSnapshot;
+    }
+
+    struct DepositMetadata {
+        address depositer;
+        uint256 ticketId;
+        uint256 depositId;
+        bool redeemed;
+        uint256 nativeTokenAmount;
+        address erc20Token;
+        uint256 erc20TokenAmount;
+        uint256 timestamp;
+        uint256 maxTicketsSnapshot;
+    }
+
     Counters.Counter public ticketIdCounter;
     mapping(uint256 => Deposit) public depositReceipts;
     Counters.Counter public depositIdCounter;
@@ -76,6 +97,32 @@ contract LootboxCosmic is
     mapping(uint256 => address) public minters;
 
     uint256 public immutable createdAt;
+
+    event DepositEarnings(
+        address indexed depositor,
+        address lootbox,
+        uint256 depositId,
+        uint256 nativeTokenAmount,
+        address erc20Token,
+        uint256 erc20Amount,
+        uint256 maxTicketsSnapshot
+    );
+
+    event MintTicket(
+        address indexed redeemer,
+        address lootbox,
+        uint256 nonce,
+        uint256 ticketId
+    );
+    event WithdrawEarnings(
+        address indexed withdrawer,
+        address lootbox,
+        uint256 ticketId,
+        uint256 depositId,
+        uint256 nativeTokenAmount,
+        address erc20Token,
+        uint256 erc20Amount
+    );
 
     constructor(
         string memory _name,
