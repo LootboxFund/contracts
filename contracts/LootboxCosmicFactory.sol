@@ -27,7 +27,8 @@ contract LootboxCosmicFactory is Pausable, AccessControl {
         address indexed lootbox,
         address indexed issuer,
         uint256 maxTickets,
-        string _data
+        string baseTokenURI,
+        string _nonce
     );
 
     constructor(
@@ -59,7 +60,7 @@ contract LootboxCosmicFactory is Pausable, AccessControl {
         string memory _lootboxName,
         string memory _lootboxSymbol,
         uint256 _maxTickets,
-        string memory _data
+        string memory _nonce  // to identify the lootbox
     ) public whenNotPaused returns (address _lootbox) {
         require(
             bytes(_lootboxName).length != 0,
@@ -87,7 +88,8 @@ contract LootboxCosmicFactory is Pausable, AccessControl {
             newLootboxAddress,
             msg.sender,
             _maxTickets,
-            _data
+            baseTokenURI,
+            _nonce
         );
 
         return newLootboxAddress;

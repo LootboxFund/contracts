@@ -1,5 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
+import { randomUUID } from "crypto";
 import { ContractTransaction, ethers as _ethers } from "ethers";
 import { ethers } from "hardhat";
 import { random } from "lodash";
@@ -127,6 +128,7 @@ describe("📦 LootboxCosmicFactory smart contract", () => {
     let factory: LootboxCosmicFactory;
     let maxTickets: number;
     let createLootboxTx: ContractTransaction;
+    let nonce: string;
 
     beforeEach(async () => {
       maxTickets = random(10, 1000);
@@ -137,9 +139,11 @@ describe("📦 LootboxCosmicFactory smart contract", () => {
         BASE_URI
       );
 
+      nonce = randomUUID();
+
       createLootboxTx = await factory
         .connect(lootboxDeployer)
-        .createLootbox(LOOTBOX_NAME, LOOTBOX_SYMBOL, maxTickets, "{}");
+        .createLootbox(LOOTBOX_NAME, LOOTBOX_SYMBOL, maxTickets, nonce);
       await createLootboxTx.wait();
 
       const addresses = await factory.viewLootboxes();
@@ -153,7 +157,7 @@ describe("📦 LootboxCosmicFactory smart contract", () => {
       await expect(
         factory
           .connect(lootboxDeployer)
-          .createLootbox(LOOTBOX_NAME, LOOTBOX_SYMBOL, maxTickets, "{}")
+          .createLootbox(LOOTBOX_NAME, LOOTBOX_SYMBOL, maxTickets, nonce)
       ).to.be.revertedWith("Pausable: paused");
     });
 
@@ -191,7 +195,8 @@ describe("📦 LootboxCosmicFactory smart contract", () => {
           lootbox.address,
           lootboxDeployer.address,
           maxTickets,
-          "{}"
+          BASE_URI,
+          nonce
         );
     });
   });

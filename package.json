@@ -73,7 +73,7 @@
     "@openzeppelin/contracts-upgradeable": "^4.4.2",
     "@openzeppelin/hardhat-upgrades": "^1.12.0",
     "@wormgraph/helpers": "0.1.10",
-    "@wormgraph/manifest": "0.3.118",
+    "@wormgraph/manifest": "0.4.0-afm-alpha6",
     "crypto": "^1.0.1",
     "hardhat-contract-sizer": "^2.5.1",
     "lodash": "^4.17.21",

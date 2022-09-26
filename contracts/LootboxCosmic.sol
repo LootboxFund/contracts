@@ -63,7 +63,7 @@ contract LootboxCosmic is
     string public constant SEMVER = "0.7.0-demo";
     uint256 public maxTickets;
     bool public flushed = false;
-    string public _tokenURI; // Something like https://storage.googleapis.com/lootbox-data-staging/{lootboxAddress}.json
+    string public _tokenURI; // Something like https://storage.googleapis.com/lootbox-data-staging/{lootboxAddress}/{ticketID}.json
 
     struct Deposit {
         address depositer;
