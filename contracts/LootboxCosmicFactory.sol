@@ -28,7 +28,7 @@ contract LootboxCosmicFactory is Pausable, AccessControl {
         address indexed issuer,
         uint256 maxTickets,
         string baseTokenURI,
-        string _nonce
+        string indexed _nonce
     );
 
     constructor(

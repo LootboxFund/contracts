@@ -764,10 +764,36 @@ describe("📦 LootboxCosmic smart contract", async function () {
 
         it("emits a MintTicket event", async () => {
           const beforeTicketIdx = await lootbox.ticketIdCounter();
+          const domainSeperator = await lootbox.DOMAIN_SEPARATOR();
+
+          const MINTER_TYPEHASH = ethers.utils.keccak256(
+            ethers.utils.toUtf8Bytes("Minter(address wallet,uint256 nonce)")
+          );
+
+          const structHash = ethers.utils.keccak256(
+            ethers.utils.defaultAbiCoder.encode(
+              ["bytes32", "address", "uint256"],
+              [MINTER_TYPEHASH, minter.address, nonce]
+            )
+          );
+
+          const expectedDigest = ethers.utils.keccak256(
+            ethers.utils.concat([
+              ethers.utils.toUtf8Bytes("\x19\x01"),
+              ethers.utils.arrayify(domainSeperator),
+              ethers.utils.arrayify(structHash),
+            ])
+          );
 
           await expect(await lootbox.connect(minter).mint(signature, nonce))
             .to.emit(lootbox, "MintTicket")
-            .withArgs(minter.address, lootbox.address, nonce, beforeTicketIdx);
+            .withArgs(
+              minter.address,
+              lootbox.address,
+              nonce,
+              beforeTicketIdx,
+              expectedDigest
+            );
         });
 
         it("increments the minters variable with the minters address", async () => {

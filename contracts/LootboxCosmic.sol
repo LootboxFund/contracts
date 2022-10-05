@@ -112,7 +112,8 @@ contract LootboxCosmic is
         address indexed redeemer,
         address lootbox,
         uint256 nonce,
-        uint256 ticketId
+        uint256 ticketId,
+        bytes32 digest
     );
     event WithdrawEarnings(
         address indexed withdrawer,
@@ -164,7 +165,16 @@ contract LootboxCosmic is
         minters[ticketId] = msg.sender;
         ticketIdCounter.increment();
 
-        emit MintTicket(msg.sender, address(this), nonce, ticketId);
+        // WARN: duplicated in requiresWhitelist
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                DOMAIN_SEPARATOR,
+                keccak256(abi.encode(MINTER_TYPEHASH, msg.sender, nonce))
+            )
+        );
+
+        emit MintTicket(msg.sender, address(this), nonce, ticketId, digest);
 
         _safeMint(msg.sender, ticketId);
         // return the ticket ID & sharesPurchased
