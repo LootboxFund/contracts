@@ -112,8 +112,8 @@ contract LootboxCosmic is
         address indexed redeemer,
         address lootbox,
         uint256 nonce,
-        uint256 ticketId,
-        bytes32 digest
+        uint256 indexed ticketId,
+        bytes32 indexed digest
     );
     event WithdrawEarnings(
         address indexed withdrawer,
