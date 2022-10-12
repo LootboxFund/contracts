@@ -1,0 +1,15 @@
+2022-10-07T00:42:17.520Z -  
+  
+---------- DEPLOY LOOTBOX COSMIC FACTORY (development) ----------
+  
+---- Script starting...
+
+---- Network:                             mumbai_testnet (Hex ID = 0x13881)
+---- Lootbox DAO:                         0x8C402c09d3622dceeb123b086Bd5227189931BEE
+---- Whitelister:                         0xEf3a69a53F65D5bFa688Fb9FE621Aa5c41F1f9aF
+---- Deployer (UNTRUSTED):                0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A
+---- Base Metadata Path:                  https://storage.googleapis.com/lootbox-data-staging
+
+
+  
+2022-10-07T00:42:19.308Z - insufficient funds for intrinsic transaction cost [ See: https://links.ethers.org/v5-errors-INSUFFICIENT_FUNDS ] (error={"name":"ProviderError","code":-32000,"_isProviderError":true}, method="sendTransaction", transaction=undefined, code=INSUFFICIENT_FUNDS, version=providers/5.6.8)

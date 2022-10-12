@@ -21,12 +21,16 @@ contract EIP712Whitelisting is AccessControl {
     // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-712.md#rationale-for-typehash
     // This should match whats in the client side whitelist signing code
     // https://github.com/msfeldstein/EIP712-whitelisting/blob/main/test/signWhitelist.ts#L22
-    bytes32 public constant MINTER_TYPEHASH = keccak256("Minter(address wallet,uint256 nonce)");
+    bytes32 public constant MINTER_TYPEHASH =
+        keccak256("Minter(address wallet,uint256 nonce)");
 
     mapping(bytes32 => bool) private signatureUsed;
 
-    constructor(address whitelister) {
-        require(whitelister != address(0), "Whitelister cannot be the zero address");
+    constructor(address whitelister, string memory contractName) {
+        require(
+            whitelister != address(0),
+            "Whitelister cannot be the zero address"
+        );
 
         // This should match whats in the client side whitelist signing code
         // https://github.com/msfeldstein/EIP712-whitelisting/blob/main/test/signWhitelist.ts#L12
@@ -36,7 +40,7 @@ contract EIP712Whitelisting is AccessControl {
                     "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
                 ),
                 // This should match the domain you set in your client side signing.
-                keccak256(bytes("PartyBasket")),
+                keccak256(bytes(contractName)),
                 keccak256(bytes("1")),
                 block.chainid,
                 address(this)
@@ -44,7 +48,7 @@ contract EIP712Whitelisting is AccessControl {
         );
         _grantRole(WHITELISTER_ROLE, whitelister);
     }
-    
+
     modifier requiresWhitelist(bytes calldata signature, uint256 nonce) {
         // Verify EIP-712 signature by recreating the data structure
         // that we signed on the client side, and then using that to recover

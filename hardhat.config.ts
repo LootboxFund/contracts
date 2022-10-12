@@ -39,7 +39,8 @@ const config: HardhatUserConfig = {
     },
     binance_testnet: {
       chainId: 97,
-      url: `https://speedy-nodes-nyc.moralis.io/cfd85a5f6e8635607e954ada/bsc/testnet`,
+      // url: `https://speedy-nodes-nyc.moralis.io/cfd85a5f6e8635607e954ada/bsc/testnet`,
+      url: `https://data-seed-prebsc-1-s1.binance.org:8545/`,
       accounts: [
         `${process.env.DEV_DEPLOYER_PRIVATE_KEY}`,
         `${process.env.DEV_TREASURY_PRIVATE_KEY}`,
@@ -69,7 +70,8 @@ const config: HardhatUserConfig = {
     },
     mumbai_testnet: {
       chainId: 80001,
-      url: `https://speedy-nodes-nyc.moralis.io/cfd85a5f6e8635607e954ada/polygon/mumbai`,
+      // url: `https://speedy-nodes-nyc.moralis.io/cfd85a5f6e8635607e954ada/polygon/mumbai`,
+      url: "https://matic-mumbai.chainstacklabs.com ",
       accounts: [
         `${process.env.DEV_DEPLOYER_PRIVATE_KEY}`,
         `${process.env.DEV_TREASURY_PRIVATE_KEY}`,
@@ -101,6 +103,9 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
+  },
+  mocha: {
+    timeout: 1000000,
   },
 };
 

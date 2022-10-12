@@ -1,6 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ethers, upgrades } from "hardhat";
 import { randomBytes } from "crypto";
+import { BigNumberish } from "ethers";
 
 export const generatePermissionRevokeMessage = (
   address: string,
@@ -11,6 +12,10 @@ export const generatePermissionRevokeMessage = (
 export const DAO_ROLE = ethers.utils.solidityKeccak256(
   ["string"],
   ["DAO_ROLE"]
+);
+export const LOGGER_ROLE = ethers.utils.solidityKeccak256(
+  ["string"],
+  ["LOGGER_ROLE"]
 );
 export const REBASE_ROLE = ethers.utils.solidityKeccak256(
   ["string"],
@@ -116,12 +121,13 @@ export const signWhitelist = async (
   contractAddress: string,
   whitelistKey: SignerWithAddress,
   mintingAddress: string,
-  nonce: string // should be a stringified uint256 number
+  nonce: string, // should be a stringified uint256 number
+  contractName = "PartyBasket"
 ) => {
   // Domain data should match whats specified in the DOMAIN_SEPARATOR constructed in the contract
   // https://github.com/msfeldstein/EIP712-whitelisting/blob/main/contracts/EIP712Whitelisting.sol#L33-L43
   const domain = {
-    name: "PartyBasket",
+    name: contractName,
     version: "1",
     chainId,
     verifyingContract: contractAddress,
@@ -166,4 +172,8 @@ export const generateNonce = () => {
   };
   const bytes = randomBytes(16);
   return hexToDec(bytes.toString("hex"));
+};
+
+export const randomBN = (max: BigNumberish) => {
+  return ethers.BigNumber.from(ethers.utils.randomBytes(32)).mod(max);
 };
