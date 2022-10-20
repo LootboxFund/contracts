@@ -1,0 +1,15 @@
+2022-10-15T17:52:47.992Z -  
+  
+---------- DEPLOY LOOTBOX COSMIC FACTORY (development) ----------
+  
+---- Script starting...
+
+---- Network:                             binance_mainnet (Hex ID = 0x38)
+---- Lootbox DAO:                         0x7D70653768627FFa4D941aA389214E30f447a1cb
+---- Whitelister:                         0xc84a10D6011006ea12FBAa7b9BB91df1d713A667
+---- Deployer (UNTRUSTED):                0x88c501B30E1A57f13Be608c596c04CB472e50458
+---- Base Metadata Path:                  https://storage.googleapis.com/lootbox-data-prod
+
+
+  
+2022-10-15T17:52:50.839Z - insufficient funds for intrinsic transaction cost [ See: https://links.ethers.org/v5-errors-INSUFFICIENT_FUNDS ] (error={"name":"ProviderError","_stack":"ProviderError: HttpProviderError\n    at HttpProvider.request (/Users/starship420/repo/lootbox/contracts/node_modules/hardhat/src/internal/core/providers/http.ts:78:19)\n    at LocalAccountsProvider.request (/Users/starship420/repo/lootbox/contracts/node_modules/hardhat/src/internal/core/providers/accounts.ts:181:36)\n    at processTicksAndRejections (node:internal/process/task_queues:96:5)\n    at async EthersProviderWrapper.send (/Users/starship420/repo/lootbox/contracts/node_modules/@nomiclabs/hardhat-ethers/src/internal/ethers-provider-wrapper.ts:13:20)","code":-32000,"_isProviderError":true}, method="sendTransaction", transaction=undefined, code=INSUFFICIENT_FUNDS, version=providers/5.7.1)
