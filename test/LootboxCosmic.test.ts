@@ -24,7 +24,8 @@ import { random } from "lodash";
 
 const LOOTBOX_NAME = "Pinata Lootbox";
 const LOOTBOX_SYMBOL = "PINATA";
-const BASE_URI = "https://storage.googleapis.com/lootbox-data-staging";
+const BASE_URI =
+  "https://storage.googleapis.com/lootbox-data-staging/lootboxID/ldjkflskdjfnlsdfwoeirjowei12312";
 const provider = waffle.provider;
 
 // needed to prevent "too many requests" error
@@ -420,7 +421,16 @@ describe("📦 LootboxCosmic smart contract", async function () {
           expectedNativeYieldPerTicket = ethers.BigNumber.from(0);
           expectedUsdcYieldPerTicket = ethers.BigNumber.from(0);
           expectedUsdtYieldPerTicket = ethers.BigNumber.from(0);
+          // Make sure it atleast has 1
+          const amt = randomBN(NATIVE_STARTING_BALANCE).div(100);
 
+          await lootbox
+            .connect(depositers[0])
+            .depositEarningsNative({ value: amt });
+          runningDepositNative = runningDepositNative.add(amt);
+          expectedNativeYieldPerTicket = expectedNativeYieldPerTicket.add(
+            amt.div(lootboxMaxTickets)
+          );
           for (let depositer of depositers) {
             if (random(0, 1) === 1) {
               // make native deposit
@@ -878,25 +888,47 @@ describe("📦 LootboxCosmic smart contract", async function () {
         ).to.not.be.reverted;
       });
 
-      it("reverts targetMaxTickets is 0 or less than 0 or less than current maxTickets, otherwise, does not revert", async () => {
+      it("emits a MaxTicketsChanged event", async () => {
+        const newMaxTickets = random(10, 1000);
+
+        const response = lootbox
+          .connect(issuingEntity)
+          .changeMaxTickets(newMaxTickets);
+
+        await expect(response)
+          .to.emit(lootbox, "MaxTicketsChange")
+          .withArgs(
+            issuingEntity.address,
+            lootbox.address,
+            lootboxMaxTickets,
+            newMaxTickets
+          );
+      });
+
+      it("does not revert when decreasing & or increasing max tickets", async () => {
         const initMaxTickets = await lootbox.maxTickets();
         await expect(
-          lootbox.connect(issuingEntity).changeMaxTickets(initMaxTickets)
-        ).to.be.revertedWith("Must be greater than maxTickets");
-        await expect(
           lootbox.connect(issuingEntity).changeMaxTickets(initMaxTickets.sub(1))
-        ).to.be.revertedWith("Must be greater than maxTickets");
-        await expect(
-          lootbox.connect(issuingEntity).changeMaxTickets(0)
-        ).to.be.revertedWith("Must be greater than maxTickets");
-        await expect(lootbox.connect(issuingEntity).changeMaxTickets(-1)).to.be
-          .reverted; // Not sure how to catch these errors
+        ).to.not.be.reverted;
         await expect(
           lootbox.connect(issuingEntity).changeMaxTickets(initMaxTickets.add(1))
         ).to.not.be.reverted;
       });
 
-      it("you can change maxTickets multiple times, and it can only be increasing", async () => {
+      it("reverts targetMaxTickets is 0 or less than 0", async () => {
+        const initMaxTickets = await lootbox.maxTickets();
+        await expect(
+          lootbox.connect(issuingEntity).changeMaxTickets(initMaxTickets)
+        ).to.be.revertedWith("No change");
+
+        await expect(
+          lootbox.connect(issuingEntity).changeMaxTickets(0)
+        ).to.be.revertedWith("Invalid");
+        await expect(lootbox.connect(issuingEntity).changeMaxTickets(-1)).to.be
+          .reverted; // Not sure how to catch these errors
+      });
+
+      it("you can change maxTickets multiple times", async () => {
         let maxTicketsTally = await lootbox.maxTickets();
         const numsToAdd = [2, 4, 100, 10000000];
         for (let n of numsToAdd) {
@@ -905,7 +937,8 @@ describe("📦 LootboxCosmic smart contract", async function () {
             lootbox
               .connect(issuingEntity)
               .changeMaxTickets(maxTicketsTally.sub(n).sub(2))
-          ).to.be.revertedWith("Must be greater than maxTickets");
+            // ).to.be.revertedWith("Must be greater than maxTickets");
+          ).to.not.be.reverted;
           await expect(
             lootbox.connect(issuingEntity).changeMaxTickets(maxTicketsTally)
           ).to.not.be.reverted;
@@ -936,6 +969,25 @@ describe("📦 LootboxCosmic smart contract", async function () {
           nativeDepositAmount = randomBN(NATIVE_STARTING_BALANCE).div(100);
 
           usdcDepositAmount = randomBN(USDC_STARTING_BALANCE).div(100);
+        });
+
+        it("decreasing max tickets after a deposit will revert", async () => {
+          await lootbox
+            .connect(depositer)
+            .depositEarningsNative({ value: nativeDepositAmount });
+          await timeout(300);
+
+          // Change the max tickets
+          const newMaxTickets = lootboxMaxTickets - random(1, 10);
+          await expect(
+            lootbox.connect(issuingEntity).changeMaxTickets(newMaxTickets)
+          ).to.be.revertedWith("Cannot decrease");
+
+          await expect(
+            lootbox
+              .connect(issuingEntity)
+              .changeMaxTickets(lootboxMaxTickets + random(1, 100))
+          ).to.not.be.reverted;
         });
 
         it("changing max tickets gets snapshotted on deposits", async () => {
@@ -1310,7 +1362,7 @@ describe("📦 LootboxCosmic smart contract", async function () {
       it("reverts if the caller does not own the ticket", async () => {
         await expect(
           lootbox.connect(malicious).withdrawEarnings(ticketId)
-        ).to.be.revertedWith("You do not own this ticket");
+        ).to.be.revertedWith("Unauthorized");
       });
 
       it("reverts if there has been no deposits yet", async () => {
@@ -2370,12 +2422,13 @@ describe("📦 LootboxCosmic smart contract", async function () {
     });
 
     describe("tokenURI()", () => {
-      it("tokenURI should return the correct path for ticket URIs (with lowercase addresses)", async () => {
+      it("tokenURI should return the correct path for ticket URIs", async () => {
         let tickets = [0, 1, 2, 3, 4, 5];
         for (const ticket of tickets) {
           const uriPath = await lootbox.tokenURI(ticket);
           expect(uriPath).to.eq(
-            `${BASE_URI}/${lootbox.address.toLowerCase()}/${ticket}.json`
+            // `${BASE_URI}/${lootbox.address.toLowerCase()}/${ticket}.json`
+            `${BASE_URI}/${ticket}.json`
           );
         }
       });

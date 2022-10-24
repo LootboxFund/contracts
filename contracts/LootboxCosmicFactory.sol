@@ -28,6 +28,7 @@ contract LootboxCosmicFactory is Pausable, AccessControl {
         address indexed issuer,
         uint256 maxTickets,
         string baseTokenURI,
+        string lootboxID,
         string indexed _nonce
     );
 
@@ -36,45 +37,34 @@ contract LootboxCosmicFactory is Pausable, AccessControl {
         address _whitelister,
         string memory _baseTokenURI
     ) {
-        require(
-            _lootboxDao != address(0),
-            "DAO Lootbox address cannot be zero"
-        );
-        require(
-            _whitelister != address(0),
-            "Whitelister address cannot be the zero address"
-        );
-        require(
-            bytes(_baseTokenURI).length != 0,
-            "Base token URI cannot be empty"
-        );
+        require(_lootboxDao != address(0), "E1"); // DAO Lootbox address cannot be zero
+        require(_whitelister != address(0), "E2"); // Whitelister address cannot be zero
+        require(bytes(_baseTokenURI).length != 0, "E3"); // Base token URI cannot be empty
 
         _grantRole(DAO_ROLE, _lootboxDao);
         whitelister = _whitelister;
 
         baseTokenURI = _baseTokenURI;
-        semver = "0.7.0-demo";
+        semver = "0.7.1-demo";
     }
 
     function createLootbox(
         string memory _lootboxName,
         string memory _lootboxSymbol,
         uint256 _maxTickets,
-        string memory _nonce  // to identify the lootbox
+        string memory _lootboxID,
+        string memory _nonce // to identify the lootbox
     ) public whenNotPaused returns (address _lootbox) {
-        require(
-            bytes(_lootboxName).length != 0,
-            "Lootbox name cannot be empty"
-        );
-        require(
-            bytes(_lootboxSymbol).length != 0,
-            "Lootbox symbol cannot be empty"
-        );
-        require(_maxTickets > 0, "Max tickets must be greater than zero");
+        require(bytes(_lootboxName).length != 0, "E4"); // Name cannot be empty
+        require(bytes(_lootboxSymbol).length != 0, "E5"); // Symbol cannot be empty
+        require(_maxTickets > 0, "E6"); // Max tickets must be > 0
+        require(bytes(_lootboxID).length != 0, "E7"); // Lootbox ID cannot be empty
+        require(bytes(_nonce).length != 0, "E8"); // Nonce cannot be empty
+
         LootboxCosmic newLootbox = new LootboxCosmic(
             _lootboxName,
             _lootboxSymbol,
-            baseTokenURI,
+            string.concat(baseTokenURI, "/", _lootboxID),
             _maxTickets,
             msg.sender,
             whitelister
@@ -88,7 +78,8 @@ contract LootboxCosmicFactory is Pausable, AccessControl {
             newLootboxAddress,
             msg.sender,
             _maxTickets,
-            baseTokenURI,
+            string.concat(baseTokenURI, "/", _lootboxID),
+            _lootboxID,
             _nonce
         );
 
