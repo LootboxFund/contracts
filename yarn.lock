@@ -1855,28 +1855,28 @@
   resolved "https://registry.yarnpkg.com/@ungap/promise-all-settled/-/promise-all-settled-1.1.2.tgz#aa58042711d6e3275dd37dc597e5d31e8c290a44"
   integrity sha512-sL/cEvJWAnClXw0wHk85/2L0G6Sj8UB0Ctc1TEMbKSsmpRosqhwj9gWgFRZSrBr2f9tiXISwNhCPmlfqUqyb9Q==
 
-"@wormgraph/helpers@0.7.1-demo-1":
-  version "0.7.1-demo-1"
-  resolved "https://registry.yarnpkg.com/@wormgraph/helpers/-/helpers-0.7.1-demo-1.tgz#1749d61cd495ff2334ce72f6d9daaf553aa910cf"
-  integrity sha512-aHkEuFMhf1uDxfGNVePyyfEPotTK8aehU8WT8AMLxf0b6V9ZtQsT69EiAiuXicsrXLoeq3szxlPYe8yYf026gw==
+"@wormgraph/helpers@0.7.1-demo-3":
+  version "0.7.1-demo-3"
+  resolved "https://registry.yarnpkg.com/@wormgraph/helpers/-/helpers-0.7.1-demo-3.tgz#6f850426347d0d2828e5865e5c934aebd16b97a1"
+  integrity sha512-mbFrcYt/YnC6FVQTT0rPqq+1Lv1pJPk6RgVy+Esn09rah8CQmQeSnBlb1rpKFpd9wI9M+uQdB8MkSWZIU/9byw==
   dependencies:
     axios "0.25.0"
     lodash "4.17.21"
 
-"@wormgraph/helpers@0.7.1-demo-2":
-  version "0.7.1-demo-2"
-  resolved "https://registry.yarnpkg.com/@wormgraph/helpers/-/helpers-0.7.1-demo-2.tgz#e52e453344bfa83ed946b4f58d02804299a9f0a3"
-  integrity sha512-j9hsn8xofAS31oJm2xrZkOasy8APL1pMbBbhfoATWY5t/kIi9lcskFT2z9T9A3b0AlN4W16oZFhR4479seoAzQ==
+"@wormgraph/helpers@0.7.1-demo-7":
+  version "0.7.1-demo-7"
+  resolved "https://registry.yarnpkg.com/@wormgraph/helpers/-/helpers-0.7.1-demo-7.tgz#067915b7be0b80cc6f65bd7e9d9efaebc6a71620"
+  integrity sha512-3v/pqOImUj6itDZvIMhTU6oapq+FTXyV/JbRfkGEfmCdrrFMhwZiNz84/xkGTtTtyJhbE5m61CTeJcHLqlyFJA==
   dependencies:
     axios "0.25.0"
     lodash "4.17.21"
 
-"@wormgraph/manifest@0.7.1-demo-2":
-  version "0.7.1-demo-2"
-  resolved "https://registry.yarnpkg.com/@wormgraph/manifest/-/manifest-0.7.1-demo-2.tgz#5a74d3dff5cf24fb7737641064f7b1ca60464a45"
-  integrity sha512-ERQz0njMdbTq7nEDcWsh97DLT+Xw3y0LuOLml1w3kHkPF7IKDxikBunOJ5lNqiTGKmiZDsaQSZCA11/Yqu+Z/g==
+"@wormgraph/manifest@0.7.1-prod":
+  version "0.7.1-prod"
+  resolved "https://registry.yarnpkg.com/@wormgraph/manifest/-/manifest-0.7.1-prod.tgz#283dac642937f3048b57bf5905769c14426aa8ee"
+  integrity sha512-cfsYx35q+5OJsKwh/bEm6wQzX/DVmbfAp669ODyt8bGemHYwQWBIRHrqpMmzo+fvEhKb6BtndZ1+evcPlWjwmw==
   dependencies:
-    "@wormgraph/helpers" "0.7.1-demo-1"
+    "@wormgraph/helpers" "0.7.1-demo-3"
 
 "@yarnpkg/lockfile@^1.1.0":
   version "1.1.0"

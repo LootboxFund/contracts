@@ -45,7 +45,7 @@ contract LootboxCosmicFactory is Pausable, AccessControl {
         whitelister = _whitelister;
 
         baseTokenURI = _baseTokenURI;
-        semver = "0.7.1-demo";
+        semver = "0.7.1-prod";
     }
 
     function createLootbox(

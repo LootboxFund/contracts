@@ -1,6 +1,6 @@
 {
   "name": "@lootboxfund/contracts",
-  "version": "0.7.0-demo",
+  "version": "0.7.1-prod",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -77,8 +77,8 @@
     "@openzeppelin/contracts": "^4.4.2",
     "@openzeppelin/contracts-upgradeable": "^4.4.2",
     "@openzeppelin/hardhat-upgrades": "^1.12.0",
-    "@wormgraph/helpers": "0.7.1-demo-2",
-    "@wormgraph/manifest": "0.7.1-demo-2",
+    "@wormgraph/helpers": "0.7.1-demo-7",
+    "@wormgraph/manifest": "0.7.1-prod",
     "crypto": "^1.0.1",
     "hardhat-contract-sizer": "^2.5.1",
     "lodash": "^4.17.21",
