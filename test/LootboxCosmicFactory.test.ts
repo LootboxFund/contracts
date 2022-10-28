@@ -16,9 +16,11 @@ import {
   stripZeros,
 } from "./helpers/test-helpers";
 
-const BASE_URI = "https://storage.googleapis.com/lootbox-data-staging";
 const LOOTBOX_NAME = "Pinata Lootbox";
 const LOOTBOX_SYMBOL = "PINATA";
+const LOOTBOX_ID = "jlshdbflsdjbfldjhfbvjhdfbvjkhrsdkj2131212313n";
+const BASE_URI = `https://storage.googleapis.com/lootbox-data-staging`;
+const EXPECTED_BASE_URI = `${BASE_URI}/${LOOTBOX_ID}`;
 
 // needed to prevent "too many requests" error
 const timeout = async (ms: number = 1000) => {
@@ -62,7 +64,7 @@ describe("📦 LootboxCosmicFactory smart contract", () => {
         whitelistKey.address,
         BASE_URI
       )
-    ).to.be.revertedWith("DAO Lootbox address cannot be zero");
+    ).to.be.revertedWith("E1");
   });
 
   it("reverts if whitelister is zero address", async () => {
@@ -72,13 +74,13 @@ describe("📦 LootboxCosmicFactory smart contract", () => {
         ethers.constants.AddressZero,
         BASE_URI
       )
-    ).to.be.revertedWith("Whitelister address cannot be the zero address");
+    ).to.be.revertedWith("E2");
   });
 
   it("reverts if base uri is empty", async () => {
     await expect(
       LootboxCosmicFactory.deploy(lootboxDAO.address, whitelistKey.address, "")
-    ).to.be.revertedWith("Base token URI cannot be empty");
+    ).to.be.revertedWith("E3");
   });
 
   it("grants the dao the DAO_ROLE", async () => {
@@ -143,7 +145,13 @@ describe("📦 LootboxCosmicFactory smart contract", () => {
 
       createLootboxTx = await factory
         .connect(lootboxDeployer)
-        .createLootbox(LOOTBOX_NAME, LOOTBOX_SYMBOL, maxTickets, nonce);
+        .createLootbox(
+          LOOTBOX_NAME,
+          LOOTBOX_SYMBOL,
+          maxTickets,
+          LOOTBOX_ID,
+          nonce
+        );
       await createLootboxTx.wait();
 
       const addresses = await factory.viewLootboxes();
@@ -157,7 +165,13 @@ describe("📦 LootboxCosmicFactory smart contract", () => {
       await expect(
         factory
           .connect(lootboxDeployer)
-          .createLootbox(LOOTBOX_NAME, LOOTBOX_SYMBOL, maxTickets, nonce)
+          .createLootbox(
+            LOOTBOX_NAME,
+            LOOTBOX_SYMBOL,
+            maxTickets,
+            LOOTBOX_ID,
+            nonce
+          )
       ).to.be.revertedWith("Pausable: paused");
     });
 
@@ -179,7 +193,7 @@ describe("📦 LootboxCosmicFactory smart contract", () => {
     });
 
     it("sets the base uri", async () => {
-      expect(await lootbox._tokenURI()).to.eq(BASE_URI);
+      expect(await lootbox._tokenURI()).to.eq(EXPECTED_BASE_URI);
     });
 
     it("the lootbox grants the issuer the DAO role", async () => {
@@ -195,7 +209,8 @@ describe("📦 LootboxCosmicFactory smart contract", () => {
           lootbox.address,
           lootboxDeployer.address,
           maxTickets,
-          BASE_URI,
+          EXPECTED_BASE_URI,
+          LOOTBOX_ID,
           nonce
         );
     });

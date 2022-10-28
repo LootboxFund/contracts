@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -60,7 +59,7 @@ contract LootboxCosmic is
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
 
     string public constant VARIANT = "Cosmic";
-    string public constant SEMVER = "0.7.0-demo";
+    string public constant SEMVER = "0.7.1-demo";
     uint256 public maxTickets;
     bool public flushed = false;
     string public _tokenURI; // Something like https://storage.googleapis.com/lootbox-data-staging/{lootboxAddress}/{ticketID}.json
@@ -124,6 +123,12 @@ contract LootboxCosmic is
         address erc20Token,
         uint256 erc20Amount
     );
+    event MaxTicketsChange(
+        address indexed changer,
+        address lootbox,
+        uint256 oldMaxTickets,
+        uint256 indexed newMaxTickets
+    );
 
     constructor(
         string memory _name,
@@ -186,9 +191,18 @@ contract LootboxCosmic is
         nonReentrant
         onlyRole(DAO_ROLE)
     {
-        require(
-            targetMaxTickets > maxTickets,
-            "Must be greater than maxTickets"
+        require(targetMaxTickets > 0, "Invalid");
+        require(targetMaxTickets != maxTickets, "No change");
+        if (depositIdCounter.current() > 0) {
+            // If deposits have been made, we can only increase maxTickets...
+            require(targetMaxTickets > maxTickets, "Cannot decrease");
+        }
+        // No deposits have been made yet, so we can change maxTickets
+        emit MaxTicketsChange(
+            msg.sender,
+            address(this),
+            maxTickets,
+            targetMaxTickets
         );
 
         maxTickets = targetMaxTickets;
@@ -200,8 +214,8 @@ contract LootboxCosmic is
         whenNotPaused
     {
         _requireMinted(ticketId);
-        require(ownerOf(ticketId) == msg.sender, "You do not own this ticket");
-        require(depositIdCounter.current() > 0, "No deposits have been made");
+        require(ownerOf(ticketId) == msg.sender, "Unauthorized"); // You do not own this ticket
+        require(depositIdCounter.current() > 0, "No deposits"); // No deposits have been made yet
 
         // uint256 sharesOwned = sharesInTicket[ticketId];
         // loop through all deposits
@@ -252,10 +266,7 @@ contract LootboxCosmic is
                     (bool success, ) = address(ownerOf(ticketId)).call{
                         value: owedNative
                     }("");
-                    require(
-                        success,
-                        "Ticket holder could not receive earnings"
-                    );
+                    require(success, "Not received");
                 }
             }
         }
@@ -310,15 +321,8 @@ contract LootboxCosmic is
         override(ERC721)
         returns (string memory)
     {
-        // Note: this converts the address into a LOWERCASE string
-        string memory addressStr = Strings.toHexString(
-            uint160(address(this)),
-            20
-        );
         string memory tokenURIPath = string.concat(
             _tokenURI,
-            "/",
-            addressStr,
             "/",
             Strings.toString(ticketId),
             ".json"
@@ -436,7 +440,7 @@ contract LootboxCosmic is
         depositIdCounter.increment();
         // transfer the native tokens to this LootboxEscrow contract
         (bool success, ) = address(this).call{value: amount}("");
-        require(success, "Could not receive payment");
+        require(success, "Not received");
     }
 
     // Note: functions using this MUST be wrapped with the `nonReentrant` modifier
@@ -522,7 +526,7 @@ contract LootboxCosmic is
                     value: address(this).balance
                 }("");
                 // depositReceipts[i].nativeTokenAmount = 0;
-                require(success, "Target could not receive funds");
+                require(success, "Not received");
             }
         }
         flushed = true;
