@@ -323,7 +323,7 @@ describe("📦 LootboxCosmic smart contract", async function () {
       });
     });
 
-    describe("flush tokens", async () => {
+    describe.only("flush tokens", async () => {
       let flushTarget: SignerWithAddress;
       let depositers: SignerWithAddress[];
       beforeEach(async () => {
@@ -374,28 +374,28 @@ describe("📦 LootboxCosmic smart contract", async function () {
         );
       });
 
-      it("reverts if called withing 120 days from lootbox creation", async () => {
+      it("reverts if called within 60 days from lootbox creation", async () => {
         await expect(
           lootbox.connect(issuingEntity).flushTokens(flushTarget.address)
-        ).to.be.revertedWith("Must wait 120 days");
+        ).to.be.revertedWith("Must wait 60 days");
 
-        await network.provider.send("evm_increaseTime", [86400 * 100]); // increase number of seconds (86400 seconds in a day)
+        await network.provider.send("evm_increaseTime", [86400 * 40]); // increase number of seconds (86400 seconds in a day)
         await network.provider.send("evm_mine");
 
         await expect(
           lootbox.connect(issuingEntity).flushTokens(flushTarget.address)
-        ).to.be.revertedWith("Must wait 120 days");
+        ).to.be.revertedWith("Must wait 60 days");
 
         await network.provider.send("evm_increaseTime", [86400 * 20]); // increase number of seconds (86400 seconds in a day)
         await network.provider.send("evm_mine");
 
         await expect(
           lootbox.connect(issuingEntity).flushTokens(flushTarget.address)
-        ).to.be.not.be.revertedWith("Must wait 120 days");
+        ).to.be.not.be.revertedWith("Must wait 60 days");
       });
 
       it("when it does not revert, it also sets 'flushed' to true", async () => {
-        await network.provider.send("evm_increaseTime", [86400 * 120]); // increase number of seconds (86400 seconds in a day)
+        await network.provider.send("evm_increaseTime", [86400 * 60]); // increase number of seconds (86400 seconds in a day)
         await network.provider.send("evm_mine");
 
         const initFlushed = await lootbox.flushed();
