@@ -1,0 +1,15 @@
+2022-12-23T21:37:15.720Z -  
+  
+---------- DEPLOY LOOTBOX COSMIC FACTORY (development) ----------
+  
+---- Script starting...
+
+---- Network:                             binance_testnet (Hex ID = 0x61)
+---- Lootbox DAO:                         0x8C402c09d3622dceeb123b086Bd5227189931BEE
+---- Whitelister:                         0xEf3a69a53F65D5bFa688Fb9FE621Aa5c41F1f9aF
+---- Deployer (UNTRUSTED):                0xA86E179eCE6785ad758cd35d81006C12EbaF8D2A
+---- Base Metadata Path:                  https://storage.googleapis.com/lootbox-data-staging
+
+
+  
+2022-12-23T21:37:24.405Z - ---- 0xc40FD83A4939B363501F7942360d3cE2312d2e53 ---> Lootbox Cosmic Factory 
