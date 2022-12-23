@@ -59,7 +59,7 @@ contract LootboxCosmic is
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
 
     string public constant VARIANT = "Cosmic";
-    string public constant SEMVER = "0.7.1-prod";
+    string public constant SEMVER = "0.7.2-demo";
     uint256 public maxTickets;
     bool public flushed = false;
     string public _tokenURI; // Something like https://storage.googleapis.com/lootbox-data-staging/{lootboxAddress}/{ticketID}.json
@@ -504,8 +504,6 @@ contract LootboxCosmic is
         nonReentrant
         whenNotPaused
     {
-        require(block.timestamp > createdAt + 60 days, "Must wait 60 days");
-
         for (uint256 i = 0; i < depositIdCounter.current(); i++) {
             // handle erc20 tokens
             if (depositReceipts[i].erc20Token != address(0)) {

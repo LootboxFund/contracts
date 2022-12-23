@@ -9,7 +9,6 @@ import {
   WHITELISTER_ROLE,
   randomBN,
 } from "./helpers/test-helpers";
-import { manifest } from "../scripts/manifest";
 import {
   USDC,
   USDC__factory,
@@ -187,8 +186,8 @@ describe("📦 LootboxCosmic smart contract", async function () {
       usdt_stablecoin = (await Usdt.deploy(0)) as USDT;
     });
 
-    it(`has the expected semver ${manifest.semver.id}`, async () => {
-      expect(await lootbox.SEMVER()).to.eq(manifest.semver.id);
+    it(`has the expected semver`, async () => {
+      expect(await lootbox.SEMVER()).to.eq("0.7.2-demo");
     });
 
     it("has the createdAt timestamp", async () => {
@@ -323,7 +322,7 @@ describe("📦 LootboxCosmic smart contract", async function () {
       });
     });
 
-    describe.only("flush tokens", async () => {
+    describe("flush tokens", async () => {
       let flushTarget: SignerWithAddress;
       let depositers: SignerWithAddress[];
       beforeEach(async () => {
@@ -374,29 +373,29 @@ describe("📦 LootboxCosmic smart contract", async function () {
         );
       });
 
-      it("reverts if called within 60 days from lootbox creation", async () => {
+      it("does not revert if called within 60 days from lootbox creation", async () => {
         await expect(
           lootbox.connect(issuingEntity).flushTokens(flushTarget.address)
-        ).to.be.revertedWith("Must wait 60 days");
+        ).to.not.be.reverted;
 
         await network.provider.send("evm_increaseTime", [86400 * 40]); // increase number of seconds (86400 seconds in a day)
         await network.provider.send("evm_mine");
 
         await expect(
           lootbox.connect(issuingEntity).flushTokens(flushTarget.address)
-        ).to.be.revertedWith("Must wait 60 days");
+        ).to.not.be.reverted;
 
         await network.provider.send("evm_increaseTime", [86400 * 20]); // increase number of seconds (86400 seconds in a day)
         await network.provider.send("evm_mine");
 
         await expect(
           lootbox.connect(issuingEntity).flushTokens(flushTarget.address)
-        ).to.be.not.be.revertedWith("Must wait 60 days");
+        ).to.be.not.be.reverted;
       });
 
       it("when it does not revert, it also sets 'flushed' to true", async () => {
-        await network.provider.send("evm_increaseTime", [86400 * 60]); // increase number of seconds (86400 seconds in a day)
-        await network.provider.send("evm_mine");
+        // await network.provider.send("evm_increaseTime", [86400 * 60]); // increase number of seconds (86400 seconds in a day)
+        // await network.provider.send("evm_mine");
 
         const initFlushed = await lootbox.flushed();
         expect(initFlushed).to.be.false;
