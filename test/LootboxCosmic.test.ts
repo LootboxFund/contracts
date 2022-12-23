@@ -9,7 +9,6 @@ import {
   WHITELISTER_ROLE,
   randomBN,
 } from "./helpers/test-helpers";
-import { manifest } from "../scripts/manifest";
 import {
   USDC,
   USDC__factory,
@@ -187,8 +186,8 @@ describe("📦 LootboxCosmic smart contract", async function () {
       usdt_stablecoin = (await Usdt.deploy(0)) as USDT;
     });
 
-    it(`has the expected semver ${manifest.semver.id}`, async () => {
-      expect(await lootbox.SEMVER()).to.eq(manifest.semver.id);
+    it(`has the expected semver`, async () => {
+      expect(await lootbox.SEMVER()).to.eq("0.7.2-demo");
     });
 
     it("has the createdAt timestamp", async () => {

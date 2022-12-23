@@ -59,7 +59,7 @@ contract LootboxCosmic is
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
 
     string public constant VARIANT = "Cosmic";
-    string public constant SEMVER = "0.7.1-prod";
+    string public constant SEMVER = "0.7.2-demo";
     uint256 public maxTickets;
     bool public flushed = false;
     string public _tokenURI; // Something like https://storage.googleapis.com/lootbox-data-staging/{lootboxAddress}/{ticketID}.json

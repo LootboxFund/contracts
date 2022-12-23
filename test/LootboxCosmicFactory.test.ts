@@ -4,7 +4,6 @@ import { randomUUID } from "crypto";
 import { ContractTransaction, ethers as _ethers } from "ethers";
 import { ethers } from "hardhat";
 import { random } from "lodash";
-import { manifest } from "../scripts/manifest";
 import {
   LootboxCosmic,
   LootboxCosmicFactory,
@@ -102,7 +101,7 @@ describe("📦 LootboxCosmicFactory smart contract", () => {
       BASE_URI
     );
 
-    expect(await factory.semver()).to.eq(manifest.semver.id);
+    expect(await factory.semver()).to.eq("0.7.2-demo");
   });
 
   it("persists the base URI", async () => {
