@@ -504,8 +504,6 @@ contract LootboxCosmic is
         nonReentrant
         whenNotPaused
     {
-        require(block.timestamp > createdAt + 60 days, "Must wait 60 days");
-
         for (uint256 i = 0; i < depositIdCounter.current(); i++) {
             // handle erc20 tokens
             if (depositReceipts[i].erc20Token != address(0)) {
