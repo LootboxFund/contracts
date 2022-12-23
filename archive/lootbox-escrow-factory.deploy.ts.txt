@@ -28,9 +28,9 @@
 
 import { ethers, network } from "hardhat";
 import { sleep } from "@wormgraph/helpers";
-import { logToFile } from "./helpers/logger";
-import { baseMetadataPath } from "./helpers/ticketMetadata";
-import { manifest } from "./manifest";
+import { logToFile } from "../scripts/helpers/logger";
+import { baseMetadataPath } from "../scripts/helpers/ticketMetadata";
+import { manifest } from "../scripts/manifest";
 
 const LOG_FILE_PATH = `${__dirname}/logs/deployLootboxEscrowFactory_log_${Date.now()}_${
   network.name
