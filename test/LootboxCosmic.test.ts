@@ -65,7 +65,9 @@ describe("📦 LootboxCosmic smart contract", async function () {
 
   describe("Before constructor & deployment", async () => {
     beforeEach(async () => {
-      Lootbox = await ethers.getContractFactory("LootboxCosmic");
+      Lootbox = (await ethers.getContractFactory(
+        "LootboxCosmic"
+      )) as LootboxCosmic__factory;
     });
 
     it("reverts if name is empty", async () => {
@@ -168,7 +170,9 @@ describe("📦 LootboxCosmic smart contract", async function () {
     let usdt_stablecoin: USDT;
 
     beforeEach(async () => {
-      Lootbox = await ethers.getContractFactory("LootboxCosmic");
+      Lootbox = (await ethers.getContractFactory(
+        "LootboxCosmic"
+      )) as LootboxCosmic__factory;
       lootbox = await Lootbox.deploy(
         LOOTBOX_NAME,
         LOOTBOX_SYMBOL,
@@ -179,15 +183,15 @@ describe("📦 LootboxCosmic smart contract", async function () {
       );
 
       // Bnb = await ethers.getContractFactory("BNB");
-      Usdc = await ethers.getContractFactory("USDC");
-      Usdt = await ethers.getContractFactory("USDT");
+      Usdc = (await ethers.getContractFactory("USDC")) as USDC__factory;
+      Usdt = (await ethers.getContractFactory("USDT")) as USDT__factory;
 
       usdc_stablecoin = (await Usdc.deploy(0)) as USDC;
       usdt_stablecoin = (await Usdt.deploy(0)) as USDT;
     });
 
     it(`has the expected semver`, async () => {
-      expect(await lootbox.SEMVER()).to.eq("0.7.2-demo");
+      expect(await lootbox.SEMVER()).to.eq("0.7.2-prod");
     });
 
     it("has the createdAt timestamp", async () => {

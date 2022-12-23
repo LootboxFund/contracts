@@ -1,0 +1,15 @@
+2022-12-23T21:53:31.147Z -  
+  
+---------- DEPLOY LOOTBOX COSMIC FACTORY (development) ----------
+  
+---- Script starting...
+
+---- Network:                             polygon (Hex ID = 0x89)
+---- Lootbox DAO:                         0x7D70653768627FFa4D941aA389214E30f447a1cb
+---- Whitelister:                         0xc84a10D6011006ea12FBAa7b9BB91df1d713A667
+---- Deployer (UNTRUSTED):                0x88c501B30E1A57f13Be608c596c04CB472e50458
+---- Base Metadata Path:                  https://storage.googleapis.com/lootbox-data-prod
+
+
+  
+2022-12-23T21:53:36.769Z - ---- 0x4CB401fA068ffEaDDAf5C3a0dD2f2615858e774B ---> Lootbox Cosmic Factory 

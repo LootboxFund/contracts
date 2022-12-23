@@ -42,9 +42,9 @@ describe("📦 LootboxCosmicFactory smart contract", () => {
   let minter: SignerWithAddress;
 
   beforeEach(async () => {
-    LootboxCosmicFactory = await ethers.getContractFactory(
+    LootboxCosmicFactory = (await ethers.getContractFactory(
       "LootboxCosmicFactory"
-    );
+    )) as LootboxCosmicFactory__factory;
     const accounts = await ethers.getSigners();
 
     deployer = accounts[0];
@@ -101,7 +101,7 @@ describe("📦 LootboxCosmicFactory smart contract", () => {
       BASE_URI
     );
 
-    expect(await factory.semver()).to.eq("0.7.2-demo");
+    expect(await factory.semver()).to.eq("0.7.2-prod");
   });
 
   it("persists the base URI", async () => {
@@ -156,7 +156,10 @@ describe("📦 LootboxCosmicFactory smart contract", () => {
       const addresses = await factory.viewLootboxes();
       const lootboxAddr = ethers.utils.getAddress(stripZeros(addresses[0]));
 
-      lootbox = await ethers.getContractAt("LootboxCosmic", lootboxAddr);
+      lootbox = (await ethers.getContractAt(
+        "LootboxCosmic",
+        lootboxAddr
+      )) as LootboxCosmic;
     });
 
     it("reverts when contract is paused", async () => {
